@@ -1,0 +1,225 @@
+// FlowStudio Prisma Schema
+// Based on FDP Backend Architect Template
+// Customized for AI Image Generation Platform
+
+// ========================================
+// Data Source Configuration
+// ========================================
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ========================================
+// Generator Configuration
+// ========================================
+
+generator client {
+  provider      = "prisma-client-js"
+  // CRITICAL: Include rhel-openssl-3.0.x for Vercel serverless deployment
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+// ========================================
+// NextAuth.js Models
+// ========================================
+
+// User - Primary user account
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  imageProjects ImageProject[]
+  apiKeys       ApiKey[]
+  usageStats    UsageStats?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Account - OAuth provider accounts
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+// Session - Active user sessions
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// VerificationToken - Email verification tokens
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ========================================
+// FlowStudio Application Models
+// ========================================
+
+// ImageProject - AI generated image projects
+model ImageProject {
+  id           String   @id @default(cuid())
+  userId       String
+  title        String
+  description  String?
+  mode         String   // 'CREATE', 'EDIT', 'DETAIL_PAGE', 'DETAIL_EDIT'
+
+  // Generation parameters
+  prompt       String?  @db.Text
+  category     String?
+  style        String?
+  aspectRatio  String?  @default("1:1")
+
+  // Image data (base64 or URLs)
+  sourceImage  String?  @db.Text
+  resultImages String[] @default([]) // Array of generated images
+
+  // Status
+  status       String   @default("draft") // 'draft', 'completed', 'shared'
+  deletedAt    DateTime?
+
+  // Relations
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ApiKey - Encrypted user API keys for Gemini
+model ApiKey {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  encryptedKey  String   @db.Text
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// UsageStats - User usage tracking and cost estimation
+model UsageStats {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  totalImages    Int      @default(0)
+  totalCostUsd   Decimal  @default(0.00) @db.Decimal(10, 2)
+  todayUsage     Int      @default(0)
+  lastUsageDate  DateTime?
+  history        Json     @default("[]") // [{date: "2024-11-25", count: 10}, ...]
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  updatedAt      DateTime @updatedAt
+}
+
+// GenerationHistory - AI generation audit trail
+model GenerationHistory {
+  id            String   @id @default(cuid())
+  userId        String
+  projectId     String?
+  mode          String   // 'CREATE', 'EDIT', 'DETAIL_PAGE', 'DETAIL_EDIT'
+  prompt        String?  @db.Text
+  category      String?
+  style         String?
+  imageCount    Int      @default(1)
+  costUsd       Decimal  @db.Decimal(10, 2)
+  status        String   // 'success', 'failed'
+  errorMessage  String?  @db.Text
+
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([status])
+}
+
+// ========================================
+// ReBAC Permission System
+// ========================================
+
+// RelationTuple - Core permissions table
+model RelationTuple {
+  id          String @id @default(cuid())
+
+  namespace   String // 'image_project', 'system'
+  objectId    String // Resource ID
+  relation    String // 'owner', 'editor', 'viewer'
+  subjectType String // 'user'
+  subjectId   String // User ID
+
+  createdAt DateTime @default(now())
+
+  @@unique([namespace, objectId, relation, subjectType, subjectId])
+  @@index([namespace, objectId, relation])
+  @@index([subjectType, subjectId])
+  @@index([namespace, relation, subjectId])
+}
+
+// RelationDefinition - Permission inheritance rules
+model RelationDefinition {
+  id        String   @id @default(cuid())
+  namespace String   // 'image_project'
+  relation  String   // 'owner', 'editor', 'viewer'
+  inherits  String[] @default([]) // Array of inherited relations
+
+  createdAt DateTime @default(now())
+
+  @@unique([namespace, relation])
+}
+
+// ========================================
+// Optional: Subscription (Future Premium Plans)
+// ========================================
+
+model Subscription {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  plan              String    // 'free', 'pro', 'enterprise'
+  status            String    // 'active', 'cancelled', 'expired'
+  currentPeriodEnd  DateTime?
+  cancelAtPeriodEnd Boolean   @default(false)
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}

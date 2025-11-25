@@ -1,65 +1,102 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React from 'react';
+import { Sparkles, Layout, FilePenLine, Wand2, ArrowRight } from 'lucide-react';
+import { Header } from '@/components/Header';
+import { AppMode } from '@/types';
+
+export default function HomePage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <>
+      <Header currentMode={AppMode.HOME} onNavigate={(mode) => {
+        if (mode === AppMode.HOME) window.location.href = '/';
+        else if (mode === AppMode.CREATE) window.location.href = '/create';
+        else if (mode === AppMode.EDIT) window.location.href = '/edit';
+        else if (mode === AppMode.DETAIL_PAGE) window.location.href = '/detail-page';
+        else if (mode === AppMode.DETAIL_EDIT) window.location.href = '/detail-edit';
+        else if (mode === AppMode.PROFILE) window.location.href = '/profile';
+      }} />
+
+      <div className="max-w-6xl mx-auto px-4 py-16">
+        <div className="text-center mb-16">
+          <h1 className="text-5xl font-bold text-slate-900 mb-4">
+            BizAI 스튜디오
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-slate-600 text-lg">
+            복잡한 포토샵 없이, 전문가급 제품 사진과 홍보물을 30초 만에 만들어보세요.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Create Card */}
+          <div
+            onClick={() => window.location.href = '/create'}
+            className="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-xl hover:border-indigo-200 transition-all cursor-pointer"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <div className="bg-indigo-100 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Sparkles className="w-6 h-6 text-indigo-600" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">새로운 이미지</h3>
+            <p className="text-slate-500 mb-3 text-xs h-10">
+              제품 사진이나 컨셉만으로 SNS 홍보물, 메뉴판, 포스터용 이미지를 생성합니다.
+            </p>
+            <div className="flex items-center text-indigo-600 font-medium text-xs">
+              시작하기 <ArrowRight className="w-3 h-3 ml-1" />
+            </div>
+          </div>
+
+          {/* Detail Page Card */}
+          <div
+            onClick={() => window.location.href = '/detail-page'}
+            className="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-xl hover:border-blue-200 transition-all cursor-pointer"
           >
-            Documentation
-          </a>
+            <div className="bg-blue-100 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Layout className="w-6 h-6 text-blue-600" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">상세페이지 제작</h3>
+            <p className="text-slate-500 mb-3 text-xs h-10">
+              모바일 최적화된 긴 상세페이지를 섹션별로 나누어 생성하고 연결합니다.
+            </p>
+            <div className="flex items-center text-blue-600 font-medium text-xs">
+              제작하기 <ArrowRight className="w-3 h-3 ml-1" />
+            </div>
+          </div>
+
+          {/* Detail Edit Card */}
+          <div
+            onClick={() => window.location.href = '/detail-edit'}
+            className="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-xl hover:border-violet-200 transition-all cursor-pointer"
+          >
+            <div className="bg-violet-100 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <FilePenLine className="w-6 h-6 text-violet-600" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">상세페이지 편집</h3>
+            <p className="text-slate-500 mb-3 text-xs h-10">
+              기존 상세페이지의 특정 부분을 선택하여 텍스트를 수정하거나 이미지를 교체합니다.
+            </p>
+            <div className="flex items-center text-violet-600 font-medium text-xs">
+              편집하기 <ArrowRight className="w-3 h-3 ml-1" />
+            </div>
+          </div>
+
+          {/* Edit Card */}
+          <div
+            onClick={() => window.location.href = '/edit'}
+            className="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-xl hover:border-emerald-200 transition-all cursor-pointer"
+          >
+            <div className="bg-emerald-100 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Wand2 className="w-6 h-6 text-emerald-600" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">간편 편집</h3>
+            <p className="text-slate-500 mb-3 text-xs h-10">
+              "레트로 필터 씌워줘", "배경에 사람 지워줘" 등 말 한마디로 사진을 전체 수정합니다.
+            </p>
+            <div className="flex items-center text-emerald-600 font-medium text-xs">
+              편집하기 <ArrowRight className="w-3 h-3 ml-1" />
+            </div>
+          </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }
