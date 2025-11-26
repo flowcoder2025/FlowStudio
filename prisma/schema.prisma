@@ -104,9 +104,9 @@ model ImageProject {
   style        String?
   aspectRatio  String?  @default("1:1")
 
-  // Image data (base64 or URLs)
+  // Image data (Supabase Storage URLs or legacy base64)
   sourceImage  String?  @db.Text
-  resultImages String[] @default([]) // Array of generated images
+  resultImages String[] @default([]) // Array of Supabase Storage URLs
 
   // Status
   status       String   @default("draft") // 'draft', 'completed', 'shared'

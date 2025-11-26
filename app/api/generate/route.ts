@@ -1,13 +1,14 @@
 /**
- * Image Generation API - Gemini Proxy with Usage Tracking
+ * Image Generation API - Gemini Proxy with Supabase Storage Upload
  * /api/generate
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next/auth'
+import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { decrypt } from '@/lib/utils/encryption'
+import { uploadMultipleImages } from '@/lib/utils/imageStorage'
 import { GoogleGenAI } from '@google/genai'
 
 const PRO_MODEL = 'gemini-3-pro-image-preview'
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
     // 5. Gemini API 초기화
     const ai = new GoogleGenAI({ apiKey })
 
-    // 6. 이미지 생성 함수
+    // 6. 이미지 생성 함수 (base64로 생성)
     const generateSingle = async () => {
       const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [{ text: finalPrompt }]
 
@@ -84,7 +85,7 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      // Extract generated image
+      // Extract generated image (base64)
       for (const part of response.candidates?.[0]?.content?.parts || []) {
         if (part.inlineData) {
           return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
@@ -94,12 +95,12 @@ export async function POST(req: NextRequest) {
       return null
     }
 
-    // 7. 4장 병렬 생성
+    // 7. 4장 병렬 생성 (base64)
     const promises = Array.from({ length: 4 }, () => generateSingle())
     const results = await Promise.all(promises)
-    const images = results.filter((img): img is string => img !== null)
+    const base64Images = results.filter((img): img is string => img !== null)
 
-    if (images.length === 0) {
+    if (base64Images.length === 0) {
       // 생성 실패 이력 기록
       await prisma.generationHistory.create({
         data: {
@@ -119,43 +120,50 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '이미지 생성에 실패했습니다.' }, { status: 500 })
     }
 
-    // 8. 프로젝트 업데이트 (projectId가 있는 경우)
+    // 8. Supabase Storage에 업로드 (base64 → URL 변환)
+    const storageUrls = await uploadMultipleImages(
+      base64Images,
+      session.user.id,
+      projectId ? `projects/${projectId}` : 'generations'
+    )
+
+    // 9. 프로젝트 업데이트 (projectId가 있는 경우)
     if (projectId) {
       await prisma.imageProject.update({
         where: { id: projectId },
         data: {
-          resultImages: images,
+          resultImages: storageUrls,
           status: 'completed',
         },
       })
     }
 
-    // 9. 사용량 기록
-    const totalCost = images.length * COST_PER_IMAGE_USD
+    // 10. 사용량 기록
+    const totalCost = base64Images.length * COST_PER_IMAGE_USD
     const today = new Date().toISOString().split('T')[0]
 
     await prisma.usageStats.upsert({
       where: { userId: session.user.id },
       create: {
         userId: session.user.id,
-        totalImages: images.length,
+        totalImages: base64Images.length,
         totalCostUsd: totalCost,
-        todayUsage: images.length,
+        todayUsage: base64Images.length,
         lastUsageDate: new Date(),
-        history: [{ date: today, count: images.length }],
+        history: [{ date: today, count: base64Images.length }],
       },
       update: {
-        totalImages: { increment: images.length },
+        totalImages: { increment: base64Images.length },
         totalCostUsd: { increment: totalCost },
-        todayUsage: { increment: images.length },
+        todayUsage: { increment: base64Images.length },
         lastUsageDate: new Date(),
         history: {
-          push: { date: today, count: images.length },
+          push: { date: today, count: base64Images.length },
         },
       },
     })
 
-    // 10. 생성 성공 이력 기록
+    // 11. 생성 성공 이력 기록
     await prisma.generationHistory.create({
       data: {
         userId: session.user.id,
@@ -164,13 +172,14 @@ export async function POST(req: NextRequest) {
         prompt: finalPrompt,
         category,
         style,
-        imageCount: images.length,
+        imageCount: base64Images.length,
         costUsd: totalCost,
         status: 'success',
       },
     })
 
-    return NextResponse.json({ images })
+    // 12. Storage URL 반환 (클라이언트는 URL로 이미지 표시)
+    return NextResponse.json({ images: storageUrls })
   } catch (error: unknown) {
     console.error('Image generation error:', error)
 

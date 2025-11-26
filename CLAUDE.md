@@ -32,11 +32,18 @@
   - `types/api.ts`: 모든 API 응답에 대한 포괄적인 타입 정의
   - `lib/errors.ts`: 커스텀 에러 클래스 계층 (AppError, ValidationError, UnauthorizedError 등)
   - `components/ErrorBoundary.tsx`: React 에러 바운더리로 앱 전체 에러 처리
+- **이미지 저장소 개선 (Phase 5)** ✨:
+  - Supabase Storage 통합: base64 데이터베이스 저장 → URL 참조 방식으로 전환
+  - `lib/supabase.ts`: Supabase Storage 클라이언트 (service role key 사용)
+  - `lib/utils/imageStorage.ts`: 이미지 업로드/삭제 유틸리티
+  - `/api/generate`: 생성된 이미지를 자동으로 Storage에 업로드 후 URL 반환
+  - 데이터베이스 부하 감소 및 쿼리 성능 대폭 향상
 
 ## 기술 스택
 
 - **프레임워크**: Next.js 16.0.4 (App Router, React 19.2.0, React Server Components)
 - **데이터베이스**: PostgreSQL via Supabase (Prisma 5.22.0 ORM)
+- **파일 저장소**: Supabase Storage (@supabase/supabase-js)
 - **인증**: NextAuth.js 4.24.13 with Google OAuth
 - **스타일링**: Tailwind CSS 4 with @tailwindcss/postcss
 - **AI 통합**: Google gemini-3-pro-image-preview API (@google/genai)
@@ -90,6 +97,7 @@ FlowStudio는 4가지 독립적인 모드로 운영됩니다 (`types/index.ts` �
 **주요 설계 결정사항**:
 - 사용자 API 키는 암호화 저장 (AES-256-GCM) `lib/utils/encryption.ts` 사용
 - 비용 추정을 위한 사용량 추적 (이미지당 $0.04)
+- **이미지 저장**: Supabase Storage에 업로드 후 URL만 데이터베이스에 저장
 - ImageProject의 소프트 삭제 (`deletedAt` 필드 사용)
 - Vercel 배포를 위한 Prisma 바이너리 타겟에 `rhel-openssl-3.0.x` 포함
 
@@ -134,6 +142,10 @@ await requireImageProjectEditor(userId, projectId) // 권한 없으면 에러
 **이미지 생성** (`/api/generate/route.ts`):
 - **보안**: 사용자의 암호화된 API 키를 서버에서 복호화하여 Gemini API 프록시
 - **병렬 생성**: 4장의 이미지를 `Promise.all`로 동시 생성
+- **Storage 통합**:
+  - Gemini API가 base64로 이미지 생성
+  - `lib/utils/imageStorage.ts`로 Supabase Storage에 자동 업로드
+  - 클라이언트에 Storage 공개 URL 반환
 - **사용량 추적**: UsageStats와 GenerationHistory에 자동 기록 (이미지당 $0.04)
 - **모델**: `gemini-3-pro-image-preview` (Google Gemini API)
 - **기능 지원**:
@@ -141,7 +153,7 @@ await requireImageProjectEditor(userId, projectId) // 권한 없으면 에러
   - 소스 이미지 (EDIT, DETAIL_EDIT 모드)
   - 참조 이미지 (CREATE 모드)
   - 종횡비 설정 (1:1, 9:16 등)
-- **응답 형식**: base64 인코딩된 이미지 배열 (`data:image/png;base64,...`)
+- **응답 형식**: Supabase Storage 공개 URL 배열 (`https://[project].supabase.co/storage/v1/object/public/...`)
 
 **프로젝트** (`/api/projects/*`):
 - ImageProject CRUD 작업
@@ -179,6 +191,10 @@ await requireImageProjectEditor(userId, projectId) // 권한 없으면 에러
 # Supabase (데이터베이스)
 DATABASE_URL="postgresql://..." # 포트 6543 (연결 풀링)
 DIRECT_URL="postgresql://..."    # 포트 5432 (마이그레이션)
+
+# Supabase Storage (이미지 저장)
+NEXT_PUBLIC_SUPABASE_URL="https://[project-ref].supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="<Supabase Dashboard → Project Settings → API → service_role>"
 
 # NextAuth
 NEXTAUTH_URL="http://localhost:3000"
@@ -300,10 +316,10 @@ const projects = await prisma.imageProject.findMany({
 ## 알려진 제약사항 및 향후 개선 방향
 
 ### 현재 제약사항
-1. **이미지 저장 방식**:
-   - 현재: 데이터베이스에 base64 인코딩으로 저장 (`resultImages: string[]`)
-   - 문제: 대용량 이미지 시 데이터베이스 부하, 쿼리 성능 저하
-   - 향후: Supabase Storage로 마이그레이션 (URL 참조 방식)
+1. **이미지 저장 방식**: ✅ 해결됨 (Phase 5)
+   - ~~이전: 데이터베이스에 base64 인코딩으로 저장~~
+   - **현재**: Supabase Storage에 업로드 후 URL만 데이터베이스에 저장
+   - 데이터베이스 부하 감소, 쿼리 성능 향상, 확장성 확보
 
 2. **속도 제한**:
    - 현재: 애플리케이션 레벨 속도 제한 없음
@@ -319,7 +335,30 @@ const projects = await prisma.imageProject.findMany({
    - 향후: Stripe 연동 및 프리미엄 기능 구현
 
 ### 개선 우선순위
-1. **High**: 이미지 저장소 마이그레이션 (Supabase Storage)
-2. **Medium**: 구독 플랜 및 결제 시스템
-3. **Medium**: 속도 제한 및 쿼터 관리
-4. **Low**: 실시간 협업 기능
+1. ~~**High**: 이미지 저장소 마이그레이션 (Supabase Storage)~~ ✅ 완료 (Phase 5)
+2. **High**: Supabase Storage 버킷 설정 및 RLS (Row Level Security) 정책
+3. **Medium**: 구독 플랜 및 결제 시스템
+4. **Medium**: 속도 제한 및 쿼터 관리
+5. **Low**: 실시간 협업 기능
+
+### 추가 작업 필요 (Supabase Storage 설정)
+Phase 5 구현이 완료되었으나, Supabase Dashboard에서 수동 설정이 필요합니다:
+
+1. **Storage 버킷 생성**:
+   ```sql
+   -- Supabase Dashboard → Storage → Create Bucket
+   -- Bucket name: flowstudio-images
+   -- Public: Yes (공개 URL 접근 허용)
+   ```
+
+2. **RLS 정책 설정** (선택, 보안 강화 시):
+   ```sql
+   -- 사용자는 자신의 이미지만 삭제 가능
+   CREATE POLICY "Users can delete own images"
+   ON storage.objects FOR DELETE
+   USING (bucket_id = 'flowstudio-images' AND auth.uid()::text = (storage.foldername(name))[2]);
+   ```
+
+3. **Service Role Key 설정**:
+   - `.env.local`에 `SUPABASE_SERVICE_ROLE_KEY` 추가
+   - Supabase Dashboard → Project Settings → API → service_role 복사
