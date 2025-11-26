@@ -8,7 +8,6 @@ import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
 import { CATEGORIES } from '@/constants';
 import { generateImageVariations } from '@/services/geminiService';
-import { recordUsage } from '@/services/usageService';
 
 export default function CreatePage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -31,20 +30,27 @@ export default function CreatePage() {
     }
   };
 
-  const validateApiKey = (): boolean => {
-    if (typeof window === 'undefined') return false;
-
-    const apiKey = localStorage.getItem('gemini_api_key');
-    if (!apiKey) {
+  const validateApiKey = async (): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/profile/api-key');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.exists) {
+          return true;
+        }
+      }
       alert("이미지 생성을 위해 프로필 페이지에서 API 키를 설정해주세요.");
       window.location.href = '/profile';
       return false;
+    } catch (error) {
+      console.error('API key validation error:', error);
+      alert("API 키 확인 중 오류가 발생했습니다.");
+      return false;
     }
-    return true;
   };
 
   const handleGenerate = async () => {
-    if (!validateApiKey()) return;
+    if (!(await validateApiKey())) return;
 
     if (!selectedCategory) {
       alert('이미지의 종류를 선택해주세요.');
@@ -67,8 +73,7 @@ export default function CreatePage() {
         alert('이미지 생성에 실패했습니다. 다시 시도해주세요.');
       } else {
         setGeneratedImages(images);
-        // Record Usage (4 images)
-        recordUsage(4);
+        // Usage is now tracked server-side in /api/generate
       }
     } catch (error) {
       console.error(error);
