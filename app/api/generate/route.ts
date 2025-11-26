@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
 
     // 6. 이미지 생성 함수
     const generateSingle = async () => {
-      const parts: any[] = [{ text: finalPrompt }]
+      const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [{ text: finalPrompt }]
 
       // Source image 추가 (EDIT, DETAIL_EDIT 모드)
       if (sourceImage) {
@@ -171,7 +171,7 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ images })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Image generation error:', error)
 
     // 실패 이력 기록
@@ -183,7 +183,7 @@ export async function POST(req: NextRequest) {
           imageCount: 0,
           costUsd: 0,
           status: 'failed',
-          errorMessage: error?.message || String(error),
+          errorMessage: error instanceof Error ? error.message : String(error),
         },
       })
     } catch (historyError) {

@@ -89,7 +89,7 @@ export default function HomePage() {
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-1">간편 편집</h3>
             <p className="text-slate-500 mb-3 text-xs h-10">
-              "레트로 필터 씌워줘", "배경에 사람 지워줘" 등 말 한마디로 사진을 전체 수정합니다.
+              &ldquo;레트로 필터 씌워줘&rdquo;, &ldquo;배경에 사람 지워줘&rdquo; 등 말 한마디로 사진을 전체 수정합니다.
             </p>
             <div className="flex items-center text-emerald-600 font-medium text-xs">
               편집하기 <ArrowRight className="w-3 h-3 ml-1" />

@@ -13,9 +13,11 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
   if (images.length === 0) return null;
 
   const handleDownload = (base64Data: string, index: number) => {
+    // eslint-disable-next-line react-hooks/purity
+    const timestamp = Date.now();
     const link = document.createElement('a');
     link.href = base64Data;
-    link.download = `biz-ai-generated-${Date.now()}-${index}.png`;
+    link.download = `biz-ai-generated-${timestamp}-${index}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
