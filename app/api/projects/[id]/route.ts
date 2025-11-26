@@ -12,7 +12,7 @@ import { check } from '@/lib/permissions'
 // GET /api/projects/[id] - 프로젝트 상세 조회
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
 
@@ -20,16 +20,18 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { id } = await params
+
   try {
     // Viewer 권한 확인
-    const canView = await check(session.user.id, 'image_project', params.id, 'viewer')
+    const canView = await check(session.user.id, 'image_project', id, 'viewer')
 
     if (!canView) {
       return NextResponse.json({ error: '프로젝트에 대한 권한이 없습니다.' }, { status: 403 })
     }
 
     const project = await prisma.imageProject.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         user: {
           select: {
@@ -56,7 +58,7 @@ export async function GET(
 // PUT /api/projects/[id] - 프로젝트 수정
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
 
@@ -64,9 +66,11 @@ export async function PUT(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { id } = await params
+
   try {
     // Editor 권한 확인
-    const canEdit = await check(session.user.id, 'image_project', params.id, 'editor')
+    const canEdit = await check(session.user.id, 'image_project', id, 'editor')
 
     if (!canEdit) {
       return NextResponse.json({ error: '편집 권한이 없습니다.' }, { status: 403 })
@@ -76,7 +80,7 @@ export async function PUT(
     const { title, description, resultImages, status } = body
 
     const project = await prisma.imageProject.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(title && { title }),
         ...(description !== undefined && { description }),
@@ -95,7 +99,7 @@ export async function PUT(
 // DELETE /api/projects/[id] - 프로젝트 삭제 (Soft Delete)
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
 
@@ -103,9 +107,11 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { id } = await params
+
   try {
     // Owner 권한 확인 (삭제는 소유자만 가능)
-    const isOwner = await check(session.user.id, 'image_project', params.id, 'owner')
+    const isOwner = await check(session.user.id, 'image_project', id, 'owner')
 
     if (!isOwner) {
       return NextResponse.json({ error: '프로젝트 소유자만 삭제할 수 있습니다.' }, { status: 403 })
@@ -113,7 +119,7 @@ export async function DELETE(
 
     // Soft Delete
     await prisma.imageProject.update({
-      where: { id: params.id },
+      where: { id },
       data: { deletedAt: new Date() },
     })
 

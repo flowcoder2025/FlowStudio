@@ -11,28 +11,79 @@ export default function ProfilePage() {
   const [apiKey, setApiKey] = useState('');
   const [usageStats, setUsageStats] = useState(getUsageStats());
   const [showApiKey, setShowApiKey] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error' | 'loading'>('idle');
+  const [isKeyConfigured, setIsKeyConfigured] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    // Load API key from localStorage
-    if (typeof window !== 'undefined') {
-      const storedKey = localStorage.getItem('gemini_api_key') || '';
-      setApiKey(storedKey);
-    }
+    // Check if API key exists on server
+    const checkApiKey = async () => {
+      try {
+        const response = await fetch('/api/profile/api-key');
+        if (response.ok) {
+          const data = await response.json();
+          setIsKeyConfigured(data.exists);
+          // Show masked placeholder if key exists
+          if (data.exists) {
+            setApiKey('••••••••••••••••••••••••••••••••');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check API key:', error);
+      }
+    };
+
+    checkApiKey();
   }, []);
 
-  const handleSaveApiKey = () => {
-    if (typeof window === 'undefined') return;
-
-    if (!apiKey.trim()) {
+  const handleSaveApiKey = async () => {
+    if (!apiKey.trim() || apiKey.startsWith('••••')) {
+      setErrorMessage('API 키를 입력해주세요.');
       setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 2000);
+      setTimeout(() => {
+        setSaveStatus('idle');
+        setErrorMessage('');
+      }, 3000);
       return;
     }
 
-    localStorage.setItem('gemini_api_key', apiKey.trim());
-    setSaveStatus('success');
-    setTimeout(() => setSaveStatus('idle'), 2000);
+    setSaveStatus('loading');
+    setErrorMessage('');
+
+    try {
+      const response = await fetch('/api/profile/api-key', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ apiKey: apiKey.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSaveStatus('success');
+        setIsKeyConfigured(true);
+        // Mask the key after successful save
+        setApiKey('••••••••••••••••••••••••••••••••');
+        setTimeout(() => setSaveStatus('idle'), 3000);
+      } else {
+        setErrorMessage(data.error || 'API 키 저장에 실패했습니다.');
+        setSaveStatus('error');
+        setTimeout(() => {
+          setSaveStatus('idle');
+          setErrorMessage('');
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('API key save error:', error);
+      setErrorMessage('네트워크 오류가 발생했습니다.');
+      setSaveStatus('error');
+      setTimeout(() => {
+        setSaveStatus('idle');
+        setErrorMessage('');
+      }, 3000);
+    }
   };
 
   const handleClearStats = () => {
@@ -73,14 +124,14 @@ export default function ProfilePage() {
               <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
                 <Key className="w-5 h-5 text-green-600" /> Gemini API 키 설정
               </h3>
-              {apiKey && saveStatus === 'idle' && (
+              {isKeyConfigured && saveStatus === 'idle' && (
                 <CheckCircle className="w-5 h-5 text-green-500" />
               )}
             </div>
 
             <div className="p-6">
               <p className="text-sm text-slate-600 mb-4">
-                Google AI Studio에서 발급받은 Gemini API 키를 입력하세요. API 키는 브라우저 로컬 스토리지에만 저장되며 서버로 전송되지 않습니다.
+                Google AI Studio에서 발급받은 Gemini API 키를 입력하세요. API 키는 서버에 AES-256-GCM으로 암호화되어 안전하게 저장됩니다.
               </p>
 
               <div className="mb-4">
@@ -106,15 +157,24 @@ export default function ProfilePage() {
 
               <button
                 onClick={handleSaveApiKey}
+                disabled={saveStatus === 'loading'}
                 className={`w-full py-3 rounded-lg font-medium transition-all ${
                   saveStatus === 'success'
                     ? 'bg-green-600 text-white'
                     : saveStatus === 'error'
                     ? 'bg-red-600 text-white'
+                    : saveStatus === 'loading'
+                    ? 'bg-indigo-400 text-white cursor-wait'
                     : 'bg-indigo-600 text-white hover:bg-indigo-700'
                 }`}
               >
-                {saveStatus === 'success' ? '✓ 저장 완료' : saveStatus === 'error' ? '✗ API 키를 입력하세요' : 'API 키 저장'}
+                {saveStatus === 'success'
+                  ? '✓ 저장 완료'
+                  : saveStatus === 'error'
+                  ? `✗ ${errorMessage || 'API 키를 입력하세요'}`
+                  : saveStatus === 'loading'
+                  ? '저장 중...'
+                  : 'API 키 저장'}
               </button>
 
               <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">

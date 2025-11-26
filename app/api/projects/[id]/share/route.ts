@@ -12,7 +12,7 @@ import { check, grant, revoke } from '@/lib/permissions'
 // POST /api/projects/[id]/share - 협업자 추가
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
 
@@ -20,9 +20,11 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { id } = await params
+
   try {
     // Owner만 공유 가능
-    const isOwner = await check(session.user.id, 'image_project', params.id, 'owner')
+    const isOwner = await check(session.user.id, 'image_project', id, 'owner')
 
     if (!isOwner) {
       return NextResponse.json({ error: '프로젝트 소유자만 공유할 수 있습니다.' }, { status: 403 })
@@ -63,7 +65,7 @@ export async function POST(
     }
 
     // 권한 부여
-    await grant('image_project', params.id, role as 'editor' | 'viewer', 'user', collaborator.id)
+    await grant('image_project', id, role as 'editor' | 'viewer', 'user', collaborator.id)
 
     return NextResponse.json({
       success: true,
@@ -78,7 +80,7 @@ export async function POST(
 // DELETE /api/projects/[id]/share - 협업자 제거
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
 
@@ -86,9 +88,11 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { id } = await params
+
   try {
     // Owner만 권한 제거 가능
-    const isOwner = await check(session.user.id, 'image_project', params.id, 'owner')
+    const isOwner = await check(session.user.id, 'image_project', id, 'owner')
 
     if (!isOwner) {
       return NextResponse.json({ error: '프로젝트 소유자만 권한을 제거할 수 있습니다.' }, { status: 403 })
@@ -113,7 +117,7 @@ export async function DELETE(
     }
 
     // 권한 제거
-    await revoke('image_project', params.id, role as 'editor' | 'viewer', 'user', collaboratorId)
+    await revoke('image_project', id, role as 'editor' | 'viewer', 'user', collaboratorId)
 
     return NextResponse.json({
       success: true,
@@ -128,7 +132,7 @@ export async function DELETE(
 // GET /api/projects/[id]/share - 협업자 목록 조회
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
 
@@ -136,9 +140,11 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { id } = await params
+
   try {
     // Viewer 이상 권한 필요
-    const canView = await check(session.user.id, 'image_project', params.id, 'viewer')
+    const canView = await check(session.user.id, 'image_project', id, 'viewer')
 
     if (!canView) {
       return NextResponse.json({ error: '프로젝트에 대한 권한이 없습니다.' }, { status: 403 })
@@ -148,7 +154,7 @@ export async function GET(
     const tuples = await prisma.relationTuple.findMany({
       where: {
         namespace: 'image_project',
-        objectId: params.id,
+        objectId: id,
       },
     })
 
