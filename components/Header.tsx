@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Wand2, User, FilePenLine } from 'lucide-react';
+import { Wand2, User, FilePenLine, LogIn, LogOut } from 'lucide-react';
+import { useSession, signOut } from 'next-auth/react';
 import { AppMode } from '@/types';
 import { useNavigation } from '@/hooks/useNavigation';
 
@@ -10,7 +11,13 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
-  const { navigateToMode } = useNavigation();
+  const { navigateToMode, navigateTo } = useNavigation();
+  const { data: session, status } = useSession();
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/' });
+  };
+
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -73,6 +80,37 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
           </nav>
 
           <div className="h-6 w-px bg-slate-200 mx-1 hidden md:block"></div>
+
+          {/* Authentication UI */}
+          {status === 'loading' ? (
+            <div className="px-3 py-2 text-sm text-slate-400">로딩 중...</div>
+          ) : session ? (
+            // Logged in state
+            <>
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-full">
+                <span className="text-sm text-slate-700 font-medium">
+                  {session.user?.name || session.user?.email}
+                </span>
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="p-2 rounded-full text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all"
+                title="로그아웃"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </>
+          ) : (
+            // Not logged in state
+            <button
+              onClick={() => navigateTo('/login')}
+              className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition-all text-sm font-medium"
+              title="로그인"
+            >
+              <LogIn className="w-4 h-4" />
+              <span className="hidden sm:inline">로그인</span>
+            </button>
+          )}
 
           <button
             onClick={() => navigateToMode(AppMode.PROFILE)}
