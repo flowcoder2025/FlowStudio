@@ -364,14 +364,7 @@ export default function DetailEditPage() {
 
   return (
     <>
-      <Header currentMode={AppMode.DETAIL_EDIT} onNavigate={(mode) => {
-        if (mode === AppMode.HOME) window.location.href = '/';
-        else if (mode === AppMode.CREATE) window.location.href = '/create';
-        else if (mode === AppMode.EDIT) window.location.href = '/edit';
-        else if (mode === AppMode.DETAIL_PAGE) window.location.href = '/detail-page';
-        else if (mode === AppMode.DETAIL_EDIT) window.location.href = '/detail-edit';
-        else if (mode === AppMode.PROFILE) window.location.href = '/profile';
-      }} />
+      <Header currentMode={AppMode.DETAIL_EDIT} />
 
       <div className="max-w-7xl mx-auto px-4 py-6 pb-32 h-[calc(100vh-64px)] flex flex-col">
         <div className="mb-4 flex items-center justify-between">

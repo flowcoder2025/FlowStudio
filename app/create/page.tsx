@@ -85,14 +85,7 @@ export default function CreatePage() {
 
   return (
     <>
-      <Header currentMode={AppMode.CREATE} onNavigate={(mode) => {
-        if (mode === AppMode.HOME) window.location.href = '/';
-        else if (mode === AppMode.CREATE) window.location.href = '/create';
-        else if (mode === AppMode.EDIT) window.location.href = '/edit';
-        else if (mode === AppMode.DETAIL_PAGE) window.location.href = '/detail-page';
-        else if (mode === AppMode.DETAIL_EDIT) window.location.href = '/detail-edit';
-        else if (mode === AppMode.PROFILE) window.location.href = '/profile';
-      }} />
+      <Header currentMode={AppMode.CREATE} />
 
       <div className="max-w-3xl mx-auto px-4 py-8 pb-32">
         <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">

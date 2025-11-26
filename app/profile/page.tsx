@@ -99,14 +99,7 @@ export default function ProfilePage() {
 
   return (
     <>
-      <Header currentMode={AppMode.PROFILE} onNavigate={(mode) => {
-        if (mode === AppMode.HOME) window.location.href = '/';
-        else if (mode === AppMode.CREATE) window.location.href = '/create';
-        else if (mode === AppMode.EDIT) window.location.href = '/edit';
-        else if (mode === AppMode.DETAIL_PAGE) window.location.href = '/detail-page';
-        else if (mode === AppMode.DETAIL_EDIT) window.location.href = '/detail-edit';
-        else if (mode === AppMode.PROFILE) window.location.href = '/profile';
-      }} />
+      <Header currentMode={AppMode.PROFILE} />
 
       <div className="max-w-2xl mx-auto px-4 py-12">
         <div className="text-center mb-8">

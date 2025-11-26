@@ -90,14 +90,7 @@ export default function DetailPagePage() {
 
   return (
     <>
-      <Header currentMode={AppMode.DETAIL_PAGE} onNavigate={(mode) => {
-        if (mode === AppMode.HOME) window.location.href = '/';
-        else if (mode === AppMode.CREATE) window.location.href = '/create';
-        else if (mode === AppMode.EDIT) window.location.href = '/edit';
-        else if (mode === AppMode.DETAIL_PAGE) window.location.href = '/detail-page';
-        else if (mode === AppMode.DETAIL_EDIT) window.location.href = '/detail-edit';
-        else if (mode === AppMode.PROFILE) window.location.href = '/profile';
-      }} />
+      <Header currentMode={AppMode.DETAIL_PAGE} />
 
       <div className="max-w-6xl mx-auto px-4 py-8 pb-32 flex flex-col md:flex-row gap-8">
         {/* Left Panel: Controls */}

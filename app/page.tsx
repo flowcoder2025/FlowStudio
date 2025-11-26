@@ -8,14 +8,7 @@ import { AppMode } from '@/types';
 export default function HomePage() {
   return (
     <>
-      <Header currentMode={AppMode.HOME} onNavigate={(mode) => {
-        if (mode === AppMode.HOME) window.location.href = '/';
-        else if (mode === AppMode.CREATE) window.location.href = '/create';
-        else if (mode === AppMode.EDIT) window.location.href = '/edit';
-        else if (mode === AppMode.DETAIL_PAGE) window.location.href = '/detail-page';
-        else if (mode === AppMode.DETAIL_EDIT) window.location.href = '/detail-edit';
-        else if (mode === AppMode.PROFILE) window.location.href = '/profile';
-      }} />
+      <Header currentMode={AppMode.HOME} />
 
       <div className="max-w-6xl mx-auto px-4 py-16">
         <div className="text-center mb-16">
