@@ -314,9 +314,9 @@ export async function listAccessible(
   })
 
   // 2. 시스템 admin 권한 확인
-  const isAdmin = await check(userId, 'system', 'global', 'admin')
+  const adminStatus = await isAdmin(userId)
 
-  if (isAdmin) {
+  if (adminStatus) {
     // admin은 모든 리소스 접근 가능
     // 실제로는 DB에서 모든 리소스 ID 조회 필요
     // 여기서는 빈 배열 반환 (호출하는 쪽에서 admin 여부 확인 후 별도 처리)
@@ -358,6 +358,31 @@ function getInheritedRelations(relation: Relation): Relation[] {
 }
 
 // ============================================
+// Helper Functions
+// ============================================
+
+/**
+ * 시스템 관리자 여부 확인
+ *
+ * @param userId - 사용자 ID
+ * @returns 관리자 여부
+ *
+ * @example
+ * ```typescript
+ * const userIsAdmin = await isAdmin('alice')
+ * if (userIsAdmin) {
+ *   // 관리자 전용 기능
+ * }
+ * ```
+ */
+export async function isAdmin(userId: string | undefined): Promise<boolean> {
+  if (!userId) {
+    return false
+  }
+  return check(userId, 'system', 'global', 'admin')
+}
+
+// ============================================
 // Middleware Functions
 // ============================================
 
@@ -371,9 +396,9 @@ export async function requireAdmin(userId: string | undefined): Promise<void> {
     throw new Error('Unauthorized: 로그인이 필요해요.')
   }
 
-  const isAdmin = await check(userId, 'system', 'global', 'admin')
+  const adminStatus = await isAdmin(userId)
 
-  if (!isAdmin) {
+  if (!adminStatus) {
     throw new Error('Forbidden: 관리자 권한이 필요해요.')
   }
 }
