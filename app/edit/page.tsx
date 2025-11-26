@@ -7,7 +7,6 @@ import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { AppMode, GenerationRequest } from '@/types';
 import { generateImageVariations, generatePreview } from '@/services/geminiService';
-import { recordUsage } from '@/services/usageService';
 
 export default function EditPage() {
   const [prompt, setPrompt] = useState('');
@@ -31,20 +30,27 @@ export default function EditPage() {
     }
   };
 
-  const validateApiKey = (): boolean => {
-    if (typeof window === 'undefined') return false;
-
-    const apiKey = localStorage.getItem('gemini_api_key');
-    if (!apiKey) {
+  const validateApiKey = async (): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/profile/api-key');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.exists) {
+          return true;
+        }
+      }
       alert("이미지 생성을 위해 프로필 페이지에서 API 키를 설정해주세요.");
       window.location.href = '/profile';
       return false;
+    } catch (error) {
+      console.error('API key validation error:', error);
+      alert("API 키 확인 중 오류가 발생했습니다.");
+      return false;
     }
-    return true;
   };
 
   const handlePreview = async () => {
-    if (!validateApiKey()) return;
+    if (!(await validateApiKey())) return;
 
     if (!uploadedImage || !prompt) {
       alert('이미지를 업로드하고 편집 내용을 입력해주세요.');
@@ -63,7 +69,7 @@ export default function EditPage() {
       const result = await generatePreview(request);
       if (result) {
         setPreviewImage(result);
-        recordUsage(1);
+        // Usage is now tracked server-side in /api/generate
       } else {
         alert('미리보기 생성에 실패했습니다.');
       }
@@ -76,7 +82,7 @@ export default function EditPage() {
   };
 
   const handleGenerate = async () => {
-    if (!validateApiKey()) return;
+    if (!(await validateApiKey())) return;
 
     if (!uploadedImage || !prompt) {
       alert('이미지를 업로드하고 편집 내용을 입력해주세요.');
@@ -97,7 +103,7 @@ export default function EditPage() {
         alert('이미지 생성에 실패했습니다. 다시 시도해주세요.');
       } else {
         setGeneratedImages(images);
-        recordUsage(4);
+        // Usage is now tracked server-side in /api/generate
       }
     } catch (error) {
       console.error(error);
