@@ -181,7 +181,37 @@ export async function POST(req: NextRequest) {
     // 12. Storage URL 반환 (클라이언트는 URL로 이미지 표시)
     return NextResponse.json({ images: storageUrls })
   } catch (error: unknown) {
-    console.error('Image generation error:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorStack = error instanceof Error ? error.stack : undefined
+
+    console.error('========================================')
+    console.error('Image generation error DETAILS:')
+    console.error('Message:', errorMessage)
+    console.error('Stack:', errorStack)
+    console.error('User ID:', session.user.id)
+    console.error('========================================')
+
+    // 할당량 초과 에러 감지 및 친화적 메시지 생성
+    let userFriendlyMessage = '이미지 생성 중 오류가 발생했습니다.'
+    let statusCode = 500
+
+    if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('quota')) {
+      userFriendlyMessage = 'Google Gemini API 할당량이 초과되었습니다. 잠시 후 다시 시도해주세요. (무료 티어: 분당/일일 요청 제한)'
+      statusCode = 429
+
+      // 재시도 대기 시간 추출
+      const retryMatch = errorMessage.match(/retry in ([\d.]+)s/)
+      if (retryMatch) {
+        const retrySeconds = Math.ceil(parseFloat(retryMatch[1]))
+        userFriendlyMessage = `Google Gemini API 할당량이 초과되었습니다. ${retrySeconds}초 후에 다시 시도해주세요.`
+      }
+    } else if (errorMessage.includes('API key')) {
+      userFriendlyMessage = 'Google Gemini API 키가 유효하지 않습니다. 프로필에서 API 키를 확인해주세요.'
+      statusCode = 401
+    } else if (errorMessage.includes('network') || errorMessage.includes('ENOTFOUND')) {
+      userFriendlyMessage = '네트워크 연결을 확인해주세요. Google AI 서비스에 접근할 수 없습니다.'
+      statusCode = 503
+    }
 
     // 실패 이력 기록
     try {
@@ -192,7 +222,7 @@ export async function POST(req: NextRequest) {
           imageCount: 0,
           costUsd: 0,
           status: 'failed',
-          errorMessage: error instanceof Error ? error.message : String(error),
+          errorMessage: userFriendlyMessage,
         },
       })
     } catch (historyError) {
@@ -200,8 +230,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: '이미지 생성 중 오류가 발생했습니다.' },
-      { status: 500 }
+      { error: userFriendlyMessage },
+      { status: statusCode }
     )
   }
 }

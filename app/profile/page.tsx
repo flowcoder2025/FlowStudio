@@ -178,6 +178,16 @@ export default function ProfilePage() {
                   </span>
                 </p>
               </div>
+
+              <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                <p className="text-xs text-amber-800 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>
+                    <strong>무료 티어 제한:</strong> Gemini API 무료 티어는 분당 약 2-4회, 일일 약 50회 이미지 생성 제한이 있습니다. 할당량 초과 시 10-60초 대기 후 재시도하거나{' '}
+                    <a href="https://ai.google.dev/pricing" target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-900">유료 플랜</a>으로 업그레이드하세요.
+                  </span>
+                </p>
+              </div>
             </div>
           </div>
 
