@@ -111,6 +111,35 @@ export const extractTextFromImage = async (imageBase64: string): Promise<string>
 };
 
 /**
+ * Upscale image to 2K resolution
+ * Calls /api/upscale endpoint
+ */
+export const upscaleImage = async (imageBase64: string): Promise<string | null> => {
+  try {
+    const response = await fetch('/api/upscale', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        image: imageBase64,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '업스케일링에 실패했습니다.');
+    }
+
+    const data = await response.json();
+    return data.image || null;
+  } catch (error) {
+    console.error('Upscale error:', error);
+    throw error;
+  }
+};
+
+/**
  * Build comprehensive prompt based on request parameters
  */
 function buildPrompt(request: GenerationRequest): string {
@@ -134,6 +163,12 @@ function buildPrompt(request: GenerationRequest): string {
     }
     if (style) {
       finalPrompt += `Design Style: ${style.promptModifier}. `;
+    }
+    if (request.layout) {
+      finalPrompt += `Layout Structure: ${request.layout.promptModifier} `;
+    }
+    if (request.refImage) {
+      finalPrompt += "STYLE REFERENCE: Use the provided second image as a strict Style Reference. Mimic its colors, fonts, layout vibe, and lighting, but use the Main Product image for the content. ";
     }
     finalPrompt += "The image must be suitable for a continuous scrolling web page. Focus on high-quality visuals and clean layout. Maintain visual consistency with previous sections if implied.";
   } else if (mode === AppMode.DETAIL_EDIT && request.refImage) {

@@ -1,23 +1,33 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Layout, Camera, Eye, X, Plus, Trash2 } from 'lucide-react';
+import { Layout, Camera, Eye, X, Plus, Trash2, Grid, Columns, Square, MoveDiagonal2 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
-import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
-import { DETAIL_PAGE_CATEGORIES } from '@/constants';
+import { AppMode, Category, StyleOption, LayoutOption, GenerationRequest } from '@/types';
+import { DETAIL_PAGE_CATEGORIES, LAYOUT_OPTIONS } from '@/constants';
 import { generatePreview } from '@/services/geminiService';
-import { recordUsage } from '@/services/usageService';
+
+// Icon mapping for layout options
+const layoutIcons: Record<string, React.ReactNode> = {
+  square: <Square className="w-5 h-5" />,
+  columns: <Columns className="w-5 h-5" />,
+  grid: <Grid className="w-5 h-5" />,
+  'move-diagonal-2': <MoveDiagonal2 className="w-5 h-5" />,
+};
 
 export default function DetailPagePage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<StyleOption | null>(null);
+  const [selectedLayout, setSelectedLayout] = useState<LayoutOption | null>(null);
   const [prompt, setPrompt] = useState('');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [refImage, setRefImage] = useState<string | null>(null);
   const [detailPageSegments, setDetailPageSegments] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const refImageInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -30,20 +40,38 @@ export default function DetailPagePage() {
     }
   };
 
-  const validateApiKey = (): boolean => {
-    if (typeof window === 'undefined') return false;
+  const handleRefImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setRefImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-    const apiKey = localStorage.getItem('gemini_api_key');
-    if (!apiKey) {
+  const validateApiKey = async (): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/profile/api-key');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.exists) {
+          return true;
+        }
+      }
       alert("이미지 생성을 위해 프로필 페이지에서 API 키를 설정해주세요.");
       window.location.href = '/profile';
       return false;
+    } catch (error) {
+      console.error('API key validation error:', error);
+      alert("API 키 확인 중 오류가 발생했습니다.");
+      return false;
     }
-    return true;
   };
 
   const handleGenerate = async () => {
-    if (!validateApiKey()) return;
+    if (!(await validateApiKey())) return;
 
     if (!uploadedImage) {
       alert('제품 사진을 업로드해주세요.');
@@ -61,8 +89,10 @@ export default function DetailPagePage() {
         mode: AppMode.DETAIL_PAGE,
         prompt: prompt || (detailPageSegments.length === 0 ? '제품 인트로 섹션' : '제품 설명 섹션'),
         image: uploadedImage,
+        refImage: refImage || undefined,
         category: selectedCategory,
         style: selectedStyle || undefined,
+        layout: selectedLayout || undefined,
         aspectRatio: '9:16'
       };
 
@@ -70,7 +100,7 @@ export default function DetailPagePage() {
       if (result) {
         setDetailPageSegments([...detailPageSegments, result]);
         setPrompt(''); // Clear prompt for next section
-        recordUsage(1);
+        // Usage is now tracked server-side in /api/generate
       } else {
         alert('섹션 생성에 실패했습니다.');
       }
@@ -164,7 +194,7 @@ export default function DetailPagePage() {
             </div>
 
             {selectedCategory && (
-              <div>
+              <div className="mb-4">
                 <label className="text-xs font-semibold text-slate-500 mb-2 block">스타일</label>
                 <div className="grid grid-cols-2 gap-2">
                   {selectedCategory.styles.map(style => (
@@ -183,12 +213,76 @@ export default function DetailPagePage() {
                 </div>
               </div>
             )}
+
+            {/* Layout Selection */}
+            <div>
+              <label className="text-xs font-semibold text-slate-500 mb-2 block">레이아웃 (선택)</label>
+              <div className="grid grid-cols-2 gap-2">
+                {LAYOUT_OPTIONS.map(layout => (
+                  <button
+                    key={layout.id}
+                    onClick={() => setSelectedLayout(selectedLayout?.id === layout.id ? null : layout)}
+                    className={`p-3 rounded-lg text-left text-xs transition-all border flex items-start gap-2 ${
+                      selectedLayout?.id === layout.id
+                        ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500'
+                        : 'bg-white border-slate-200 hover:border-blue-300'
+                    }`}
+                  >
+                    <span className="text-blue-600 mt-0.5">
+                      {layoutIcons[layout.icon] || <Square className="w-5 h-5" />}
+                    </span>
+                    <div>
+                      <span className="block font-semibold text-slate-800">{layout.label}</span>
+                      <span className="block text-slate-500 text-[10px] mt-0.5">{layout.description}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Reference Image (Optional) */}
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <h3 className="font-bold text-base mb-3 text-slate-800">3. 스타일 참조 이미지 (선택)</h3>
+            <p className="text-xs text-slate-500 mb-3">다른 상세페이지의 스타일을 참조하여 비슷한 분위기로 생성합니다.</p>
+            <div
+              onClick={() => refImageInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${refImage ? 'border-purple-500 bg-purple-50' : 'border-slate-300 hover:bg-slate-50'}`}
+            >
+              <input
+                type="file"
+                ref={refImageInputRef}
+                onChange={handleRefImageUpload}
+                accept="image/*"
+                className="hidden"
+              />
+              {refImage ? (
+                <div className="flex items-center gap-4">
+                  <img src={refImage} alt="Reference" className="w-16 h-16 object-cover rounded-md" />
+                  <div className="text-left flex-1">
+                    <p className="text-sm font-semibold text-slate-800">참조 이미지 등록됨</p>
+                    <p className="text-xs text-slate-500">이 이미지의 스타일을 참조합니다.</p>
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setRefImage(null); }}
+                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-full"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2 py-2">
+                  <Eye className="w-5 h-5 text-slate-400" />
+                  <span className="text-sm text-slate-600">스타일 참조 이미지 업로드 (선택)</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Section Generation */}
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex-1">
             <h3 className="font-bold text-base mb-3 text-slate-800">
-              {detailPageSegments.length === 0 ? '3. 첫번째 섹션(인트로) 만들기' : `3. ${detailPageSegments.length + 1}번째 섹션 추가하기`}
+              {detailPageSegments.length === 0 ? '4. 첫번째 섹션(인트로) 만들기' : `4. ${detailPageSegments.length + 1}번째 섹션 추가하기`}
             </h3>
             <textarea
               value={prompt}

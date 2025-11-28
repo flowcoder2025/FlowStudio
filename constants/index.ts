@@ -1,4 +1,4 @@
-import { Category, StyleOption } from '@/types';
+import { Category, StyleOption, LayoutOption } from '@/types';
 
 export const COMMON_STYLES: StyleOption[] = [
   { id: 'realistic', label: '리얼리스틱', promptModifier: 'photorealistic, high quality, 4k, highly detailed', previewColor: 'bg-blue-100' },
@@ -106,6 +106,44 @@ export const DETAIL_PAGE_CATEGORIES: Category[] = [
       { id: 'simple_white', label: '심플 화이트', promptModifier: 'apple style, minimal white, product focus, clean shadows, vertical layout', previewColor: 'bg-white border' },
     ]
   }
+];
+
+export const LAYOUT_OPTIONS: LayoutOption[] = [
+  {
+    id: 'single',
+    label: '1단 (전체 강조)',
+    icon: 'square',
+    description: '이미지 중심의 임팩트 있는 레이아웃',
+    promptModifier: 'Single column layout. Full-width impactful image dominant design. Clean and minimal.'
+  },
+  {
+    id: 'split',
+    label: '2단 (좌우 분할)',
+    icon: 'columns',
+    description: '이미지와 텍스트가 좌우로 배치됨',
+    promptModifier: '2-Column split layout. Image on one side, text description on the other side. Balanced composition.'
+  },
+  {
+    id: 'grid',
+    label: '3단 그리드',
+    icon: 'grid',
+    description: '특징/성분 나열에 좋은 그리드형',
+    promptModifier: '3-Column grid layout. Structured arrangement for listing features or ingredients. Repeated pattern style.'
+  },
+  {
+    id: 'zigzag',
+    label: '지그재그',
+    icon: 'move-diagonal-2',
+    description: '리듬감 있는 지그재그 배치',
+    promptModifier: 'Zigzag layout. Alternating text and image placement to create a dynamic reading flow.'
+  },
+];
+
+// Aspect Ratio Options for Image Generation
+export const ASPECT_RATIOS = [
+  { id: '1:1', label: '1:1 (정방형)', desc: '기본, 인스타 피드' },
+  { id: '9:16', label: '9:16 (세로)', desc: '스토리, 릴스, 틱톡' },
+  { id: '16:9', label: '16:9 (가로)', desc: '유튜브 썸네일, 배너' },
 ];
 
 // Usage & Cost Estimation Constants

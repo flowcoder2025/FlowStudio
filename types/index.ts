@@ -28,12 +28,21 @@ export interface GeneratedImage {
   prompt: string;
 }
 
+export interface LayoutOption {
+  id: string;
+  label: string;
+  icon: string; // Lucide icon name mapping or description
+  description: string;
+  promptModifier: string;
+}
+
 export interface GenerationRequest {
   image?: string; // Base64 (Target image)
   refImage?: string; // Base64 (Reference/Replacement image)
   prompt: string;
   category?: Category;
   style?: StyleOption;
+  layout?: LayoutOption;
   mode: AppMode;
   aspectRatio?: string; // "1:1", "9:16", etc.
 }

@@ -6,8 +6,8 @@ import { Header } from '@/components/Header';
 import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
-import { CATEGORIES } from '@/constants';
-import { generateImageVariations } from '@/services/geminiService';
+import { CATEGORIES, ASPECT_RATIOS } from '@/constants';
+import { generateImageVariations, upscaleImage } from '@/services/geminiService';
 
 export default function CreatePage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -16,6 +16,9 @@ export default function CreatePage() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState('1:1');
+  const [isUpscaling, setIsUpscaling] = useState(false);
+  const [upscaledImage, setUpscaledImage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -65,7 +68,7 @@ export default function CreatePage() {
         image: uploadedImage || undefined,
         category: selectedCategory,
         style: selectedStyle || undefined,
-        aspectRatio: '1:1'
+        aspectRatio: selectedAspectRatio
       };
 
       const images = await generateImageVariations(request);
@@ -80,6 +83,25 @@ export default function CreatePage() {
       alert('오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleUpscale = async (imageUrl: string) => {
+    if (!(await validateApiKey())) return;
+
+    setIsUpscaling(true);
+    try {
+      const result = await upscaleImage(imageUrl);
+      if (result) {
+        setUpscaledImage(result);
+      } else {
+        alert('업스케일링에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('업스케일링 중 오류가 발생했습니다.');
+    } finally {
+      setIsUpscaling(false);
     }
   };
 
@@ -171,9 +193,30 @@ export default function CreatePage() {
           </div>
         )}
 
-        {/* Step 4: Text Prompt */}
+        {/* Step 4: Aspect Ratio Selection */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
-          <h3 className="font-bold text-lg mb-4 text-slate-800">4. 추가로 원하시는 내용을 적어주세요</h3>
+          <h3 className="font-bold text-lg mb-4 text-slate-800">4. 이미지 비율을 선택해주세요</h3>
+          <div className="grid grid-cols-3 gap-3">
+            {ASPECT_RATIOS.map(ratio => (
+              <button
+                key={ratio.id}
+                onClick={() => setSelectedAspectRatio(ratio.id)}
+                className={`p-4 rounded-xl text-center transition-all border ${
+                  selectedAspectRatio === ratio.id
+                    ? 'bg-indigo-50 border-indigo-500 ring-1 ring-indigo-500'
+                    : 'bg-white border-slate-200 hover:border-indigo-300'
+                }`}
+              >
+                <span className="block font-semibold text-slate-800 mb-1">{ratio.label}</span>
+                <span className="block text-xs text-slate-500">{ratio.desc}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Step 5: Text Prompt */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
+          <h3 className="font-bold text-lg mb-4 text-slate-800">5. 추가로 원하시는 내용을 적어주세요</h3>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -205,11 +248,52 @@ export default function CreatePage() {
         </div>
       </div>
 
-      <LoadingOverlay isVisible={isLoading} />
+      <LoadingOverlay isVisible={isLoading} message="이미지 생성 중..." />
+      <LoadingOverlay isVisible={isUpscaling} message="업스케일링 중..." />
       <ResultGrid
         images={generatedImages}
         onClose={() => setGeneratedImages([])}
+        onUpscale={handleUpscale}
       />
+
+      {/* Upscaled Image Modal */}
+      {upscaledImage && (
+        <div className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+            <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-800">업스케일 결과 (2K)</h2>
+              <button
+                onClick={() => setUpscaledImage(null)}
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <X className="w-6 h-6 text-slate-500" />
+              </button>
+            </div>
+            <div className="p-4">
+              <img
+                src={upscaledImage}
+                alt="Upscaled"
+                className="w-full rounded-lg shadow-lg"
+              />
+              <div className="mt-4 flex gap-3 justify-center">
+                <a
+                  href={upscaledImage}
+                  download={`upscaled-${Date.now()}.png`}
+                  className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
+                >
+                  2K 이미지 다운로드
+                </a>
+                <button
+                  onClick={() => setUpscaledImage(null)}
+                  className="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300 transition-colors"
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
