@@ -16,7 +16,7 @@ import { ensureBase64, extractBase64Data } from '@/lib/utils/imageConverter'
 import { GoogleGenAI } from '@google/genai'
 
 const PRO_MODEL = 'gemini-3-pro-image-preview'
-const COST_PER_IMAGE_USD = 0.04
+const COST_PER_IMAGE_USD = 0.14
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)

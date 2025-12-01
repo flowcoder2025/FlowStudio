@@ -6,11 +6,20 @@ import { Header } from '@/components/Header';
 import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode, GenerationRequest } from '@/types';
 import { ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, generatePreview, upscaleImage } from '@/services/geminiService';
 
 export default function EditPage() {
+  return (
+    <AuthGuard>
+      <EditPageContent />
+    </AuthGuard>
+  );
+}
+
+function EditPageContent() {
   const [prompt, setPrompt] = useState('');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);

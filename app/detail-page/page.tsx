@@ -6,6 +6,7 @@ import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { ResultGrid } from '@/components/ResultGrid';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode, Category, StyleOption, LayoutOption, GenerationRequest } from '@/types';
 import { DETAIL_PAGE_CATEGORIES, LAYOUT_OPTIONS } from '@/constants';
 import { generateImageVariations } from '@/services/geminiService';
@@ -29,6 +30,14 @@ const layoutIcons: Record<string, React.ReactNode> = {
 };
 
 export default function DetailPagePage() {
+  return (
+    <AuthGuard>
+      <DetailPageContent />
+    </AuthGuard>
+  );
+}
+
+function DetailPageContent() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<StyleOption | null>(null);
   const [selectedLayout, setSelectedLayout] = useState<LayoutOption | null>(null);

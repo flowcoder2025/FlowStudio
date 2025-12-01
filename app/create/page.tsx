@@ -6,11 +6,20 @@ import { Header } from '@/components/Header';
 import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
 import { CATEGORIES, ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, upscaleImage } from '@/services/geminiService';
 
 export default function CreatePage() {
+  return (
+    <AuthGuard>
+      <CreatePageContent />
+    </AuthGuard>
+  );
+}
+
+function CreatePageContent() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<StyleOption | null>(null);
   const [prompt, setPrompt] = useState('');

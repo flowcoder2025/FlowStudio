@@ -96,7 +96,7 @@ FlowStudio는 4가지 독립적인 모드로 운영됩니다 (`types/index.ts` �
 
 **주요 설계 결정사항**:
 - 사용자 API 키는 암호화 저장 (AES-256-GCM) `lib/utils/encryption.ts` 사용
-- 비용 추정을 위한 사용량 추적 (이미지당 $0.04)
+- 비용 추정을 위한 사용량 추적 (이미지당 $0.14)
 - **이미지 저장**: Supabase Storage에 업로드 후 URL만 데이터베이스에 저장
 - ImageProject의 소프트 삭제 (`deletedAt` 필드 사용)
 - Vercel 배포를 위한 Prisma 바이너리 타겟에 `rhel-openssl-3.0.x` 포함
@@ -146,7 +146,7 @@ await requireImageProjectEditor(userId, projectId) // 권한 없으면 에러
   - Gemini API가 base64로 이미지 생성
   - `lib/utils/imageStorage.ts`로 Supabase Storage에 자동 업로드
   - 클라이언트에 Storage 공개 URL 반환
-- **사용량 추적**: UsageStats와 GenerationHistory에 자동 기록 (이미지당 $0.04)
+- **사용량 추적**: UsageStats와 GenerationHistory에 자동 기록 (이미지당 $0.14)
 - **모델**: `gemini-3-pro-image-preview` (Google Gemini API)
 - **기능 지원**:
   - 텍스트 프롬프트 기반 생성

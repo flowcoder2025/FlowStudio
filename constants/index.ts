@@ -147,5 +147,5 @@ export const ASPECT_RATIOS = [
 ];
 
 // Usage & Cost Estimation Constants
-export const ESTIMATED_COST_PER_IMAGE_USD = 0.04; // Estimated cost for gemini-3-pro-image-preview
+export const ESTIMATED_COST_PER_IMAGE_USD = 0.14; // Estimated cost for gemini-3-pro-image-preview
 export const EXCHANGE_RATE_KRW = 1400; // Approximate exchange rate

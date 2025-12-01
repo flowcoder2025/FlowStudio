@@ -5,6 +5,7 @@ import { FilePenLine, Layout, RefreshCw, ZoomIn, ZoomOut, MousePointer2, Hand, W
 import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode, GenerationRequest } from '@/types';
 import { generatePreview, extractTextFromImage } from '@/services/geminiService';
 import { recordUsage } from '@/services/usageService';
@@ -13,6 +14,14 @@ type EditModeSub = 'GENERAL' | 'TEXT' | 'REPLACE';
 type ActiveTool = 'SELECT' | 'PAN';
 
 export default function DetailEditPage() {
+  return (
+    <AuthGuard>
+      <DetailEditPageContent />
+    </AuthGuard>
+  );
+}
+
+function DetailEditPageContent() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);

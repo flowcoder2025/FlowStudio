@@ -2,14 +2,39 @@
 
 /**
  * 로그인 페이지 - Google OAuth
+ * 이미 로그인한 사용자는 홈으로 리다이렉트
  */
 
-import { signIn } from 'next-auth/react'
-import { LogIn } from 'lucide-react'
+import { useEffect } from 'react'
+import { signIn, useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
+  const { status } = useSession()
+  const router = useRouter()
+
+  useEffect(() => {
+    // 이미 로그인한 사용자는 홈으로 리다이렉트
+    if (status === 'authenticated') {
+      router.replace('/')
+    }
+  }, [status, router])
+
   const handleGoogleLogin = () => {
     signIn('google', { callbackUrl: '/' })
+  }
+
+  // 로딩 중이거나 이미 로그인된 경우 로딩 표시
+  if (status === 'loading' || status === 'authenticated') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mx-auto mb-4" />
+          <p className="text-gray-600">잠시만 기다려주세요...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

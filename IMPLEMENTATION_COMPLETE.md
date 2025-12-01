@@ -166,7 +166,7 @@ flowstudio-nextjs/
 - ✅ Gemini API 프록시 (서버 전용)
 - ✅ API 키 AES-256-CBC 암호화
 - ✅ 4장 병렬 생성
-- ✅ 사용량 추적 및 비용 계산 ($0.04/image)
+- ✅ 사용량 추적 및 비용 계산 ($0.14/image)
 
 ### 3. 프로젝트 관리
 - ✅ CRUD with ReBAC

@@ -3,11 +3,20 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, BarChart3, History, Key, AlertCircle, CheckCircle } from 'lucide-react';
 import { Header } from '@/components/Header';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode } from '@/types';
 import { getUsageStats, clearUsageStats } from '@/services/usageService';
 import { EXCHANGE_RATE_KRW } from '@/constants';
 
 export default function ProfilePage() {
+  return (
+    <AuthGuard>
+      <ProfilePageContent />
+    </AuthGuard>
+  );
+}
+
+function ProfilePageContent() {
   const [apiKey, setApiKey] = useState('');
   const [usageStats, setUsageStats] = useState(getUsageStats());
   const [showApiKey, setShowApiKey] = useState(false);
@@ -246,7 +255,7 @@ export default function ProfilePage() {
             <div className="space-y-2 text-sm text-slate-600">
               <p><strong>버전:</strong> v1.0.0 (Next.js Edition)</p>
               <p><strong>모델:</strong> Gemini 3 Pro Image Preview</p>
-              <p><strong>예상 비용:</strong> 이미지당 약 $0.04 (실제 비용은 다를 수 있습니다)</p>
+              <p><strong>예상 비용:</strong> 이미지당 약 $0.14 (실제 비용은 다를 수 있습니다)</p>
             </div>
           </div>
         </div>

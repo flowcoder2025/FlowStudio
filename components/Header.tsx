@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Wand2, User, FilePenLine, LogIn, LogOut } from 'lucide-react';
+import { Sparkles, Wand2, Layout, FilePenLine, User, LogIn, LogOut } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { AppMode } from '@/types';
 import { useNavigation } from '@/hooks/useNavigation';
@@ -29,8 +29,8 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
             <Wand2 className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-lg leading-tight text-slate-800">BizAI 스튜디오</h1>
-            <p className="text-[10px] text-slate-500 font-medium">소상공인을 위한 스마트 디자인</p>
+            <h1 className="font-bold text-lg leading-tight text-slate-800">FlowStudio</h1>
+            <p className="text-[10px] text-slate-500 font-medium">AI 이미지 생성 플랫폼</p>
           </div>
         </div>
 
@@ -38,22 +38,35 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
           <nav className="flex gap-1 overflow-x-auto no-scrollbar">
             <button
               onClick={() => navigateToMode(AppMode.CREATE)}
-              className={`px-3 md:px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+              className={`px-3 md:px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1 ${
                 currentMode === AppMode.CREATE
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
+              <Sparkles className="w-4 h-4 hidden sm:block" />
               이미지 생성
             </button>
             <button
+              onClick={() => navigateToMode(AppMode.EDIT)}
+              className={`px-3 md:px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1 ${
+                currentMode === AppMode.EDIT
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Wand2 className="w-4 h-4 hidden sm:block" />
+              이미지 편집
+            </button>
+            <button
               onClick={() => navigateToMode(AppMode.DETAIL_PAGE)}
-              className={`px-3 md:px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+              className={`px-3 md:px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1 ${
                 currentMode === AppMode.DETAIL_PAGE
                   ? 'bg-blue-600 text-white shadow-md'
                   : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
+              <Layout className="w-4 h-4 hidden sm:block" />
               상세페이지 제작
             </button>
             <button
@@ -66,16 +79,6 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
             >
               <FilePenLine className="w-4 h-4 hidden sm:block" />
               상세페이지 편집
-            </button>
-            <button
-              onClick={() => navigateToMode(AppMode.EDIT)}
-              className={`px-3 md:px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                currentMode === AppMode.EDIT
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              간편 편집
             </button>
           </nav>
 
