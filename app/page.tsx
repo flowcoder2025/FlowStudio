@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Sparkles, Layout, FilePenLine, Wand2, ArrowRight } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { AppMode } from '@/types';
@@ -12,9 +13,14 @@ export default function HomePage() {
 
       <div className="max-w-6xl mx-auto px-4 py-16">
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-slate-900 mb-4">
-            FlowStudio
-          </h1>
+          <Image
+            src="/FlowStudio-removebg.png"
+            alt="FlowStudio"
+            width={280}
+            height={140}
+            className="mx-auto mb-6"
+            priority
+          />
           <p className="text-slate-600 text-lg">
             복잡한 포토샵 없이, 전문가급 제품 사진과 홍보물을 30초 만에 만들어보세요.
           </p>

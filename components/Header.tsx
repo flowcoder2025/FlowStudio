@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Sparkles, Wand2, Layout, FilePenLine, User, LogIn, LogOut } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { AppMode } from '@/types';
@@ -25,9 +26,13 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => navigateToMode(AppMode.HOME)}
         >
-          <div className="bg-indigo-600 p-1.5 rounded-lg">
-            <Wand2 className="w-6 h-6 text-white" />
-          </div>
+          <Image
+            src="/FlowStudio_icon-removebg.png"
+            alt="FlowStudio"
+            width={40}
+            height={40}
+            className="rounded-lg"
+          />
           <div>
             <h1 className="font-bold text-lg leading-tight text-slate-800">FlowStudio</h1>
             <p className="text-[10px] text-slate-500 font-medium">AI 이미지 생성 플랫폼</p>

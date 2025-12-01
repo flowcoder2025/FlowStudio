@@ -16,6 +16,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "FlowStudio - AI 이미지 생성",
   description: "소상공인을 위한 AI 디자인 파트너",
+  icons: {
+    icon: "/FlowStudio_icon-removebg.ico",
+    shortcut: "/FlowStudio_icon-removebg.ico",
+    apple: "/FlowStudio_icon-removebg.png",
+  },
 };
 
 export default function RootLayout({
