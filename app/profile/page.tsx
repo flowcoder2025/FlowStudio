@@ -183,7 +183,7 @@ function ProfilePageContent() {
                 <p className="text-xs text-blue-700 flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <span>
-                    <strong>API 키 발급:</strong> <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-900">Google AI Studio</a>에서 무료로 발급 받을 수 있습니다.
+                    <strong>API 키 발급:</strong> <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-900">Google AI Studio</a>에서 발급 받을 수 있습니다.
                   </span>
                 </p>
               </div>
@@ -192,8 +192,8 @@ function ProfilePageContent() {
                 <p className="text-xs text-amber-800 flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <span>
-                    <strong>무료 티어 제한:</strong> Gemini API 무료 티어는 분당 약 2-4회, 일일 약 50회 이미지 생성 제한이 있습니다. 할당량 초과 시 10-60초 대기 후 재시도하거나{' '}
-                    <a href="https://ai.google.dev/pricing" target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-900">유료 플랜</a>으로 업그레이드하세요.
+                    <strong>Tier 1 등급 필요:</strong> 이 앱에서 사용하는 이미지 생성 모델(Gemini 3 Pro Image Preview, Gemini 2.5 Flash Image)은 <strong>무료 티어로는 사용할 수 없습니다.</strong> Google Cloud에{' '}
+                    <a href="https://aistudio.google.com/billing" target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-900">결제 카드를 등록</a>하면 자동으로 Tier 1 등급이 적용됩니다.
                   </span>
                 </p>
               </div>
