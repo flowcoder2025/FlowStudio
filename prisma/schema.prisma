@@ -206,6 +206,35 @@ model RelationDefinition {
 }
 
 // ========================================
+// DetailPageDraft - Save work-in-progress detail page builder
+// ========================================
+
+model DetailPageDraft {
+  id                  String   @id @default(cuid())
+  userId              String
+  title               String   // User-defined draft name
+
+  // Builder state
+  selectedCategoryId  String?  // Category ID from DETAIL_PAGE_CATEGORIES
+  selectedStyleId     String?  // Style ID
+  selectedLayoutId    String?  // Layout ID
+  prompt              String?  @db.Text  // Current prompt text
+
+  // Images
+  uploadedImage       String?  @db.Text  // Main product image URL
+  refImage            String?  @db.Text  // Reference image URL
+
+  // Generated sections (array of image URLs)
+  detailPageSegments  String[] @default([])
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([userId])
+  @@index([updatedAt])
+}
+
+// ========================================
 // Optional: Subscription (Future Premium Plans)
 // ========================================
 

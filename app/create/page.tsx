@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Camera, Sparkles, X } from 'lucide-react';
+import { Camera, Sparkles, X, FolderOpen } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
+import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
 import { CATEGORIES, ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, upscaleImage } from '@/services/geminiService';
@@ -19,8 +20,13 @@ export default function CreatePage() {
   const [selectedAspectRatio, setSelectedAspectRatio] = useState('1:1');
   const [isUpscaling, setIsUpscaling] = useState(false);
   const [upscaledImage, setUpscaledImage] = useState<string | null>(null);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleGallerySelect = (imageUrl: string) => {
+    setUploadedImage(imageUrl);
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -105,6 +111,53 @@ export default function CreatePage() {
     }
   };
 
+  const handleSaveToCloud = async (image: string) => {
+    try {
+      const response = await fetch('/api/images/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          images: [image],
+          mode: 'CREATE',
+          prompt,
+          category: selectedCategory?.id,
+          style: selectedStyle?.id,
+          aspectRatio: selectedAspectRatio,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(data.message || '클라우드에 저장되었습니다.');
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || '저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Cloud save error:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleDownloadImage = async (imageUrl: string, filename: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      // Fallback: 새 탭에서 열기
+      window.open(imageUrl, '_blank');
+    }
+  };
+
   return (
     <>
       <Header currentMode={AppMode.CREATE} />
@@ -147,6 +200,14 @@ export default function CreatePage() {
               </div>
             )}
           </div>
+          {/* Gallery Button */}
+          <button
+            onClick={() => setIsGalleryOpen(true)}
+            className="mt-4 w-full flex items-center justify-center gap-2 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors"
+          >
+            <FolderOpen className="w-5 h-5" />
+            내 이미지에서 불러오기
+          </button>
         </div>
 
         {/* Step 2: Category Selection */}
@@ -254,6 +315,7 @@ export default function CreatePage() {
         images={generatedImages}
         onClose={() => setGeneratedImages([])}
         onUpscale={handleUpscale}
+        onSave={handleSaveToCloud}
       />
 
       {/* Upscaled Image Modal */}
@@ -276,13 +338,12 @@ export default function CreatePage() {
                 className="w-full rounded-lg shadow-lg"
               />
               <div className="mt-4 flex gap-3 justify-center">
-                <a
-                  href={upscaledImage}
-                  download={`upscaled-${Date.now()}.png`}
+                <button
+                  onClick={() => handleDownloadImage(upscaledImage, `upscaled-${Date.now()}.png`)}
                   className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
                 >
                   2K 이미지 다운로드
-                </a>
+                </button>
                 <button
                   onClick={() => setUpscaledImage(null)}
                   className="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300 transition-colors"
@@ -294,6 +355,14 @@ export default function CreatePage() {
           </div>
         </div>
       )}
+
+      {/* Image Gallery Modal */}
+      <ImageGalleryModal
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        onSelect={handleGallerySelect}
+        title="참고 이미지 선택"
+      />
     </>
   );
 }

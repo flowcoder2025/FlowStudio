@@ -1,6 +1,10 @@
 /**
- * Image Generation API - Gemini Proxy with Supabase Storage Upload
+ * Image Generation API - Gemini Proxy (Base64 Return)
  * /api/generate
+ *
+ * Returns base64 images directly for preview.
+ * Images are NOT auto-saved to storage - users must explicitly save via /api/images/save.
+ * This reduces storage costs by only saving images the user actually wants.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -8,7 +12,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { decrypt } from '@/lib/utils/encryption'
-import { uploadMultipleImages } from '@/lib/utils/imageStorage'
+import { ensureBase64, extractBase64Data } from '@/lib/utils/imageConverter'
 import { GoogleGenAI } from '@google/genai'
 
 const PRO_MODEL = 'gemini-3-pro-image-preview'
@@ -59,22 +63,31 @@ export async function POST(req: NextRequest) {
     // 5. Gemini API 초기화
     const ai = new GoogleGenAI({ apiKey })
 
-    // 6. 이미지 생성 함수 (base64로 생성)
+    // 6. 이미지 URL → base64 변환 (갤러리에서 불러온 이미지 지원)
+    let processedSourceImage: string | null = null
+    let processedRefImage: string | null = null
+
+    if (sourceImage) {
+      processedSourceImage = await ensureBase64(sourceImage)
+    }
+    if (refImage) {
+      processedRefImage = await ensureBase64(refImage)
+    }
+
+    // 7. 이미지 생성 함수 (base64로 생성)
     const generateSingle = async () => {
       const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [{ text: finalPrompt }]
 
       // Source image 추가 (EDIT, DETAIL_EDIT 모드)
-      if (sourceImage) {
-        const base64Data = sourceImage.split(',')[1] || sourceImage
-        const mimeType = sourceImage.includes('image/jpeg') ? 'image/jpeg' : 'image/png'
-        parts.push({ inlineData: { mimeType, data: base64Data } })
+      if (processedSourceImage) {
+        const { mimeType, data } = extractBase64Data(processedSourceImage)
+        parts.push({ inlineData: { mimeType, data } })
       }
 
       // Reference image 추가 (CREATE 모드)
-      if (refImage) {
-        const base64DataRef = refImage.split(',')[1] || refImage
-        const mimeTypeRef = refImage.includes('image/jpeg') ? 'image/jpeg' : 'image/png'
-        parts.push({ inlineData: { mimeType: mimeTypeRef, data: base64DataRef } })
+      if (processedRefImage) {
+        const { mimeType, data } = extractBase64Data(processedRefImage)
+        parts.push({ inlineData: { mimeType, data } })
       }
 
       const response = await ai.models.generateContent({
@@ -120,25 +133,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '이미지 생성에 실패했습니다.' }, { status: 500 })
     }
 
-    // 8. Supabase Storage에 업로드 (base64 → URL 변환)
-    const storageUrls = await uploadMultipleImages(
-      base64Images,
-      session.user.id,
-      projectId ? `projects/${projectId}` : 'generations'
-    )
-
-    // 9. 프로젝트 업데이트 (projectId가 있는 경우)
-    if (projectId) {
-      await prisma.imageProject.update({
-        where: { id: projectId },
-        data: {
-          resultImages: storageUrls,
-          status: 'completed',
-        },
-      })
-    }
-
-    // 10. 사용량 기록
+    // 8. 사용량 기록 (API 호출 비용 추적)
     const totalCost = base64Images.length * COST_PER_IMAGE_USD
     const today = new Date().toISOString().split('T')[0]
 
@@ -163,11 +158,11 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // 11. 생성 성공 이력 기록
+    // 9. 생성 성공 이력 기록
     await prisma.generationHistory.create({
       data: {
         userId: session.user.id,
-        projectId,
+        projectId: projectId || null,
         mode: mode || 'CREATE',
         prompt: finalPrompt,
         category,
@@ -178,8 +173,9 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // 12. Storage URL 반환 (클라이언트는 URL로 이미지 표시)
-    return NextResponse.json({ images: storageUrls })
+    // 10. Base64 이미지 직접 반환 (Storage 자동 저장 없음)
+    // 사용자가 원하는 이미지만 /api/images/save로 선택 저장 가능
+    return NextResponse.json({ images: base64Images })
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     const errorStack = error instanceof Error ? error.stack : undefined

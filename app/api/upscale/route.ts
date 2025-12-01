@@ -9,6 +9,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { decrypt } from '@/lib/utils/encryption'
 import { uploadMultipleImages } from '@/lib/utils/imageStorage'
+import { ensureBase64, extractBase64Data } from '@/lib/utils/imageConverter'
 import { GoogleGenAI } from '@google/genai'
 
 const PRO_MODEL = 'gemini-3-pro-image-preview'
@@ -48,9 +49,9 @@ export async function POST(req: NextRequest) {
     // 4. Gemini API 초기화
     const ai = new GoogleGenAI({ apiKey })
 
-    // 5. 업스케일 프롬프트 구성
-    const base64Data = image.split(',')[1] || image
-    const mimeType = image.includes('image/jpeg') ? 'image/jpeg' : 'image/png'
+    // 5. 이미지 URL → base64 변환 (갤러리에서 불러온 이미지 지원)
+    const processedImage = await ensureBase64(image)
+    const { mimeType, data: base64Data } = extractBase64Data(processedImage)
 
     const parts = [
       {
@@ -65,15 +66,11 @@ export async function POST(req: NextRequest) {
     ]
 
     // 6. Gemini API로 2K 업스케일 요청
+    // Note: generateContent()는 imageConfig를 지원하지 않음
+    // 고해상도 이미지 재생성을 프롬프트로 요청
     const response = await ai.models.generateContent({
       model: PRO_MODEL,
       contents: { parts },
-      config: {
-        imageConfig: {
-          aspectRatio: '1:1',
-          imageSize: '2K'
-        }
-      }
     })
 
     // 7. 결과 이미지 추출
@@ -136,7 +133,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ image: storageUrls[0] })
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error)
-    console.error('Upscale error:', errorMessage)
+    const errorStack = error instanceof Error ? error.stack : undefined
+
+    console.error('========================================')
+    console.error('Upscale error DETAILS:')
+    console.error('Message:', errorMessage)
+    console.error('Stack:', errorStack)
+    console.error('User ID:', session.user.id)
+    console.error('========================================')
 
     // 친화적 에러 메시지 생성
     let userFriendlyMessage = '업스케일 중 오류가 발생했습니다.'
@@ -145,9 +149,22 @@ export async function POST(req: NextRequest) {
     if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('quota')) {
       userFriendlyMessage = 'Google Gemini API 할당량이 초과되었습니다. 잠시 후 다시 시도해주세요.'
       statusCode = 429
-    } else if (errorMessage.includes('API key')) {
+
+      // 재시도 대기 시간 추출
+      const retryMatch = errorMessage.match(/retry in ([\d.]+)s/)
+      if (retryMatch) {
+        const retrySeconds = Math.ceil(parseFloat(retryMatch[1]))
+        userFriendlyMessage = `Google Gemini API 할당량이 초과되었습니다. ${retrySeconds}초 후에 다시 시도해주세요.`
+      }
+    } else if (errorMessage.includes('API key') || errorMessage.includes('API_KEY')) {
       userFriendlyMessage = 'Google Gemini API 키가 유효하지 않습니다.'
       statusCode = 401
+    } else if (errorMessage.includes('SAFETY') || errorMessage.includes('blocked')) {
+      userFriendlyMessage = '이미지가 안전 정책에 의해 차단되었습니다. 다른 이미지로 시도해주세요.'
+      statusCode = 400
+    } else if (errorMessage.includes('network') || errorMessage.includes('ENOTFOUND')) {
+      userFriendlyMessage = '네트워크 연결을 확인해주세요.'
+      statusCode = 503
     }
 
     return NextResponse.json(

@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { FilePenLine, Layout, RefreshCw, ZoomIn, ZoomOut, MousePointer2, Hand, Wand2, Type, ImagePlus, Check } from 'lucide-react';
+import { FilePenLine, Layout, RefreshCw, ZoomIn, ZoomOut, MousePointer2, Hand, Wand2, Type, ImagePlus, Check, FolderOpen, Download, Cloud, Loader2, FilePlus2 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
+import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AppMode, GenerationRequest } from '@/types';
 import { generatePreview, extractTextFromImage } from '@/services/geminiService';
 import { recordUsage } from '@/services/usageService';
@@ -32,6 +33,8 @@ export default function DetailEditPage() {
   const [activeTool, setActiveTool] = useState<ActiveTool>('SELECT');
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState<{x: number, y: number, scrollLeft: number, scrollTop: number} | null>(null);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const imageRef = useRef<HTMLImageElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -171,6 +174,7 @@ export default function DetailEditPage() {
     ctx.fillRect(0, 0, rect.w, rect.h);
 
     const img = new Image();
+    img.crossOrigin = "anonymous";  // CORS 지원 (Supabase Storage URL 처리)
     img.src = uploadedImage;
 
     return new Promise((resolve) => {
@@ -191,20 +195,33 @@ export default function DetailEditPage() {
     });
   };
 
-  const validateApiKey = (): boolean => {
-    if (typeof window === 'undefined') return false;
-
-    const apiKey = localStorage.getItem('gemini_api_key');
-    if (!apiKey) {
+  const validateApiKey = async (): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/profile/api-key');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.exists) {
+          return true;
+        }
+      }
       alert("이미지 생성을 위해 프로필 페이지에서 API 키를 설정해주세요.");
       window.location.href = '/profile';
       return false;
+    } catch (error) {
+      console.error('API key validation error:', error);
+      alert("API 키 확인 중 오류가 발생했습니다.");
+      return false;
     }
-    return true;
+  };
+
+  const handleGallerySelect = (imageUrl: string) => {
+    setUploadedImage(imageUrl);
+    setSelectionRect(null);
+    setEditedSectionOverlay(null);
   };
 
   const handleExtractText = async () => {
-    if (!validateApiKey()) return;
+    if (!(await validateApiKey())) return;
     if (!selectionRect) {
       alert("영역을 선택해주세요.");
       return;
@@ -230,7 +247,7 @@ export default function DetailEditPage() {
   };
 
   const handleDetailEditGenerate = async () => {
-    if (!validateApiKey()) return;
+    if (!(await validateApiKey())) return;
     if (!selectionRect || !uploadedImage) {
       alert("편집할 영역을 선택해주세요.");
       return;
@@ -329,6 +346,7 @@ export default function DetailEditPage() {
     if (!uploadedImage || !editedSectionOverlay) return;
 
     const img = new Image();
+    img.crossOrigin = "anonymous";  // CORS 지원 (Supabase Storage URL 처리)
     img.src = uploadedImage;
     await new Promise(r => img.onload = r);
 
@@ -343,6 +361,7 @@ export default function DetailEditPage() {
 
     // Draw overlay
     const overlayImg = new Image();
+    overlayImg.crossOrigin = "anonymous";  // CORS 지원
     overlayImg.src = editedSectionOverlay.data;
     await new Promise(r => overlayImg.onload = r);
 
@@ -362,6 +381,92 @@ export default function DetailEditPage() {
     setSelectionRect(null);
   };
 
+  const handleDownloadImage = async () => {
+    if (!uploadedImage) return;
+
+    try {
+      // URL인 경우 fetch로 blob 변환 (cross-origin 다운로드 지원)
+      if (uploadedImage.startsWith('http')) {
+        const response = await fetch(uploadedImage);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `detail-edit-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } else {
+        // base64인 경우 직접 다운로드
+        const link = document.createElement('a');
+        link.href = uploadedImage;
+        link.download = `detail-edit-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      // Fallback: 새 탭에서 열기
+      window.open(uploadedImage, '_blank');
+    }
+  };
+
+  const handleSaveToCloud = async () => {
+    if (!uploadedImage) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch('/api/images/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          images: [uploadedImage],
+          mode: 'DETAIL_EDIT',
+          prompt: prompt || '상세페이지 편집',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(data.message || '클라우드에 저장되었습니다.');
+        // 저장된 URL로 업데이트 (다음 저장 시 중복 방지)
+        if (data.urls && data.urls[0]) {
+          setUploadedImage(data.urls[0]);
+        }
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || '저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Cloud save error:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleNewProject = () => {
+    // 작업 중인 내용이 있으면 확인
+    if (uploadedImage || selectionRect || editedSectionOverlay) {
+      if (!confirm('현재 작업 중인 내용이 있습니다. 새로 시작하시겠습니까?')) {
+        return;
+      }
+    }
+
+    // 모든 상태 초기화
+    setUploadedImage(null);
+    setPrompt('');
+    setSelectionRect(null);
+    setEditedSectionOverlay(null);
+    setEditModeSub('GENERAL');
+    setReplacementImage(null);
+    setExtractedText('');
+    setZoomLevel(1.0);
+    setActiveTool('SELECT');
+  };
+
   return (
     <>
       <Header currentMode={AppMode.DETAIL_EDIT} />
@@ -373,32 +478,45 @@ export default function DetailEditPage() {
           </h2>
           {uploadedImage && (
             <button
-              onClick={() => setUploadedImage(null)}
-              className="text-sm text-slate-500 hover:text-red-500 flex items-center gap-1"
+              onClick={handleNewProject}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition-colors"
+              title="새로 시작하기"
             >
-              <RefreshCw className="w-3 h-3" /> 다른 이미지 편집
+              <FilePlus2 className="w-4 h-4" />
+              새로하기
             </button>
           )}
         </div>
 
         {!uploadedImage ? (
           <div className="flex-1 flex items-center justify-center bg-white rounded-2xl shadow-sm border border-slate-200">
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="text-center cursor-pointer p-12 hover:bg-slate-50 rounded-xl transition-all"
-            >
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImageUpload}
-                accept="image/*"
-                className="hidden"
-              />
-              <div className="bg-violet-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Layout className="w-10 h-10 text-violet-600" />
+            <div className="text-center p-12">
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="cursor-pointer hover:bg-slate-50 rounded-xl transition-all p-6"
+              >
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <div className="bg-violet-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Layout className="w-10 h-10 text-violet-600" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-800 mb-2">편집할 상세페이지 업로드</h3>
+                <p className="text-slate-500">JPG, PNG 파일 지원 (최대 10MB)</p>
               </div>
-              <h3 className="text-xl font-bold text-slate-800 mb-2">편집할 상세페이지 업로드</h3>
-              <p className="text-slate-500">JPG, PNG 파일 지원 (최대 10MB)</p>
+              <div className="mt-4 border-t border-slate-200 pt-4">
+                <button
+                  onClick={() => setIsGalleryOpen(true)}
+                  className="flex items-center justify-center gap-2 py-3 px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors mx-auto"
+                >
+                  <FolderOpen className="w-5 h-5" />
+                  내 이미지에서 불러오기
+                </button>
+              </div>
             </div>
           </div>
         ) : (
@@ -440,14 +558,43 @@ export default function DetailEditPage() {
                   </button>
                 </div>
 
-                {/* Apply Button */}
-                <div className="flex-1 flex justify-end">
+                {/* Action Buttons */}
+                <div className="flex-1 flex justify-end gap-2">
+                  {/* Download Button */}
+                  <button
+                    onClick={handleDownloadImage}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 text-slate-700 rounded font-medium text-xs hover:bg-slate-200 transition-colors"
+                    title="이미지 다운로드"
+                  >
+                    <Download className="w-3 h-3" /> 다운로드
+                  </button>
+
+                  {/* Cloud Save Button */}
+                  <button
+                    onClick={handleSaveToCloud}
+                    disabled={isSaving}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded font-medium text-xs transition-colors ${
+                      isSaving
+                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                        : 'bg-violet-100 text-violet-700 hover:bg-violet-200'
+                    }`}
+                    title="클라우드에 저장"
+                  >
+                    {isSaving ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Cloud className="w-3 h-3" />
+                    )}
+                    {isSaving ? '저장 중...' : '클라우드 저장'}
+                  </button>
+
+                  {/* Apply Edit Button */}
                   {editedSectionOverlay && (
                     <button
                       onClick={handleApplyEdit}
                       className="flex items-center gap-1 px-4 py-1.5 bg-green-600 text-white rounded font-medium text-xs hover:bg-green-700 shadow-sm animate-pulse"
                     >
-                      <Check className="w-3 h-3" /> 적용하기 (편집 완료)
+                      <Check className="w-3 h-3" /> 적용하기
                     </button>
                   )}
                 </div>
@@ -643,6 +790,14 @@ export default function DetailEditPage() {
       </div>
 
       <LoadingOverlay isVisible={isLoading} message="AI가 선택 영역을 편집하고 있습니다..." />
+
+      {/* Image Gallery Modal */}
+      <ImageGalleryModal
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        onSelect={handleGallerySelect}
+        title="편집할 상세페이지 선택"
+      />
     </>
   );
 }
