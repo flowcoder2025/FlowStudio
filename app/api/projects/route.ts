@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 }
 
 // GET /api/projects - 내 프로젝트 + 공유받은 프로젝트 조회
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await getServerSession(authOptions)
 
   if (!session?.user?.id) {

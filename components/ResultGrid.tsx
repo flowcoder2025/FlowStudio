@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Download, X, Check, Maximize2, ZoomIn, Cloud, Loader2 } from 'lucide-react';
 
 interface ResultGridProps {
@@ -82,10 +83,12 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
                   className="aspect-[9/16] max-h-[400px] relative overflow-hidden bg-slate-100 dark:bg-slate-900 cursor-pointer"
                   onClick={() => openPreview(img, idx)}
                 >
-                  <img
+                  <Image
                     src={img}
                     alt={`Generated ${idx}`}
-                    className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                    fill
+                    className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                    unoptimized={img.startsWith('data:')}
                   />
                   {/* 줌 오버레이 */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
@@ -202,13 +205,16 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
 
           {/* 이미지 */}
           <div
-            className="max-w-md w-full max-h-[85vh] overflow-auto rounded-lg"
+            className="max-w-md w-full max-h-[85vh] overflow-auto rounded-lg relative"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
+            <Image
               src={previewImage}
               alt={`Preview ${previewIndex}`}
+              width={1080}
+              height={1920}
               className="w-full h-auto"
+              unoptimized={previewImage.startsWith('data:')}
             />
           </div>
 

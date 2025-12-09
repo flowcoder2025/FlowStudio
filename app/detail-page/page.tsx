@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import NextImage from 'next/image';
 import { Layout, Camera, Eye, X, Plus, Trash2, Grid, Columns, Square, MoveDiagonal2, FolderOpen, Save, FileText, Clock, FilePlus2 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
@@ -481,7 +482,15 @@ function DetailPageContent() {
               />
               {uploadedImage ? (
                 <div className="flex items-center gap-4">
-                  <img src={uploadedImage} alt="Main Product" className="w-16 h-16 object-cover rounded-md" />
+                  <div className="relative w-16 h-16 flex-shrink-0">
+                    <NextImage
+                      src={uploadedImage}
+                      alt="Main Product"
+                      fill
+                      className="object-cover rounded-md"
+                      unoptimized={uploadedImage.startsWith('data:')}
+                    />
+                  </div>
                   <div className="text-left flex-1">
                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">제품 사진 등록됨</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">모든 섹션 생성시 참조됩니다.</p>
@@ -597,7 +606,15 @@ function DetailPageContent() {
               />
               {refImage ? (
                 <div className="flex items-center gap-4">
-                  <img src={refImage} alt="Reference" className="w-16 h-16 object-cover rounded-md" />
+                  <div className="relative w-16 h-16 flex-shrink-0">
+                    <NextImage
+                      src={refImage}
+                      alt="Reference"
+                      fill
+                      className="object-cover rounded-md"
+                      unoptimized={refImage.startsWith('data:')}
+                    />
+                  </div>
                   <div className="text-left flex-1">
                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">참조 이미지 등록됨</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">이 이미지의 스타일을 참조합니다.</p>
@@ -670,7 +687,14 @@ function DetailPageContent() {
             ) : (
               detailPageSegments.map((segment, idx) => (
                 <div key={idx} className="relative group w-full max-w-[360px] shadow-lg">
-                  <img src={segment} alt={`Section ${idx}`} className="w-full h-auto block" />
+                  <NextImage
+                    src={segment}
+                    alt={`Section ${idx}`}
+                    width={360}
+                    height={640}
+                    className="w-full h-auto block"
+                    unoptimized={segment.startsWith('data:')}
+                  />
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => removeSegment(idx)}
@@ -848,12 +872,15 @@ function DetailPageContent() {
                         {draft.detailPageSegments.length > 0 && (
                           <div className="mt-3 flex gap-1 overflow-x-auto pb-1">
                             {draft.detailPageSegments.slice(0, 4).map((segment, idx) => (
-                              <img
-                                key={idx}
-                                src={segment}
-                                alt={`Section ${idx + 1}`}
-                                className="w-12 h-16 object-cover rounded border border-slate-200 dark:border-slate-700"
-                              />
+                              <div key={idx} className="relative w-12 h-16 flex-shrink-0">
+                                <NextImage
+                                  src={segment}
+                                  alt={`Section ${idx + 1}`}
+                                  fill
+                                  className="object-cover rounded border border-slate-200 dark:border-slate-700"
+                                  unoptimized={segment.startsWith('data:')}
+                                />
+                              </div>
                             ))}
                             {draft.detailPageSegments.length > 4 && (
                               <div className="w-12 h-16 bg-slate-100 dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs text-slate-500 dark:text-slate-400">

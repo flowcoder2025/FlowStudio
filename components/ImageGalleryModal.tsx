@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import {
   X,
   Images,
@@ -172,11 +173,11 @@ export function ImageGalleryModal({
                       : 'border-transparent hover:border-slate-300'
                   }`}
                 >
-                  <img
+                  <Image
                     src={image.url}
                     alt={image.projectTitle}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
+                    fill
+                    className="object-cover"
                   />
 
                   {/* Selection Indicator */}

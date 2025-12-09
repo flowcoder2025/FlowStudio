@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
+    ],
+  },
   webpack: (config) => {
     // Explicit alias for next-auth to fix Turbopack module resolution
     config.resolve = config.resolve || {};

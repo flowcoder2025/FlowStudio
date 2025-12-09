@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { Camera, Sparkles, X, FolderOpen } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { ResultGrid } from '@/components/ResultGrid';
@@ -218,7 +219,13 @@ function CreatePageContent() {
             />
             {uploadedImage ? (
               <div className="relative h-48 w-full flex items-center justify-center">
-                <img src={uploadedImage} alt="Uploaded" className="h-full object-contain rounded-lg shadow-sm" />
+                <Image
+                  src={uploadedImage}
+                  alt="Uploaded"
+                  fill
+                  className="object-contain rounded-lg shadow-sm"
+                  unoptimized={uploadedImage.startsWith('data:')}
+                />
                 <button
                   onClick={(e) => { e.stopPropagation(); setUploadedImage(null); }}
                   className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1"
@@ -369,10 +376,13 @@ function CreatePageContent() {
               </button>
             </div>
             <div className="p-4">
-              <img
+              <Image
                 src={upscaledImage}
                 alt="Upscaled"
-                className="w-full rounded-lg shadow-lg"
+                width={2048}
+                height={2048}
+                className="w-full h-auto rounded-lg shadow-lg"
+                unoptimized={upscaledImage.startsWith('data:')}
               />
               <div className="mt-4 flex gap-3 justify-center">
                 <button

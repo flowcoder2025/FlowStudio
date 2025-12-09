@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { Wand2, ImageIcon, Eye, X, RefreshCw, FolderOpen } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { ResultGrid } from '@/components/ResultGrid';
@@ -245,8 +246,15 @@ function EditPageContent() {
               className="hidden"
             />
             {uploadedImage ? (
-              <div className="relative">
-                <img src={uploadedImage} alt="To Edit" className="max-h-80 w-auto mx-auto rounded-lg shadow-sm" />
+              <div className="relative max-h-80 mx-auto w-fit">
+                <Image
+                  src={uploadedImage}
+                  alt="To Edit"
+                  width={1080}
+                  height={1920}
+                  className="max-h-80 w-auto rounded-lg shadow-sm"
+                  unoptimized={uploadedImage.startsWith('data:')}
+                />
                 <button
                   onClick={(e) => { e.stopPropagation(); setUploadedImage(null); }}
                   className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 min-h-[36px] min-w-[36px] transition-colors"
@@ -329,8 +337,14 @@ function EditPageContent() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="aspect-square w-full max-w-sm mx-auto bg-white dark:bg-slate-800 rounded-lg shadow-sm overflow-hidden">
-                <img src={previewImage} alt="Preview" className="w-full h-full object-cover" />
+              <div className="aspect-square w-full max-w-sm mx-auto bg-white dark:bg-slate-800 rounded-lg shadow-sm overflow-hidden relative">
+                <Image
+                  src={previewImage}
+                  alt="Preview"
+                  fill
+                  className="object-cover"
+                  unoptimized={previewImage.startsWith('data:')}
+                />
               </div>
               <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-2">
                 미리보기는 1장만 빠르게 생성됩니다. 마음에 들면 하단 버튼으로 고화질 4장을 생성하세요.
@@ -401,10 +415,13 @@ function EditPageContent() {
               </button>
             </div>
             <div className="p-4">
-              <img
+              <Image
                 src={upscaledImage}
                 alt="Upscaled"
-                className="w-full rounded-lg shadow-lg"
+                width={2048}
+                height={2048}
+                className="w-full h-auto rounded-lg shadow-lg"
+                unoptimized={upscaledImage.startsWith('data:')}
               />
               <div className="mt-4 flex gap-3 justify-center">
                 <button

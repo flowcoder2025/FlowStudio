@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import NextImage from 'next/image';
 import { FilePenLine, Layout, RefreshCw, ZoomIn, ZoomOut, MousePointer2, Hand, Wand2, Type, ImagePlus, Check, FolderOpen, Download, Cloud, Loader2, FilePlus2 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
@@ -296,7 +297,7 @@ function DetailEditPageContent() {
       setPrompt(text);
       setEditModeSub('TEXT');
       recordUsage(1);
-    } catch (e) {
+    } catch {
       alert("텍스트 추출 실패");
     } finally {
       setIsLoading(false);
@@ -672,12 +673,16 @@ function DetailEditPageContent() {
                       className="relative shadow-2xl bg-white dark:bg-slate-800"
                       style={{ width: `${zoomLevel * 100}%`, maxWidth: 'none', transition: isPanning ? 'none' : 'width 0.1s ease-out' }}
                     >
-                      <img
-                        ref={imageRef}
+                      <NextImage
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        ref={imageRef as any}
                         src={uploadedImage}
                         alt="Detail Page"
+                        width={1080}
+                        height={1920}
                         className="w-full block select-none pointer-events-none"
                         draggable={false}
+                        unoptimized={uploadedImage.startsWith('data:')}
                       />
 
                       {/* Selection Overlay */}
@@ -699,9 +704,11 @@ function DetailEditPageContent() {
 
                       {/* Edited Result Overlay */}
                       {editedSectionOverlay && imageRef.current && (
-                        <img
+                        <NextImage
                           src={editedSectionOverlay.data}
                           alt="Edited Segment"
+                          width={100}
+                          height={100}
                           className="absolute z-20 shadow-xl border-2 border-green-400/80 dark:border-green-500/80"
                           style={{
                             left: `${(editedSectionOverlay.rect.x / imageRef.current.naturalWidth) * 100}%`,
@@ -709,6 +716,7 @@ function DetailEditPageContent() {
                             width: `${(editedSectionOverlay.rect.w / imageRef.current.naturalWidth) * 100}%`,
                             height: `${(editedSectionOverlay.rect.h / imageRef.current.naturalHeight) * 100}%`,
                           }}
+                          unoptimized={editedSectionOverlay.data.startsWith('data:')}
                         />
                       )}
                     </div>
@@ -799,7 +807,15 @@ function DetailEditPageContent() {
                         className="hidden"
                       />
                       {replacementImage ? (
-                        <img src={replacementImage} alt="Replacement" className="w-20 h-20 object-cover rounded mx-auto" />
+                        <div className="relative w-20 h-20 mx-auto">
+                          <NextImage
+                            src={replacementImage}
+                            alt="Replacement"
+                            fill
+                            className="object-cover rounded"
+                            unoptimized={replacementImage.startsWith('data:')}
+                          />
+                        </div>
                       ) : (
                         <div className="flex flex-col items-center gap-1 py-2">
                           <ImagePlus className="w-6 h-6 text-violet-400 dark:text-violet-500" />
