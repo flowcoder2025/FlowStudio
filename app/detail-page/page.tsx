@@ -427,22 +427,22 @@ function DetailPageContent() {
         <div className="md:w-1/2 flex flex-col gap-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
-                <Layout className="text-blue-600" /> 상세페이지 빌더
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                <Layout className="text-blue-600 dark:text-blue-400" /> 상세페이지 빌더
                 {currentDraftTitle && (
-                  <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                  <span className="text-sm font-normal text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
                     {currentDraftTitle}
                   </span>
                 )}
               </h2>
-              <p className="text-slate-600 text-sm">
+              <p className="text-slate-600 dark:text-slate-300 text-sm">
                 원하는 섹션을 순서대로 생성하여 쌓아올리세요. (가로 1080px 기준)
               </p>
             </div>
             <div className="flex gap-2 shrink-0">
               <button
                 onClick={handleNewProject}
-                className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 min-h-[44px] bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-medium transition-colors"
                 title="새로 시작하기"
               >
                 <FilePlus2 className="w-4 h-4" />
@@ -450,14 +450,14 @@ function DetailPageContent() {
               </button>
               <button
                 onClick={() => setIsLoadModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 min-h-[44px] bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-medium transition-colors"
               >
                 <FileText className="w-4 h-4" />
                 불러오기
               </button>
               <button
                 onClick={openSaveModal}
-                className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 min-h-[44px] bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
               >
                 <Save className="w-4 h-4" />
                 저장하기
@@ -466,11 +466,11 @@ function DetailPageContent() {
           </div>
 
           {/* Global Product Upload */}
-          <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-            <h3 className="font-bold text-base mb-3 text-slate-800">1. 메인 제품 사진 (필수)</h3>
+          <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
+            <h3 className="font-bold text-base mb-3 text-slate-800 dark:text-slate-100">1. 메인 제품 사진 (필수)</h3>
             <div
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${uploadedImage ? 'border-blue-500 bg-blue-50' : 'border-slate-300 hover:bg-slate-50'}`}
+              className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${uploadedImage ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/30' : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
             >
               <input
                 type="file"
@@ -483,27 +483,27 @@ function DetailPageContent() {
                 <div className="flex items-center gap-4">
                   <img src={uploadedImage} alt="Main Product" className="w-16 h-16 object-cover rounded-md" />
                   <div className="text-left flex-1">
-                    <p className="text-sm font-semibold text-slate-800">제품 사진 등록됨</p>
-                    <p className="text-xs text-slate-500">모든 섹션 생성시 참조됩니다.</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">제품 사진 등록됨</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">모든 섹션 생성시 참조됩니다.</p>
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); setUploadedImage(null); }}
-                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-full"
+                    className="p-1.5 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2 py-2">
-                  <Camera className="w-5 h-5 text-slate-400" />
-                  <span className="text-sm text-slate-600">제품 사진 업로드</span>
+                  <Camera className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                  <span className="text-sm text-slate-600 dark:text-slate-300">제품 사진 업로드</span>
                 </div>
               )}
             </div>
             {/* Gallery Button */}
             <button
               onClick={() => setGalleryTarget('main')}
-              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium text-sm transition-colors"
+              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 px-4 min-h-[44px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium text-sm transition-colors"
             >
               <FolderOpen className="w-4 h-4" />
               내 이미지에서 불러오기
@@ -511,10 +511,10 @@ function DetailPageContent() {
           </div>
 
           {/* Category & Style */}
-          <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-            <h3 className="font-bold text-base mb-3 text-slate-800">2. 컨셉 설정</h3>
+          <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
+            <h3 className="font-bold text-base mb-3 text-slate-800 dark:text-slate-100">2. 컨셉 설정</h3>
             <div className="mb-4">
-              <label className="text-xs font-semibold text-slate-500 mb-2 block">카테고리</label>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 block">카테고리</label>
               <div className="grid grid-cols-2 gap-2">
                 {DETAIL_PAGE_CATEGORIES.map(cat => (
                   <button
@@ -522,8 +522,8 @@ function DetailPageContent() {
                     onClick={() => { setSelectedCategory(cat); setSelectedStyle(null); }}
                     className={`p-3 rounded-lg text-left text-sm transition-all border ${
                       selectedCategory?.id === cat.id
-                        ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500'
-                        : 'bg-white border-slate-200 hover:border-blue-300'
+                        ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-500 dark:border-blue-400 ring-1 ring-blue-500 dark:ring-blue-400 text-slate-900 dark:text-slate-100'
+                        : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-400 text-slate-900 dark:text-slate-100'
                     }`}
                   >
                     {cat.label}
@@ -534,7 +534,7 @@ function DetailPageContent() {
 
             {selectedCategory && (
               <div className="mb-4">
-                <label className="text-xs font-semibold text-slate-500 mb-2 block">스타일</label>
+                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 block">스타일</label>
                 <div className="grid grid-cols-2 gap-2">
                   {selectedCategory.styles.map(style => (
                     <button
@@ -542,8 +542,8 @@ function DetailPageContent() {
                       onClick={() => setSelectedStyle(style)}
                       className={`p-2 rounded-lg text-center text-xs transition-all border ${
                         selectedStyle?.id === style.id
-                          ? 'bg-blue-50 border-blue-500 text-blue-700 font-bold'
-                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                          ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-500 dark:border-blue-400 text-blue-700 dark:text-blue-300 font-bold'
+                          : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
                       }`}
                     >
                       {style.label}
@@ -555,7 +555,7 @@ function DetailPageContent() {
 
             {/* Layout Selection */}
             <div>
-              <label className="text-xs font-semibold text-slate-500 mb-2 block">레이아웃 (선택)</label>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 block">레이아웃 (선택)</label>
               <div className="grid grid-cols-2 gap-2">
                 {LAYOUT_OPTIONS.map(layout => (
                   <button
@@ -563,16 +563,16 @@ function DetailPageContent() {
                     onClick={() => setSelectedLayout(selectedLayout?.id === layout.id ? null : layout)}
                     className={`p-3 rounded-lg text-left text-xs transition-all border flex items-start gap-2 ${
                       selectedLayout?.id === layout.id
-                        ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500'
-                        : 'bg-white border-slate-200 hover:border-blue-300'
+                        ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-500 dark:border-blue-400 ring-1 ring-blue-500 dark:ring-blue-400'
+                        : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-400'
                     }`}
                   >
-                    <span className="text-blue-600 mt-0.5">
+                    <span className="text-blue-600 dark:text-blue-400 mt-0.5">
                       {layoutIcons[layout.icon] || <Square className="w-5 h-5" />}
                     </span>
                     <div>
-                      <span className="block font-semibold text-slate-800">{layout.label}</span>
-                      <span className="block text-slate-500 text-[10px] mt-0.5">{layout.description}</span>
+                      <span className="block font-semibold text-slate-800 dark:text-slate-100">{layout.label}</span>
+                      <span className="block text-slate-500 dark:text-slate-400 text-[10px] mt-0.5">{layout.description}</span>
                     </div>
                   </button>
                 ))}
@@ -581,12 +581,12 @@ function DetailPageContent() {
           </div>
 
           {/* Reference Image (Optional) */}
-          <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-            <h3 className="font-bold text-base mb-3 text-slate-800">3. 스타일 참조 이미지 (선택)</h3>
-            <p className="text-xs text-slate-500 mb-3">다른 상세페이지의 스타일을 참조하여 비슷한 분위기로 생성합니다.</p>
+          <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
+            <h3 className="font-bold text-base mb-3 text-slate-800 dark:text-slate-100">3. 스타일 참조 이미지 (선택)</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">다른 상세페이지의 스타일을 참조하여 비슷한 분위기로 생성합니다.</p>
             <div
               onClick={() => refImageInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${refImage ? 'border-purple-500 bg-purple-50' : 'border-slate-300 hover:bg-slate-50'}`}
+              className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${refImage ? 'border-purple-500 dark:border-purple-400 bg-purple-50 dark:bg-purple-900/30' : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
             >
               <input
                 type="file"
@@ -599,27 +599,27 @@ function DetailPageContent() {
                 <div className="flex items-center gap-4">
                   <img src={refImage} alt="Reference" className="w-16 h-16 object-cover rounded-md" />
                   <div className="text-left flex-1">
-                    <p className="text-sm font-semibold text-slate-800">참조 이미지 등록됨</p>
-                    <p className="text-xs text-slate-500">이 이미지의 스타일을 참조합니다.</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">참조 이미지 등록됨</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">이 이미지의 스타일을 참조합니다.</p>
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); setRefImage(null); }}
-                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-full"
+                    className="p-1.5 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2 py-2">
-                  <Eye className="w-5 h-5 text-slate-400" />
-                  <span className="text-sm text-slate-600">스타일 참조 이미지 업로드 (선택)</span>
+                  <Eye className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                  <span className="text-sm text-slate-600 dark:text-slate-300">스타일 참조 이미지 업로드 (선택)</span>
                 </div>
               )}
             </div>
             {/* Gallery Button */}
             <button
               onClick={() => setGalleryTarget('ref')}
-              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium text-sm transition-colors"
+              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 px-4 min-h-[44px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium text-sm transition-colors"
             >
               <FolderOpen className="w-4 h-4" />
               내 이미지에서 불러오기
@@ -627,8 +627,8 @@ function DetailPageContent() {
           </div>
 
           {/* Section Generation */}
-          <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex-1">
-            <h3 className="font-bold text-base mb-3 text-slate-800">
+          <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex-1 transition-colors">
+            <h3 className="font-bold text-base mb-3 text-slate-800 dark:text-slate-100">
               {detailPageSegments.length === 0 ? '4. 첫번째 섹션(인트로) 만들기' : `4. ${detailPageSegments.length + 1}번째 섹션 추가하기`}
             </h3>
             <textarea
@@ -637,16 +637,16 @@ function DetailPageContent() {
               placeholder={detailPageSegments.length === 0
                 ? "예: 제품 이름이 크게 들어간 임팩트 있는 인트로. '순수 비타민 세럼' 텍스트 포함."
                 : "예: 핵심 성분을 설명하는 섹션. 비타민 C의 효능을 강조하는 그래프와 아이콘."}
-              className="w-full p-4 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px] mb-4 text-sm"
+              className="w-full p-4 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 min-h-[120px] mb-4 text-sm transition-colors"
             />
 
             <button
               onClick={handleGenerate}
               disabled={!uploadedImage || !selectedCategory || isLoading}
-              className={`w-full py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-sm transition-all ${
+              className={`w-full py-3 min-h-[48px] rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-sm transition-all ${
                 !uploadedImage || !selectedCategory || isLoading
-                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-blue-200'
+                  ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                  : 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-blue-200 dark:hover:shadow-blue-900'
               }`}
             >
               {isLoading ? '생성 중...' : (detailPageSegments.length === 0 ? '인트로 생성하기' : '다음 섹션 생성하기')}
@@ -656,15 +656,15 @@ function DetailPageContent() {
         </div>
 
         {/* Right Panel: Canvas */}
-        <div className="md:w-1/2 bg-slate-200 rounded-2xl p-6 overflow-hidden flex flex-col min-h-[600px] border border-slate-300">
-          <h3 className="text-center text-slate-600 font-bold mb-4 flex items-center justify-center gap-2">
+        <div className="md:w-1/2 bg-slate-200 dark:bg-slate-900 rounded-2xl p-6 overflow-hidden flex flex-col min-h-[600px] border border-slate-300 dark:border-slate-700 transition-colors">
+          <h3 className="text-center text-slate-600 dark:text-slate-300 font-bold mb-4 flex items-center justify-center gap-2">
             <Eye className="w-4 h-4" /> 미리보기 (1080px 기준)
           </h3>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-300/50 rounded-lg p-4 flex flex-col items-center gap-0.5">
+          <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-300/50 dark:bg-slate-800/50 rounded-lg p-4 flex flex-col items-center gap-0.5">
             {detailPageSegments.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-slate-400 space-y-4 py-20">
-                <div className="w-20 h-32 border-2 border-dashed border-slate-400 rounded-md"></div>
+              <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 space-y-4 py-20">
+                <div className="w-20 h-32 border-2 border-dashed border-slate-400 dark:border-slate-600 rounded-md"></div>
                 <p className="text-sm text-center">생성된 상세페이지가<br />여기에 순서대로 쌓입니다.</p>
               </div>
             ) : (
@@ -674,14 +674,14 @@ function DetailPageContent() {
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => removeSegment(idx)}
-                      className="p-1.5 bg-red-600 text-white rounded-md shadow-md hover:bg-red-700"
+                      className="p-1.5 bg-red-600 dark:bg-red-500 text-white rounded-md shadow-md hover:bg-red-700 dark:hover:bg-red-600 transition-colors"
                       title="섹션 삭제"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                   <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="bg-black/50 text-white text-xs px-2 py-1 rounded">#{idx + 1}</span>
+                    <span className="bg-black/50 dark:bg-black/70 text-white text-xs px-2 py-1 rounded">#{idx + 1}</span>
                   </div>
                 </div>
               ))
@@ -692,7 +692,7 @@ function DetailPageContent() {
             <div className="mt-4 text-center">
               <button
                 onClick={() => alert("브라우저의 '이미지 저장' 기능을 이용해 개별 섹션을 저장한 후 포토샵 등에서 연결해주세요. (전체 병합 다운로드 기능 준비중)")}
-                className="text-xs text-slate-500 underline hover:text-slate-700"
+                className="text-xs text-slate-500 dark:text-slate-400 underline hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
               >
                 전체 이미지 다운로드 가이드
               </button>
@@ -724,21 +724,21 @@ function DetailPageContent() {
       {/* Save Draft Modal */}
       {isSaveModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl transition-colors">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <Save className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <Save className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 초안 저장하기
               </h3>
               <button
                 onClick={() => setIsSaveModalOpen(false)}
-                className="p-1 hover:bg-slate-100 rounded-full"
+                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
               >
-                <X className="w-5 h-5 text-slate-500" />
+                <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
               </button>
             </div>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 초안 제목
               </label>
               <input
@@ -746,10 +746,10 @@ function DetailPageContent() {
                 value={draftTitle}
                 onChange={(e) => setDraftTitle(e.target.value)}
                 placeholder="예: 비타민 세럼 상세페이지"
-                className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
               />
             </div>
-            <div className="mb-4 p-3 bg-slate-50 rounded-lg text-sm text-slate-600">
+            <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-sm text-slate-600 dark:text-slate-300 transition-colors">
               <p className="font-medium mb-1">저장되는 정보:</p>
               <ul className="list-disc list-inside space-y-0.5 text-xs">
                 <li>카테고리 및 스타일 설정</li>
@@ -761,14 +761,14 @@ function DetailPageContent() {
             <div className="flex gap-3">
               <button
                 onClick={() => setIsSaveModalOpen(false)}
-                className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors"
+                className="flex-1 py-2.5 px-4 min-h-[44px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium transition-colors"
               >
                 취소
               </button>
               <button
                 onClick={handleSaveDraft}
                 disabled={isSaving || !draftTitle.trim()}
-                className="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-lg font-medium transition-colors"
+                className="flex-1 py-2.5 px-4 min-h-[44px] bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white disabled:text-slate-500 rounded-lg font-medium transition-colors"
               >
                 {isSaving ? '저장 중...' : currentDraftId ? '덮어쓰기' : '저장'}
               </button>
@@ -780,27 +780,27 @@ function DetailPageContent() {
       {/* Load Draft Modal */}
       {isLoadModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] flex flex-col shadow-xl">
-            <div className="flex items-center justify-between p-6 border-b border-slate-200">
-              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" />
+          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full max-h-[80vh] flex flex-col shadow-xl transition-colors">
+            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 저장된 초안 불러오기
               </h3>
               <button
                 onClick={() => setIsLoadModalOpen(false)}
-                className="p-1 hover:bg-slate-100 rounded-full"
+                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
               >
-                <X className="w-5 h-5 text-slate-500" />
+                <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
               {isLoadingDrafts ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
                 </div>
               ) : drafts.length === 0 ? (
-                <div className="text-center py-12 text-slate-500">
-                  <FileText className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                  <FileText className="w-12 h-12 mx-auto mb-3 text-slate-300 dark:text-slate-600" />
                   <p>저장된 초안이 없습니다.</p>
                   <p className="text-sm mt-1">작업 중인 상세페이지를 저장해보세요.</p>
                 </div>
@@ -811,17 +811,17 @@ function DetailPageContent() {
                     return (
                       <div
                         key={draft.id}
-                        className="group border border-slate-200 rounded-xl p-4 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+                        className="group border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-blue-300 dark:hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div
                             className="flex-1 cursor-pointer"
                             onClick={() => handleLoadDraft(draft.id)}
                           >
-                            <h4 className="font-semibold text-slate-800 mb-1">{draft.title}</h4>
-                            <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-1">{draft.title}</h4>
+                            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                               {categoryLabel && (
-                                <span className="bg-slate-100 px-2 py-0.5 rounded">{categoryLabel}</span>
+                                <span className="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">{categoryLabel}</span>
                               )}
                               <span>{draft.detailPageSegments.length}개 섹션</span>
                               <span className="flex items-center gap-1">
@@ -833,13 +833,13 @@ function DetailPageContent() {
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => handleLoadDraft(draft.id)}
-                              className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg text-sm font-medium"
+                              className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg text-sm font-medium transition-colors"
                             >
                               불러오기
                             </button>
                             <button
                               onClick={() => handleDeleteDraft(draft.id, draft.title)}
-                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                              className="p-2 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -852,11 +852,11 @@ function DetailPageContent() {
                                 key={idx}
                                 src={segment}
                                 alt={`Section ${idx + 1}`}
-                                className="w-12 h-16 object-cover rounded border border-slate-200"
+                                className="w-12 h-16 object-cover rounded border border-slate-200 dark:border-slate-700"
                               />
                             ))}
                             {draft.detailPageSegments.length > 4 && (
-                              <div className="w-12 h-16 bg-slate-100 rounded border border-slate-200 flex items-center justify-center text-xs text-slate-500">
+                              <div className="w-12 h-16 bg-slate-100 dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs text-slate-500 dark:text-slate-400">
                                 +{draft.detailPageSegments.length - 4}
                               </div>
                             )}
@@ -868,10 +868,10 @@ function DetailPageContent() {
                 </div>
               )}
             </div>
-            <div className="p-4 border-t border-slate-200">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-700">
               <button
                 onClick={() => setIsLoadModalOpen(false)}
-                className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors"
+                className="w-full py-2.5 px-4 min-h-[44px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium transition-colors"
               >
                 닫기
               </button>

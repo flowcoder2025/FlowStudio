@@ -28,29 +28,29 @@ export default function LoginPage() {
   // 로딩 중이거나 이미 로그인된 경우 로딩 표시
   if (status === 'loading' || status === 'authenticated') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mx-auto mb-4" />
-          <p className="text-gray-600">잠시만 기다려주세요...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400 mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-slate-300">잠시만 기다려주세요...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="bg-white p-10 rounded-2xl shadow-xl border border-gray-200 max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="bg-white dark:bg-slate-800 p-10 rounded-2xl shadow-xl border border-gray-200 dark:border-slate-700 max-w-md w-full transition-colors">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">FlowStudio</h1>
-          <p className="text-gray-600 text-lg">AI 이미지 생성 플랫폼</p>
-          <p className="text-gray-500 text-sm mt-2">소상공인을 위한 AI 디자인 파트너</p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-slate-100 mb-2">FlowStudio</h1>
+          <p className="text-gray-600 dark:text-slate-300 text-lg">AI 이미지 생성 플랫폼</p>
+          <p className="text-gray-500 dark:text-slate-400 text-sm mt-2">소상공인을 위한 AI 디자인 파트너</p>
         </div>
 
         {/* Google Login Button */}
         <button
           onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium text-gray-700 shadow-sm hover:shadow-md"
+          className="w-full flex items-center justify-center gap-3 px-6 py-4 min-h-[56px] bg-white dark:bg-slate-700 border-2 border-gray-300 dark:border-slate-600 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-600 hover:border-gray-400 dark:hover:border-slate-500 transition-all duration-200 font-medium text-gray-700 dark:text-slate-200 shadow-sm hover:shadow-md"
         >
           <svg className="w-6 h-6" viewBox="0 0 24 24">
             <path
@@ -74,7 +74,7 @@ export default function LoginPage() {
         </button>
 
         {/* Info */}
-        <div className="mt-8 text-center text-sm text-gray-500">
+        <div className="mt-8 text-center text-sm text-gray-500 dark:text-slate-400">
           <p>로그인하면 FlowStudio의</p>
           <p className="mt-1">서비스 약관 및 개인정보 처리방침에 동의하게 됩니다.</p>
         </div>

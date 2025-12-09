@@ -226,16 +226,16 @@ function EditPageContent() {
       <Header currentMode={AppMode.EDIT} />
 
       <div className="max-w-3xl mx-auto px-4 py-8 pb-32">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Wand2 className="text-emerald-600" /> AI 이미지 편집
+        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
+          <Wand2 className="text-emerald-600 dark:text-emerald-400" /> AI 이미지 편집
         </h2>
 
         {/* Step 1: Mandatory Upload */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
-          <h3 className="font-bold text-lg mb-4 text-slate-800">1. 편집할 사진을 올려주세요</h3>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
+          <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">1. 편집할 사진을 올려주세요</h3>
           <div
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${uploadedImage ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300 hover:bg-slate-50'}`}
+            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${uploadedImage ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20' : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
           >
             <input
               type="file"
@@ -249,22 +249,22 @@ function EditPageContent() {
                 <img src={uploadedImage} alt="To Edit" className="max-h-80 w-auto mx-auto rounded-lg shadow-sm" />
                 <button
                   onClick={(e) => { e.stopPropagation(); setUploadedImage(null); }}
-                  className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
+                  className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 min-h-[36px] min-w-[36px] transition-colors"
                 >
                   <span className="text-xs font-bold">변경</span>
                 </button>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-3 py-8">
-                <ImageIcon className="w-12 h-12 text-slate-400" />
-                <p className="text-slate-600 font-medium text-lg">사진 업로드하기</p>
+                <ImageIcon className="w-12 h-12 text-slate-400 dark:text-slate-500" />
+                <p className="text-slate-600 dark:text-slate-300 font-medium text-lg">사진 업로드하기</p>
               </div>
             )}
           </div>
           {/* Gallery Button */}
           <button
             onClick={() => setIsGalleryOpen(true)}
-            className="mt-4 w-full flex items-center justify-center gap-2 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors"
+            className="mt-4 w-full flex items-center justify-center gap-2 py-3 px-4 min-h-[48px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-medium transition-colors"
           >
             <FolderOpen className="w-5 h-5" />
             내 이미지에서 불러오기
@@ -272,35 +272,35 @@ function EditPageContent() {
         </div>
 
         {/* Step 2: Aspect Ratio Selection */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
-          <h3 className="font-bold text-lg mb-4 text-slate-800">2. 결과 이미지 비율</h3>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
+          <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">2. 결과 이미지 비율</h3>
           <div className="grid grid-cols-3 gap-3">
             {ASPECT_RATIOS.map(ratio => (
               <button
                 key={ratio.id}
                 onClick={() => setSelectedAspectRatio(ratio.id)}
-                className={`p-3 rounded-xl text-center transition-all border ${
+                className={`p-3 min-h-[72px] rounded-xl text-center transition-all border ${
                   selectedAspectRatio === ratio.id
-                    ? 'bg-emerald-50 border-emerald-500 ring-1 ring-emerald-500'
-                    : 'bg-white border-slate-200 hover:border-emerald-300'
+                    ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500 dark:border-emerald-400 ring-1 ring-emerald-500 dark:ring-emerald-400'
+                    : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-emerald-300 dark:hover:border-emerald-500'
                 }`}
               >
-                <span className="block font-semibold text-slate-800 text-sm">{ratio.label}</span>
-                <span className="block text-xs text-slate-500">{ratio.desc}</span>
+                <span className="block font-semibold text-slate-800 dark:text-slate-100 text-sm">{ratio.label}</span>
+                <span className="block text-xs text-slate-500 dark:text-slate-400">{ratio.desc}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Step 3: Instruction & Preview */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
-          <h3 className="font-bold text-lg mb-4 text-slate-800">3. 어떻게 바꿔드릴까요?</h3>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
+          <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">3. 어떻게 바꿔드릴까요?</h3>
           <div className="mb-4 flex flex-wrap gap-2">
             {['레트로 필터 씌워줘', '배경에 있는 사람 지워줘', '배경을 사무실로 바꿔줘', '좀 더 화사하게 만들어줘'].map(suggestion => (
               <button
                 key={suggestion}
                 onClick={() => setPrompt(suggestion)}
-                className="px-3 py-1.5 bg-slate-100 text-slate-600 text-sm rounded-full hover:bg-slate-200 transition-colors"
+                className="px-3 py-1.5 min-h-[32px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-sm rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
               >
                 {suggestion}
               </button>
@@ -311,44 +311,44 @@ function EditPageContent() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="예: 배경을 깔끔한 흰색으로 바꿔줘, 텍스트를 제거해줘."
-              className="w-full p-4 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[120px]"
+              className="w-full p-4 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 min-h-[120px] transition-colors"
             />
           </div>
 
           {/* Preview Area */}
           {previewImage && (
-            <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors">
               <div className="flex justify-between items-center mb-3">
-                <h4 className="font-bold text-slate-700 flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-emerald-600" /> 미리보기 결과
+                <h4 className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> 미리보기 결과
                 </h4>
                 <button
                   onClick={() => setPreviewImage(null)}
-                  className="text-slate-400 hover:text-slate-600"
+                  className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 min-h-[28px] min-w-[28px]"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="aspect-square w-full max-w-sm mx-auto bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="aspect-square w-full max-w-sm mx-auto bg-white dark:bg-slate-800 rounded-lg shadow-sm overflow-hidden">
                 <img src={previewImage} alt="Preview" className="w-full h-full object-cover" />
               </div>
-              <p className="text-center text-xs text-slate-500 mt-2">
+              <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-2">
                 미리보기는 1장만 빠르게 생성됩니다. 마음에 들면 하단 버튼으로 고화질 4장을 생성하세요.
               </p>
             </div>
           )}
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 z-30">
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4 pb-safe z-30 transition-colors">
           <div className="max-w-3xl mx-auto flex gap-3 justify-end">
             {/* Preview Button */}
             <button
               onClick={handlePreview}
               disabled={!uploadedImage || !prompt || isPreviewLoading || isLoading}
-              className={`flex-1 md:flex-none px-6 py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2 border-2 transition-all ${
+              className={`flex-1 md:flex-none px-6 py-3 min-h-[52px] rounded-xl font-bold text-base flex items-center justify-center gap-2 border-2 transition-all ${
                 isPreviewLoading
-                  ? 'bg-slate-100 border-slate-200 text-slate-400'
-                  : 'bg-white border-emerald-600 text-emerald-600 hover:bg-emerald-50'
+                  ? 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-400 dark:text-slate-500'
+                  : 'bg-white dark:bg-slate-700 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
               }`}
             >
               {isPreviewLoading ? (
@@ -363,10 +363,10 @@ function EditPageContent() {
             <button
               onClick={handleGenerate}
               disabled={!uploadedImage || !prompt || isLoading || isPreviewLoading}
-              className={`flex-1 md:flex-none px-8 py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all ${
+              className={`flex-1 md:flex-none px-8 py-3 min-h-[52px] rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all ${
                 !uploadedImage || !prompt || isLoading || isPreviewLoading
-                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                  : 'bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-emerald-200'
+                  ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-500 cursor-not-allowed'
+                  : 'bg-emerald-600 dark:bg-emerald-500 text-white hover:bg-emerald-700 dark:hover:bg-emerald-600 hover:shadow-emerald-200 dark:hover:shadow-emerald-900'
               }`}
             >
               {isLoading ? '생성 중...' : '이미지 4장 생성'}
@@ -389,15 +389,15 @@ function EditPageContent() {
 
       {/* Upscaled Image Modal */}
       {upscaledImage && (
-        <div className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto">
-            <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-800">업스케일 결과 (2K)</h2>
+        <div className="fixed inset-0 z-60 bg-black/80 dark:bg-black/90 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto transition-colors">
+            <div className="sticky top-0 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">업스케일 결과 (2K)</h2>
               <button
                 onClick={() => setUpscaledImage(null)}
-                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                className="p-2 min-h-[40px] min-w-[40px] hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
               >
-                <X className="w-6 h-6 text-slate-500" />
+                <X className="w-6 h-6 text-slate-500 dark:text-slate-400" />
               </button>
             </div>
             <div className="p-4">
@@ -409,13 +409,13 @@ function EditPageContent() {
               <div className="mt-4 flex gap-3 justify-center">
                 <button
                   onClick={() => handleDownloadImage(upscaledImage, `upscaled-${Date.now()}.png`)}
-                  className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-colors"
+                  className="px-6 py-3 min-h-[48px] bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors"
                 >
                   2K 이미지 다운로드
                 </button>
                 <button
                   onClick={() => setUpscaledImage(null)}
-                  className="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300 transition-colors"
+                  className="px-6 py-3 min-h-[48px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
                 >
                   닫기
                 </button>

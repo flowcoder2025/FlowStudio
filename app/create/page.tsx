@@ -198,16 +198,16 @@ function CreatePageContent() {
       <Header currentMode={AppMode.CREATE} />
 
       <div className="max-w-3xl mx-auto px-4 py-8 pb-32">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Sparkles className="text-indigo-600" /> 이미지 생성 마법사
+        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
+          <Sparkles className="text-indigo-600 dark:text-indigo-400" /> 이미지 생성 마법사
         </h2>
 
         {/* Step 1: Upload (Optional) */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
-          <h3 className="font-bold text-lg mb-4 text-slate-800">1. 참고할 제품 사진이 있나요? (선택)</h3>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
+          <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">1. 참고할 제품 사진이 있나요? (선택)</h3>
           <div
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${uploadedImage ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 hover:bg-slate-50'}`}
+            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${uploadedImage ? 'border-indigo-500 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20' : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
           >
             <input
               type="file"
@@ -229,16 +229,16 @@ function CreatePageContent() {
               </div>
             ) : (
               <div className="flex flex-col items-center gap-3">
-                <Camera className="w-10 h-10 text-slate-400" />
-                <p className="text-slate-600 font-medium">제품 사진 업로드 또는 촬영</p>
-                <p className="text-xs text-slate-400">사진이 없으면 텍스트로만 생성됩니다.</p>
+                <Camera className="w-10 h-10 text-slate-400 dark:text-slate-500" />
+                <p className="text-slate-600 dark:text-slate-300 font-medium">제품 사진 업로드 또는 촬영</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">사진이 없으면 텍스트로만 생성됩니다.</p>
               </div>
             )}
           </div>
           {/* Gallery Button */}
           <button
             onClick={() => setIsGalleryOpen(true)}
-            className="mt-4 w-full flex items-center justify-center gap-2 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors"
+            className="mt-4 w-full flex items-center justify-center gap-2 py-3 px-4 min-h-[44px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-medium transition-colors"
           >
             <FolderOpen className="w-5 h-5" />
             내 이미지에서 불러오기
@@ -246,21 +246,21 @@ function CreatePageContent() {
         </div>
 
         {/* Step 2: Category Selection */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
-          <h3 className="font-bold text-lg mb-4 text-slate-800">2. 어떤 용도로 만드시나요?</h3>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
+          <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">2. 어떤 용도로 만드시나요?</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {CATEGORIES.map(cat => (
               <button
                 key={cat.id}
                 onClick={() => { setSelectedCategory(cat); setSelectedStyle(null); }}
-                className={`p-4 rounded-xl text-left transition-all border ${
+                className={`p-4 min-h-[88px] rounded-xl text-left transition-all border ${
                   selectedCategory?.id === cat.id
-                    ? 'bg-indigo-50 border-indigo-500 ring-1 ring-indigo-500'
-                    : 'bg-white border-slate-200 hover:border-indigo-300'
+                    ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-500 dark:border-indigo-400 ring-1 ring-indigo-500 dark:ring-indigo-400'
+                    : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500'
                 }`}
               >
-                <span className="block font-semibold text-slate-800 mb-1">{cat.label}</span>
-                <span className="block text-xs text-slate-500">{cat.description}</span>
+                <span className="block font-semibold text-slate-800 dark:text-slate-100 mb-1">{cat.label}</span>
+                <span className="block text-xs text-slate-500 dark:text-slate-400">{cat.description}</span>
               </button>
             ))}
           </div>
@@ -268,21 +268,21 @@ function CreatePageContent() {
 
         {/* Step 3: Style Selection (Conditional) */}
         {selectedCategory && (
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6 animate-fadeIn">
-            <h3 className="font-bold text-lg mb-4 text-slate-800">3. 어떤 분위기를 원하세요?</h3>
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 animate-fadeIn transition-colors">
+            <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">3. 어떤 분위기를 원하세요?</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {selectedCategory.styles.map(style => (
                 <button
                   key={style.id}
                   onClick={() => setSelectedStyle(style)}
-                  className={`p-3 rounded-xl text-center transition-all border relative overflow-hidden ${
+                  className={`p-3 min-h-[88px] rounded-xl text-center transition-all border relative overflow-hidden ${
                     selectedStyle?.id === style.id
-                      ? 'border-indigo-500 ring-2 ring-indigo-500'
-                      : 'border-slate-200 hover:border-slate-300'
+                      ? 'border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500 dark:ring-indigo-400'
+                      : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'
                   }`}
                 >
                   <div className={`w-full h-12 mb-2 rounded-lg ${style.previewColor}`}></div>
-                  <span className="text-sm font-medium text-slate-700">{style.label}</span>
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{style.label}</span>
                 </button>
               ))}
             </div>
@@ -290,51 +290,51 @@ function CreatePageContent() {
         )}
 
         {/* Step 4: Aspect Ratio Selection */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
-          <h3 className="font-bold text-lg mb-4 text-slate-800">4. 이미지 비율을 선택해주세요</h3>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
+          <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">4. 이미지 비율을 선택해주세요</h3>
           <div className="grid grid-cols-3 gap-3">
             {ASPECT_RATIOS.map(ratio => (
               <button
                 key={ratio.id}
                 onClick={() => setSelectedAspectRatio(ratio.id)}
-                className={`p-4 rounded-xl text-center transition-all border ${
+                className={`p-4 min-h-[88px] rounded-xl text-center transition-all border ${
                   selectedAspectRatio === ratio.id
-                    ? 'bg-indigo-50 border-indigo-500 ring-1 ring-indigo-500'
-                    : 'bg-white border-slate-200 hover:border-indigo-300'
+                    ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-500 dark:border-indigo-400 ring-1 ring-indigo-500 dark:ring-indigo-400'
+                    : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500'
                 }`}
               >
-                <span className="block font-semibold text-slate-800 mb-1">{ratio.label}</span>
-                <span className="block text-xs text-slate-500">{ratio.desc}</span>
+                <span className="block font-semibold text-slate-800 dark:text-slate-100 mb-1">{ratio.label}</span>
+                <span className="block text-xs text-slate-500 dark:text-slate-400">{ratio.desc}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Step 5: Text Prompt */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
-          <h3 className="font-bold text-lg mb-4 text-slate-800">5. 추가로 원하시는 내용을 적어주세요</h3>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
+          <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">5. 추가로 원하시는 내용을 적어주세요</h3>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="예: 나무 테이블 위에 커피가 놓여있고, 아침 햇살이 들어오는 느낌으로 만들어줘."
-            className="w-full p-4 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px]"
+            className="w-full p-4 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 min-h-[100px] transition-colors"
           />
         </div>
 
         {/* Action Bar */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 z-30">
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 p-4 pb-safe z-30 transition-colors">
           <div className="max-w-3xl mx-auto flex justify-between items-center">
-            <p className="text-sm text-slate-500 hidden md:block">
+            <p className="text-sm text-slate-500 dark:text-slate-400 hidden md:block">
               {selectedCategory ? `${selectedCategory.label}` : '종류 선택'}
               {selectedStyle ? ` > ${selectedStyle.label}` : ''}
             </p>
             <button
               onClick={handleGenerate}
               disabled={!selectedCategory || isLoading}
-              className={`w-full md:w-auto px-8 py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all ${
+              className={`w-full md:w-auto px-8 py-3.5 min-h-[52px] rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all ${
                 !selectedCategory || isLoading
-                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-200'
+                  ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                  : 'bg-indigo-600 dark:bg-indigo-500 text-white hover:bg-indigo-700 dark:hover:bg-indigo-600 hover:shadow-indigo-200 dark:hover:shadow-indigo-900'
               }`}
             >
               {isLoading ? '생성 중...' : '이미지 4장 생성하기'}
@@ -356,15 +356,16 @@ function CreatePageContent() {
 
       {/* Upscaled Image Modal */}
       {upscaledImage && (
-        <div className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto">
-            <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-800">업스케일 결과 (2K)</h2>
+        <div className="fixed inset-0 z-60 bg-black/80 dark:bg-black/90 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+            <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">업스케일 결과 (2K)</h2>
               <button
                 onClick={() => setUpscaledImage(null)}
-                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                className="p-2 min-w-[40px] min-h-[40px] hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors flex items-center justify-center"
+                aria-label="닫기"
               >
-                <X className="w-6 h-6 text-slate-500" />
+                <X className="w-6 h-6 text-slate-500 dark:text-slate-400" />
               </button>
             </div>
             <div className="p-4">
@@ -376,13 +377,13 @@ function CreatePageContent() {
               <div className="mt-4 flex gap-3 justify-center">
                 <button
                   onClick={() => handleDownloadImage(upscaledImage, `upscaled-${Date.now()}.png`)}
-                  className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
+                  className="px-6 py-3 min-h-[48px] bg-indigo-600 dark:bg-indigo-500 text-white rounded-xl font-semibold hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
                 >
                   2K 이미지 다운로드
                 </button>
                 <button
                   onClick={() => setUpscaledImage(null)}
-                  className="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300 transition-colors"
+                  className="px-6 py-3 min-h-[48px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
                 >
                   닫기
                 </button>
