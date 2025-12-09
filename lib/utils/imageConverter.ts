@@ -1,7 +1,14 @@
 /**
  * Image Converter Utility
  * Handles conversion between URLs and base64 for Gemini API compatibility
+ *
+ * Features:
+ * - Automatic server-side image compression with sharp
+ * - Reduces high-resolution images to <2MB for API compatibility
+ * - Maintains quality while preventing 413 Payload Too Large errors
  */
+
+import sharp from 'sharp'
 
 /**
  * Check if the input is a URL (not base64)
@@ -18,8 +25,10 @@ export function isBase64DataUrl(input: string): boolean {
 }
 
 /**
- * Convert image URL to base64 data URL
- * Fetches the image from URL and converts to base64
+ * Convert image URL to base64 data URL with automatic compression
+ * Fetches the image from URL, compresses if needed, and converts to base64
+ *
+ * Server-side compression ensures images stay under 2MB for API compatibility
  */
 export async function urlToBase64(url: string): Promise<string> {
   try {
@@ -31,7 +40,6 @@ export async function urlToBase64(url: string): Promise<string> {
 
     const arrayBuffer = await response.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
-    const base64 = buffer.toString('base64')
 
     // Detect MIME type from content-type header or URL
     let mimeType = response.headers.get('content-type') || 'image/png'
@@ -54,10 +62,81 @@ export async function urlToBase64(url: string): Promise<string> {
       }
     }
 
-    return `data:${mimeType};base64,${base64}`
+    // Server-side compression with sharp (prevents 413 errors)
+    const compressedBuffer = await compressImageBuffer(buffer)
+    const base64 = compressedBuffer.toString('base64')
+
+    // Always return as JPEG after compression for consistency
+    return `data:image/jpeg;base64,${base64}`
   } catch (error) {
     console.error('URL to base64 conversion failed:', error)
     throw new Error('이미지 URL을 처리할 수 없습니다.')
+  }
+}
+
+/**
+ * Compress image buffer to <2MB using sharp (server-side)
+ * Progressive quality reduction ensures optimal size/quality balance
+ */
+async function compressImageBuffer(buffer: Buffer): Promise<Buffer> {
+  try {
+    const image = sharp(buffer)
+    const metadata = await image.metadata()
+
+    // Target: 2MB max (will be ~2.6MB after base64 encoding)
+    const TARGET_SIZE_MB = 2
+    const TARGET_SIZE_BYTES = TARGET_SIZE_MB * 1024 * 1024
+
+    // Resize if dimensions are too large (max 2048px on longest side)
+    const MAX_DIMENSION = 2048
+    let resizeOptions = {}
+
+    if (metadata.width && metadata.height) {
+      const maxSize = Math.max(metadata.width, metadata.height)
+      if (maxSize > MAX_DIMENSION) {
+        if (metadata.width > metadata.height) {
+          resizeOptions = { width: MAX_DIMENSION }
+        } else {
+          resizeOptions = { height: MAX_DIMENSION }
+        }
+      }
+    }
+
+    // Progressive quality reduction
+    let quality = 90
+    let compressed = await image
+      .resize(resizeOptions)
+      .jpeg({ quality, mozjpeg: true })
+      .toBuffer()
+
+    // Reduce quality until target size is reached
+    while (compressed.length > TARGET_SIZE_BYTES && quality > 60) {
+      quality -= 5
+      compressed = await image
+        .resize(resizeOptions)
+        .jpeg({ quality, mozjpeg: true })
+        .toBuffer()
+    }
+
+    // If still too large, apply more aggressive resizing
+    if (compressed.length > TARGET_SIZE_BYTES) {
+      const reductionFactor = 0.8
+      const reducedWidth = metadata.width ? Math.floor(metadata.width * reductionFactor) : undefined
+      const reducedHeight = metadata.height ? Math.floor(metadata.height * reductionFactor) : undefined
+
+      compressed = await image
+        .resize({ width: reducedWidth, height: reducedHeight })
+        .jpeg({ quality: 60, mozjpeg: true })
+        .toBuffer()
+    }
+
+    console.log(`Image compressed: ${(buffer.length / 1024 / 1024).toFixed(2)}MB → ${(compressed.length / 1024 / 1024).toFixed(2)}MB`)
+
+    return compressed
+  } catch (error) {
+    console.error('Image compression failed, returning original:', error)
+    // Fallback: return original buffer if compression fails
+    return buffer
   }
 }
 

@@ -29,8 +29,20 @@ export const generatePreview = async (request: GenerationRequest): Promise<strin
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || '이미지 생성에 실패했습니다.');
+      let errorMessage = '이미지 생성에 실패했습니다.';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch {
+        // JSON 파싱 실패 시 텍스트로 읽기 (413 등의 경우)
+        try {
+          const textError = await response.text();
+          errorMessage = textError || `서버 오류 (${response.status})`;
+        } catch {
+          errorMessage = `서버 오류 (${response.status})`;
+        }
+      }
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
@@ -65,8 +77,20 @@ export const generateImageVariations = async (request: GenerationRequest): Promi
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || '이미지 생성에 실패했습니다.');
+      let errorMessage = '이미지 생성에 실패했습니다.';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch {
+        // JSON 파싱 실패 시 텍스트로 읽기 (413 등의 경우)
+        try {
+          const textError = await response.text();
+          errorMessage = textError || `서버 오류 (${response.status})`;
+        } catch {
+          errorMessage = `서버 오류 (${response.status})`;
+        }
+      }
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();

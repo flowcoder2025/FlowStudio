@@ -18,14 +18,11 @@ import { GoogleGenAI } from '@google/genai'
 const PRO_MODEL = 'gemini-3-pro-image-preview'
 const COST_PER_IMAGE_USD = 0.14
 
-// Request body size limit configuration
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb', // 압축된 이미지를 위한 충분한 여유
-    },
-  },
-}
+// Next.js 15+ App Router Configuration
+// Note: Body size is now handled by imageConverter.ts compression (target: <2MB)
+// All images are automatically compressed server-side with sharp before API calls
+export const maxDuration = 60 // Maximum execution time in seconds
+export const dynamic = 'force-dynamic' // Force dynamic rendering (no caching)
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
