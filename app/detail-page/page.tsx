@@ -426,42 +426,44 @@ function DetailPageContent() {
       <div className="max-w-6xl mx-auto px-4 py-8 pb-32 flex flex-col md:flex-row gap-8">
         {/* Left Panel: Controls */}
         <div className="md:w-1/2 flex flex-col gap-6">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center justify-between gap-2 md:gap-4">
             <div>
               <h2 className="text-2xl font-bold mb-2 flex items-center gap-2 text-slate-900 dark:text-slate-100">
                 <Layout className="text-blue-600 dark:text-blue-400" /> 상세페이지 빌더
                 {currentDraftTitle && (
-                  <span className="text-sm font-normal text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
+                  <span className="hidden sm:inline-flex text-sm font-normal text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
                     {currentDraftTitle}
                   </span>
                 )}
               </h2>
-              <p className="text-slate-600 dark:text-slate-300 text-sm">
+              <p className="hidden md:block text-slate-600 dark:text-slate-300 text-sm">
                 원하는 섹션을 순서대로 생성하여 쌓아올리세요. (가로 1080px 기준)
               </p>
             </div>
-            <div className="flex gap-2 shrink-0">
+            <div className="flex gap-1.5 md:gap-2 shrink-0">
               <button
                 onClick={handleNewProject}
-                className="flex items-center gap-1.5 px-3 py-2 min-h-[44px] bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-1.5 px-2.5 md:px-3 py-2 min-h-[44px] bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-medium transition-colors"
                 title="새로 시작하기"
               >
                 <FilePlus2 className="w-4 h-4" />
-                새로하기
+                <span className="hidden sm:inline">새로하기</span>
               </button>
               <button
                 onClick={() => setIsLoadModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2 min-h-[44px] bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-1.5 px-2.5 md:px-3 py-2 min-h-[44px] bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-medium transition-colors"
+                title="불러오기"
               >
                 <FileText className="w-4 h-4" />
-                불러오기
+                <span className="hidden sm:inline">불러오기</span>
               </button>
               <button
                 onClick={openSaveModal}
-                className="flex items-center gap-1.5 px-3 py-2 min-h-[44px] bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-1.5 px-2.5 md:px-3 py-2 min-h-[44px] bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
+                title="저장하기"
               >
                 <Save className="w-4 h-4" />
-                저장하기
+                <span className="hidden sm:inline">저장하기</span>
               </button>
             </div>
           </div>
