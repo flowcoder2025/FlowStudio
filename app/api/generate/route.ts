@@ -98,8 +98,9 @@ export async function POST(req: NextRequest) {
 
       const response = await ai.models.generateContent({
         model: PRO_MODEL,
-        contents: { parts },
+        contents: parts, // ✅ 배열 직접 전달 [{ text: ... }, { inlineData: ... }]
         config: {
+          responseModalities: ['TEXT', 'IMAGE'], // 이미지 응답 명시
           imageConfig: { aspectRatio: aspectRatio || '1:1' },
         },
       })
@@ -197,7 +198,10 @@ export async function POST(req: NextRequest) {
     let userFriendlyMessage = '이미지 생성 중 오류가 발생했습니다.'
     let statusCode = 500
 
-    if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('quota')) {
+    if (errorMessage.includes('503') || errorMessage.includes('UNAVAILABLE') || errorMessage.includes('overloaded')) {
+      userFriendlyMessage = 'Google Gemini 서버가 일시적으로 과부하 상태입니다. 잠시 후 다시 시도해주세요. (보통 30초~1분 후 복구)'
+      statusCode = 503
+    } else if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('quota')) {
       userFriendlyMessage = 'Google Gemini API 할당량이 초과되었습니다. 잠시 후 다시 시도해주세요. (무료 티어: 분당/일일 요청 제한)'
       statusCode = 429
 
