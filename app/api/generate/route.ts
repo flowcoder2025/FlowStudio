@@ -18,6 +18,15 @@ import { GoogleGenAI } from '@google/genai'
 const PRO_MODEL = 'gemini-3-pro-image-preview'
 const COST_PER_IMAGE_USD = 0.14
 
+// Request body size limit configuration
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb', // 압축된 이미지를 위한 충분한 여유
+    },
+  },
+}
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
 
@@ -207,6 +216,12 @@ export async function POST(req: NextRequest) {
     } else if (errorMessage.includes('network') || errorMessage.includes('ENOTFOUND')) {
       userFriendlyMessage = '네트워크 연결을 확인해주세요. Google AI 서비스에 접근할 수 없습니다.'
       statusCode = 503
+    } else if (errorMessage.includes('413') || errorMessage.includes('Payload') || errorMessage.includes('too large')) {
+      userFriendlyMessage = '이미지 파일이 너무 큽니다. 4MB 이하의 이미지를 사용해주세요. (고화질 이미지는 자동으로 압축됩니다)'
+      statusCode = 413
+    } else if (errorMessage.includes('body size') || errorMessage.includes('entity too large')) {
+      userFriendlyMessage = '전송된 데이터가 너무 큽니다. 이미지 크기를 줄여주세요. (권장: 3MB 이하)'
+      statusCode = 413
     }
 
     // 실패 이력 기록

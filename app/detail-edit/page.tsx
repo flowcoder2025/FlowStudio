@@ -9,6 +9,7 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode, GenerationRequest } from '@/types';
 import { generatePreview, extractTextFromImage } from '@/services/geminiService';
 import { recordUsage } from '@/services/usageService';
+import { compressImageWithStats, isFileTooLarge } from '@/lib/utils/imageCompression';
 
 type EditModeSub = 'GENERAL' | 'TEXT' | 'REPLACE';
 type ActiveTool = 'SELECT' | 'PAN';
@@ -44,6 +45,7 @@ function DetailEditPageContent() {
   const [panStart, setPanStart] = useState<{x: number, y: number, scrollLeft: number, scrollTop: number} | null>(null);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const imageRef = useRef<HTMLImageElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -61,27 +63,73 @@ function DetailEditPageContent() {
     }
   }, [uploadedImage]);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUploadedImage(reader.result as string);
+    if (!file) return;
+
+    try {
+      const needsCompression = isFileTooLarge(file, 3);
+
+      if (needsCompression) {
+        setIsCompressing(true);
+        console.log(`🖼️ 이미지 압축 시작: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+
+        const result = await compressImageWithStats(file, {
+          maxSizeMB: 2,
+          maxWidthOrHeight: 2048,
+        });
+
+        console.log(`✅ 압축 완료: ${result.originalSizeMB.toFixed(2)}MB → ${result.compressedSizeMB.toFixed(2)}MB (${result.reductionPercent.toFixed(1)}% 감소)`);
+        setUploadedImage(result.compressed);
         setSelectionRect(null);
         setEditedSectionOverlay(null);
-      };
-      reader.readAsDataURL(file);
+        setIsCompressing(false);
+      } else {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setUploadedImage(reader.result as string);
+          setSelectionRect(null);
+          setEditedSectionOverlay(null);
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (error) {
+      console.error('이미지 압축 오류:', error);
+      setIsCompressing(false);
+      alert('이미지 처리 중 오류가 발생했습니다. 다른 이미지를 시도해주세요.');
     }
   };
 
-  const handleReplacementImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReplacementImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setReplacementImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    try {
+      const needsCompression = isFileTooLarge(file, 3);
+
+      if (needsCompression) {
+        setIsCompressing(true);
+        console.log(`🖼️ 교체 이미지 압축 시작: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+
+        const result = await compressImageWithStats(file, {
+          maxSizeMB: 2,
+          maxWidthOrHeight: 2048,
+        });
+
+        console.log(`✅ 압축 완료: ${result.originalSizeMB.toFixed(2)}MB → ${result.compressedSizeMB.toFixed(2)}MB (${result.reductionPercent.toFixed(1)}% 감소)`);
+        setReplacementImage(result.compressed);
+        setIsCompressing(false);
+      } else {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setReplacementImage(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (error) {
+      console.error('교체 이미지 압축 오류:', error);
+      setIsCompressing(false);
+      alert('이미지 처리 중 오류가 발생했습니다. 다른 이미지를 시도해주세요.');
     }
   };
 
@@ -799,6 +847,7 @@ function DetailEditPageContent() {
       </div>
 
       <LoadingOverlay isVisible={isLoading} message="AI가 선택 영역을 편집하고 있습니다..." />
+      <LoadingOverlay isVisible={isCompressing} message="이미지 압축 중..." />
 
       {/* Image Gallery Modal */}
       <ImageGalleryModal

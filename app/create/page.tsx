@@ -10,6 +10,7 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
 import { CATEGORIES, ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, upscaleImage } from '@/services/geminiService';
+import { compressImageWithStats, isFileTooLarge } from '@/lib/utils/imageCompression';
 
 export default function CreatePage() {
   return (
@@ -30,6 +31,7 @@ function CreatePageContent() {
   const [isUpscaling, setIsUpscaling] = useState(false);
   const [upscaledImage, setUpscaledImage] = useState<string | null>(null);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -37,14 +39,38 @@ function CreatePageContent() {
     setUploadedImage(imageUrl);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUploadedImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    try {
+      // 파일 크기 확인 및 압축 필요 여부 판단
+      const needsCompression = isFileTooLarge(file, 3); // 3MB 이상이면 압축
+
+      if (needsCompression) {
+        setIsCompressing(true);
+        console.log(`🖼️ 이미지 압축 시작: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+
+        const result = await compressImageWithStats(file, {
+          maxSizeMB: 2,
+          maxWidthOrHeight: 2048,
+        });
+
+        console.log(`✅ 압축 완료: ${result.originalSizeMB.toFixed(2)}MB → ${result.compressedSizeMB.toFixed(2)}MB (${result.reductionPercent.toFixed(1)}% 감소)`);
+        setUploadedImage(result.compressed);
+        setIsCompressing(false);
+      } else {
+        // 3MB 이하는 압축 없이 그대로 사용
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setUploadedImage(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (error) {
+      console.error('이미지 압축 오류:', error);
+      setIsCompressing(false);
+      alert('이미지 처리 중 오류가 발생했습니다. 다른 이미지를 시도해주세요.');
     }
   };
 
@@ -320,6 +346,7 @@ function CreatePageContent() {
 
       <LoadingOverlay isVisible={isLoading} message="이미지 생성 중..." />
       <LoadingOverlay isVisible={isUpscaling} message="업스케일링 중..." />
+      <LoadingOverlay isVisible={isCompressing} message="이미지 압축 중..." />
       <ResultGrid
         images={generatedImages}
         onClose={() => setGeneratedImages([])}

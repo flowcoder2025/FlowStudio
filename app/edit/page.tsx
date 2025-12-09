@@ -10,6 +10,7 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode, GenerationRequest } from '@/types';
 import { ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, generatePreview, upscaleImage } from '@/services/geminiService';
+import { compressImageWithStats, isFileTooLarge } from '@/lib/utils/imageCompression';
 
 export default function EditPage() {
   return (
@@ -30,18 +31,42 @@ function EditPageContent() {
   const [isUpscaling, setIsUpscaling] = useState(false);
   const [upscaledImage, setUpscaledImage] = useState<string | null>(null);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUploadedImage(reader.result as string);
+    if (!file) return;
+
+    try {
+      const needsCompression = isFileTooLarge(file, 3);
+
+      if (needsCompression) {
+        setIsCompressing(true);
+        console.log(`🖼️ 이미지 압축 시작: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+
+        const result = await compressImageWithStats(file, {
+          maxSizeMB: 2,
+          maxWidthOrHeight: 2048,
+        });
+
+        console.log(`✅ 압축 완료: ${result.originalSizeMB.toFixed(2)}MB → ${result.compressedSizeMB.toFixed(2)}MB (${result.reductionPercent.toFixed(1)}% 감소)`);
+        setUploadedImage(result.compressed);
         setPreviewImage(null);
-      };
-      reader.readAsDataURL(file);
+        setIsCompressing(false);
+      } else {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setUploadedImage(reader.result as string);
+          setPreviewImage(null);
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (error) {
+      console.error('이미지 압축 오류:', error);
+      setIsCompressing(false);
+      alert('이미지 처리 중 오류가 발생했습니다. 다른 이미지를 시도해주세요.');
     }
   };
 
@@ -354,6 +379,7 @@ function EditPageContent() {
       <LoadingOverlay isVisible={isLoading} message="이미지 생성 중..." />
       <LoadingOverlay isVisible={isPreviewLoading} message="미리보기 생성 중..." />
       <LoadingOverlay isVisible={isUpscaling} message="업스케일링 중..." />
+      <LoadingOverlay isVisible={isCompressing} message="이미지 압축 중..." />
       <ResultGrid
         images={generatedImages}
         onClose={() => setGeneratedImages([])}

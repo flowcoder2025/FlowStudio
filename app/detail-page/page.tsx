@@ -10,6 +10,7 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode, Category, StyleOption, LayoutOption, GenerationRequest } from '@/types';
 import { DETAIL_PAGE_CATEGORIES, LAYOUT_OPTIONS } from '@/constants';
 import { generateImageVariations } from '@/services/geminiService';
+import { compressImageWithStats, isFileTooLarge } from '@/lib/utils/imageCompression';
 
 // Draft type for the list
 interface DraftSummary {
@@ -47,6 +48,7 @@ function DetailPageContent() {
   const [detailPageSegments, setDetailPageSegments] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [galleryTarget, setGalleryTarget] = useState<'main' | 'ref' | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   // Draft management state
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
@@ -241,25 +243,69 @@ function DetailPageContent() {
     setGalleryTarget(null);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUploadedImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    try {
+      const needsCompression = isFileTooLarge(file, 3);
+
+      if (needsCompression) {
+        setIsCompressing(true);
+        console.log(`🖼️ 이미지 압축 시작: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+
+        const result = await compressImageWithStats(file, {
+          maxSizeMB: 2,
+          maxWidthOrHeight: 2048,
+        });
+
+        console.log(`✅ 압축 완료: ${result.originalSizeMB.toFixed(2)}MB → ${result.compressedSizeMB.toFixed(2)}MB (${result.reductionPercent.toFixed(1)}% 감소)`);
+        setUploadedImage(result.compressed);
+        setIsCompressing(false);
+      } else {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setUploadedImage(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (error) {
+      console.error('이미지 압축 오류:', error);
+      setIsCompressing(false);
+      alert('이미지 처리 중 오류가 발생했습니다. 다른 이미지를 시도해주세요.');
     }
   };
 
-  const handleRefImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRefImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setRefImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    try {
+      const needsCompression = isFileTooLarge(file, 3);
+
+      if (needsCompression) {
+        setIsCompressing(true);
+        console.log(`🖼️ 참조 이미지 압축 시작: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+
+        const result = await compressImageWithStats(file, {
+          maxSizeMB: 2,
+          maxWidthOrHeight: 2048,
+        });
+
+        console.log(`✅ 압축 완료: ${result.originalSizeMB.toFixed(2)}MB → ${result.compressedSizeMB.toFixed(2)}MB (${result.reductionPercent.toFixed(1)}% 감소)`);
+        setRefImage(result.compressed);
+        setIsCompressing(false);
+      } else {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setRefImage(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (error) {
+      console.error('참조 이미지 압축 오류:', error);
+      setIsCompressing(false);
+      alert('이미지 처리 중 오류가 발생했습니다. 다른 이미지를 시도해주세요.');
     }
   };
 
@@ -656,6 +702,7 @@ function DetailPageContent() {
       </div>
 
       <LoadingOverlay isVisible={isLoading} message="상세페이지 섹션 4장을 생성하고 있습니다..." />
+      <LoadingOverlay isVisible={isCompressing} message="이미지 압축 중..." />
 
       {/* 4장 생성 결과에서 선택 */}
       {isSelectionModalOpen && (
