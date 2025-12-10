@@ -13,6 +13,9 @@ import {
   FilePenLine,
   RefreshCw,
   Check,
+  Calendar,
+  Tag,
+  RotateCcw,
 } from 'lucide-react'
 import type { UserImage } from '@/app/api/images/list/route'
 
@@ -45,6 +48,12 @@ export function ImageGalleryModal({
   const [filterMode, setFilterMode] = useState<FilterMode>('ALL')
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
+  // 날짜 및 태그 필터
+  const [dateFrom, setDateFrom] = useState<string>('')
+  const [dateTo, setDateTo] = useState<string>('')
+  const [selectedTag, setSelectedTag] = useState<string>('')
+  const [availableTags, setAvailableTags] = useState<string[]>([])
+
   const fetchImages = useCallback(async () => {
     setIsLoading(true)
     setError(null)
@@ -53,6 +62,15 @@ export function ImageGalleryModal({
       const params = new URLSearchParams()
       if (filterMode !== 'ALL') {
         params.set('mode', filterMode)
+      }
+      if (dateFrom) {
+        params.set('dateFrom', dateFrom)
+      }
+      if (dateTo) {
+        params.set('dateTo', dateTo)
+      }
+      if (selectedTag) {
+        params.set('tag', selectedTag)
       }
 
       const response = await fetch(`/api/images/list?${params.toString()}`)
@@ -63,13 +81,20 @@ export function ImageGalleryModal({
 
       const data = await response.json()
       setImages(data.images || [])
+
+      // 사용 가능한 태그 목록 추출 (중복 제거)
+      const tags = new Set<string>()
+      data.images.forEach((img: UserImage) => {
+        img.tags.forEach((tag: string) => tags.add(tag))
+      })
+      setAvailableTags(Array.from(tags).sort())
     } catch (err) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.')
       setImages([])
     } finally {
       setIsLoading(false)
     }
-  }, [filterMode])
+  }, [filterMode, dateFrom, dateTo, selectedTag])
 
   useEffect(() => {
     if (isOpen) {
@@ -87,6 +112,13 @@ export function ImageGalleryModal({
 
   const handleImageClick = (url: string) => {
     setSelectedImage(url === selectedImage ? null : url)
+  }
+
+  const resetFilters = () => {
+    setFilterMode('ALL')
+    setDateFrom('')
+    setDateTo('')
+    setSelectedTag('')
   }
 
   if (!isOpen) return null
@@ -146,6 +178,59 @@ export function ImageGalleryModal({
               className={`w-4 h-4 text-slate-500 ${isLoading ? 'animate-spin' : ''}`}
             />
           </button>
+        </div>
+
+        {/* 날짜 및 태그 필터 */}
+        <div className="px-6 py-3 border-b border-slate-100 dark:border-slate-700 flex flex-wrap items-center gap-3">
+          {/* 날짜 필터 */}
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-slate-500" />
+            <span className="text-xs text-slate-500 font-medium">기간:</span>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="px-2 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="시작일"
+            />
+            <span className="text-xs text-slate-400">~</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="px-2 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="종료일"
+            />
+          </div>
+
+          {/* 태그 필터 */}
+          <div className="flex items-center gap-2">
+            <Tag className="w-4 h-4 text-slate-500" />
+            <span className="text-xs text-slate-500 font-medium">태그:</span>
+            <select
+              value={selectedTag}
+              onChange={(e) => setSelectedTag(e.target.value)}
+              className="px-2 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            >
+              <option value="">전체</option>
+              {availableTags.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 필터 리셋 버튼 */}
+          {(filterMode !== 'ALL' || dateFrom || dateTo || selectedTag) && (
+            <button
+              onClick={resetFilters}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded transition-colors"
+            >
+              <RotateCcw className="w-3 h-3" />
+              필터 초기화
+            </button>
+          )}
         </div>
 
         {/* Content */}

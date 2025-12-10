@@ -19,6 +19,7 @@ export interface UserImage {
   mode: string
   createdAt: string
   index: number
+  tags: string[]
 }
 
 export interface ImagesListResponse {
@@ -37,6 +38,9 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const mode = searchParams.get('mode') // CREATE, EDIT, DETAIL_PAGE, DETAIL_EDIT
+    const tag = searchParams.get('tag') // 단일 태그 필터
+    const dateFrom = searchParams.get('dateFrom') // ISO 날짜 문자열
+    const dateTo = searchParams.get('dateTo') // ISO 날짜 문자열
     const limit = parseInt(searchParams.get('limit') || '100')
     const offset = parseInt(searchParams.get('offset') || '0')
 
@@ -53,6 +57,8 @@ export async function GET(req: NextRequest) {
       deletedAt: null
       resultImages: { isEmpty: boolean }
       mode?: string
+      tags?: { has: string }
+      createdAt?: { gte?: Date; lte?: Date }
     } = {
       id: { in: accessibleIds },
       deletedAt: null,
@@ -61,6 +67,23 @@ export async function GET(req: NextRequest) {
 
     if (mode) {
       whereClause.mode = mode
+    }
+
+    if (tag) {
+      whereClause.tags = { has: tag }
+    }
+
+    if (dateFrom || dateTo) {
+      whereClause.createdAt = {}
+      if (dateFrom) {
+        whereClause.createdAt.gte = new Date(dateFrom)
+      }
+      if (dateTo) {
+        // dateTo는 해당 날짜의 끝까지 포함하도록 다음날 00:00:00으로 설정
+        const endDate = new Date(dateTo)
+        endDate.setDate(endDate.getDate() + 1)
+        whereClause.createdAt.lte = endDate
+      }
     }
 
     // 프로젝트 조회 (결과 이미지가 있는 것만)
@@ -72,6 +95,7 @@ export async function GET(req: NextRequest) {
         title: true,
         mode: true,
         resultImages: true,
+        tags: true,
         createdAt: true,
       },
       take: limit,
@@ -95,6 +119,7 @@ export async function GET(req: NextRequest) {
           mode: project.mode,
           createdAt: project.createdAt.toISOString(),
           index: i,
+          tags: project.tags,
         })
       }
     }
