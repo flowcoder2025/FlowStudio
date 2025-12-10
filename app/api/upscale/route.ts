@@ -11,6 +11,12 @@ import { decrypt } from '@/lib/utils/encryption'
 import { uploadMultipleImages } from '@/lib/utils/imageStorage'
 import { ensureBase64, extractBase64Data } from '@/lib/utils/imageConverter'
 import { GoogleGenAI } from '@google/genai'
+import {
+  hasEnoughCredits,
+  deductCredits,
+  CREDIT_PRICES
+} from '@/lib/utils/creditManager'
+import { InsufficientCreditsError, formatApiError } from '@/lib/errors'
 
 const PRO_MODEL = 'gemini-3-pro-image-preview'
 const COST_PER_IMAGE_USD = 0.14
@@ -38,7 +44,20 @@ export async function POST(req: NextRequest) {
     // 2. API 키 복호화
     const apiKey = decrypt(apiKeyRecord.encryptedKey)
 
-    // 3. 요청 파싱
+    // 3. 크레딧 잔액 확인 (업스케일 1회 = 10 크레딧)
+    const hasEnough = await hasEnoughCredits(session.user.id, CREDIT_PRICES.UPSCALE_4K)
+
+    if (!hasEnough) {
+      return NextResponse.json(
+        {
+          error: `크레딧이 부족합니다. 업스케일링에는 ${CREDIT_PRICES.UPSCALE_4K} 크레딧이 필요합니다.`,
+          required: CREDIT_PRICES.UPSCALE_4K
+        },
+        { status: 402 } // Payment Required
+      )
+    }
+
+    // 4. 요청 파싱
     const body = await req.json()
     const { image } = body
 
@@ -97,7 +116,21 @@ export async function POST(req: NextRequest) {
       'upscaled'
     )
 
-    // 9. 사용량 기록
+    // 9. 크레딧 차감 (10 크레딧)
+    await deductCredits(
+      session.user.id,
+      CREDIT_PRICES.UPSCALE_4K,
+      'UPSCALE',
+      '4K 업스케일링 (1장)',
+      {
+        imageCount: 1,
+        resolution: '4K'
+      }
+    )
+
+    console.log(`[Upscale] Credits deducted: ${CREDIT_PRICES.UPSCALE_4K} credits`)
+
+    // 10. 사용량 기록
     const today = new Date().toISOString().split('T')[0]
 
     await prisma.usageStats.upsert({

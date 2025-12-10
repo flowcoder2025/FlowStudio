@@ -63,6 +63,13 @@ export class ConflictError extends AppError {
   }
 }
 
+export class InsufficientCreditsError extends AppError {
+  constructor(message: string = '크레딧이 부족합니다.') {
+    super(message, 402) // 402 Payment Required
+    Object.setPrototypeOf(this, InsufficientCreditsError.prototype)
+  }
+}
+
 // ============================================
 // Error Formatting
 // ============================================
@@ -141,6 +148,7 @@ export const HTTP_STATUS = {
   NO_CONTENT: 204,
   BAD_REQUEST: 400,
   UNAUTHORIZED: 401,
+  PAYMENT_REQUIRED: 402,
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,

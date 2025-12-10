@@ -34,15 +34,35 @@ model User {
   emailVerified DateTime?
   image         String?
 
+  // Business Verification Fields
+  businessNumber       String?   @unique // 사업자등록번호 (10자리, 하이픈 제거)
+  businessOwnerName    String?            // 담당자 이름
+  businessPhone        String?            // 전화번호
+  businessVerified     Boolean   @default(false)  // 인증 완료 여부
+  businessVerifiedAt   DateTime?          // 인증 완료 시각
+  businessBonusClaimed Boolean   @default(false)  // 사업자 보너스 크레딧 지급 여부
+
+  // Referral Fields
+  referralCode         String?   @unique // 추천 코드 (8자리 영숫자)
+  referredBy           String?            // 추천인 ID (가입 시 입력된 추천 코드의 소유자)
+
   // Relations
-  accounts      Account[]
-  sessions      Session[]
-  imageProjects ImageProject[]
-  apiKeys       ApiKey[]
-  usageStats    UsageStats?
+  accounts              Account[]
+  sessions              Session[]
+  imageProjects         ImageProject[]
+  apiKeys               ApiKey[]
+  usageStats            UsageStats?
+  credit                Credit?
+  creditTransactions    CreditTransaction[]
+  subscription          Subscription?
+  generationHistory     GenerationHistory[]
+  referralsGiven        Referral[]        @relation("Referrer")   // 내가 추천한 사람들
+  referralsReceived     Referral[]        @relation("Referred")   // 나를 추천한 사람
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([businessNumber])
 }
 
 // Account - OAuth provider accounts
@@ -167,6 +187,8 @@ model GenerationHistory {
   status        String   // 'success', 'failed'
   errorMessage  String?  @db.Text
 
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   createdAt     DateTime @default(now())
 
   @@index([userId])
@@ -238,20 +260,100 @@ model DetailPageDraft {
 }
 
 // ========================================
-// Optional: Subscription (Future Premium Plans)
+// Credit System (Server-managed Vertex AI Billing)
+// ========================================
+
+// Credit - User credit balance
+model Credit {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  balance   Int      @default(0) // 크레딧 잔액 (1 크레딧 = ₩100)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// CreditTransaction - Credit usage/purchase history
+model CreditTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Int      // 양수: 충전/보너스, 음수: 사용
+  type        String   // 'PURCHASE', 'BONUS', 'REFERRAL', 'GENERATION', 'UPSCALE'
+  description String?  @db.Text
+  metadata    Json?    // 결제 정보, 이미지 생성 정보 등 (해상도, 생성 수량 등)
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ========================================
+// Subscription (Storage & Feature Access)
 // ========================================
 
 model Subscription {
-  id                String    @id @default(cuid())
-  userId            String    @unique
-  plan              String    // 'free', 'pro', 'enterprise'
-  status            String    // 'active', 'cancelled', 'expired'
-  currentPeriodEnd  DateTime?
-  cancelAtPeriodEnd Boolean   @default(false)
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  tier            String    @default("FREE") // 'FREE', 'PLUS', 'PRO', 'ENTERPRISE'
+  status          String    @default("ACTIVE") // 'ACTIVE', 'CANCELLED', 'EXPIRED', 'PAUSED'
 
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  // 티어별 혜택
+  storageQuotaGB  Int       @default(1) // 저장 공간 (GB)
+  concurrentLimit Int       @default(1) // 동시 생성 제한
+  watermarkFree   Boolean   @default(false) // 워터마크 제거 여부
+  priorityQueue   Boolean   @default(false) // 우선 처리 여부
+
+  // 구독 기간
+  startDate       DateTime  @default(now())
+  endDate         DateTime? // null이면 무기한 (FREE 티어)
+  cancelledAt     DateTime?
+
+  // 결제 정보 (외부 결제 시스템 ID)
+  paymentProvider String?   // 'TOSS', 'STRIPE', 'MANUAL'
+  externalId      String?   // 외부 결제 시스템의 구독 ID
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([userId])
   @@index([status])
+  @@index([tier])
+  @@index([endDate])
+}
+
+// ========================================
+// Referral System
+// ========================================
+
+// Referral - Track referral relationships and reward status
+model Referral {
+  id             String    @id @default(cuid())
+  referrerId     String    // 추천인 ID
+  referredId     String    // 가입자 ID
+  status         String    @default("PENDING") // 'PENDING', 'COMPLETED'
+  creditsAwarded Boolean   @default(false) // 크레딧 지급 완료 여부
+  awardedAt      DateTime? // 크레딧 지급 시각
+
+  // Relations
+  referrer       User      @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referred       User      @relation("Referred", fields: [referredId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([referrerId, referredId])
+  @@index([referrerId])
+  @@index([referredId])
+  @@index([status])
+  @@index([creditsAwarded])
 }

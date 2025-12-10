@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { AppMode } from '@/types';
 import { useNavigation } from '@/hooks/useNavigation';
 import { ProfileDropdown } from './ProfileDropdown';
+import { CreditBalance } from './CreditBalance';
 
 interface HeaderProps {
   currentMode: AppMode;
@@ -112,8 +113,11 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
           {status === 'loading' ? (
             <div className="px-3 py-2 text-sm text-slate-400 dark:text-slate-500">로딩 중...</div>
           ) : session ? (
-            // Logged in state - Profile Dropdown
-            <ProfileDropdown />
+            // Logged in state - Credit Balance + Profile Dropdown
+            <div className="flex items-center gap-3">
+              <CreditBalance />
+              <ProfileDropdown />
+            </div>
           ) : (
             // Not logged in state - Login Button
             <button

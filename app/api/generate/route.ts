@@ -14,6 +14,12 @@ import { prisma } from '@/lib/prisma'
 import { decrypt } from '@/lib/utils/encryption'
 import { ensureBase64, extractBase64Data } from '@/lib/utils/imageConverter'
 import { GoogleGenAI } from '@google/genai'
+import {
+  hasEnoughCredits,
+  deductForGeneration,
+  CREDIT_PRICES
+} from '@/lib/utils/creditManager'
+import { InsufficientCreditsError } from '@/lib/errors'
 
 const PRO_MODEL = 'gemini-3-pro-image-preview'
 const COST_PER_IMAGE_USD = 0.14
@@ -47,7 +53,20 @@ export async function POST(req: NextRequest) {
     // 2. API 키 복호화
     const apiKey = decrypt(apiKeyRecord.encryptedKey)
 
-    // 3. 요청 파싱
+    // 3. 크레딧 잔액 확인 (2K 생성 1회 = 20 크레딧)
+    const hasEnough = await hasEnoughCredits(session.user.id, CREDIT_PRICES.GENERATION_2K)
+
+    if (!hasEnough) {
+      return NextResponse.json(
+        {
+          error: `크레딧이 부족합니다. 2K 이미지 생성에는 ${CREDIT_PRICES.GENERATION_2K} 크레딧이 필요합니다.`,
+          required: CREDIT_PRICES.GENERATION_2K
+        },
+        { status: 402 } // Payment Required
+      )
+    }
+
+    // 4. 요청 파싱
     const body = await req.json()
     const { projectId, prompt, sourceImage, refImage, logoImage, category, style, aspectRatio, mode } = body
 
@@ -152,7 +171,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '이미지 생성에 실패했습니다.' }, { status: 500 })
     }
 
-    // 8. 사용량 기록 (API 호출 비용 추적)
+    // 8. 크레딧 차감 (2K 생성 1회 = 20 크레딧)
+    await deductForGeneration(session.user.id, projectId || 'no-project-id')
+
+    // 9. 사용량 기록 (API 호출 비용 추적)
     const totalCost = base64Images.length * COST_PER_IMAGE_USD
     const today = new Date().toISOString().split('T')[0]
 
