@@ -10,7 +10,7 @@ import { requireImageProjectEditor } from '@/lib/permissions';
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -33,8 +33,10 @@ export async function PATCH(
       );
     }
 
+    const { id } = await params;
+
     // 권한 확인 (편집 권한 필요)
-    await requireImageProjectEditor(user.id, params.id);
+    await requireImageProjectEditor(user.id, id);
 
     const body = await request.json();
     const { tags } = body;
@@ -49,7 +51,7 @@ export async function PATCH(
     // 태그 업데이트
     const updatedProject = await prisma.imageProject.update({
       where: {
-        id: params.id,
+        id,
       },
       data: {
         tags,

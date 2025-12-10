@@ -10,7 +10,7 @@ import { requireImageProjectOwner } from '@/lib/permissions';
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -33,13 +33,15 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
+
     // 권한 확인 (소유자 권한 필요)
-    await requireImageProjectOwner(user.id, params.id);
+    await requireImageProjectOwner(user.id, id);
 
     // Soft delete
     await prisma.imageProject.update({
       where: {
-        id: params.id,
+        id,
       },
       data: {
         deletedAt: new Date(),

@@ -80,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
               }`}
             >
               <FilePenLine className="w-4 h-4" />
-              <span className="hidden md:inline">편집</span>
+              <span className="hidden md:inline">상세 편집</span>
             </button>
             <button
               onClick={() => navigateToMode(AppMode.POSTER)}
