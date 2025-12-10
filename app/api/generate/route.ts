@@ -139,8 +139,8 @@ export async function POST(req: NextRequest) {
     // 7. 4장 생성 (2장씩 2번 순차 - QPM 제한 회피)
     console.log('[API /generate] Generating images in batches to avoid rate limits...')
     const batch1 = await Promise.all([generateSingle(), generateSingle()])
-    console.log('[API /generate] Batch 1 completed, waiting 1 second...')
-    await new Promise(resolve => setTimeout(resolve, 1000)) // 1초 대기
+    console.log('[API /generate] Batch 1 completed, waiting 5 seconds for rate limit...')
+    await new Promise(resolve => setTimeout(resolve, 5000)) // 5초 대기 (QPM 제한 회피)
 
     const batch2 = await Promise.all([generateSingle(), generateSingle()])
     console.log('[API /generate] Batch 2 completed')
