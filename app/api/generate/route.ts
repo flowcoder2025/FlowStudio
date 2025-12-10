@@ -136,9 +136,16 @@ export async function POST(req: NextRequest) {
       return null
     }
 
-    // 7. 4장 병렬 생성 (base64)
-    const promises = Array.from({ length: 4 }, () => generateSingle())
-    const results = await Promise.all(promises)
+    // 7. 4장 생성 (2장씩 2번 순차 - QPM 제한 회피)
+    console.log('[API /generate] Generating images in batches to avoid rate limits...')
+    const batch1 = await Promise.all([generateSingle(), generateSingle()])
+    console.log('[API /generate] Batch 1 completed, waiting 1 second...')
+    await new Promise(resolve => setTimeout(resolve, 1000)) // 1초 대기
+
+    const batch2 = await Promise.all([generateSingle(), generateSingle()])
+    console.log('[API /generate] Batch 2 completed')
+
+    const results = [...batch1, ...batch2]
     const base64Images = results.filter((img): img is string => img !== null)
 
     if (base64Images.length === 0) {
