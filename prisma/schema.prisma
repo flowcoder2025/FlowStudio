@@ -108,6 +108,9 @@ model ImageProject {
   sourceImage  String?  @db.Text
   resultImages String[] @default([]) // Array of Supabase Storage URLs
 
+  // Organization
+  tags         String[] @default([]) // User-defined tags for search and filtering
+
   // Status
   status       String   @default("draft") // 'draft', 'completed', 'shared'
   deletedAt    DateTime?
