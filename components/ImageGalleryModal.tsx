@@ -16,6 +16,8 @@ import {
   Calendar,
   Tag,
   RotateCcw,
+  Megaphone,
+  SlidersHorizontal,
 } from 'lucide-react'
 import type { UserImage } from '@/app/api/images/list/route'
 
@@ -26,7 +28,7 @@ interface ImageGalleryModalProps {
   title?: string
 }
 
-type FilterMode = 'ALL' | 'CREATE' | 'EDIT' | 'DETAIL_PAGE' | 'DETAIL_EDIT'
+type FilterMode = 'ALL' | 'CREATE' | 'EDIT' | 'DETAIL_PAGE' | 'DETAIL_EDIT' | 'POSTER' | 'COLOR_CORRECTION'
 
 const MODE_LABELS: Record<FilterMode, { label: string; icon: React.ReactNode }> = {
   ALL: { label: '전체', icon: <Images className="w-4 h-4" /> },
@@ -34,6 +36,8 @@ const MODE_LABELS: Record<FilterMode, { label: string; icon: React.ReactNode }> 
   EDIT: { label: '간편 편집', icon: <Wand2 className="w-4 h-4" /> },
   DETAIL_PAGE: { label: '상세페이지', icon: <Layout className="w-4 h-4" /> },
   DETAIL_EDIT: { label: '상세 편집', icon: <FilePenLine className="w-4 h-4" /> },
+  POSTER: { label: '포스터', icon: <Megaphone className="w-4 h-4" /> },
+  COLOR_CORRECTION: { label: '색감 보정', icon: <SlidersHorizontal className="w-4 h-4" /> },
 }
 
 export function ImageGalleryModal({
@@ -306,7 +310,13 @@ export function ImageGalleryModal({
                             ? 'bg-emerald-100 text-emerald-700'
                             : image.mode === 'DETAIL_PAGE'
                               ? 'bg-blue-100 text-blue-700'
-                              : 'bg-violet-100 text-violet-700'
+                              : image.mode === 'DETAIL_EDIT'
+                                ? 'bg-violet-100 text-violet-700'
+                                : image.mode === 'POSTER'
+                                  ? 'bg-pink-100 text-pink-700'
+                                  : image.mode === 'COLOR_CORRECTION'
+                                    ? 'bg-amber-100 text-amber-700'
+                                    : 'bg-slate-100 text-slate-700'
                       }`}
                     >
                       {MODE_LABELS[image.mode as FilterMode]?.label || image.mode}

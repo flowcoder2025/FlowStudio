@@ -12,6 +12,7 @@ import {
   RefreshCw,
   FolderOpen,
   ImageIcon,
+  Cloud,
 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
@@ -162,6 +163,42 @@ function ColorCorrectionPageContent() {
     } catch (error) {
       console.error('Upscale error:', error);
       alert(error instanceof Error ? error.message : '고화질 변환에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveToCloud = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    setIsLoading(true);
+
+    try {
+      // Canvas를 base64로 변환
+      const base64Image = canvas.toDataURL('image/png');
+
+      // 클라우드에 저장
+      const response = await fetch('/api/images/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          images: [base64Image],
+          mode: 'COLOR_CORRECTION',
+          prompt: `색감 보정 - 밝기: ${filters.brightness}%, 대비: ${filters.contrast}%, 채도: ${filters.saturation}%`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('클라우드 저장에 실패했습니다.');
+      }
+
+      alert('클라우드에 저장되었습니다!');
+    } catch (error) {
+      console.error('Cloud save error:', error);
+      alert(error instanceof Error ? error.message : '클라우드 저장에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -392,18 +429,27 @@ function ColorCorrectionPageContent() {
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-6 flex gap-2">
+              <div className="mt-6 space-y-2">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setFilters(DEFAULT_FILTERS)}
+                    className="flex-1 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl transition-colors flex items-center justify-center gap-1"
+                  >
+                    <RotateCcw className="w-4 h-4" /> 초기화
+                  </button>
+                  <button
+                    onClick={handleDownload}
+                    className="flex-[2] py-3 text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Download className="w-4 h-4" /> 다운로드
+                  </button>
+                </div>
                 <button
-                  onClick={() => setFilters(DEFAULT_FILTERS)}
-                  className="flex-1 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl transition-colors flex items-center justify-center gap-1"
+                  onClick={handleSaveToCloud}
+                  disabled={isLoading}
+                  className="w-full py-3 text-sm font-bold text-white bg-amber-500 dark:bg-amber-600 hover:bg-amber-600 dark:hover:bg-amber-700 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-amber-200 dark:shadow-amber-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <RotateCcw className="w-4 h-4" /> 초기화
-                </button>
-                <button
-                  onClick={handleDownload}
-                  className="flex-[2] py-3 text-sm font-bold text-white bg-amber-500 dark:bg-amber-600 hover:bg-amber-600 dark:hover:bg-amber-700 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-amber-200 dark:shadow-amber-900/50"
-                >
-                  <Download className="w-4 h-4" /> 저장하기
+                  <Cloud className="w-4 h-4" /> 클라우드 저장
                 </button>
               </div>
             </div>

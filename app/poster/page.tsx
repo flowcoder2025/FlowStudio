@@ -175,7 +175,7 @@ function PosterPageContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           images: [image],
-          mode: 'DETAIL_PAGE',
+          mode: 'POSTER',
           prompt,
           category: selectedCategory?.id,
           aspectRatio: selectedAspectRatio,

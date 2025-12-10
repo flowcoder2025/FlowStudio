@@ -164,8 +164,8 @@ export default function GalleryPage() {
   // 모드 레이블 변환
   const getModeLabel = (mode: string) => {
     const labels: Record<string, string> = {
-      'CREATE': '생성',
-      'EDIT': '편집',
+      'CREATE': '이미지 생성',
+      'EDIT': '간편 편집',
       'DETAIL_PAGE': '상세페이지',
       'DETAIL_EDIT': '상세 편집',
       'POSTER': '포스터',
