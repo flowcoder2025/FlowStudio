@@ -216,7 +216,14 @@ export async function POST(req: NextRequest) {
     console.error('Message:', errorMessage)
     console.error('Stack:', errorStack)
     console.error('User ID:', session.user.id)
+    console.error('Error Type:', error?.constructor?.name)
+    console.error('Full Error Object:', JSON.stringify(error, null, 2))
     console.error('========================================')
+
+    // Vercel 배포 디버깅용: 환경 변수 확인
+    console.error('[DEBUG] GOOGLE_CLOUD_PROJECT:', process.env.GOOGLE_CLOUD_PROJECT)
+    console.error('[DEBUG] GOOGLE_CLOUD_LOCATION:', process.env.GOOGLE_CLOUD_LOCATION)
+    console.error('[DEBUG] GOOGLE_GENAI_USE_VERTEXAI:', process.env.GOOGLE_GENAI_USE_VERTEXAI)
 
     // 할당량 초과 에러 감지 및 친화적 메시지 생성
     let userFriendlyMessage = '이미지 생성 중 오류가 발생했습니다.'
