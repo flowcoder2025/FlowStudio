@@ -74,11 +74,9 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
           {status === 'loading' ? (
             <div className="px-2 py-1 text-xs text-slate-400 dark:text-slate-500">...</div>
           ) : session ? (
-            // Logged in state - Profile Dropdown (크레딧은 프로필 메뉴 안에)
+            // Logged in state - Credit Balance + Profile Dropdown
             <div className="flex items-center gap-2">
-              <div className="hidden md:block">
-                <CreditBalance />
-              </div>
+              <CreditBalance />
               <ProfileDropdown />
             </div>
           ) : (

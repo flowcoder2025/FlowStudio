@@ -57,11 +57,11 @@ export function CreditBalance() {
   return (
     <Link
       href="/credits/purchase"
-      className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+      className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
     >
       <div className="flex items-center gap-1">
         <svg
-          className="w-4 h-4 text-white"
+          className="w-4 h-4 text-white flex-shrink-0"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -73,15 +73,19 @@ export function CreditBalance() {
             d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
-        <span className="text-sm font-medium text-white">
-          {balance?.toLocaleString() || 0} 크레딧
+        {/* 모바일: 숫자만, PC: 숫자 + "크레딧" */}
+        <span className="text-sm font-medium text-white whitespace-nowrap">
+          {balance?.toLocaleString() || 0}
+          <span className="hidden sm:inline"> 크레딧</span>
         </span>
       </div>
-      <span className="text-xs text-blue-100">
+      {/* PC에서만 원화 표시 */}
+      <span className="hidden md:inline text-xs text-blue-100 whitespace-nowrap">
         (₩{balanceKRW.toLocaleString()})
       </span>
+      {/* PC에서만 + 아이콘 */}
       <svg
-        className="w-4 h-4 text-blue-100"
+        className="hidden md:block w-4 h-4 text-blue-100 flex-shrink-0"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
