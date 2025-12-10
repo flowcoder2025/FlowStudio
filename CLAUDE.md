@@ -287,9 +287,14 @@ FlowStudio는 Google Cloud의 Application Default Credentials (ADC)를 사용하
 3. **환경 변수 설정** (`.env.local`):
    ```bash
    GOOGLE_CLOUD_PROJECT="your-google-cloud-project-id"
-   GOOGLE_CLOUD_LOCATION="us-central1"  # 또는 "asia-northeast3" (서울)
+   GOOGLE_CLOUD_LOCATION="global"  # ⚠️ 중요: gemini-3-pro-image-preview는 global만 지원
    GOOGLE_GENAI_USE_VERTEXAI="true"
    ```
+
+   **⚠️ 주의**: `gemini-3-pro-image-preview` 모델은 **Global endpoint만 지원**합니다.
+   - 반드시 `GOOGLE_CLOUD_LOCATION="global"`로 설정해야 합니다.
+   - `us-central1`, `asia-northeast3` 등 리전별 엔드포인트는 지원하지 않습니다.
+   - 참조: [Google Cloud Console - Gemini 3 Pro Image Preview](https://console.cloud.google.com/vertex-ai/publishers/google/model-garden/gemini-3-pro-image-preview)
 
 4. **개발 서버 실행**:
    ```bash
@@ -305,7 +310,7 @@ FlowStudio는 Google Cloud의 Application Default Credentials (ADC)를 사용하
 
 2. **Vercel 환경 변수 설정**:
    - `GOOGLE_CLOUD_PROJECT`: 프로젝트 ID
-   - `GOOGLE_CLOUD_LOCATION`: 리전 (예: `us-central1`)
+   - `GOOGLE_CLOUD_LOCATION`: **반드시 `global`로 설정** (gemini-3-pro-image-preview는 global만 지원)
    - `GOOGLE_GENAI_USE_VERTEXAI`: `true`
    - `GOOGLE_APPLICATION_CREDENTIALS`: JSON 키 파일 내용 전체 (Base64 인코딩 권장)
 
