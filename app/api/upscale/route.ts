@@ -24,6 +24,10 @@ import {
 const PRO_MODEL = VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE_PREVIEW
 const COST_PER_IMAGE_USD = 0.14
 
+// Next.js App Router Configuration
+export const maxDuration = 120 // Maximum execution time in seconds (Vercel Pro)
+export const dynamic = 'force-dynamic' // Force dynamic rendering (no caching)
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
 

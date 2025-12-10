@@ -30,7 +30,7 @@ const COST_PER_IMAGE_USD = 0.14
 // Next.js 15+ App Router Configuration
 // Note: Body size is now handled by imageConverter.ts compression (target: <2MB)
 // All images are automatically compressed server-side with sharp before API calls
-export const maxDuration = 60 // Maximum execution time in seconds
+export const maxDuration = 120 // Maximum execution time in seconds (Vercel Pro)
 export const dynamic = 'force-dynamic' // Force dynamic rendering (no caching)
 
 export async function POST(req: NextRequest) {
