@@ -65,6 +65,60 @@ export const CATEGORIES: Category[] = [
   }
 ];
 
+export const POSTER_CATEGORIES: Category[] = [
+  {
+    id: 'sale_event',
+    label: '세일/이벤트 포스터',
+    icon: 'megaphone',
+    description: '할인, 프로모션, 특별 행사 홍보용 포스터',
+    styles: [
+      { id: 'vibrant_sale', label: '강렬한 세일', promptModifier: 'vibrant colors, high contrast, sale poster, eye-catching, bold typography, energetic', previewColor: 'bg-red-100' },
+      { id: 'elegant_event', label: '우아한 이벤트', promptModifier: 'elegant event poster, sophisticated colors, premium feeling, clean design', previewColor: 'bg-purple-100' },
+      { id: 'fun_promotion', label: '재미있는 프로모션', promptModifier: 'fun and playful, bright colors, friendly atmosphere, casual event poster', previewColor: 'bg-yellow-100' },
+    ]
+  },
+  {
+    id: 'grand_opening',
+    label: '오픈/리뉴얼',
+    icon: 'store',
+    description: '신규 오픈, 리뉴얼 오픈 안내 포스터',
+    styles: [
+      { id: 'fresh_opening', label: '신선한 오픈', promptModifier: 'grand opening poster, fresh and new, welcoming atmosphere, bright and inviting', previewColor: 'bg-green-100' },
+      { id: 'modern_renewal', label: '모던 리뉴얼', promptModifier: 'modern renewal design, sleek and contemporary, sophisticated branding', previewColor: 'bg-blue-100' },
+    ]
+  },
+  {
+    id: 'menu_poster',
+    label: '메뉴판 포스터',
+    icon: 'utensils',
+    description: '식당, 카페 메뉴 안내 포스터',
+    styles: [
+      { id: 'appetizing_menu', label: '식욕 자극 메뉴', promptModifier: 'appetizing food photography, menu board design, delicious presentation, warm tones', previewColor: 'bg-orange-100' },
+      { id: 'cafe_menu', label: '카페 메뉴판', promptModifier: 'cafe menu board, coffee shop vibes, minimalist design, chalkboard style', previewColor: 'bg-amber-100' },
+    ]
+  },
+  {
+    id: 'info_poster',
+    label: '정보 안내 포스터',
+    icon: 'info',
+    description: '영업시간, 주차, 공지사항 등 정보 전달용',
+    styles: [
+      { id: 'clear_info', label: '명확한 안내', promptModifier: 'clear information design, easy to read, organized layout, professional', previewColor: 'bg-blue-50' },
+      { id: 'friendly_notice', label: '친근한 공지', promptModifier: 'friendly notice poster, warm colors, approachable design, casual tone', previewColor: 'bg-teal-100' },
+    ]
+  },
+  {
+    id: 'product_promo',
+    label: '제품 홍보 포스터',
+    icon: 'package',
+    description: '특정 제품이나 신제품 홍보용 포스터',
+    styles: [
+      { id: 'premium_product', label: '프리미엄 제품', promptModifier: 'premium product showcase, luxury branding, high-end photography, sophisticated', previewColor: 'bg-slate-800 text-white' },
+      { id: 'new_arrival', label: '신제품 출시', promptModifier: 'new product launch, exciting and fresh, modern design, attention-grabbing', previewColor: 'bg-indigo-100' },
+    ]
+  }
+];
+
 export const DETAIL_PAGE_CATEGORIES: Category[] = [
   {
     id: 'cosmetics',
@@ -141,9 +195,11 @@ export const LAYOUT_OPTIONS: LayoutOption[] = [
 
 // Aspect Ratio Options for Image Generation
 export const ASPECT_RATIOS = [
-  { id: '1:1', label: '1:1 (정방형)', desc: '기본, 인스타 피드' },
-  { id: '9:16', label: '9:16 (세로)', desc: '스토리, 릴스, 틱톡' },
-  { id: '16:9', label: '16:9 (가로)', desc: '유튜브 썸네일, 배너' },
+  { value: '1:1', label: '1:1 (정방형)', description: '기본, 인스타 피드' },
+  { value: '3:4', label: '3:4 (세로)', description: '세로형 포스터, 포트레이트' },
+  { value: '4:3', label: '4:3 (가로)', description: '가로형 포스터, 프레젠테이션' },
+  { value: '9:16', label: '9:16 (세로)', description: '스토리, 릴스, 틱톡' },
+  { value: '16:9', label: '16:9 (가로)', description: '유튜브 썸네일, 배너' },
 ];
 
 // Usage & Cost Estimation Constants
