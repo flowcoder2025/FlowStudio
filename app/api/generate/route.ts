@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     // 3. 요청 파싱
     const body = await req.json()
-    const { projectId, prompt, sourceImage, refImage, category, style, aspectRatio, mode } = body
+    const { projectId, prompt, sourceImage, refImage, logoImage, category, style, aspectRatio, mode } = body
 
     if (!prompt) {
       return NextResponse.json({ error: '프롬프트를 입력해주세요.' }, { status: 400 })
@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
     // 6. 이미지 URL → base64 변환 (갤러리에서 불러온 이미지 지원)
     let processedSourceImage: string | null = null
     let processedRefImage: string | null = null
+    let processedLogoImage: string | null = null
 
     if (sourceImage) {
       processedSourceImage = await ensureBase64(sourceImage)
@@ -79,22 +80,30 @@ export async function POST(req: NextRequest) {
     if (refImage) {
       processedRefImage = await ensureBase64(refImage)
     }
+    if (logoImage) {
+      processedLogoImage = await ensureBase64(logoImage)
+    }
 
     // 7. 이미지 생성 함수 (base64로 생성)
     const generateSingle = async () => {
-      const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [{ text: finalPrompt }]
+      const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = []
 
-      // Source image 추가 (EDIT, DETAIL_EDIT 모드)
+      // Source image 먼저 추가 (EDIT, DETAIL_EDIT, POSTER 모드)
       if (processedSourceImage) {
         const { mimeType, data } = extractBase64Data(processedSourceImage)
         parts.push({ inlineData: { mimeType, data } })
       }
 
-      // Reference image 추가 (CREATE 모드)
-      if (processedRefImage) {
-        const { mimeType, data } = extractBase64Data(processedRefImage)
+      // Reference image 또는 Logo image 추가
+      // Priority: refImage > logoImage (모드에 따라 상호 배타적)
+      const secondaryImage = processedRefImage || processedLogoImage
+      if (secondaryImage) {
+        const { mimeType, data } = extractBase64Data(secondaryImage)
         parts.push({ inlineData: { mimeType, data } })
       }
+
+      // Text prompt는 마지막에 추가
+      parts.push({ text: finalPrompt })
 
       const response = await ai.models.generateContent({
         model: PRO_MODEL,

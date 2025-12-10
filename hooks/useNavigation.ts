@@ -20,6 +20,8 @@ export function useNavigation() {
       [AppMode.EDIT]: '/edit',
       [AppMode.DETAIL_PAGE]: '/detail-page',
       [AppMode.DETAIL_EDIT]: '/detail-edit',
+      [AppMode.POSTER]: '/poster',
+      [AppMode.COLOR_CORRECTION]: '/color-correction',
       [AppMode.PROFILE]: '/profile',
     }
 

@@ -21,6 +21,7 @@ export const generatePreview = async (request: GenerationRequest): Promise<strin
         prompt: buildPrompt(request),
         sourceImage: request.image,
         refImage: request.refImage,
+        logoImage: request.logoImage,
         category: request.category?.label,
         style: request.style?.label,
         aspectRatio: request.aspectRatio || '1:1',
@@ -69,6 +70,7 @@ export const generateImageVariations = async (request: GenerationRequest): Promi
         prompt: buildPrompt(request),
         sourceImage: request.image,
         refImage: request.refImage,
+        logoImage: request.logoImage,
         category: request.category?.label,
         style: request.style?.label,
         aspectRatio: request.aspectRatio || '1:1',
@@ -180,6 +182,24 @@ function buildPrompt(request: GenerationRequest): string {
       finalPrompt += `Style details: ${style.promptModifier}. `;
     }
     finalPrompt += "Ensure the subject is well-lit and clearly visible.";
+  } else if (mode === AppMode.POSTER) {
+    finalPrompt = `Design a professional advertisement poster. `;
+    finalPrompt += `The Main Subject is the provided first image (Product). `;
+
+    if (request.logoImage) {
+      finalPrompt += `Integrate the provided Logo (second image) naturally into the composition (e.g., top corner or bottom center). Do not distort the logo. `;
+    }
+
+    finalPrompt += `Poster Theme/Context: ${prompt}. `;
+
+    if (category) {
+      finalPrompt += `Theme Category: ${category.label}. `;
+    }
+    if (style) {
+      finalPrompt += `Visual Style: ${style.promptModifier}. `;
+    }
+
+    finalPrompt += "Layout should include clear space for text overlay (typography friendly). High visual hierarchy, commercial quality, eye-catching design.";
   } else if (mode === AppMode.DETAIL_PAGE) {
     finalPrompt = `Create a high-resolution vertical mobile product detail page section (Aspect Ratio 9:16). Description: ${prompt}. `;
     if (category) {

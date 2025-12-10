@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Sparkles, Wand2, Layout, FilePenLine, User, LogIn, LogOut, Moon, Sun } from 'lucide-react';
+import { Sparkles, Wand2, Layout, FilePenLine, User, LogIn, LogOut, Moon, Sun, Megaphone, SlidersHorizontal } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import { AppMode } from '@/types';
@@ -90,6 +90,28 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
             >
               <FilePenLine className="w-4 h-4" />
               <span className="hidden md:inline">편집</span>
+            </button>
+            <button
+              onClick={() => navigateToMode(AppMode.POSTER)}
+              className={`px-4 py-2.5 min-h-[44px] rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                currentMode === AppMode.POSTER
+                  ? 'bg-rose-600 dark:bg-rose-500 text-white shadow-md'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <Megaphone className="w-4 h-4" />
+              <span className="hidden md:inline">포스터</span>
+            </button>
+            <button
+              onClick={() => navigateToMode(AppMode.COLOR_CORRECTION)}
+              className={`px-4 py-2.5 min-h-[44px] rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                currentMode === AppMode.COLOR_CORRECTION
+                  ? 'bg-amber-600 dark:bg-amber-500 text-white shadow-md'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              <span className="hidden md:inline">색감</span>
             </button>
           </nav>
 

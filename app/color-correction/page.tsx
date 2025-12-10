@@ -1,10 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import Image from 'next/image';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   SlidersHorizontal,
-  Upload,
   Download,
   RotateCcw,
   Sparkles,
@@ -80,25 +78,7 @@ function ColorCorrectionPageContent() {
     }
   };
 
-  // Canvas에 필터 적용
-  useEffect(() => {
-    if (uploadedImage && canvasRef.current) {
-      // 이미지가 변경되었을 때만 새로 로드
-      if (!sourceImageRef.current || sourceImageRef.current.src !== uploadedImage) {
-        const img = new Image();
-        img.src = uploadedImage;
-        img.onload = () => {
-          sourceImageRef.current = img;
-          drawCanvas();
-        };
-      } else {
-        // 이미지는 그대로, 필터만 변경
-        drawCanvas();
-      }
-    }
-  }, [uploadedImage, filters]);
-
-  const drawCanvas = () => {
+  const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     const img = sourceImageRef.current;
 
@@ -124,7 +104,25 @@ function ColorCorrectionPageContent() {
 
     // 이미지 그리기
     ctx.drawImage(img, 0, 0);
-  };
+  }, [filters]);
+
+  // Canvas에 필터 적용
+  useEffect(() => {
+    if (uploadedImage && canvasRef.current) {
+      // 이미지가 변경되었을 때만 새로 로드
+      if (!sourceImageRef.current || sourceImageRef.current.src !== uploadedImage) {
+        const img = new Image();
+        img.src = uploadedImage;
+        img.onload = () => {
+          sourceImageRef.current = img;
+          drawCanvas();
+        };
+      } else {
+        // 이미지는 그대로, 필터만 변경
+        drawCanvas();
+      }
+    }
+  }, [uploadedImage, filters, drawCanvas]);
 
   const handleDownload = () => {
     const canvas = canvasRef.current;
@@ -413,8 +411,8 @@ function ColorCorrectionPageContent() {
         )}
       </div>
 
-      {isLoading && <LoadingOverlay message="AI가 고화질로 변환하고 있습니다..." />}
-      {isCompressing && <LoadingOverlay message="이미지를 최적화하고 있습니다..." />}
+      <LoadingOverlay isVisible={isLoading} message="AI가 고화질로 변환하고 있습니다..." />
+      <LoadingOverlay isVisible={isCompressing} message="이미지를 최적화하고 있습니다..." />
 
       <ImageGalleryModal isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} onSelect={handleGallerySelect} />
     </>

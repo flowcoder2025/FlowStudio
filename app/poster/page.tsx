@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
-import { Megaphone, Sparkles, X, FolderOpen, Upload, ImageIcon } from 'lucide-react';
+import { Megaphone, Sparkles, X, FolderOpen, Upload } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';

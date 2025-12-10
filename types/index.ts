@@ -4,6 +4,8 @@ export enum AppMode {
   EDIT = 'EDIT',      // Editing existing image with prompt
   DETAIL_PAGE = 'DETAIL_PAGE', // Creating vertical detail pages
   DETAIL_EDIT = 'DETAIL_EDIT', // Editing specific parts of a detail page
+  POSTER = 'POSTER', // Poster creation mode
+  COLOR_CORRECTION = 'COLOR_CORRECTION', // Non-AI color grading studio
   PROFILE = 'PROFILE' // User profile and settings
 }
 
@@ -39,10 +41,27 @@ export interface LayoutOption {
 export interface GenerationRequest {
   image?: string; // Base64 (Target image)
   refImage?: string; // Base64 (Reference/Replacement image)
+  logoImage?: string; // Base64 (Logo image for posters)
   prompt: string;
   category?: Category;
   style?: StyleOption;
   layout?: LayoutOption;
   mode: AppMode;
   aspectRatio?: string; // "1:1", "9:16", etc.
+}
+
+export interface FilterState {
+  brightness: number;
+  contrast: number;
+  saturation: number;
+  sepia: number;
+  blur: number;
+  grayscale: number;
+  hueRotate: number;
+}
+
+export interface FilterPreset {
+  label: string;
+  filters: FilterState;
+  color: string;
 }
