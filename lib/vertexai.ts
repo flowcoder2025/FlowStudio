@@ -69,39 +69,66 @@ export function getVertexAIClient(): GoogleGenAI {
 
   // Vercel/Cloud 환경: GOOGLE_APPLICATION_CREDENTIALS를 JSON 문자열로 받아 처리
   const credsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS
+  console.log('[Vertex AI] Checking GOOGLE_APPLICATION_CREDENTIALS...')
+  console.log(`[Vertex AI] Credentials type: ${typeof credsJson}`)
+  console.log(`[Vertex AI] Credentials length: ${credsJson?.length || 0} characters`)
+
   if (credsJson && !credentialsPath) {
     try {
       // JSON 파싱 시도 (파일 경로가 아닌 경우)
+      console.log('[Vertex AI] Attempting to parse credentials as JSON...')
       const credentials = JSON.parse(credsJson)
-      console.log(`[Vertex AI] Setting up service account: ${credentials.client_email}`)
+      console.log(`[Vertex AI] ✅ JSON parsed successfully`)
+      console.log(`[Vertex AI] Service account: ${credentials.client_email}`)
+      console.log(`[Vertex AI] Project ID: ${credentials.project_id}`)
 
       // /tmp 디렉토리에 임시 credentials 파일 생성 (Vercel Lambda는 /tmp 쓰기 가능)
       credentialsPath = join('/tmp', `gcp-credentials-${Date.now()}.json`)
+      console.log(`[Vertex AI] Creating credentials file at: ${credentialsPath}`)
+
       writeFileSync(credentialsPath, credsJson, 'utf8')
+      console.log(`[Vertex AI] ✅ Credentials file written successfully`)
 
       // 환경 변수를 파일 경로로 재설정 (GoogleGenAI가 자동으로 사용)
       process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath
-
-      console.log(`[Vertex AI] Credentials file created at: ${credentialsPath}`)
+      console.log(`[Vertex AI] ✅ Environment variable updated to file path`)
     } catch (error) {
       // JSON 파싱 실패 = 이미 파일 경로인 경우 (로컬 개발)
-      console.log('[Vertex AI] Using existing credentials file path')
+      console.log('[Vertex AI] JSON parsing failed - assuming existing file path')
+      console.log(`[Vertex AI] Error: ${error instanceof Error ? error.message : String(error)}`)
     }
   } else if (!credsJson) {
     // 로컬 개발 환경: Application Default Credentials (ADC) 사용
+    console.log('[Vertex AI] No GOOGLE_APPLICATION_CREDENTIALS found')
     console.log('[Vertex AI] Using Application Default Credentials (gcloud auth)')
+  } else {
+    console.log('[Vertex AI] Credentials already processed in previous initialization')
   }
 
   // Vertex AI 클라이언트 초기화
-  vertexAIClient = new GoogleGenAI({
-    vertexai: true,
-    project,
-    location,
-  })
+  try {
+    console.log('[Vertex AI] Initializing GoogleGenAI client...')
+    console.log(`[Vertex AI] Config: { vertexai: true, project: "${project}", location: "${location}" }`)
 
-  console.log(`[Vertex AI] Initialized with project: ${project}, location: ${location}`)
+    vertexAIClient = new GoogleGenAI({
+      vertexai: true,
+      project,
+      location,
+    })
 
-  return vertexAIClient
+    console.log(`[Vertex AI] ✅ Client initialized successfully`)
+    console.log(`[Vertex AI] Project: ${project}, Location: ${location}`)
+
+    return vertexAIClient
+  } catch (error) {
+    console.error('[Vertex AI] ❌ Failed to initialize client')
+    console.error(`[Vertex AI] Error type: ${error?.constructor?.name}`)
+    console.error(`[Vertex AI] Error message: ${error instanceof Error ? error.message : String(error)}`)
+    if (error instanceof Error && error.stack) {
+      console.error(`[Vertex AI] Stack trace: ${error.stack}`)
+    }
+    throw error
+  }
 }
 
 /**

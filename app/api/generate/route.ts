@@ -42,7 +42,9 @@ export async function POST(req: NextRequest) {
 
   try {
     // 1. Vertex AI 클라이언트 초기화 (Application Default Credentials 사용)
+    console.log('[API /generate] Initializing Vertex AI client...')
     const ai = getVertexAIClient()
+    console.log('[API /generate] ✅ Vertex AI client initialized successfully')
 
     // 2. 크레딧 잔액 확인 (2K 생성 1회 = 20 크레딧)
     const hasEnough = await hasEnoughCredits(session.user.id, CREDIT_PRICES.GENERATION_2K)
