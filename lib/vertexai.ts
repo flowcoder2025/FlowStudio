@@ -11,8 +11,11 @@
  */
 
 import { GoogleGenAI } from '@google/genai'
+import { writeFileSync } from 'fs'
+import { join } from 'path'
 
 let vertexAIClient: GoogleGenAI | null = null
+let credentialsPath: string | null = null
 
 /**
  * Vertex AI 환경 변수 검증
@@ -64,8 +67,32 @@ export function getVertexAIClient(): GoogleGenAI {
 
   const { project, location } = validateVertexAIConfig()
 
+  // Vercel/Cloud 환경: GOOGLE_APPLICATION_CREDENTIALS를 JSON 문자열로 받아 처리
+  const credsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS
+  if (credsJson && !credentialsPath) {
+    try {
+      // JSON 파싱 시도 (파일 경로가 아닌 경우)
+      const credentials = JSON.parse(credsJson)
+      console.log(`[Vertex AI] Setting up service account: ${credentials.client_email}`)
+
+      // /tmp 디렉토리에 임시 credentials 파일 생성 (Vercel Lambda는 /tmp 쓰기 가능)
+      credentialsPath = join('/tmp', `gcp-credentials-${Date.now()}.json`)
+      writeFileSync(credentialsPath, credsJson, 'utf8')
+
+      // 환경 변수를 파일 경로로 재설정 (GoogleGenAI가 자동으로 사용)
+      process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath
+
+      console.log(`[Vertex AI] Credentials file created at: ${credentialsPath}`)
+    } catch (error) {
+      // JSON 파싱 실패 = 이미 파일 경로인 경우 (로컬 개발)
+      console.log('[Vertex AI] Using existing credentials file path')
+    }
+  } else if (!credsJson) {
+    // 로컬 개발 환경: Application Default Credentials (ADC) 사용
+    console.log('[Vertex AI] Using Application Default Credentials (gcloud auth)')
+  }
+
   // Vertex AI 클라이언트 초기화
-  // Application Default Credentials (ADC) 자동 사용
   vertexAIClient = new GoogleGenAI({
     vertexai: true,
     project,
