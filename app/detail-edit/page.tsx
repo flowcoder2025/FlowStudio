@@ -529,7 +529,7 @@ function DetailEditPageContent() {
     <>
       <Header currentMode={AppMode.DETAIL_EDIT} />
 
-      <div className="max-w-7xl mx-auto px-4 py-6 pb-32 h-[calc(100vh-64px)] flex flex-col">
+      <div className="max-w-6xl mx-auto px-4 py-6 pb-32 h-[calc(100vh-64px)] flex flex-col">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
             <FilePenLine className="text-violet-600 dark:text-violet-400" /> 상세페이지 편집

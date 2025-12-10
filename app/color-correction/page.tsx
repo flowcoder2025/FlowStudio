@@ -173,7 +173,7 @@ function ColorCorrectionPageContent() {
     <>
       <Header currentMode={AppMode.COLOR_CORRECTION} />
 
-      <div className="max-w-7xl mx-auto px-4 py-8 pb-32">
+      <div className="max-w-6xl mx-auto px-4 py-8 pb-32">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold mb-2 flex items-center gap-2 text-slate-900 dark:text-slate-100">

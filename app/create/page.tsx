@@ -198,7 +198,7 @@ function CreatePageContent() {
     <>
       <Header currentMode={AppMode.CREATE} />
 
-      <div className="max-w-3xl mx-auto px-4 py-8 pb-32">
+      <div className="max-w-6xl mx-auto px-4 py-8 pb-32">
         <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
           <Sparkles className="text-indigo-600 dark:text-indigo-400" /> 이미지 생성 마법사
         </h2>
@@ -302,16 +302,16 @@ function CreatePageContent() {
           <div className="grid grid-cols-3 gap-3">
             {ASPECT_RATIOS.map(ratio => (
               <button
-                key={ratio.id}
-                onClick={() => setSelectedAspectRatio(ratio.id)}
+                key={ratio.value}
+                onClick={() => setSelectedAspectRatio(ratio.value)}
                 className={`p-4 min-h-[88px] rounded-xl text-center transition-all border ${
-                  selectedAspectRatio === ratio.id
+                  selectedAspectRatio === ratio.value
                     ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-500 dark:border-indigo-400 ring-1 ring-indigo-500 dark:ring-indigo-400'
                     : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500'
                 }`}
               >
                 <span className="block font-semibold text-slate-800 dark:text-slate-100 mb-1">{ratio.label}</span>
-                <span className="block text-xs text-slate-500 dark:text-slate-400">{ratio.desc}</span>
+                <span className="block text-xs text-slate-500 dark:text-slate-400">{ratio.description}</span>
               </button>
             ))}
           </div>
@@ -330,7 +330,7 @@ function CreatePageContent() {
 
         {/* Action Bar */}
         <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 p-4 pb-safe z-30 transition-colors">
-          <div className="max-w-3xl mx-auto flex justify-between items-center">
+          <div className="max-w-6xl mx-auto flex justify-between items-center">
             <p className="text-sm text-slate-500 dark:text-slate-400 hidden md:block">
               {selectedCategory ? `${selectedCategory.label}` : '종류 선택'}
               {selectedStyle ? ` > ${selectedStyle.label}` : ''}

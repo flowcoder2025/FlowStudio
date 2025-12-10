@@ -226,7 +226,7 @@ function EditPageContent() {
     <>
       <Header currentMode={AppMode.EDIT} />
 
-      <div className="max-w-3xl mx-auto px-4 py-8 pb-32">
+      <div className="max-w-6xl mx-auto px-4 py-8 pb-32">
         <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
           <Wand2 className="text-emerald-600 dark:text-emerald-400" /> AI 이미지 편집
         </h2>
@@ -285,16 +285,16 @@ function EditPageContent() {
           <div className="grid grid-cols-3 gap-3">
             {ASPECT_RATIOS.map(ratio => (
               <button
-                key={ratio.id}
-                onClick={() => setSelectedAspectRatio(ratio.id)}
+                key={ratio.value}
+                onClick={() => setSelectedAspectRatio(ratio.value)}
                 className={`p-3 min-h-[72px] rounded-xl text-center transition-all border ${
-                  selectedAspectRatio === ratio.id
+                  selectedAspectRatio === ratio.value
                     ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500 dark:border-emerald-400 ring-1 ring-emerald-500 dark:ring-emerald-400'
                     : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-emerald-300 dark:hover:border-emerald-500'
                 }`}
               >
                 <span className="block font-semibold text-slate-800 dark:text-slate-100 text-sm">{ratio.label}</span>
-                <span className="block text-xs text-slate-500 dark:text-slate-400">{ratio.desc}</span>
+                <span className="block text-xs text-slate-500 dark:text-slate-400">{ratio.description}</span>
               </button>
             ))}
           </div>
@@ -354,7 +354,7 @@ function EditPageContent() {
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4 pb-safe z-30 transition-colors">
-          <div className="max-w-3xl mx-auto flex gap-3 justify-end">
+          <div className="max-w-6xl mx-auto flex gap-3 justify-end">
             {/* Preview Button */}
             <button
               onClick={handlePreview}
