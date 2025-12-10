@@ -1,27 +1,30 @@
 /**
- * Image Generation API - Gemini Proxy (Base64 Return)
+ * Image Generation API - Vertex AI Gemini (Base64 Return)
  * /api/generate
  *
  * Returns base64 images directly for preview.
  * Images are NOT auto-saved to storage - users must explicitly save via /api/images/save.
  * This reduces storage costs by only saving images the user actually wants.
+ *
+ * 변경사항 (Vertex AI 전환):
+ * - 사용자 개별 API 키 불필요 → 중앙화된 Vertex AI 인증
+ * - Application Default Credentials (ADC) 사용
+ * - 크레딧 시스템은 동일하게 유지
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { decrypt } from '@/lib/utils/encryption'
 import { ensureBase64, extractBase64Data } from '@/lib/utils/imageConverter'
-import { GoogleGenAI } from '@google/genai'
+import { getVertexAIClient, VERTEX_AI_MODELS } from '@/lib/vertexai'
 import {
   hasEnoughCredits,
   deductForGeneration,
   CREDIT_PRICES
 } from '@/lib/utils/creditManager'
-import { InsufficientCreditsError } from '@/lib/errors'
 
-const PRO_MODEL = 'gemini-3-pro-image-preview'
+const PRO_MODEL = VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE_PREVIEW
 const COST_PER_IMAGE_USD = 0.14
 
 // Next.js 15+ App Router Configuration
@@ -38,22 +41,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // 1. 사용자의 API 키 조회
-    const apiKeyRecord = await prisma.apiKey.findUnique({
-      where: { userId: session.user.id },
-    })
+    // 1. Vertex AI 클라이언트 초기화 (Application Default Credentials 사용)
+    const ai = getVertexAIClient()
 
-    if (!apiKeyRecord) {
-      return NextResponse.json(
-        { error: 'API 키가 설정되지 않았습니다. 프로필에서 API 키를 설정해주세요.' },
-        { status: 400 }
-      )
-    }
-
-    // 2. API 키 복호화
-    const apiKey = decrypt(apiKeyRecord.encryptedKey)
-
-    // 3. 크레딧 잔액 확인 (2K 생성 1회 = 20 크레딧)
+    // 2. 크레딧 잔액 확인 (2K 생성 1회 = 20 크레딧)
     const hasEnough = await hasEnoughCredits(session.user.id, CREDIT_PRICES.GENERATION_2K)
 
     if (!hasEnough) {
@@ -66,7 +57,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 4. 요청 파싱
+    // 3. 요청 파싱
     const body = await req.json()
     const { projectId, prompt, sourceImage, refImage, logoImage, category, style, aspectRatio, mode } = body
 
@@ -85,10 +76,7 @@ export async function POST(req: NextRequest) {
       finalPrompt += ` Style: ${style}. `
     }
 
-    // 5. Gemini API 초기화
-    const ai = new GoogleGenAI({ apiKey })
-
-    // 6. 이미지 URL → base64 변환 (갤러리에서 불러온 이미지 지원)
+    // 5. 이미지 URL → base64 변환 (갤러리에서 불러온 이미지 지원)
     let processedSourceImage: string | null = null
     let processedRefImage: string | null = null
     let processedLogoImage: string | null = null
@@ -103,7 +91,7 @@ export async function POST(req: NextRequest) {
       processedLogoImage = await ensureBase64(logoImage)
     }
 
-    // 7. 이미지 생성 함수 (base64로 생성)
+    // 6. 이미지 생성 함수 (base64로 생성)
     const generateSingle = async () => {
       const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = []
 
@@ -199,7 +187,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // 9. 생성 성공 이력 기록
+    // 10. 생성 성공 이력 기록
     await prisma.generationHistory.create({
       data: {
         userId: session.user.id,
@@ -214,7 +202,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // 10. Base64 이미지 직접 반환 (Storage 자동 저장 없음)
+    // 11. Base64 이미지 직접 반환 (Storage 자동 저장 없음)
     // 사용자가 원하는 이미지만 /api/images/save로 선택 저장 가능
     return NextResponse.json({ images: base64Images })
   } catch (error: unknown) {
@@ -245,9 +233,9 @@ export async function POST(req: NextRequest) {
         const retrySeconds = Math.ceil(parseFloat(retryMatch[1]))
         userFriendlyMessage = `Google Gemini API 할당량이 초과되었습니다. ${retrySeconds}초 후에 다시 시도해주세요.`
       }
-    } else if (errorMessage.includes('API key')) {
-      userFriendlyMessage = 'Google Gemini API 키가 유효하지 않습니다. 프로필에서 API 키를 확인해주세요.'
-      statusCode = 401
+    } else if (errorMessage.includes('API key') || errorMessage.includes('authentication') || errorMessage.includes('UNAUTHENTICATED')) {
+      userFriendlyMessage = 'Google Cloud 인증 오류가 발생했습니다. 서버 관리자에게 문의하세요.'
+      statusCode = 500
     } else if (errorMessage.includes('network') || errorMessage.includes('ENOTFOUND')) {
       userFriendlyMessage = '네트워크 연결을 확인해주세요. Google AI 서비스에 접근할 수 없습니다.'
       statusCode = 503

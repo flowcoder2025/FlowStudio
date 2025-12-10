@@ -18,9 +18,8 @@
 **최근 주요 개선사항** (2025-01):
 - **아키텍처 마이그레이션**: Vite → Next.js 16 전체 UI 구현 완료 (커밋 7a2f304)
 - **보안 강화 (Phase 1)**:
-  - API 키 관리: localStorage 의존성 완전 제거 → 서버 측 암호화 저장 (AES-256-GCM)
+  - ~~API 키 관리: localStorage 의존성 완전 제거 → 서버 측 암호화 저장 (AES-256-GCM)~~ (Phase 6에서 Vertex AI로 대체)
   - `services/geminiService.ts`: 서버 API 프록시로 전환 (`/api/generate` 호출)
-  - 모든 페이지에서 `/api/profile/api-key` 엔드포인트를 통한 API 키 검증
 - **권한 시스템 개선 (Phase 2)**:
   - `lib/permissions.ts`에 `isAdmin()` 헬퍼 함수 추가 (비-throwing 불린 체크)
   - 관리자 권한 체크 로직 재사용성 향상
@@ -38,6 +37,12 @@
   - `lib/utils/imageStorage.ts`: 이미지 업로드/삭제 유틸리티
   - `/api/generate`: 생성된 이미지를 자동으로 Storage에 업로드 후 URL 반환
   - 데이터베이스 부하 감소 및 쿼리 성능 대폭 향상
+- **Vertex AI 전환 (Phase 6)** 🚀:
+  - 사용자 개별 API 키 방식 → 중앙화된 Google Cloud Vertex AI 인증
+  - `lib/vertexai.ts`: Vertex AI 싱글톤 클라이언트 (Application Default Credentials)
+  - `/api/generate`, `/api/upscale`: API 키 로직 제거, Vertex AI 사용
+  - UX 개선: 사용자는 크레딧만 구매하면 즉시 사용 가능 (API 키 설정 불필요)
+  - 중앙화된 비용 관리 및 모니터링, 보안 향상
 
 ## 기술 스택
 
@@ -46,7 +51,7 @@
 - **파일 저장소**: Supabase Storage (@supabase/supabase-js)
 - **인증**: NextAuth.js 4.24.13 with Google OAuth
 - **스타일링**: Tailwind CSS 4 with @tailwindcss/postcss
-- **AI 통합**: Google gemini-3-pro-image-preview API (@google/genai)
+- **AI 통합**: Google Cloud Vertex AI - Gemini 3 Pro Image Preview (@google/genai with Vertex AI mode)
 - **타입 안정성**: TypeScript 5 (strict mode)
 
 ## 개발 명령어
@@ -95,8 +100,9 @@ FlowStudio는 4가지 독립적인 모드로 운영됩니다 (`types/index.ts` �
 - **향후 계획**: Subscription (프리미엄 플랜)
 
 **주요 설계 결정사항**:
-- 사용자 API 키는 암호화 저장 (AES-256-GCM) `lib/utils/encryption.ts` 사용
-- 비용 추정을 위한 사용량 추적 (이미지당 $0.14)
+- ~~사용자 API 키는 암호화 저장 (AES-256-GCM) `lib/utils/encryption.ts` 사용~~ (Phase 6에서 Vertex AI로 전환)
+- Vertex AI를 통한 중앙화된 이미지 생성 (Application Default Credentials 사용)
+- 크레딧 기반 과금 시스템 (이미지당 API 비용 추적: $0.14)
 - **이미지 저장**: Supabase Storage에 업로드 후 URL만 데이터베이스에 저장
 - ImageProject의 소프트 삭제 (`deletedAt` 필드 사용)
 - Vercel 배포를 위한 Prisma 바이너리 타겟에 `rhel-openssl-3.0.x` 포함
@@ -185,7 +191,7 @@ await requireImageProjectEditor(userId, projectId) // 권한 없으면 에러
 
 ### 환경 변수 설정
 
-필수 `.env.local` 변수:
+필수 `.env.local` 변수 (`.env.example` 파일 참조):
 
 ```bash
 # Supabase (데이터베이스)
@@ -204,9 +210,16 @@ NEXTAUTH_SECRET="<생성 명령: openssl rand -base64 32>"
 GOOGLE_CLIENT_ID="..."
 GOOGLE_CLIENT_SECRET="..."
 
-# API 키 암호화
-ENCRYPTION_KEY="<생성 명령: node -e 'console.log(require(\"crypto\").randomBytes(32).toString(\"hex\"))'>"
+# Google Cloud Vertex AI (이미지 생성)
+GOOGLE_CLOUD_PROJECT="your-google-cloud-project-id"
+GOOGLE_CLOUD_LOCATION="us-central1"  # 또는 "asia-northeast3" (서울)
+GOOGLE_GENAI_USE_VERTEXAI="true"
+
+# API 키 암호화 (레거시 - Phase 6에서 Vertex AI로 대체, 향후 제거 예정)
+# ENCRYPTION_KEY="<생성 명령: node -e 'console.log(require(\"crypto\").randomBytes(32).toString(\"hex\"))'>"
 ```
+
+**참고**: Vertex AI 인증은 별도로 `gcloud auth application-default login` 명령을 통해 설정합니다. 자세한 내용은 [Vertex AI 인증](#vertex-ai-인증) 섹션을 참조하세요.
 
 ## 데이터베이스 작업 흐름
 
@@ -245,26 +258,69 @@ const projects = await prisma.imageProject.findMany({
 })
 ```
 
-## API 키 보안
+## Vertex AI 인증
 
-**중요**: localStorage 저장 방식을 완전히 제거하고 서버 측 암호화로 전환됨 (Phase 1)
+**중요**: Phase 6에서 사용자 개별 API 키 방식을 Google Cloud Vertex AI로 전환 (2025-12-10)
 
-**보안 흐름**:
-1. **클라이언트 입력**: 프로필 페이지에서 API 키 입력
-2. **서버 저장**: `/api/profile/api-key` POST로 전송 → `lib/utils/encryption.ts`의 AES-256-GCM으로 암호화
-3. **데이터베이스**: `ApiKey.encryptedKey`에 저장 (사용자당 1개 레코드)
-4. **사용 시**:
-   - 페이지 로드 시 `/api/profile/api-key` GET으로 존재 여부 확인
-   - 이미지 생성 시 `/api/generate`에서 자동으로 복호화하여 Gemini API 호출
-5. **보안 원칙**:
-   - 암호화된 키는 절대 클라이언트로 전송하지 않음
-   - 복호화는 서버 사이드에서만 수행 (`ENCRYPTION_KEY` 환경 변수 필요)
-   - 로그나 에러 메시지에 키 노출 금지
+**인증 방식**:
+FlowStudio는 Google Cloud의 Application Default Credentials (ADC)를 사용하여 Vertex AI에 인증합니다.
 
-**API 엔드포인트**:
-- `GET /api/profile/api-key` - API 키 존재 여부 확인 (`{exists: boolean}`)
-- `POST /api/profile/api-key` - API 키 저장 (암호화)
-- `DELETE /api/profile/api-key` - API 키 삭제
+### 로컬 개발 환경 설정
+
+1. **Google Cloud CLI 설치**:
+   ```bash
+   # macOS
+   brew install google-cloud-sdk
+
+   # 다른 OS: https://cloud.google.com/sdk/docs/install
+   ```
+
+2. **인증 설정**:
+   ```bash
+   # Google 계정으로 로그인
+   gcloud auth application-default login
+
+   # 프로젝트 설정
+   gcloud config set project YOUR_PROJECT_ID
+   ```
+
+3. **환경 변수 설정** (`.env.local`):
+   ```bash
+   GOOGLE_CLOUD_PROJECT="your-google-cloud-project-id"
+   GOOGLE_CLOUD_LOCATION="us-central1"  # 또는 "asia-northeast3" (서울)
+   GOOGLE_GENAI_USE_VERTEXAI="true"
+   ```
+
+4. **개발 서버 실행**:
+   ```bash
+   npm run dev
+   ```
+
+### 프로덕션 배포 (Vercel)
+
+1. **서비스 계정 생성** (Google Cloud Console):
+   - IAM & Admin → Service Accounts → Create Service Account
+   - 권한: `Vertex AI User`, `AI Platform Developer`
+   - JSON 키 생성 및 다운로드
+
+2. **Vercel 환경 변수 설정**:
+   - `GOOGLE_CLOUD_PROJECT`: 프로젝트 ID
+   - `GOOGLE_CLOUD_LOCATION`: 리전 (예: `us-central1`)
+   - `GOOGLE_GENAI_USE_VERTEXAI`: `true`
+   - `GOOGLE_APPLICATION_CREDENTIALS`: JSON 키 파일 내용 전체 (Base64 인코딩 권장)
+
+3. **참고**: Cloud Run, GCE 등에서는 서비스 계정이 자동으로 적용되어 추가 설정 불필요
+
+### 장점
+- ✅ **UX 개선**: 사용자가 API 키를 설정할 필요 없음 (크레딧만 구매)
+- ✅ **보안 강화**: API 키가 사용자에게 노출되지 않음
+- ✅ **중앙 관리**: 모든 API 호출을 서버에서 통제 및 모니터링
+- ✅ **비용 최적화**: 통합 과금 및 예산 관리
+
+### 관련 파일
+- `lib/vertexai.ts`: Vertex AI 클라이언트 싱글톤
+- `/api/generate/route.ts`: 2K 이미지 생성 (4장)
+- `/api/upscale/route.ts`: 4K 업스케일링 (1장)
 
 ## 코드 컨벤션
 
@@ -323,8 +379,8 @@ const projects = await prisma.imageProject.findMany({
 
 2. **속도 제한**:
    - 현재: 애플리케이션 레벨 속도 제한 없음
-   - 제어: 사용자의 Gemini API 키 쿼터로 자연스럽게 제한
-   - 향후: 구독 플랜별 일일 생성 제한 구현 고려
+   - 제어: Vertex AI 할당량으로 제한 (Phase 6 전환 완료)
+   - 향후: 크레딧 기반 일일 생성 제한 구현 고려
 
 3. **실시간 협업**:
    - 현재: ReBAC 권한 시스템으로 공유/편집 권한만 지원

@@ -1,24 +1,27 @@
 /**
- * Image Upscale API - 4K Ultra High Resolution
+ * Image Upscale API - 4K Ultra High Resolution (Vertex AI)
  * /api/upscale
+ *
+ * 변경사항 (Vertex AI 전환):
+ * - 사용자 개별 API 키 불필요 → 중앙화된 Vertex AI 인증
+ * - Application Default Credentials (ADC) 사용
+ * - 크레딧 시스템은 동일하게 유지
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { decrypt } from '@/lib/utils/encryption'
 import { uploadMultipleImages } from '@/lib/utils/imageStorage'
 import { ensureBase64, extractBase64Data } from '@/lib/utils/imageConverter'
-import { GoogleGenAI } from '@google/genai'
+import { getVertexAIClient, VERTEX_AI_MODELS } from '@/lib/vertexai'
 import {
   hasEnoughCredits,
   deductCredits,
   CREDIT_PRICES
 } from '@/lib/utils/creditManager'
-import { InsufficientCreditsError, formatApiError } from '@/lib/errors'
 
-const PRO_MODEL = 'gemini-3-pro-image-preview'
+const PRO_MODEL = VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE_PREVIEW
 const COST_PER_IMAGE_USD = 0.14
 
 export async function POST(req: NextRequest) {
@@ -29,22 +32,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // 1. 사용자의 API 키 조회
-    const apiKeyRecord = await prisma.apiKey.findUnique({
-      where: { userId: session.user.id },
-    })
+    // 1. Vertex AI 클라이언트 초기화 (Application Default Credentials 사용)
+    const ai = getVertexAIClient()
 
-    if (!apiKeyRecord) {
-      return NextResponse.json(
-        { error: 'API 키가 설정되지 않았습니다. 프로필에서 API 키를 설정해주세요.' },
-        { status: 400 }
-      )
-    }
-
-    // 2. API 키 복호화
-    const apiKey = decrypt(apiKeyRecord.encryptedKey)
-
-    // 3. 크레딧 잔액 확인 (업스케일 1회 = 10 크레딧)
+    // 2. 크레딧 잔액 확인 (업스케일 1회 = 10 크레딧)
     const hasEnough = await hasEnoughCredits(session.user.id, CREDIT_PRICES.UPSCALE_4K)
 
     if (!hasEnough) {
@@ -57,7 +48,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 4. 요청 파싱
+    // 3. 요청 파싱
     const body = await req.json()
     const { image } = body
 
@@ -65,10 +56,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '업스케일할 이미지를 제공해주세요.' }, { status: 400 })
     }
 
-    // 4. Gemini API 초기화
-    const ai = new GoogleGenAI({ apiKey })
-
-    // 5. 이미지 URL → base64 변환 (갤러리에서 불러온 이미지 지원)
+    // 4. 이미지 URL → base64 변환 (갤러리에서 불러온 이미지 지원)
     const processedImage = await ensureBase64(image)
     const { mimeType, data: base64Data } = extractBase64Data(processedImage)
 
@@ -84,7 +72,7 @@ export async function POST(req: NextRequest) {
       }
     ]
 
-    // 6. Gemini API로 4K 업스케일 요청
+    // 5. Gemini API로 4K 업스케일 요청
     const response = await ai.models.generateContent({
       model: PRO_MODEL,
       contents: { parts },
@@ -96,7 +84,7 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    // 7. 결과 이미지 추출
+    // 6. 결과 이미지 추출
     let upscaledBase64: string | null = null
     for (const part of response.candidates?.[0]?.content?.parts || []) {
       if (part.inlineData) {
@@ -109,14 +97,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '업스케일에 실패했습니다.' }, { status: 500 })
     }
 
-    // 8. Supabase Storage에 업로드
+    // 7. Supabase Storage에 업로드
     const storageUrls = await uploadMultipleImages(
       [upscaledBase64],
       session.user.id,
       'upscaled'
     )
 
-    // 9. 크레딧 차감 (10 크레딧)
+    // 8. 크레딧 차감 (10 크레딧)
     await deductCredits(
       session.user.id,
       CREDIT_PRICES.UPSCALE_4K,
@@ -130,7 +118,7 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Upscale] Credits deducted: ${CREDIT_PRICES.UPSCALE_4K} credits`)
 
-    // 10. 사용량 기록
+    // 9. 사용량 기록
     const today = new Date().toISOString().split('T')[0]
 
     await prisma.usageStats.upsert({
@@ -193,9 +181,9 @@ export async function POST(req: NextRequest) {
         const retrySeconds = Math.ceil(parseFloat(retryMatch[1]))
         userFriendlyMessage = `Google Gemini API 할당량이 초과되었습니다. ${retrySeconds}초 후에 다시 시도해주세요.`
       }
-    } else if (errorMessage.includes('API key') || errorMessage.includes('API_KEY')) {
-      userFriendlyMessage = 'Google Gemini API 키가 유효하지 않습니다.'
-      statusCode = 401
+    } else if (errorMessage.includes('API key') || errorMessage.includes('API_KEY') || errorMessage.includes('authentication') || errorMessage.includes('UNAUTHENTICATED')) {
+      userFriendlyMessage = 'Google Cloud 인증 오류가 발생했습니다. 서버 관리자에게 문의하세요.'
+      statusCode = 500
     } else if (errorMessage.includes('SAFETY') || errorMessage.includes('blocked')) {
       userFriendlyMessage = '이미지가 안전 정책에 의해 차단되었습니다. 다른 이미지로 시도해주세요.'
       statusCode = 400
