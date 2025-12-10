@@ -17,7 +17,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isVisible, messa
         <Loader2 className="w-12 h-12 animate-spin mb-4 text-indigo-400 dark:text-indigo-300" />
         <h3 className="text-xl font-bold mb-2">잠시만 기다려주세요</h3>
         <p className="text-sm text-gray-200 dark:text-gray-300 text-center max-w-xs">{message}</p>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">최대 30초 정도 소요될 수 있습니다.</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">최대 60초 정도 소요될 수 있습니다.</p>
       </div>
     </div>
   );
