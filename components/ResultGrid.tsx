@@ -127,7 +127,7 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
                         className="flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-3 py-1.5 min-h-[32px] rounded-full transition-colors"
                       >
                         <Maximize2 className="w-3 h-3" />
-                        업스케일링 (2K)
+                        업스케일링 (4K)
                       </button>
                     )}
                   </div>

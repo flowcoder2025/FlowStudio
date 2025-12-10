@@ -137,7 +137,7 @@ export const extractTextFromImage = async (imageBase64: string): Promise<string>
 };
 
 /**
- * Upscale image to 2K resolution
+ * Upscale image to 4K resolution
  * Calls /api/upscale endpoint
  */
 export const upscaleImage = async (imageBase64: string): Promise<string | null> => {

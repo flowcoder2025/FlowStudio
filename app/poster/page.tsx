@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
-import { Megaphone, Sparkles, X, FolderOpen, Upload } from 'lucide-react';
+import { Megaphone, Sparkles, X, FolderOpen, Upload, Cloud, Loader2, Check, Download } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
@@ -35,6 +35,8 @@ function PosterPageContent() {
   const [isProductGalleryOpen, setIsProductGalleryOpen] = useState(false);
   const [isLogoGalleryOpen, setIsLogoGalleryOpen] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [isUpscaledSaving, setIsUpscaledSaving] = useState(false);
+  const [isUpscaledSaved, setIsUpscaledSaved] = useState(false);
 
   const productFileInputRef = useRef<HTMLInputElement>(null);
   const logoFileInputRef = useRef<HTMLInputElement>(null);
@@ -148,6 +150,7 @@ function PosterPageContent() {
   const handleUpscale = async (imageUrl: string) => {
     setIsUpscaling(true);
     setUpscaledImage(null);
+    setIsUpscaledSaved(false);
 
     try {
       const upscaled = await upscaleImage(imageUrl);
@@ -159,6 +162,39 @@ function PosterPageContent() {
       alert(error instanceof Error ? error.message : '고화질 변환에 실패했습니다.');
     } finally {
       setIsUpscaling(false);
+    }
+  };
+
+  const handleSaveToCloud = async (image: string) => {
+    if (isUpscaledSaved) return;
+
+    setIsUpscaledSaving(true);
+    try {
+      const response = await fetch('/api/images/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          images: [image],
+          mode: 'DETAIL_PAGE',
+          prompt,
+          category: selectedCategory?.id,
+          aspectRatio: selectedAspectRatio,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsUpscaledSaved(true);
+        alert(data.message || '클라우드에 저장되었습니다.');
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || '저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Cloud save error:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    } finally {
+      setIsUpscaledSaving(false);
     }
   };
 
@@ -385,7 +421,7 @@ function PosterPageContent() {
         <div className="fixed inset-0 z-60 bg-black/80 dark:bg-black/90 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto">
             <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">업스케일 결과 (2K)</h2>
+              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">업스케일 결과 (4K)</h2>
               <button
                 onClick={() => setUpscaledImage(null)}
                 className="p-2 min-w-[40px] min-h-[40px] hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors flex items-center justify-center"
@@ -403,7 +439,7 @@ function PosterPageContent() {
                 className="w-full h-auto rounded-lg shadow-lg"
                 unoptimized={upscaledImage.startsWith('data:')}
               />
-              <div className="mt-4 flex gap-3 justify-center">
+              <div className="mt-4 flex gap-3 justify-center flex-wrap">
                 <button
                   onClick={() => {
                     const link = document.createElement('a');
@@ -413,13 +449,42 @@ function PosterPageContent() {
                     link.click();
                     document.body.removeChild(link);
                   }}
-                  className="px-6 py-3 min-h-[48px] bg-rose-600 dark:bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-700 dark:hover:bg-rose-600 transition-colors"
+                  className="flex items-center gap-2 px-6 py-3 min-h-[48px] bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-xl font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
                 >
-                  2K 이미지 다운로드
+                  <Download className="w-5 h-5" />
+                  4K 이미지 다운로드
+                </button>
+                <button
+                  onClick={() => handleSaveToCloud(upscaledImage)}
+                  disabled={isUpscaledSaving || isUpscaledSaved}
+                  className={`flex items-center gap-2 px-6 py-3 min-h-[48px] rounded-xl font-semibold transition-colors ${
+                    isUpscaledSaved
+                      ? 'bg-green-500 dark:bg-green-600 text-white'
+                      : isUpscaledSaving
+                      ? 'bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                      : 'bg-blue-500 dark:bg-blue-600 text-white hover:bg-blue-600 dark:hover:bg-blue-700'
+                  }`}
+                >
+                  {isUpscaledSaving ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      저장 중...
+                    </>
+                  ) : isUpscaledSaved ? (
+                    <>
+                      <Check className="w-5 h-5" />
+                      저장됨
+                    </>
+                  ) : (
+                    <>
+                      <Cloud className="w-5 h-5" />
+                      클라우드 저장
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={() => setUpscaledImage(null)}
-                  className="px-6 py-3 min-h-[48px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                  className="px-6 py-3 min-h-[48px] bg-rose-600 dark:bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-700 dark:hover:bg-rose-600 transition-colors"
                 >
                   닫기
                 </button>

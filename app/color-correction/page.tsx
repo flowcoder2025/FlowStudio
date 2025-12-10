@@ -241,7 +241,7 @@ function ColorCorrectionPageContent() {
                     ) : (
                       <Maximize2 className="w-3 h-3" />
                     )}
-                    AI 고화질 변환 (2K)
+                    AI 고화질 변환 (4K)
                   </button>
                 </div>
               </div>

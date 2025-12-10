@@ -1,5 +1,5 @@
 /**
- * Image Upscale API - 2K High Resolution
+ * Image Upscale API - 4K Ultra High Resolution
  * /api/upscale
  */
 
@@ -61,16 +61,20 @@ export async function POST(req: NextRequest) {
         }
       },
       {
-        text: "Generate a high-resolution 2K version of this image. Improve texture details, lighting, and sharpness while maintaining the exact composition, content, and style of the original. Do not alter the subject."
+        text: "Generate a high-resolution 4K version of this image. Improve texture details, lighting, and sharpness while maintaining the exact composition, content, and style of the original. Do not alter the subject."
       }
     ]
 
-    // 6. Gemini API로 2K 업스케일 요청
-    // Note: generateContent()는 imageConfig를 지원하지 않음
-    // 고해상도 이미지 재생성을 프롬프트로 요청
+    // 6. Gemini API로 4K 업스케일 요청
     const response = await ai.models.generateContent({
       model: PRO_MODEL,
       contents: { parts },
+      config: {
+        responseModalities: ['TEXT', 'IMAGE'],
+        imageConfig: {
+          imageSize: '4K' // 4K 고해상도 업스케일
+        }
+      }
     })
 
     // 7. 결과 이미지 추출
@@ -122,7 +126,7 @@ export async function POST(req: NextRequest) {
       data: {
         userId: session.user.id,
         mode: 'UPSCALE',
-        prompt: 'Image upscale to 2K',
+        prompt: 'Image upscale to 4K',
         imageCount: 1,
         costUsd: COST_PER_IMAGE_USD,
         status: 'success',

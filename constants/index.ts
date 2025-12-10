@@ -202,6 +202,15 @@ export const ASPECT_RATIOS = [
   { value: '16:9', label: '16:9 (가로)', description: '유튜브 썸네일, 배너' },
 ];
 
+// Image Resolution Options (Gemini API)
+export const IMAGE_RESOLUTIONS = [
+  { value: '1K', label: '1K (기본)', description: '빠른 생성, 웹 미리보기용' },
+  { value: '2K', label: '2K (고화질)', description: '기본 생성 화질, 대부분의 용도' },
+  { value: '4K', label: '4K (초고화질)', description: '업스케일 전용, 인쇄 및 고품질 출력' },
+] as const;
+
+export type ImageResolution = typeof IMAGE_RESOLUTIONS[number]['value'];
+
 // Usage & Cost Estimation Constants
 export const ESTIMATED_COST_PER_IMAGE_USD = 0.14; // Estimated cost for gemini-3-pro-image-preview
 export const EXCHANGE_RATE_KRW = 1400; // Approximate exchange rate

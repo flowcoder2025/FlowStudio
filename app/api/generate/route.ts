@@ -110,7 +110,10 @@ export async function POST(req: NextRequest) {
         contents: parts, // ✅ 배열 직접 전달 [{ text: ... }, { inlineData: ... }]
         config: {
           responseModalities: ['TEXT', 'IMAGE'], // 이미지 응답 명시
-          imageConfig: { aspectRatio: aspectRatio || '1:1' },
+          imageConfig: {
+            aspectRatio: aspectRatio || '1:1',
+            imageSize: '2K' // 기본 2K 해상도 설정
+          },
         },
       })
 
