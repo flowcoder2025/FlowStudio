@@ -10,7 +10,23 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
+        hostname: 'lh3.googleusercontent.com', // Google OAuth
+      },
+      {
+        protocol: 'http',
+        hostname: 'k.kakaocdn.net', // Kakao OAuth
+      },
+      {
+        protocol: 'https',
+        hostname: 'k.kakaocdn.net', // Kakao OAuth (https)
+      },
+      {
+        protocol: 'http',
+        hostname: 't1.kakaocdn.net', // Kakao OAuth (thumbnail)
+      },
+      {
+        protocol: 'https',
+        hostname: 't1.kakaocdn.net', // Kakao OAuth (thumbnail, https)
       },
     ],
   },
