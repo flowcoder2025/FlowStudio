@@ -1,18 +1,16 @@
 /**
- * Image Generation API - Vertex AI Imagen 4 / Gemini 3 Pro Image (Base64 Return)
+ * Image Generation API - Vertex AI Gemini 3 Pro Image (Base64 Return)
  * /api/generate
  *
  * Returns base64 images directly for preview.
  * Images are NOT auto-saved to storage - users must explicitly save via /api/images/save.
  * This reduces storage costs by only saving images the user actually wants.
  *
- * 하이브리드 모델 전략 (2025-01 최적화):
- * - CREATE 모드 (텍스트만): Imagen 4 Fast + generateImages API (최고 속도, 한 번에 2장)
- * - EDIT/DETAIL_EDIT 모드 (이미지 입력): Gemini 3 Pro Image + generateContent API (최고 품질)
- *
- * 모델 선택 근거:
- * - Imagen 4 Fast: 텍스트→이미지 변환에 최적화, 가장 빠른 응답 속도
- * - Gemini 3 Pro Image (Nano Banana Pro): 복잡한 이미지 편집에 최적화, 최고 품질
+ * 모델: Gemini 3 Pro Image (Nano Banana Pro)
+ * - Google의 최신 최고 품질 이미지 생성 모델
+ * - 모든 모드(CREATE, EDIT, DETAIL_EDIT)에서 통일 사용
+ * - generateContent API로 2장 병렬 생성
+ * - JPEG 출력으로 파일 크기 최적화 (PNG 대비 50-70% 감소)
  *
  * 변경사항 (Vertex AI 전환):
  * - 사용자 개별 API 키 불필요 → 중앙화된 Vertex AI 인증
@@ -39,8 +37,8 @@ import {
 import { hasWatermarkFree } from '@/lib/utils/subscriptionManager'
 import { addWatermarkBatch } from '@/lib/utils/watermark'
 
-// 모델 선택: CREATE는 Imagen 4 Fast (최고 속도), EDIT는 Gemini 3 Pro Image (최고 품질)
-const IMAGEN_MODEL = VERTEX_AI_MODELS.IMAGEN_4_FAST
+// 모델 선택: 모든 모드에서 Gemini 3 Pro Image (최고 품질) 사용
+// Gemini 3 Pro Image (Nano Banana Pro): Google의 최신 최고 품질 이미지 생성 모델
 const GEMINI_IMAGE_MODEL = VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE
 const COST_PER_IMAGE_USD = 0.14
 
@@ -127,89 +125,58 @@ export async function POST(req: NextRequest) {
       processedLogoImage = await ensureBase64(logoImage)
     }
 
-    // 6. 하이브리드 이미지 생성 전략
-    // - 이미지 입력 없음: Imagen 3 + generateImages (빠름, 한 번에 2장)
-    // - 이미지 입력 있음: Gemini 2.5 Flash + generateContent (이미지 편집 지원)
-    const hasImageInput = processedSourceImage || processedRefImage || processedLogoImage
+    // 6. Gemini 3 Pro Image 모델로 이미지 생성 (모든 모드 통일)
+    // Google의 최신 최고 품질 이미지 생성 모델 사용
     let base64Images: string[] = []
 
-    if (!hasImageInput) {
-      // ===== Imagen 4 Fast 모델: 텍스트만으로 최고 속도 이미지 생성 =====
-      console.log('[API /generate] Using Imagen 4 Fast model (fastest, text-only)...')
+    console.log('[API /generate] Using Gemini 3 Pro Image model (best quality)...')
 
-      const response = await ai.models.generateImages({
-        model: IMAGEN_MODEL,
-        prompt: finalPrompt,
+    const generateWithGemini = async () => {
+      const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = []
+
+      // Source image 추가 (EDIT, DETAIL_EDIT, POSTER 모드)
+      if (processedSourceImage) {
+        const { mimeType, data } = extractBase64Data(processedSourceImage)
+        parts.push({ inlineData: { mimeType, data } })
+      }
+
+      // Reference image 또는 Logo image 추가
+      const secondaryImage = processedRefImage || processedLogoImage
+      if (secondaryImage) {
+        const { mimeType, data } = extractBase64Data(secondaryImage)
+        parts.push({ inlineData: { mimeType, data } })
+      }
+
+      // Text prompt 추가
+      parts.push({ text: finalPrompt })
+
+      const response = await ai.models.generateContent({
+        model: GEMINI_IMAGE_MODEL,
+        contents: parts,
         config: {
-          numberOfImages: 2,
-          aspectRatio: aspectRatio || '1:1',
-          // JPEG 출력으로 변경: PNG 대비 파일 크기 50-70% 감소 (6~8MB → 2~3MB)
-          // 이로 인해 네트워크 전송 시간 대폭 단축 → 타임아웃 방지
-          outputMimeType: 'image/jpeg',
-          outputCompressionQuality: 85, // 높은 품질 유지하면서 파일 크기 최적화
+          responseModalities: ['TEXT', 'IMAGE'],
+          // 이미지 출력 설정: JPEG로 출력하여 파일 크기 최적화 (PNG 대비 50-70% 감소)
+          imageConfig: {
+            aspectRatio: aspectRatio || '1:1',
+            outputMimeType: 'image/jpeg',
+            outputCompressionQuality: 85,
+          },
         },
       })
 
-      console.log('[API /generate] Imagen 4 Fast generation completed')
-
-      // Imagen 응답에서 이미지 추출
-      if (response.generatedImages) {
-        for (const generatedImage of response.generatedImages) {
-          if (generatedImage.image?.imageBytes) {
-            base64Images.push(`data:image/jpeg;base64,${generatedImage.image.imageBytes}`)
-          }
+      // Gemini 응답에서 이미지 추출
+      for (const part of response.candidates?.[0]?.content?.parts || []) {
+        if (part.inlineData) {
+          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
         }
       }
-    } else {
-      // ===== Gemini 3 Pro Image 모델: 이미지 입력이 있는 경우 (편집 모드) =====
-      console.log('[API /generate] Using Gemini 3 Pro Image model (best quality editing)...')
-
-      const generateWithGemini = async () => {
-        const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = []
-
-        // Source image 먼저 추가 (EDIT, DETAIL_EDIT, POSTER 모드)
-        if (processedSourceImage) {
-          const { mimeType, data } = extractBase64Data(processedSourceImage)
-          parts.push({ inlineData: { mimeType, data } })
-        }
-
-        // Reference image 또는 Logo image 추가
-        const secondaryImage = processedRefImage || processedLogoImage
-        if (secondaryImage) {
-          const { mimeType, data } = extractBase64Data(secondaryImage)
-          parts.push({ inlineData: { mimeType, data } })
-        }
-
-        // Text prompt는 마지막에 추가
-        parts.push({ text: finalPrompt })
-
-        const response = await ai.models.generateContent({
-          model: GEMINI_IMAGE_MODEL,
-          contents: parts,
-          config: {
-            responseModalities: ['TEXT', 'IMAGE'],
-            // 이미지 출력 설정: JPEG로 출력하여 파일 크기 최적화
-            imageConfig: {
-              outputMimeType: 'image/jpeg',
-              outputCompressionQuality: 85,
-            },
-          },
-        })
-
-        // Gemini 응답에서 이미지 추출
-        for (const part of response.candidates?.[0]?.content?.parts || []) {
-          if (part.inlineData) {
-            return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
-          }
-        }
-        return null
-      }
-
-      // Gemini 3 Pro Image는 한 번에 1장씩 생성하므로 병렬 호출
-      const results = await Promise.all([generateWithGemini(), generateWithGemini()])
-      console.log('[API /generate] Gemini 3 Pro Image generation completed')
-      base64Images = results.filter((img): img is string => img !== null)
+      return null
     }
+
+    // Gemini 3 Pro Image는 한 번에 1장씩 생성하므로 2장 병렬 호출
+    const results = await Promise.all([generateWithGemini(), generateWithGemini()])
+    console.log('[API /generate] Gemini 3 Pro Image generation completed')
+    base64Images = results.filter((img): img is string => img !== null)
 
     if (base64Images.length === 0) {
       // 생성 실패 이력 기록
