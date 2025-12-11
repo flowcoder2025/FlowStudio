@@ -5,6 +5,10 @@
  * Saves user-selected images to Supabase Storage.
  * This allows users to only save images they actually want,
  * reducing storage costs compared to auto-saving all generated images.
+ *
+ * Supports:
+ * - base64 data URLs: Upload to Storage
+ * - Supabase Storage URLs: Already uploaded, just record in project
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -14,6 +18,18 @@ import { prisma } from '@/lib/prisma'
 import { uploadMultipleImages } from '@/lib/utils/imageStorage'
 import { isBase64DataUrl } from '@/lib/utils/imageConverter'
 import { grantImageProjectOwnership } from '@/lib/permissions'
+
+/**
+ * Check if a URL is from Supabase Storage
+ */
+function isSupabaseStorageUrl(url: string): boolean {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!supabaseUrl) return false
+
+  // Match both public and authenticated storage URLs
+  // e.g., https://xxx.supabase.co/storage/v1/object/public/...
+  return url.startsWith(supabaseUrl) && url.includes('/storage/v1/object/')
+}
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -34,8 +50,10 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Validate all images are base64
+    // Separate images by type: base64 (need upload) vs URLs (already in Storage)
     const base64Images: string[] = []
+    const existingStorageUrls: string[] = []
+
     for (const img of images) {
       if (typeof img !== 'string') {
         return NextResponse.json(
@@ -43,15 +61,23 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         )
       }
-      // Accept both base64 data URLs and raw base64
-      if (isBase64DataUrl(img)) {
+
+      // Check if it's a Supabase Storage URL (already uploaded - e.g., from upscale)
+      if (isSupabaseStorageUrl(img)) {
+        existingStorageUrls.push(img)
+      }
+      // Accept base64 data URLs
+      else if (isBase64DataUrl(img)) {
         base64Images.push(img)
-      } else if (img.length > 100 && !img.includes(' ') && !img.startsWith('http')) {
-        // Likely raw base64, add data URL prefix
+      }
+      // Accept raw base64 (no data: prefix)
+      else if (img.length > 100 && !img.includes(' ') && !img.startsWith('http')) {
         base64Images.push(`data:image/png;base64,${img}`)
-      } else {
+      }
+      // Reject other URLs
+      else {
         return NextResponse.json(
-          { error: 'base64 형식의 이미지만 저장 가능합니다. URL은 지원하지 않습니다.' },
+          { error: 'base64 형식의 이미지 또는 FlowStudio Storage URL만 저장 가능합니다.' },
           { status: 400 }
         )
       }
@@ -87,12 +113,18 @@ export async function POST(req: NextRequest) {
       finalProjectId = newProject.id
     }
 
-    // Upload to Supabase Storage
-    const storageUrls = await uploadMultipleImages(
-      base64Images,
-      session.user.id,
-      `projects/${finalProjectId}`
-    )
+    // Upload only base64 images to Supabase Storage
+    let newlyUploadedUrls: string[] = []
+    if (base64Images.length > 0) {
+      newlyUploadedUrls = await uploadMultipleImages(
+        base64Images,
+        session.user.id,
+        `projects/${finalProjectId}`
+      )
+    }
+
+    // Combine newly uploaded URLs with existing Storage URLs
+    const allStorageUrls = [...newlyUploadedUrls, ...existingStorageUrls]
 
     // Update project with saved images
     const existingProject = await prisma.imageProject.findUnique({
@@ -101,7 +133,7 @@ export async function POST(req: NextRequest) {
     })
 
     const existingImages = existingProject?.resultImages || []
-    const updatedImages = [...existingImages, ...storageUrls]
+    const updatedImages = [...existingImages, ...allStorageUrls]
 
     await prisma.imageProject.update({
       where: { id: finalProjectId },
@@ -113,9 +145,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      urls: storageUrls,
+      urls: allStorageUrls,
       projectId: finalProjectId,
-      message: `${storageUrls.length}개의 이미지가 클라우드에 저장되었습니다.`,
+      message: `${allStorageUrls.length}개의 이미지가 클라우드에 저장되었습니다.`,
     })
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error)
