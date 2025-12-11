@@ -92,14 +92,22 @@ npx tsx scripts/migrate-project-permissions.ts  # 기존 프로젝트 권한 마
 
 ### 애플리케이션 모드
 
-FlowStudio는 4가지 독립적인 모드로 운영됩니다 (`types/index.ts` 참조):
+FlowStudio는 7가지 독립적인 모드로 운영됩니다 (`types/index.ts` AppMode enum):
 
-1. **CREATE**: 프롬프트/참조 이미지로부터 새로운 이미지 생성
-2. **EDIT**: 프롬프트 기반으로 기존 이미지 수정
-3. **DETAIL_PAGE**: 모바일 최적화 세로형 랜딩 페이지 생성
-4. **DETAIL_EDIT**: 상세페이지의 특정 섹션 편집
+1. **HOME**: 메인 랜딩 페이지 (`/`)
+2. **CREATE**: 프롬프트/참조 이미지로부터 새로운 이미지 생성 (`/create`)
+3. **EDIT**: 프롬프트 기반으로 기존 이미지 수정 (`/edit`)
+4. **DETAIL_PAGE**: 모바일 최적화 세로형 상세페이지 생성 (`/detail-page`)
+5. **DETAIL_EDIT**: 상세페이지의 특정 섹션 편집 (`/detail-edit`)
+6. **POSTER**: 포스터 이미지 생성 (`/poster`)
+7. **COLOR_CORRECTION**: 비-AI 색상 보정 스튜디오 (`/color-correction`)
 
-각 모드는 전용 페이지를 가집니다: `/create`, `/edit`, `/detail-page`, `/detail-edit`
+**추가 주요 페이지**:
+- `/gallery` - 생성된 이미지 갤러리 및 관리
+- `/profile` - 사용자 프로필 및 설정
+- `/credits/purchase` - 크레딧 구매
+- `/subscription` - 구독 플랜 관리
+- `/admin` - 관리자 대시보드
 
 ### 데이터베이스 아키텍처
 
