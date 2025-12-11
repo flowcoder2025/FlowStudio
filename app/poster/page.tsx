@@ -440,6 +440,24 @@ function PosterPageContent() {
         onClose={() => setGeneratedImages([])}
         onUpscale={handleUpscale}
         onGenerateMore={handleGenerateMore}
+        onSave={async (image: string) => {
+          const response = await fetch('/api/images/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              images: [image],
+              mode: 'POSTER',
+              prompt,
+              category: selectedCategory?.id,
+              style: selectedStyle?.id,
+              aspectRatio: selectedAspectRatio,
+            }),
+          });
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || '저장에 실패했습니다.');
+          }
+        }}
       />
 
       {/* Upscaled Image Modal */}
