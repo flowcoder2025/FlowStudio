@@ -1,14 +1,18 @@
 /**
- * Image Generation API - Vertex AI Imagen/Gemini (Base64 Return)
+ * Image Generation API - Vertex AI Imagen 4 / Gemini 3 Pro Image (Base64 Return)
  * /api/generate
  *
  * Returns base64 images directly for preview.
  * Images are NOT auto-saved to storage - users must explicitly save via /api/images/save.
  * This reduces storage costs by only saving images the user actually wants.
  *
- * 하이브리드 모델 전략:
- * - CREATE 모드 (텍스트만): Imagen 3 + generateImages API (빠름, 한 번에 2장)
- * - EDIT/DETAIL_EDIT 모드 (이미지 입력): Gemini 2.5 Flash + generateContent API
+ * 하이브리드 모델 전략 (2025-01 최적화):
+ * - CREATE 모드 (텍스트만): Imagen 4 Fast + generateImages API (최고 속도, 한 번에 2장)
+ * - EDIT/DETAIL_EDIT 모드 (이미지 입력): Gemini 3 Pro Image + generateContent API (최고 품질)
+ *
+ * 모델 선택 근거:
+ * - Imagen 4 Fast: 텍스트→이미지 변환에 최적화, 가장 빠른 응답 속도
+ * - Gemini 3 Pro Image (Nano Banana Pro): 복잡한 이미지 편집에 최적화, 최고 품질
  *
  * 변경사항 (Vertex AI 전환):
  * - 사용자 개별 API 키 불필요 → 중앙화된 Vertex AI 인증
@@ -35,9 +39,9 @@ import {
 import { hasWatermarkFree } from '@/lib/utils/subscriptionManager'
 import { addWatermarkBatch } from '@/lib/utils/watermark'
 
-// 모델 선택: CREATE는 Imagen (빠름), EDIT는 Gemini (이미지 입력 지원)
-const IMAGEN_MODEL = VERTEX_AI_MODELS.IMAGEN_3
-const GEMINI_IMAGE_MODEL = VERTEX_AI_MODELS.GEMINI_2_5_FLASH_IMAGE
+// 모델 선택: CREATE는 Imagen 4 Fast (최고 속도), EDIT는 Gemini 3 Pro Image (최고 품질)
+const IMAGEN_MODEL = VERTEX_AI_MODELS.IMAGEN_4_FAST
+const GEMINI_IMAGE_MODEL = VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE
 const COST_PER_IMAGE_USD = 0.14
 
 // Next.js 15+ App Router Configuration
@@ -130,8 +134,8 @@ export async function POST(req: NextRequest) {
     let base64Images: string[] = []
 
     if (!hasImageInput) {
-      // ===== Imagen 모델: 텍스트만으로 빠른 이미지 생성 =====
-      console.log('[API /generate] Using Imagen 3 model (fast, text-only)...')
+      // ===== Imagen 4 Fast 모델: 텍스트만으로 최고 속도 이미지 생성 =====
+      console.log('[API /generate] Using Imagen 4 Fast model (fastest, text-only)...')
 
       const response = await ai.models.generateImages({
         model: IMAGEN_MODEL,
@@ -144,7 +148,7 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      console.log('[API /generate] Imagen generation completed')
+      console.log('[API /generate] Imagen 4 Fast generation completed')
 
       // Imagen 응답에서 이미지 추출
       if (response.generatedImages) {
@@ -155,8 +159,8 @@ export async function POST(req: NextRequest) {
         }
       }
     } else {
-      // ===== Gemini 모델: 이미지 입력이 있는 경우 (편집 모드) =====
-      console.log('[API /generate] Using Gemini 2.5 Flash model (image editing)...')
+      // ===== Gemini 3 Pro Image 모델: 이미지 입력이 있는 경우 (편집 모드) =====
+      console.log('[API /generate] Using Gemini 3 Pro Image model (best quality editing)...')
 
       const generateWithGemini = async () => {
         const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = []
@@ -194,9 +198,9 @@ export async function POST(req: NextRequest) {
         return null
       }
 
-      // Gemini는 한 번에 1장씩 생성하므로 병렬 호출
+      // Gemini 3 Pro Image는 한 번에 1장씩 생성하므로 병렬 호출
       const results = await Promise.all([generateWithGemini(), generateWithGemini()])
-      console.log('[API /generate] Gemini generation completed')
+      console.log('[API /generate] Gemini 3 Pro Image generation completed')
       base64Images = results.filter((img): img is string => img !== null)
     }
 

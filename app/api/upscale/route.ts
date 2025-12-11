@@ -2,6 +2,8 @@
  * Image Upscale API - 4K Ultra High Resolution (Vertex AI)
  * /api/upscale
  *
+ * 모델: Gemini 3 Pro Image (Nano Banana Pro) - 최고 품질 이미지 편집 모델
+ *
  * 변경사항 (Vertex AI 전환):
  * - 사용자 개별 API 키 불필요 → 중앙화된 Vertex AI 인증
  * - Application Default Credentials (ADC) 사용
@@ -21,8 +23,8 @@ import {
   CREDIT_PRICES
 } from '@/lib/utils/creditManager'
 
-// 업스케일은 이미지 입력이 필요하므로 Gemini 모델 사용
-const GEMINI_IMAGE_MODEL = VERTEX_AI_MODELS.GEMINI_2_5_FLASH_IMAGE
+// 업스케일은 이미지 입력이 필요하므로 Gemini 3 Pro Image 모델 사용 (최고 품질)
+const GEMINI_IMAGE_MODEL = VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE
 const COST_PER_IMAGE_USD = 0.14
 
 // Next.js App Router Configuration
