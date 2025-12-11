@@ -6,6 +6,8 @@ import { authOptions } from '@/lib/auth';
 /**
  * GET /api/images
  * 사용자의 저장된 이미지 목록 조회
+ * - ImageProject: CREATE, EDIT, DETAIL_EDIT, POSTER, COLOR_CORRECTION 모드
+ * - DetailPageDraft: 상세페이지 (DETAIL_PAGE) 이미지
  */
 export async function GET(request: NextRequest) {
   try {
@@ -34,8 +36,8 @@ export async function GET(request: NextRequest) {
     const tag = searchParams.get('tag');
     const search = searchParams.get('search');
 
-    // 이미지 프로젝트 조회
-    const projects = await prisma.imageProject.findMany({
+    // 1. 이미지 프로젝트 조회 (CREATE, EDIT, DETAIL_EDIT 등)
+    const imageProjects = await prisma.imageProject.findMany({
       where: {
         userId: user.id,
         deletedAt: null,
@@ -67,7 +69,53 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ projects });
+    // 2. 상세페이지 드래프트 조회 (DETAIL_PAGE 모드)
+    const detailPageDrafts = await prisma.detailPageDraft.findMany({
+      where: {
+        userId: user.id,
+        detailPageSegments: { isEmpty: false }, // 이미지가 있는 드래프트만
+        ...(search && {
+          OR: [
+            { title: { contains: search, mode: 'insensitive' } },
+            { prompt: { contains: search, mode: 'insensitive' } },
+          ],
+        }),
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+      select: {
+        id: true,
+        title: true,
+        detailPageSegments: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    // 3. 상세페이지 드래프트를 프로젝트 형식으로 변환
+    const detailPageProjects = detailPageDrafts.map(draft => ({
+      id: `draft_${draft.id}`,
+      title: draft.title,
+      description: null,
+      mode: 'DETAIL_PAGE',
+      resultImages: draft.detailPageSegments,
+      tags: [] as string[],
+      createdAt: draft.createdAt.toISOString(),
+      updatedAt: draft.updatedAt.toISOString(),
+    }));
+
+    // 4. 두 소스 합치기 및 날짜순 정렬
+    const allProjects = [
+      ...imageProjects.map(p => ({
+        ...p,
+        createdAt: p.createdAt.toISOString(),
+        updatedAt: p.updatedAt.toISOString(),
+      })),
+      ...detailPageProjects,
+    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return NextResponse.json({ projects: allProjects });
   } catch (error) {
     console.error('Image list error:', error);
     return NextResponse.json(
