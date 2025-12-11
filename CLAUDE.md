@@ -35,7 +35,7 @@
   - Supabase Storage 통합: base64 데이터베이스 저장 → URL 참조 방식으로 전환
   - `lib/supabase.ts`: Supabase Storage 클라이언트 (service role key 사용)
   - `lib/utils/imageStorage.ts`: 이미지 업로드/삭제 유틸리티
-  - `/api/generate`: 생성된 이미지를 자동으로 Storage에 업로드 후 URL 반환
+  - **주의**: `/api/generate`는 base64만 반환, Storage 저장은 `/api/images/save`에서 처리
   - 데이터베이스 부하 감소 및 쿼리 성능 대폭 향상
 - **Vertex AI 전환 (Phase 6)** 🚀:
   - 사용자 개별 API 키 방식 → 중앙화된 Google Cloud Vertex AI 인증
@@ -43,6 +43,11 @@
   - `/api/generate`, `/api/upscale`: API 키 로직 제거, Vertex AI 사용
   - UX 개선: 사용자는 크레딧만 구매하면 즉시 사용 가능 (API 키 설정 불필요)
   - 중앙화된 비용 관리 및 모니터링, 보안 향상
+- **ReBAC 후방 호환성 (Phase 7)** 🔒:
+  - `/api/images/list`: 기존 데이터를 위한 userId fallback 로직 추가
+  - DetailPageDraft 이미지 갤러리 표시 지원
+  - `scripts/migrate-project-permissions.ts`: 기존 프로젝트 권한 일괄 부여 스크립트
+  - 모든 프로젝트 생성 경로에서 자동 권한 부여 확인 완료
 
 ## 기술 스택
 
@@ -60,7 +65,7 @@
 # 개발 서버 실행 (http://localhost:3000)
 npm run dev
 
-# 프로덕션 빌드
+# 프로덕션 빌드 (Prisma Client 자동 생성 포함)
 npm run build
 
 # 프로덕션 서버 실행
@@ -69,12 +74,18 @@ npm start
 # 린팅
 npm run lint
 
+# 타입 체크
+npx tsc --noEmit
+
 # 데이터베이스 명령어
 npx prisma generate              # Prisma Client 생성
 npx prisma migrate dev           # 마이그레이션 생성 및 적용
 npx prisma migrate dev --name <name>  # 이름이 지정된 마이그레이션
 npx prisma studio                # 데이터베이스 GUI (포트 5555)
 npx prisma db push               # 스키마 변경사항 푸시 (개발 환경 전용)
+
+# 유틸리티 스크립트
+npx tsx scripts/migrate-project-permissions.ts  # 기존 프로젝트 권한 마이그레이션
 ```
 
 ## 아키텍처 개요
@@ -146,25 +157,45 @@ await requireImageProjectEditor(userId, projectId) // 권한 없으면 에러
 - 사용자 가입 시 자동으로 소유자 권한 생성 및 보너스 크레딧 지급
 
 **이미지 생성** (`/api/generate/route.ts`):
-- **보안**: 사용자의 암호화된 API 키를 서버에서 복호화하여 Gemini API 프록시
+- **Vertex AI 통합**: Google Cloud Vertex AI로 중앙화된 인증 (Phase 6)
 - **병렬 생성**: 4장의 이미지를 `Promise.all`로 동시 생성
-- **Storage 통합**:
-  - Gemini API가 base64로 이미지 생성
-  - `lib/utils/imageStorage.ts`로 Supabase Storage에 자동 업로드
-  - 클라이언트에 Storage 공개 URL 반환
+- **응답 형식**: **base64 이미지 배열** (Storage 저장 없음)
+  - 사용자가 원하는 이미지만 선택 저장 가능 (`/api/images/save`)
+  - Storage 비용 절감 및 사용자 선택권 강화
 - **사용량 추적**: UsageStats와 GenerationHistory에 자동 기록 (이미지당 $0.14)
-- **모델**: `gemini-3-pro-image-preview` (Google Gemini API)
+- **크레딧 차감**: 4장 생성 = 20 크레딧 (생성 시점 차감)
+- **모델**: `gemini-3-pro-image-preview` (Gemini 3 Pro Image)
 - **기능 지원**:
   - 텍스트 프롬프트 기반 생성
   - 소스 이미지 (EDIT, DETAIL_EDIT 모드)
   - 참조 이미지 (CREATE 모드)
   - 종횡비 설정 (1:1, 9:16 등)
-- **응답 형식**: Supabase Storage 공개 URL 배열 (`https://[project].supabase.co/storage/v1/object/public/...`)
+- **동시 생성 제한**: 구독 플랜별 제한 (FREE: 1건, PLUS: 3건, PRO: 5건)
+
+**이미지 저장** (`/api/images/save/route.ts`):
+- **역할**: 사용자가 선택한 이미지를 Supabase Storage에 업로드 및 프로젝트 생성
+- **Storage 업로드**: `lib/utils/imageStorage.ts` 사용
+- **권한 부여**: 새 프로젝트 생성 시 자동으로 owner 권한 부여 (`grantImageProjectOwnership`)
+- **응답**: Storage 공개 URL로 변환된 이미지 배열
+
+**업스케일링** (`/api/upscale/route.ts`):
+- **4K 고해상도**: 2K → 4K 업스케일링 (1장)
+- **Storage 저장**: 업스케일된 이미지 자동으로 Supabase Storage에 저장
+- **크레딧**: 1회 = 10 크레딧
+- **응답**: Storage 공개 URL
 
 **프로젝트** (`/api/projects/*`):
 - ImageProject CRUD 작업
 - ReBAC 시스템을 통한 권한 확인
 - 공유 기능 (`/api/projects/[id]/share`)
+- 프로젝트 생성 시 자동으로 owner 권한 부여
+
+**이미지 목록 조회** (`/api/images/list/route.ts`):
+- **ReBAC 통합**: `listAccessible()`로 접근 가능한 프로젝트만 조회
+- **후방 호환성**: ReBAC 권한이 없는 경우 userId 기반 fallback
+- **DetailPageDraft 지원**: DETAIL_PAGE 모드 이미지 포함
+- **필터링**: mode, tag, dateFrom/dateTo 파라미터 지원
+- **응답**: 개별 이미지 단위 데이터 (UserImage 타입)
 
 ### 컴포넌트 구조
 
@@ -242,7 +273,7 @@ GOOGLE_GENAI_USE_VERTEXAI="true"
 
 ## 권한 패턴
 
-**리소스 생성 시**:
+**리소스 생성 시** (반드시 권한 부여 필요):
 ```typescript
 const project = await prisma.imageProject.create({...})
 await grantImageProjectOwnership(project.id, userId)
@@ -256,12 +287,30 @@ const canEdit = await check(userId, 'image_project', projectId, 'editor')
 if (!canEdit) throw new Error('Forbidden')
 ```
 
-**사용자의 프로젝트 목록 조회**:
+**사용자의 프로젝트 목록 조회** (후방 호환성 포함):
 ```typescript
-const accessibleIds = await listAccessible(userId, 'image_project', 'viewer')
+// 1. ReBAC 권한으로 조회
+let accessibleIds = await listAccessible(userId, 'image_project', 'viewer')
+
+// 2. 기존 데이터 호환성: 권한이 없으면 userId 기반 fallback
+if (accessibleIds.length === 0) {
+  const userProjects = await prisma.imageProject.findMany({
+    where: { userId, deletedAt: null },
+    select: { id: true }
+  })
+  accessibleIds = userProjects.map(p => p.id)
+}
+
+// 3. 프로젝트 조회
 const projects = await prisma.imageProject.findMany({
   where: { id: { in: accessibleIds } }
 })
+```
+
+**권한 마이그레이션**:
+기존 프로젝트에 권한을 일괄 부여하려면:
+```bash
+npx tsx scripts/migrate-project-permissions.ts
 ```
 
 ## Vertex AI 인증
