@@ -143,8 +143,10 @@ export async function POST(req: NextRequest) {
         config: {
           numberOfImages: 2,
           aspectRatio: aspectRatio || '1:1',
-          outputMimeType: 'image/png',
-          // 참고: Imagen은 imageSize 파라미터가 없음 - 기본적으로 고품질 출력
+          // JPEG 출력으로 변경: PNG 대비 파일 크기 50-70% 감소 (6~8MB → 2~3MB)
+          // 이로 인해 네트워크 전송 시간 대폭 단축 → 타임아웃 방지
+          outputMimeType: 'image/jpeg',
+          outputCompressionQuality: 85, // 높은 품질 유지하면서 파일 크기 최적화
         },
       })
 
@@ -154,7 +156,7 @@ export async function POST(req: NextRequest) {
       if (response.generatedImages) {
         for (const generatedImage of response.generatedImages) {
           if (generatedImage.image?.imageBytes) {
-            base64Images.push(`data:image/png;base64,${generatedImage.image.imageBytes}`)
+            base64Images.push(`data:image/jpeg;base64,${generatedImage.image.imageBytes}`)
           }
         }
       }
@@ -186,6 +188,11 @@ export async function POST(req: NextRequest) {
           contents: parts,
           config: {
             responseModalities: ['TEXT', 'IMAGE'],
+            // 이미지 출력 설정: JPEG로 출력하여 파일 크기 최적화
+            imageConfig: {
+              outputMimeType: 'image/jpeg',
+              outputCompressionQuality: 85,
+            },
           },
         })
 

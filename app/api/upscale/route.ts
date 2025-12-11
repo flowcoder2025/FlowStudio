@@ -86,6 +86,11 @@ export async function POST(req: NextRequest) {
       contents: { parts },
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
+        // 이미지 출력 설정: JPEG로 출력하여 파일 크기 최적화
+        imageConfig: {
+          outputMimeType: 'image/jpeg',
+          outputCompressionQuality: 90, // 업스케일은 품질 우선 (90%)
+        },
       }
     })
 
