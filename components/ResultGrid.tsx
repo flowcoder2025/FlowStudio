@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Download, X, Check, Maximize2, ZoomIn, Cloud, Loader2 } from 'lucide-react';
 
@@ -19,6 +19,27 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
   const [savedIndexes, setSavedIndexes] = useState<Set<number>>(new Set());
   const [isGeneratingMore, setIsGeneratingMore] = useState(false);
+
+  // Track previous images to detect when completely new images are loaded
+  const prevImagesRef = useRef<string[]>([]);
+
+  // Reset savedIndexes when images array is replaced (not just appended)
+  useEffect(() => {
+    const prevImages = prevImagesRef.current;
+
+    // Check if this is a completely new set of images (not just additions)
+    // If the first image changed, it's a new generation
+    if (images.length > 0 && prevImages.length > 0 && images[0] !== prevImages[0]) {
+      setSavedIndexes(new Set());
+    }
+
+    // Also reset if going from empty to having images
+    if (prevImages.length === 0 && images.length > 0) {
+      setSavedIndexes(new Set());
+    }
+
+    prevImagesRef.current = images;
+  }, [images]);
 
   const handleSave = async (img: string, idx: number) => {
     if (!onSave || savedIndexes.has(idx)) return;
