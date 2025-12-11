@@ -25,6 +25,16 @@ export const authOptions: NextAuthOptions = {
     KakaoProvider({
       clientId: process.env.KAKAO_CLIENT_ID!,
       clientSecret: process.env.KAKAO_CLIENT_SECRET!,
+      // 카카오 프로필 정보 명시적 매핑
+      profile(profile) {
+        console.log('[Kakao] Profile response:', JSON.stringify(profile, null, 2))
+        return {
+          id: String(profile.id),
+          name: profile.kakao_account?.profile?.nickname ?? profile.properties?.nickname ?? null,
+          email: profile.kakao_account?.email ?? null,
+          image: profile.kakao_account?.profile?.profile_image_url ?? profile.properties?.profile_image ?? null,
+        }
+      },
     }),
   ],
   session: {
