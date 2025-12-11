@@ -10,13 +10,15 @@ interface ResultGridProps {
   onSelect?: (image: string) => void;
   onUpscale?: (image: string) => void;
   onSave?: (image: string) => Promise<void>;
+  onGenerateMore?: () => Promise<void>;
 }
 
-export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelect, onUpscale, onSave }) => {
+export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelect, onUpscale, onSave, onGenerateMore }) => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewIndex, setPreviewIndex] = useState<number>(0);
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
   const [savedIndexes, setSavedIndexes] = useState<Set<number>>(new Set());
+  const [isGeneratingMore, setIsGeneratingMore] = useState(false);
 
   const handleSave = async (img: string, idx: number) => {
     if (!onSave || savedIndexes.has(idx)) return;
@@ -26,6 +28,16 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
       setSavedIndexes(prev => new Set([...prev, idx]));
     } finally {
       setSavingIndex(null);
+    }
+  };
+
+  const handleGenerateMore = async () => {
+    if (!onGenerateMore || isGeneratingMore) return;
+    setIsGeneratingMore(true);
+    try {
+      await onGenerateMore();
+    } finally {
+      setIsGeneratingMore(false);
     }
   };
 
@@ -216,12 +228,39 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
 
           <div className="text-center">
             <p className="text-slate-500 dark:text-slate-400 mb-4">마음에 드는 이미지가 없으신가요?</p>
-            <button
-              onClick={onClose}
-              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline min-h-[32px] inline-flex items-center"
-            >
-              돌아가서 다시 생성하기
-            </button>
+            <div className="flex gap-3 justify-center flex-wrap">
+              {onGenerateMore && (
+                <button
+                  onClick={handleGenerateMore}
+                  disabled={isGeneratingMore}
+                  className={`flex items-center gap-2 px-6 py-3 min-h-[44px] rounded-lg font-semibold transition-colors shadow-sm ${
+                    isGeneratingMore
+                      ? 'bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                      : 'bg-indigo-600 dark:bg-indigo-500 text-white hover:bg-indigo-700 dark:hover:bg-indigo-600'
+                  }`}
+                >
+                  {isGeneratingMore ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      추가 생성 중...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      2장 더 생성하기 (20 크레딧)
+                    </>
+                  )}
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="px-6 py-3 min-h-[44px] rounded-lg font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-300 dark:border-slate-600"
+              >
+                돌아가기
+              </button>
+            </div>
           </div>
         </div>
       </div>

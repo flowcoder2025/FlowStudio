@@ -61,7 +61,7 @@ function DetailPageContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingDrafts, setIsLoadingDrafts] = useState(false);
 
-  // Section candidate selection state (4장 생성 후 선택)
+  // Section candidate selection state (2장 생성 후 선택, 추가 생성 가능)
   const [candidateImages, setCandidateImages] = useState<string[]>([]);
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
 
@@ -360,6 +360,36 @@ function DetailPageContent() {
         setCandidateImages(images);
         setIsSelectionModalOpen(true);
         // Usage is now tracked server-side in /api/generate
+      } else {
+        alert('섹션 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGenerateMore = async () => {
+    if (!uploadedImage || !selectedCategory) return;
+
+    setIsLoading(true);
+    try {
+      const request: GenerationRequest = {
+        mode: AppMode.DETAIL_PAGE,
+        prompt: prompt || (detailPageSegments.length === 0 ? '제품 인트로 섹션' : '제품 설명 섹션'),
+        image: uploadedImage,
+        refImage: refImage || undefined,
+        category: selectedCategory,
+        style: selectedStyle || undefined,
+        layout: selectedLayout || undefined,
+        aspectRatio: '9:16'
+      };
+
+      const images = await generateImageVariations(request);
+      if (images.length > 0) {
+        setCandidateImages(prev => [...prev, ...images]);
       } else {
         alert('섹션 생성에 실패했습니다.');
       }
@@ -727,15 +757,16 @@ function DetailPageContent() {
         </div>
       </div>
 
-      <LoadingOverlay isVisible={isLoading} message="상세페이지 섹션 4장을 생성하고 있습니다..." />
+      <LoadingOverlay isVisible={isLoading} message="상세페이지 섹션 2장을 생성하고 있습니다..." />
       <LoadingOverlay isVisible={isCompressing} message="이미지 압축 중..." />
 
-      {/* 4장 생성 결과에서 선택 */}
+      {/* 2장 생성 결과에서 선택 */}
       {isSelectionModalOpen && (
         <ResultGrid
           images={candidateImages}
           onClose={handleCloseSelection}
           onSelect={handleSelectCandidate}
+          onGenerateMore={handleGenerateMore}
         />
       )}
 

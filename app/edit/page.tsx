@@ -161,6 +161,32 @@ function EditPageContent() {
     }
   };
 
+  const handleGenerateMore = async () => {
+    if (!uploadedImage || !prompt) return;
+
+    setIsLoading(true);
+    try {
+      const request: GenerationRequest = {
+        mode: AppMode.EDIT,
+        prompt,
+        image: uploadedImage,
+        aspectRatio: selectedAspectRatio
+      };
+
+      const images = await generateImageVariations(request);
+      if (images.length === 0) {
+        alert('이미지 생성에 실패했습니다. 다시 시도해주세요.');
+      } else {
+        setGeneratedImages(prev => [...prev, ...images]);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleUpscale = async (imageUrl: string) => {
     if (!(await validateApiKey())) return;
 
@@ -392,7 +418,7 @@ function EditPageContent() {
                   : 'bg-emerald-600 dark:bg-emerald-500 text-white hover:bg-emerald-700 dark:hover:bg-emerald-600 hover:shadow-emerald-200 dark:hover:shadow-emerald-900'
               }`}
             >
-              {isLoading ? '생성 중...' : '이미지 4장 생성'}
+              {isLoading ? '생성 중...' : '이미지 2장 생성'}
               {!isLoading && <Wand2 className="w-5 h-5" />}
             </button>
           </div>
@@ -408,6 +434,7 @@ function EditPageContent() {
         onClose={() => setGeneratedImages([])}
         onUpscale={handleUpscale}
         onSave={handleSaveToCloud}
+        onGenerateMore={handleGenerateMore}
       />
 
       {/* Upscaled Image Modal */}

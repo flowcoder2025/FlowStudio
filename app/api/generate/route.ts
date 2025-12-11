@@ -136,16 +136,10 @@ export async function POST(req: NextRequest) {
       return null
     }
 
-    // 7. 4장 생성 (2장씩 2번 순차 - QPM 제한 회피)
-    console.log('[API /generate] Generating images in batches to avoid rate limits...')
-    const batch1 = await Promise.all([generateSingle(), generateSingle()])
-    console.log('[API /generate] Batch 1 completed, waiting 5 seconds for rate limit...')
-    await new Promise(resolve => setTimeout(resolve, 5000)) // 5초 대기 (QPM 제한 회피)
-
-    const batch2 = await Promise.all([generateSingle(), generateSingle()])
-    console.log('[API /generate] Batch 2 completed')
-
-    const results = [...batch1, ...batch2]
+    // 7. 2장 생성 (타임아웃 회피 - 추가 생성은 "더보기" 버튼으로 가능)
+    console.log('[API /generate] Generating 2 images...')
+    const results = await Promise.all([generateSingle(), generateSingle()])
+    console.log('[API /generate] Generation completed')
     const base64Images = results.filter((img): img is string => img !== null)
 
     if (base64Images.length === 0) {

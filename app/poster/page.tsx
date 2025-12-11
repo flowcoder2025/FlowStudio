@@ -147,6 +147,31 @@ function PosterPageContent() {
     }
   };
 
+  const handleGenerateMore = async () => {
+    if (!selectedCategory || !productImage || !prompt.trim()) return;
+
+    setIsLoading(true);
+    try {
+      const request: GenerationRequest = {
+        image: productImage,
+        logoImage: logoImage || undefined,
+        prompt,
+        category: selectedCategory,
+        style: selectedStyle || undefined,
+        mode: AppMode.POSTER,
+        aspectRatio: selectedAspectRatio,
+      };
+
+      const images = await generateImageVariations(request);
+      setGeneratedImages(prev => [...prev, ...images]);
+    } catch (error) {
+      console.error('Generation error:', error);
+      alert(error instanceof Error ? error.message : '이미지 생성에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleUpscale = async (imageUrl: string) => {
     setIsUpscaling(true);
     setUpscaledImage(null);
@@ -399,7 +424,7 @@ function PosterPageContent() {
                   : 'bg-rose-600 dark:bg-rose-500 text-white hover:bg-rose-700 dark:hover:bg-rose-600 hover:shadow-rose-200 dark:hover:shadow-rose-900'
               }`}
             >
-              {isLoading ? '생성 중...' : '포스터 4장 생성하기'}
+              {isLoading ? '생성 중...' : '포스터 2장 생성하기'}
               {!isLoading && <Sparkles className="w-5 h-5" />}
             </button>
           </div>
@@ -414,6 +439,7 @@ function PosterPageContent() {
         images={generatedImages}
         onClose={() => setGeneratedImages([])}
         onUpscale={handleUpscale}
+        onGenerateMore={handleGenerateMore}
       />
 
       {/* Upscaled Image Modal */}

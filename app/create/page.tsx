@@ -130,6 +130,35 @@ function CreatePageContent() {
     }
   };
 
+  const handleGenerateMore = async () => {
+    if (!selectedCategory) return;
+
+    setIsLoading(true);
+    try {
+      const request: GenerationRequest = {
+        mode: AppMode.CREATE,
+        prompt,
+        image: uploadedImage || undefined,
+        category: selectedCategory,
+        style: selectedStyle || undefined,
+        aspectRatio: selectedAspectRatio
+      };
+
+      const images = await generateImageVariations(request);
+      if (images.length === 0) {
+        alert('이미지 생성에 실패했습니다. 다시 시도해주세요.');
+      } else {
+        // 기존 이미지에 새 이미지 추가
+        setGeneratedImages(prev => [...prev, ...images]);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleUpscale = async (imageUrl: string) => {
     if (!(await validateApiKey())) return;
 
@@ -353,7 +382,7 @@ function CreatePageContent() {
                   : 'bg-indigo-600 dark:bg-indigo-500 text-white hover:bg-indigo-700 dark:hover:bg-indigo-600 hover:shadow-indigo-200 dark:hover:shadow-indigo-900'
               }`}
             >
-              {isLoading ? '생성 중...' : '이미지 4장 생성하기'}
+              {isLoading ? '생성 중...' : '이미지 2장 생성하기'}
               {!isLoading && <Sparkles className="w-5 h-5" />}
             </button>
           </div>
@@ -368,6 +397,7 @@ function CreatePageContent() {
         onClose={() => setGeneratedImages([])}
         onUpscale={handleUpscale}
         onSave={handleSaveToCloud}
+        onGenerateMore={handleGenerateMore}
       />
 
       {/* Upscaled Image Modal */}
