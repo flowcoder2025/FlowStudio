@@ -10,6 +10,7 @@
  * - Google의 최신 최고 품질 이미지 생성 모델
  * - 모든 모드(CREATE, EDIT, DETAIL_EDIT)에서 통일 사용
  * - generateContent API로 1장 생성 (Vertex AI 타임아웃 방지)
+ * - 2K 해상도 (2048x2048) 기본 출력
  * - JPEG 출력으로 파일 크기 최적화 (PNG 대비 50-70% 감소)
  *
  * 변경사항 (Vertex AI 전환):
@@ -159,6 +160,7 @@ export async function POST(req: NextRequest) {
         config: {
           imageConfig: {
             aspectRatio: aspectRatio || '1:1',
+            imageSize: '2K', // 2048px 해상도 (기본값 1K=1024px)
           },
         },
       })
