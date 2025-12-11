@@ -11,6 +11,12 @@
 import { prisma } from '@/lib/prisma'
 import { ValidationError, InsufficientCreditsError } from '@/lib/errors'
 
+// Prisma 트랜잭션 클라이언트 타입
+type PrismaTransactionClient = Omit<
+  typeof prisma,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>
+
 // 크레딧 가격 상수
 export const CREDIT_PRICES = {
   GENERATION_2K: 20,  // 2K 생성 1회 (4장) = 20 크레딧
@@ -118,6 +124,48 @@ export async function addCredits(
   })
 
   return { balance: result.balance }
+}
+
+/**
+ * 크레딧 추가 (트랜잭션 클라이언트 전달 버전)
+ * 외부 트랜잭션 내에서 사용할 때 호출
+ */
+export async function addCreditsWithTx(
+  tx: PrismaTransactionClient,
+  userId: string,
+  amount: number,
+  type: 'PURCHASE' | 'BONUS' | 'REFERRAL',
+  description: string,
+  metadata?: CreditTransactionMetadata
+): Promise<{ balance: number }> {
+  if (amount <= 0) {
+    throw new ValidationError('충전 금액은 0보다 커야 합니다')
+  }
+
+  // Credit 레코드가 없으면 생성
+  const credit = await tx.credit.upsert({
+    where: { userId },
+    create: {
+      userId,
+      balance: amount
+    },
+    update: {
+      balance: { increment: amount }
+    }
+  })
+
+  // 트랜잭션 기록
+  await tx.creditTransaction.create({
+    data: {
+      userId,
+      amount,
+      type,
+      description,
+      metadata: metadata || {}
+    }
+  })
+
+  return { balance: credit.balance }
 }
 
 /**

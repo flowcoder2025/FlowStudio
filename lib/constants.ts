@@ -30,3 +30,38 @@ export const FILTER_PRESETS: FilterPreset[] = [
 // Usage & Cost Estimation Constants
 export const ESTIMATED_COST_PER_IMAGE_USD = 0.14; // Updated cost for gemini-3-pro-image-preview
 export const EXCHANGE_RATE_KRW = 1400; // Approximate exchange rate
+
+// ========================================
+// Credit System Constants
+// ========================================
+
+/**
+ * 크레딧 패키지 정의 (PortOne 결제 연동)
+ * - 1 크레딧 = ₩100
+ * - 패키지별 할인율 적용
+ */
+export const CREDIT_PACKAGES = {
+  starter: { credits: 100, price: 10000, name: '스타터', discount: 0 },
+  basic: { credits: 300, price: 28000, name: '베이직', discount: 7 },    // 2,000원 할인
+  pro: { credits: 1000, price: 90000, name: '프로', discount: 10 },      // 10,000원 할인
+  business: { credits: 3000, price: 250000, name: '비즈니스', discount: 17 }, // 50,000원 할인
+} as const;
+
+export type CreditPackageId = keyof typeof CREDIT_PACKAGES;
+
+/**
+ * 크레딧 사용 비용
+ */
+export const CREDIT_USAGE = {
+  GENERATION_2K: 20,  // 2K 이미지 생성 1회 (2장) = 20 크레딧
+  UPSCALE_4K: 10,     // 4K 업스케일링 1회 (1장) = 10 크레딧
+} as const;
+
+/**
+ * 보너스 크레딧
+ */
+export const CREDIT_BONUS = {
+  SIGNUP_GENERAL: 30,    // 일반 회원 가입 보너스
+  SIGNUP_BUSINESS: 150,  // 사업자 회원 가입 보너스
+  REFERRAL: 150,         // 추천인 보상 (양측 각각)
+} as const;

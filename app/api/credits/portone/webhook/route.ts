@@ -9,22 +9,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { addCredits } from '@/lib/utils/creditManager'
+import { CREDIT_PACKAGES, type CreditPackageId } from '@/lib/constants'
 import {
   verifyPortoneWebhookSignature,
   getPortonePayment,
   parsePortoneCustomData,
   type PortoneWebhookPayload
 } from '@/lib/utils/portoneWebhook'
-
-// 크레딧 패키지 정의 (pricing-strategy.md에서)
-const CREDIT_PACKAGES = {
-  starter: { credits: 100, price: 10000, name: '스타터' },
-  basic: { credits: 300, price: 28000, name: '베이직' },
-  pro: { credits: 1000, price: 90000, name: '프로' },
-  business: { credits: 3000, price: 250000, name: '비즈니스' }
-} as const
-
-type PackageId = keyof typeof CREDIT_PACKAGES
 
 export async function POST(request: NextRequest) {
   try {
@@ -69,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     // 5. 커스텀 데이터에서 패키지 ID 및 사용자 ID 추출
     const customData = parsePortoneCustomData(payload.data.customData)
-    const packageId = customData?.packageId as PackageId | undefined
+    const packageId = customData?.packageId as CreditPackageId | undefined
     const userId = customData?.userId
 
     if (!packageId || !userId) {
@@ -132,7 +123,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 9. 크레딧 지급
-    const result = await addCredits(
+    await addCredits(
       userId,
       pkg.credits,
       'PURCHASE',
@@ -151,14 +142,13 @@ export async function POST(request: NextRequest) {
 
     console.log('[Webhook] 크레딧 지급 완료:', {
       userId,
-      credits: pkg.credits,
-      newBalance: result.balance
+      credits: pkg.credits
     })
 
+    // 보안: 웹훅 응답에 민감한 정보(잔액) 포함하지 않음
     return NextResponse.json({
       success: true,
-      message: 'Credits added successfully',
-      balance: result.balance
+      message: 'Credits added successfully'
     })
 
   } catch (error) {

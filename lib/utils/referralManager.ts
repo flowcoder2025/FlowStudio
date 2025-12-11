@@ -7,7 +7,7 @@
  */
 
 import { prisma } from '@/lib/prisma'
-import { addCredits } from '@/lib/utils/creditManager'
+import { addCreditsWithTx } from '@/lib/utils/creditManager'
 
 // 레퍼럴 보너스 크레딧
 export const REFERRAL_BONUS_CREDITS = 150
@@ -156,10 +156,11 @@ export async function awardReferralCredits(
   }
 
   try {
-    // 트랜잭션으로 양쪽에 크레딧 지급
+    // 단일 트랜잭션으로 양쪽 크레딧 지급 + 상태 업데이트 (원자성 보장)
     await prisma.$transaction(async (tx) => {
       // 추천인에게 150 크레딧 지급
-      await addCredits(
+      await addCreditsWithTx(
+        tx,
         referral.referrerId,
         REFERRAL_BONUS_CREDITS,
         'REFERRAL',
@@ -172,7 +173,8 @@ export async function awardReferralCredits(
       )
 
       // 가입자에게 150 크레딧 지급
-      await addCredits(
+      await addCreditsWithTx(
+        tx,
         referredUserId,
         REFERRAL_BONUS_CREDITS,
         'REFERRAL',

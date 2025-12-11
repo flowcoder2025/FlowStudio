@@ -17,6 +17,11 @@ import { join } from 'path'
 let vertexAIClient: GoogleGenAI | null = null
 let credentialsPath: string | null = null
 
+// 프로덕션에서는 디버그 로그 비활성화
+const isDev = process.env.NODE_ENV === 'development'
+const log = (message: string) => isDev && console.log(message)
+const logError = (message: string) => console.error(message) // 에러는 항상 출력
+
 /**
  * Vertex AI 환경 변수 검증
  * @throws {Error} 필수 환경 변수가 없을 경우
@@ -69,46 +74,35 @@ export function getVertexAIClient(): GoogleGenAI {
 
   // Vercel/Cloud 환경: GOOGLE_APPLICATION_CREDENTIALS를 JSON 문자열로 받아 처리
   const credsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS
-  console.log('[Vertex AI] Checking GOOGLE_APPLICATION_CREDENTIALS...')
-  console.log(`[Vertex AI] Credentials type: ${typeof credsJson}`)
-  console.log(`[Vertex AI] Credentials length: ${credsJson?.length || 0} characters`)
+  log('[Vertex AI] Checking GOOGLE_APPLICATION_CREDENTIALS...')
 
   if (credsJson && !credentialsPath) {
     try {
       // JSON 파싱 시도 (파일 경로가 아닌 경우)
-      console.log('[Vertex AI] Attempting to parse credentials as JSON...')
-      const credentials = JSON.parse(credsJson)
-      console.log(`[Vertex AI] ✅ JSON parsed successfully`)
-      console.log(`[Vertex AI] Service account: ${credentials.client_email}`)
-      console.log(`[Vertex AI] Project ID: ${credentials.project_id}`)
+      JSON.parse(credsJson) // 유효한 JSON인지 확인
+      log('[Vertex AI] ✅ Credentials parsed as JSON')
 
       // /tmp 디렉토리에 임시 credentials 파일 생성 (Vercel Lambda는 /tmp 쓰기 가능)
       credentialsPath = join('/tmp', `gcp-credentials-${Date.now()}.json`)
-      console.log(`[Vertex AI] Creating credentials file at: ${credentialsPath}`)
-
       writeFileSync(credentialsPath, credsJson, 'utf8')
-      console.log(`[Vertex AI] ✅ Credentials file written successfully`)
 
       // 환경 변수를 파일 경로로 재설정 (GoogleGenAI가 자동으로 사용)
       process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath
-      console.log(`[Vertex AI] ✅ Environment variable updated to file path`)
-    } catch (error) {
+      log('[Vertex AI] ✅ Credentials file created')
+    } catch {
       // JSON 파싱 실패 = 이미 파일 경로인 경우 (로컬 개발)
-      console.log('[Vertex AI] JSON parsing failed - assuming existing file path')
-      console.log(`[Vertex AI] Error: ${error instanceof Error ? error.message : String(error)}`)
+      log('[Vertex AI] Using existing credentials file path')
     }
   } else if (!credsJson) {
     // 로컬 개발 환경: Application Default Credentials (ADC) 사용
-    console.log('[Vertex AI] No GOOGLE_APPLICATION_CREDENTIALS found')
-    console.log('[Vertex AI] Using Application Default Credentials (gcloud auth)')
+    log('[Vertex AI] Using Application Default Credentials (gcloud auth)')
   } else {
-    console.log('[Vertex AI] Credentials already processed in previous initialization')
+    log('[Vertex AI] Credentials already processed')
   }
 
   // Vertex AI 클라이언트 초기화
   try {
-    console.log('[Vertex AI] Initializing GoogleGenAI client...')
-    console.log(`[Vertex AI] Config: { vertexai: true, project: "${project}", location: "${location}" }`)
+    log(`[Vertex AI] Initializing client (project: ${project}, location: ${location})`)
 
     vertexAIClient = new GoogleGenAI({
       vertexai: true,
@@ -116,17 +110,10 @@ export function getVertexAIClient(): GoogleGenAI {
       location,
     })
 
-    console.log(`[Vertex AI] ✅ Client initialized successfully`)
-    console.log(`[Vertex AI] Project: ${project}, Location: ${location}`)
-
+    log('[Vertex AI] ✅ Client initialized successfully')
     return vertexAIClient
   } catch (error) {
-    console.error('[Vertex AI] ❌ Failed to initialize client')
-    console.error(`[Vertex AI] Error type: ${error?.constructor?.name}`)
-    console.error(`[Vertex AI] Error message: ${error instanceof Error ? error.message : String(error)}`)
-    if (error instanceof Error && error.stack) {
-      console.error(`[Vertex AI] Stack trace: ${error.stack}`)
-    }
+    logError(`[Vertex AI] ❌ Failed to initialize: ${error instanceof Error ? error.message : String(error)}`)
     throw error
   }
 }
