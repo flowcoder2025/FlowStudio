@@ -9,7 +9,7 @@
  * 모델: Gemini 3 Pro Image (Nano Banana Pro)
  * - Google의 최신 최고 품질 이미지 생성 모델
  * - 모든 모드(CREATE, EDIT, DETAIL_EDIT)에서 통일 사용
- * - generateContent API로 2장 병렬 생성
+ * - generateContent API로 1장 생성 (Vertex AI 타임아웃 방지)
  * - JPEG 출력으로 파일 크기 최적화 (PNG 대비 50-70% 감소)
  *
  * 변경사항 (Vertex AI 전환):
@@ -173,10 +173,14 @@ export async function POST(req: NextRequest) {
       return null
     }
 
-    // Gemini 3 Pro Image는 한 번에 1장씩 생성하므로 2장 병렬 호출
-    const results = await Promise.all([generateWithGemini(), generateWithGemini()])
+    // Gemini 3 Pro Image 생성 (Vertex AI 타임아웃 방지를 위해 1장씩 생성)
+    // Note: Vertex AI에서 병렬 2장 생성 시 ~115초 소요되어 120초 타임아웃 발생
+    // 1장 생성으로 변경하여 안정적으로 60초 내 완료
+    const result = await generateWithGemini()
     console.log('[API /generate] Gemini 3 Pro Image generation completed')
-    base64Images = results.filter((img): img is string => img !== null)
+    if (result) {
+      base64Images = [result]
+    }
 
     if (base64Images.length === 0) {
       // 생성 실패 이력 기록
