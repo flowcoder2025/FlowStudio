@@ -45,11 +45,24 @@ export async function GET(req: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0')
 
     // ReBAC로 접근 가능한 프로젝트 ID 조회
-    const accessibleIds = await listAccessible(
+    let accessibleIds = await listAccessible(
       session.user.id,
       'image_project',
       'viewer'
     )
+
+    // ReBAC 권한이 없는 경우 (기존 데이터 호환성) userId 기반으로 폴백
+    // 사용자가 직접 생성한 모든 프로젝트를 조회
+    if (accessibleIds.length === 0) {
+      const userProjects = await prisma.imageProject.findMany({
+        where: {
+          userId: session.user.id,
+          deletedAt: null,
+        },
+        select: { id: true },
+      })
+      accessibleIds = userProjects.map((p) => p.id)
+    }
 
     // 프로젝트 조회 조건
     const whereClause: {
@@ -107,7 +120,7 @@ export async function GET(req: NextRequest) {
       where: whereClause,
     })
 
-    // 이미지 목록 변환
+    // 이미지 목록 변환 (ImageProject)
     const images: UserImage[] = []
 
     for (const project of projects) {
@@ -124,9 +137,86 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // DetailPageDraft 조회 (DETAIL_PAGE 모드이거나 전체 모드일 때만)
+    let totalDetailPageDrafts = 0
+
+    if (!mode || mode === 'DETAIL_PAGE') {
+      const detailPageDrafts = await prisma.detailPageDraft.findMany({
+        where: {
+          userId: session.user.id,
+          detailPageSegments: { isEmpty: false },
+          ...(dateFrom || dateTo
+            ? {
+                createdAt: {
+                  ...(dateFrom && { gte: new Date(dateFrom) }),
+                  ...(dateTo && {
+                    lte: (() => {
+                      const endDate = new Date(dateTo)
+                      endDate.setDate(endDate.getDate() + 1)
+                      return endDate
+                    })(),
+                  }),
+                },
+              }
+            : {}),
+        },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          detailPageSegments: true,
+          createdAt: true,
+        },
+        take: limit,
+        skip: offset,
+      })
+
+      // DetailPageDraft를 UserImage 형식으로 변환
+      for (const draft of detailPageDrafts) {
+        for (let i = 0; i < draft.detailPageSegments.length; i++) {
+          images.push({
+            url: draft.detailPageSegments[i],
+            projectId: `draft_${draft.id}`,
+            projectTitle: draft.title,
+            mode: 'DETAIL_PAGE',
+            createdAt: draft.createdAt.toISOString(),
+            index: i,
+            tags: [],
+          })
+        }
+      }
+
+      // DetailPageDraft 전체 개수 조회
+      totalDetailPageDrafts = await prisma.detailPageDraft.count({
+        where: {
+          userId: session.user.id,
+          detailPageSegments: { isEmpty: false },
+          ...(dateFrom || dateTo
+            ? {
+                createdAt: {
+                  ...(dateFrom && { gte: new Date(dateFrom) }),
+                  ...(dateTo && {
+                    lte: (() => {
+                      const endDate = new Date(dateTo)
+                      endDate.setDate(endDate.getDate() + 1)
+                      return endDate
+                    })(),
+                  }),
+                },
+              }
+            : {}),
+        },
+      })
+    }
+
+    // 생성일 기준 정렬 (최신순)
+    images.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+
     const response: ImagesListResponse = {
       images,
-      total: totalProjects,
+      total: totalProjects + totalDetailPageDrafts,
     }
 
     return NextResponse.json(response)
