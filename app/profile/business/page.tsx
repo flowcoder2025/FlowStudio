@@ -11,7 +11,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, Building2, User, Phone, AlertCircle } from 'lucide-react'
+import { CheckCircle2, Building2, User, Phone, AlertCircle, ArrowLeft } from 'lucide-react'
 
 interface VerificationStatus {
   verified: boolean
@@ -167,6 +167,15 @@ export default function BusinessVerificationPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 py-12">
       <div className="container mx-auto px-4 max-w-2xl">
+        {/* 뒤로가기 버튼 */}
+        <button
+          onClick={() => router.push('/profile')}
+          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span>프로필로 돌아가기</span>
+        </button>
+
         {/* 헤더 */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full mb-4">
