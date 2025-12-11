@@ -45,6 +45,7 @@ interface ReferralStats {
     creditsAwarded: boolean
     awardedAt: string | null
   } | null
+  hasReferrer: boolean // 이미 추천인이 있는지 여부
 }
 
 export default function ReferralPage() {
@@ -55,6 +56,14 @@ export default function ReferralPage() {
   const [stats, setStats] = useState<ReferralStats | null>(null)
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
+
+  // 추천 코드 생성 상태
+  const [generatingCode, setGeneratingCode] = useState(false)
+
+  // 추천 코드 입력 상태
+  const [inputCode, setInputCode] = useState('')
+  const [applyingCode, setApplyingCode] = useState(false)
+  const [applyMessage, setApplyMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
     if (!session?.user) {
@@ -93,6 +102,62 @@ export default function ReferralPage() {
       setTimeout(() => setCopied(false), 2000)
     } catch (error) {
       console.error('복사 실패:', error)
+    }
+  }
+
+  // 내 추천 코드 생성
+  const generateMyCode = async () => {
+    try {
+      setGeneratingCode(true)
+      const response = await fetch('/api/referral/code', { method: 'POST' })
+      const data = await response.json()
+
+      if (data.success) {
+        // 통계 새로고침
+        await fetchReferralStats()
+      } else {
+        setError(data.error || '추천 코드 생성에 실패했습니다')
+      }
+    } catch (error) {
+      console.error('추천 코드 생성 실패:', error)
+      setError('추천 코드 생성에 실패했습니다')
+    } finally {
+      setGeneratingCode(false)
+    }
+  }
+
+  // 추천 코드 적용
+  const applyReferralCode = async () => {
+    if (!inputCode.trim()) {
+      setApplyMessage({ type: 'error', text: '추천 코드를 입력해주세요' })
+      return
+    }
+
+    try {
+      setApplyingCode(true)
+      setApplyMessage(null)
+
+      const response = await fetch('/api/referral/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referralCode: inputCode.trim() })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setApplyMessage({ type: 'success', text: data.data.message })
+        setInputCode('')
+        // 통계 새로고침
+        await fetchReferralStats()
+      } else {
+        setApplyMessage({ type: 'error', text: data.error || '추천 코드 적용에 실패했습니다' })
+      }
+    } catch (error) {
+      console.error('추천 코드 적용 실패:', error)
+      setApplyMessage({ type: 'error', text: '추천 코드 적용에 실패했습니다' })
+    } finally {
+      setApplyingCode(false)
     }
   }
 
@@ -147,7 +212,7 @@ export default function ReferralPage() {
         </div>
 
         {/* 내 추천 코드 */}
-        {stats.myReferralCode && (
+        {stats.myReferralCode ? (
           <div className="bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl p-8 text-white shadow-lg">
             <div className="flex items-center gap-2 mb-4">
               <Gift className="w-6 h-6" />
@@ -177,6 +242,84 @@ export default function ReferralPage() {
             <p className="mt-4 text-sm text-purple-100">
               이 코드를 친구에게 공유하세요. 친구가 가입 시 입력하고 사업자 인증을 완료하면 각각 150 크레딧을 받습니다.
             </p>
+          </div>
+        ) : (
+          /* 추천 코드 생성 */
+          <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl p-8 shadow-lg border border-gray-300">
+            <div className="flex items-center gap-2 mb-4">
+              <Gift className="w-6 h-6 text-gray-600" />
+              <h2 className="text-xl font-semibold text-gray-800">내 추천 코드</h2>
+            </div>
+            <p className="text-gray-600 mb-6">
+              추천 코드를 생성하고 친구에게 공유하세요. 친구가 가입하고 사업자 인증을 완료하면 각각 150 크레딧을 받습니다.
+            </p>
+            <button
+              onClick={generateMyCode}
+              disabled={generatingCode}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {generatingCode ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                  생성 중...
+                </>
+              ) : (
+                <>
+                  <Gift className="w-5 h-5" />
+                  내 추천 코드 생성하기
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* 추천 코드 입력 (추천인이 없는 경우만 표시) */}
+        {!stats.referredBy && (
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">추천 코드 입력</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              친구에게 받은 추천 코드가 있나요? 입력하고 사업자 인증을 완료하면 각각 150 크레딧을 받습니다.
+            </p>
+
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={inputCode}
+                onChange={(e) => setInputCode(e.target.value.toUpperCase())}
+                placeholder="8자리 추천 코드 입력"
+                maxLength={8}
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-mono text-lg tracking-wider uppercase focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+              <button
+                onClick={applyReferralCode}
+                disabled={applyingCode || !inputCode.trim()}
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {applyingCode ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                    적용 중...
+                  </>
+                ) : (
+                  '적용하기'
+                )}
+              </button>
+            </div>
+
+            {applyMessage && (
+              <div className={`mt-3 p-3 rounded-lg flex items-center gap-2 ${
+                applyMessage.type === 'success'
+                  ? 'bg-green-50 text-green-800 border border-green-200'
+                  : 'bg-red-50 text-red-800 border border-red-200'
+              }`}>
+                {applyMessage.type === 'success' ? (
+                  <Check className="w-4 h-4 flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                )}
+                <span className="text-sm">{applyMessage.text}</span>
+              </div>
+            )}
           </div>
         )}
 
