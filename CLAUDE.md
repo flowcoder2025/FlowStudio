@@ -49,7 +49,7 @@
 - **프레임워크**: Next.js 16.0.4 (App Router, React 19.2.0, React Server Components)
 - **데이터베이스**: PostgreSQL via Supabase (Prisma 5.22.0 ORM)
 - **파일 저장소**: Supabase Storage (@supabase/supabase-js)
-- **인증**: NextAuth.js 4.24.13 with Google OAuth
+- **인증**: NextAuth.js 4.24.13 with Google OAuth + Kakao OAuth
 - **스타일링**: Tailwind CSS 4 with @tailwindcss/postcss
 - **AI 통합**: Google Cloud Vertex AI - Gemini 3 Pro Image Preview (@google/genai with Vertex AI mode)
 - **타입 안정성**: TypeScript 5 (strict mode)
@@ -141,9 +141,9 @@ await requireImageProjectEditor(userId, projectId) // 권한 없으면 에러
 ### API 라우트
 
 **인증** (`/api/auth/[...nextauth]/route.ts`):
-- Google OAuth 프로바이더
+- Google OAuth + Kakao OAuth 프로바이더
 - 세션 관리를 위한 Prisma 어댑터
-- 사용자 가입 시 자동으로 소유자 권한 생성
+- 사용자 가입 시 자동으로 소유자 권한 생성 및 보너스 크레딧 지급
 
 **이미지 생성** (`/api/generate/route.ts`):
 - **보안**: 사용자의 암호화된 API 키를 서버에서 복호화하여 Gemini API 프록시
@@ -209,6 +209,12 @@ NEXTAUTH_SECRET="<생성 명령: openssl rand -base64 32>"
 # Google OAuth
 GOOGLE_CLIENT_ID="..."
 GOOGLE_CLIENT_SECRET="..."
+
+# Kakao OAuth
+KAKAO_CLIENT_ID="<Kakao Developers → 앱 키 → REST API 키>"
+KAKAO_CLIENT_SECRET="<Kakao Developers → 보안 → Client Secret>"
+# 콜백 URL: http://localhost:3000/api/auth/callback/kakao (로컬)
+#           https://your-domain.com/api/auth/callback/kakao (프로덕션)
 
 # Google Cloud Vertex AI (이미지 생성)
 GOOGLE_CLOUD_PROJECT="your-google-cloud-project-id"
