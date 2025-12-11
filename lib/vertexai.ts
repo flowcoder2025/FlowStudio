@@ -1,26 +1,61 @@
 /**
- * Vertex AI Singleton Client
+ * GenAI Dual-Mode Client (Google AI Studio / Vertex AI)
  *
- * Google Cloud Vertex AI를 통한 Gemini 이미지 생성 API 클라이언트
- * Application Default Credentials (ADC)를 사용하여 인증
+ * 환경 변수로 모드 전환 가능:
+ * - GENAI_MODE=google-ai-studio (기본값): Google AI Studio API 사용 (빠름, 테스트용)
+ * - GENAI_MODE=vertex-ai: Vertex AI API 사용 (프로덕션, 엔터프라이즈)
  *
- * 인증 방법:
- * 1. 로컬 개발: gcloud auth application-default login
- * 2. 프로덕션: GOOGLE_APPLICATION_CREDENTIALS 환경 변수로 서비스 계정 키 지정
- * 3. Cloud Run/GCE: 자동으로 서비스 계정 사용
+ * Google AI Studio 모드:
+ * - GOOGLE_API_KEY 환경 변수 필요
+ * - 빠른 응답 속도 (4장 병렬 생성 60초 이내)
+ * - 개인/소규모 테스트에 적합
+ *
+ * Vertex AI 모드:
+ * - GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION 환경 변수 필요
+ * - GOOGLE_APPLICATION_CREDENTIALS (서비스 계정 키) 필요
+ * - 엔터프라이즈 보안 및 SLA
  */
 
 import { GoogleGenAI } from '@google/genai'
 import { writeFileSync } from 'fs'
 import { join } from 'path'
 
-let vertexAIClient: GoogleGenAI | null = null
+let genAIClient: GoogleGenAI | null = null
 let credentialsPath: string | null = null
 
 // 프로덕션에서는 디버그 로그 비활성화
 const isDev = process.env.NODE_ENV === 'development'
 const log = (message: string) => isDev && console.log(message)
 const logError = (message: string) => console.error(message) // 에러는 항상 출력
+
+/**
+ * 현재 GenAI 모드 확인
+ * @returns {'google-ai-studio' | 'vertex-ai'} 현재 모드
+ */
+export function getGenAIMode(): 'google-ai-studio' | 'vertex-ai' {
+  const mode = process.env.GENAI_MODE?.toLowerCase()
+  if (mode === 'vertex-ai') {
+    return 'vertex-ai'
+  }
+  return 'google-ai-studio' // 기본값
+}
+
+/**
+ * Google AI Studio 환경 변수 검증
+ * @throws {Error} 필수 환경 변수가 없을 경우
+ */
+function validateGoogleAIStudioConfig() {
+  const apiKey = process.env.GOOGLE_API_KEY
+
+  if (!apiKey) {
+    throw new Error(
+      `Google AI Studio 설정 오류: GOOGLE_API_KEY 환경 변수가 필요합니다.\n` +
+      `설정 가이드: https://aistudio.google.com/apikey`
+    )
+  }
+
+  return { apiKey }
+}
 
 /**
  * Vertex AI 환경 변수 검증
@@ -50,37 +85,36 @@ function validateVertexAIConfig() {
 }
 
 /**
- * Vertex AI 클라이언트 싱글톤 가져오기
- *
- * @returns {GoogleGenAI} Vertex AI 인증된 GoogleGenAI 클라이언트
- * @throws {Error} 환경 변수 설정이 잘못되었을 경우
- *
- * @example
- * ```typescript
- * const ai = getVertexAIClient()
- * const response = await ai.models.generateContent({
- *   model: 'gemini-2.5-flash-image',
- *   contents: 'Generate an image of a sunset',
- *   config: { responseModalities: ['IMAGE'] }
- * })
- * ```
+ * Google AI Studio 클라이언트 초기화
  */
-export function getVertexAIClient(): GoogleGenAI {
-  if (vertexAIClient) {
-    return vertexAIClient
-  }
+function initGoogleAIStudioClient(): GoogleGenAI {
+  const { apiKey } = validateGoogleAIStudioConfig()
 
+  log('[GenAI] Initializing Google AI Studio client...')
+
+  const client = new GoogleGenAI({
+    apiKey,
+  })
+
+  log('[GenAI] ✅ Google AI Studio client initialized successfully')
+  return client
+}
+
+/**
+ * Vertex AI 클라이언트 초기화
+ */
+function initVertexAIClient(): GoogleGenAI {
   const { project, location } = validateVertexAIConfig()
 
   // Vercel/Cloud 환경: GOOGLE_APPLICATION_CREDENTIALS를 JSON 문자열로 받아 처리
   const credsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS
-  log('[Vertex AI] Checking GOOGLE_APPLICATION_CREDENTIALS...')
+  log('[GenAI] Checking GOOGLE_APPLICATION_CREDENTIALS...')
 
   if (credsJson && !credentialsPath) {
     try {
       // JSON 파싱 시도 (파일 경로가 아닌 경우)
       JSON.parse(credsJson) // 유효한 JSON인지 확인
-      log('[Vertex AI] ✅ Credentials parsed as JSON')
+      log('[GenAI] ✅ Credentials parsed as JSON')
 
       // /tmp 디렉토리에 임시 credentials 파일 생성 (Vercel Lambda는 /tmp 쓰기 가능)
       credentialsPath = join('/tmp', `gcp-credentials-${Date.now()}.json`)
@@ -88,34 +122,73 @@ export function getVertexAIClient(): GoogleGenAI {
 
       // 환경 변수를 파일 경로로 재설정 (GoogleGenAI가 자동으로 사용)
       process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath
-      log('[Vertex AI] ✅ Credentials file created')
+      log('[GenAI] ✅ Credentials file created')
     } catch {
       // JSON 파싱 실패 = 이미 파일 경로인 경우 (로컬 개발)
-      log('[Vertex AI] Using existing credentials file path')
+      log('[GenAI] Using existing credentials file path')
     }
   } else if (!credsJson) {
     // 로컬 개발 환경: Application Default Credentials (ADC) 사용
-    log('[Vertex AI] Using Application Default Credentials (gcloud auth)')
+    log('[GenAI] Using Application Default Credentials (gcloud auth)')
   } else {
-    log('[Vertex AI] Credentials already processed')
+    log('[GenAI] Credentials already processed')
   }
 
-  // Vertex AI 클라이언트 초기화
+  log(`[GenAI] Initializing Vertex AI client (project: ${project}, location: ${location})`)
+
+  const client = new GoogleGenAI({
+    vertexai: true,
+    project,
+    location,
+  })
+
+  log('[GenAI] ✅ Vertex AI client initialized successfully')
+  return client
+}
+
+/**
+ * GenAI 클라이언트 싱글톤 가져오기 (듀얼 모드 지원)
+ *
+ * @returns {GoogleGenAI} 인증된 GoogleGenAI 클라이언트
+ * @throws {Error} 환경 변수 설정이 잘못되었을 경우
+ *
+ * @example
+ * ```typescript
+ * const ai = getGenAIClient()
+ * const response = await ai.models.generateContent({
+ *   model: 'gemini-3-pro-image-preview',
+ *   contents: 'Generate an image of a sunset',
+ *   config: { responseModalities: ['IMAGE'] }
+ * })
+ * ```
+ */
+export function getGenAIClient(): GoogleGenAI {
+  if (genAIClient) {
+    return genAIClient
+  }
+
+  const mode = getGenAIMode()
+  log(`[GenAI] Mode: ${mode}`)
+
   try {
-    log(`[Vertex AI] Initializing client (project: ${project}, location: ${location})`)
-
-    vertexAIClient = new GoogleGenAI({
-      vertexai: true,
-      project,
-      location,
-    })
-
-    log('[Vertex AI] ✅ Client initialized successfully')
-    return vertexAIClient
+    if (mode === 'google-ai-studio') {
+      genAIClient = initGoogleAIStudioClient()
+    } else {
+      genAIClient = initVertexAIClient()
+    }
+    return genAIClient
   } catch (error) {
-    logError(`[Vertex AI] ❌ Failed to initialize: ${error instanceof Error ? error.message : String(error)}`)
+    logError(`[GenAI] ❌ Failed to initialize: ${error instanceof Error ? error.message : String(error)}`)
     throw error
   }
+}
+
+/**
+ * @deprecated getVertexAIClient는 getGenAIClient로 대체되었습니다.
+ * 호환성을 위해 유지되며, 내부적으로 getGenAIClient를 호출합니다.
+ */
+export function getVertexAIClient(): GoogleGenAI {
+  return getGenAIClient()
 }
 
 /**
@@ -146,9 +219,16 @@ export const VERTEX_AI_MODELS = {
 } as const
 
 /**
- * Vertex AI 클라이언트 재초기화 (테스트용)
+ * GenAI 클라이언트 재초기화 (테스트용)
  * 프로덕션에서는 사용하지 마세요.
  */
+export function resetGenAIClient() {
+  genAIClient = null
+}
+
+/**
+ * @deprecated resetVertexAIClient는 resetGenAIClient로 대체되었습니다.
+ */
 export function resetVertexAIClient() {
-  vertexAIClient = null
+  resetGenAIClient()
 }

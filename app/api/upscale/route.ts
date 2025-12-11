@@ -16,7 +16,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { uploadMultipleImages } from '@/lib/utils/imageStorage'
 import { ensureBase64, extractBase64Data } from '@/lib/utils/imageConverter'
-import { getVertexAIClient, VERTEX_AI_MODELS } from '@/lib/vertexai'
+import { getGenAIClient, getGenAIMode, VERTEX_AI_MODELS } from '@/lib/vertexai'
 import {
   hasEnoughCredits,
   deductCredits,
@@ -39,8 +39,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // 1. Vertex AI 클라이언트 초기화 (Application Default Credentials 사용)
-    const ai = getVertexAIClient()
+    // 1. GenAI 클라이언트 초기화 (Google AI Studio 또는 Vertex AI)
+    const genAIMode = getGenAIMode()
+    console.log(`[API /upscale] Using GenAI client (mode: ${genAIMode})`)
+    const ai = getGenAIClient()
 
     // 2. 크레딧 잔액 확인 (업스케일 1회 = 10 크레딧)
     const hasEnough = await hasEnoughCredits(session.user.id, CREDIT_PRICES.UPSCALE_4K)

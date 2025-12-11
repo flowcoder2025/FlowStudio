@@ -23,7 +23,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { ensureBase64, extractBase64Data } from '@/lib/utils/imageConverter'
-import { getVertexAIClient, VERTEX_AI_MODELS } from '@/lib/vertexai'
+import { getGenAIClient, getGenAIMode, VERTEX_AI_MODELS } from '@/lib/vertexai'
 import {
   hasEnoughCredits,
   deductForGeneration,
@@ -59,10 +59,11 @@ export async function POST(req: NextRequest) {
   let generationRequestId: string | null = null
 
   try {
-    // 1. Vertex AI 클라이언트 초기화 (Application Default Credentials 사용)
-    console.log('[API /generate] Initializing Vertex AI client...')
-    const ai = getVertexAIClient()
-    console.log('[API /generate] ✅ Vertex AI client initialized successfully')
+    // 1. GenAI 클라이언트 초기화 (Google AI Studio 또는 Vertex AI)
+    const genAIMode = getGenAIMode()
+    console.log(`[API /generate] Initializing GenAI client (mode: ${genAIMode})...`)
+    const ai = getGenAIClient()
+    console.log(`[API /generate] ✅ GenAI client initialized successfully (${genAIMode})`)
 
     // 2. 크레딧 잔액 확인 (2K 생성 1회 = 20 크레딧)
     const hasEnough = await hasEnoughCredits(session.user.id, CREDIT_PRICES.GENERATION_2K)
@@ -173,14 +174,18 @@ export async function POST(req: NextRequest) {
       return null
     }
 
-    // Gemini 3 Pro Image 생성 (Vertex AI 타임아웃 방지를 위해 1장씩 생성)
-    // Note: Vertex AI에서 병렬 2장 생성 시 ~115초 소요되어 120초 타임아웃 발생
-    // 1장 생성으로 변경하여 안정적으로 60초 내 완료
-    const result = await generateWithGemini()
+    // Gemini 3 Pro Image 4장 병렬 생성
+    // Google AI Studio 모드: 4장 병렬 생성 (60초 이내 완료)
+    // Vertex AI 모드: 속도 느림 (preview 모델이라 115초+ 소요될 수 있음)
+    console.log(`[API /generate] Starting 4-image parallel generation (mode: ${genAIMode})...`)
+    const results = await Promise.all([
+      generateWithGemini(),
+      generateWithGemini(),
+      generateWithGemini(),
+      generateWithGemini(),
+    ])
     console.log('[API /generate] Gemini 3 Pro Image generation completed')
-    if (result) {
-      base64Images = [result]
-    }
+    base64Images = results.filter((r): r is string => r !== null)
 
     if (base64Images.length === 0) {
       // 생성 실패 이력 기록
