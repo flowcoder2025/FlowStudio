@@ -17,6 +17,8 @@ import {
 
 interface ReferralStats {
   myReferralCode: string | null
+  myBusinessVerified: boolean
+  hasReferrer: boolean
   totalReferrals: number
   completedReferrals: number
   pendingReferrals: number
@@ -45,7 +47,6 @@ interface ReferralStats {
     creditsAwarded: boolean
     awardedAt: string | null
   } | null
-  hasReferrer: boolean // 이미 추천인이 있는지 여부
 }
 
 export default function ReferralPage() {
@@ -64,6 +65,10 @@ export default function ReferralPage() {
   const [inputCode, setInputCode] = useState('')
   const [applyingCode, setApplyingCode] = useState(false)
   const [applyMessage, setApplyMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  // 크레딧 청구 상태
+  const [claimingCredits, setClaimingCredits] = useState(false)
+  const [claimMessage, setClaimMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
     if (!session?.user) {
@@ -158,6 +163,34 @@ export default function ReferralPage() {
       setApplyMessage({ type: 'error', text: '추천 코드 적용에 실패했습니다' })
     } finally {
       setApplyingCode(false)
+    }
+  }
+
+  // 레퍼럴 크레딧 수동 청구
+  const claimReferralCredits = async () => {
+    try {
+      setClaimingCredits(true)
+      setClaimMessage(null)
+
+      const response = await fetch('/api/referral/claim', { method: 'POST' })
+      const data = await response.json()
+
+      if (data.success) {
+        if (data.data.alreadyAwarded) {
+          setClaimMessage({ type: 'success', text: data.data.message })
+        } else if (data.data.awarded) {
+          setClaimMessage({ type: 'success', text: data.data.message })
+          // 통계 새로고침
+          await fetchReferralStats()
+        }
+      } else {
+        setClaimMessage({ type: 'error', text: data.error || '크레딧 청구에 실패했습니다' })
+      }
+    } catch (error) {
+      console.error('크레딧 청구 실패:', error)
+      setClaimMessage({ type: 'error', text: '크레딧 청구에 실패했습니다' })
+    } finally {
+      setClaimingCredits(false)
     }
   }
 
@@ -389,6 +422,11 @@ export default function ReferralPage() {
                         <Check className="w-4 h-4" />
                         크레딧 지급 완료
                       </span>
+                    ) : stats.myBusinessVerified ? (
+                      <span className="text-orange-600 flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" />
+                        크레딧 지급 대기 중
+                      </span>
                     ) : (
                       <span className="text-yellow-600 flex items-center gap-1">
                         <Clock className="w-4 h-4" />
@@ -398,7 +436,42 @@ export default function ReferralPage() {
                   </p>
                 </div>
               </div>
+              {/* 크레딧 지급 받기 버튼: 사업자 인증 완료 + 아직 크레딧 미지급 상태일 때 */}
+              {stats.myBusinessVerified && !stats.referredBy.creditsAwarded && (
+                <button
+                  onClick={claimReferralCredits}
+                  disabled={claimingCredits}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {claimingCredits ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      처리 중...
+                    </>
+                  ) : (
+                    <>
+                      <Coins className="w-4 h-4" />
+                      크레딧 지급 받기
+                    </>
+                  )}
+                </button>
+              )}
             </div>
+            {/* 크레딧 청구 메시지 */}
+            {claimMessage && (
+              <div className={`mt-4 p-3 rounded-lg flex items-center gap-2 ${
+                claimMessage.type === 'success'
+                  ? 'bg-green-50 text-green-800 border border-green-200'
+                  : 'bg-red-50 text-red-800 border border-red-200'
+              }`}>
+                {claimMessage.type === 'success' ? (
+                  <Check className="w-4 h-4 flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                )}
+                <span className="text-sm">{claimMessage.text}</span>
+              </div>
+            )}
           </div>
         )}
 

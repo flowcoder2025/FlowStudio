@@ -253,11 +253,16 @@ export async function getReferralStats(userId: string) {
     }
   })
 
+  // 내 정보 조회 (추천 코드 + 사업자 인증 상태)
+  const myInfo = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { referralCode: true, businessVerified: true, referredBy: true }
+  })
+
   return {
-    myReferralCode: (await prisma.user.findUnique({
-      where: { id: userId },
-      select: { referralCode: true }
-    }))?.referralCode || null,
+    myReferralCode: myInfo?.referralCode || null,
+    myBusinessVerified: myInfo?.businessVerified || false,
+    hasReferrer: !!myInfo?.referredBy,
     totalReferrals,
     completedReferrals,
     pendingReferrals,

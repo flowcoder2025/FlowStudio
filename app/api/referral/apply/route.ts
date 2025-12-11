@@ -6,12 +6,13 @@
  * - 이미 추천인이 있으면 에러
  * - 유효하지 않은 코드면 에러
  * - 자기 자신의 코드면 에러
+ * - 이미 사업자 인증이 완료된 경우 즉시 크레딧 지급
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { createReferral, getReferrerByCode } from '@/lib/utils/referralManager'
+import { createReferral, getReferrerByCode, awardReferralCredits } from '@/lib/utils/referralManager'
 import { prisma } from '@/lib/prisma'
 import { UnauthorizedError, ValidationError, formatApiError } from '@/lib/errors'
 
@@ -36,10 +37,10 @@ export async function POST(request: NextRequest) {
       throw new ValidationError('추천 코드는 8자리입니다')
     }
 
-    // 이미 추천인이 있는지 확인
+    // 이미 추천인이 있는지 확인 + 사업자 인증 상태 확인
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { referredBy: true, referralCode: true }
+      select: { referredBy: true, referralCode: true, businessVerified: true }
     })
 
     if (user?.referredBy) {
@@ -61,12 +62,30 @@ export async function POST(request: NextRequest) {
     // 추천 관계 생성
     const referralId = await createReferral(session.user.id, code)
 
+    // 이미 사업자 인증이 완료된 경우 즉시 크레딧 지급
+    let creditsAwarded = false
+    if (user?.businessVerified) {
+      try {
+        creditsAwarded = await awardReferralCredits(session.user.id)
+        if (creditsAwarded) {
+          console.log('[Referral Apply] Credits awarded immediately (already business verified)')
+        }
+      } catch (awardError) {
+        console.error('[Referral Apply] Credit award failed:', awardError)
+      }
+    }
+
+    const message = creditsAwarded
+      ? '추천 코드가 적용되었습니다. 크레딧이 지급되었습니다!'
+      : '추천 코드가 적용되었습니다. 사업자 인증을 완료하면 크레딧이 지급됩니다.'
+
     return NextResponse.json({
       success: true,
       data: {
         referralId,
         referrerName: referrer.name || referrer.email || '추천인',
-        message: '추천 코드가 적용되었습니다. 사업자 인증을 완료하면 크레딧이 지급됩니다.'
+        creditsAwarded,
+        message
       }
     })
 
