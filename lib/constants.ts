@@ -53,7 +53,8 @@ export type CreditPackageId = keyof typeof CREDIT_PACKAGES;
  * 크레딧 사용 비용
  */
 export const CREDIT_USAGE = {
-  GENERATION_2K: 20,  // 2K 이미지 생성 1회 (2장) = 20 크레딧
+  GENERATION_4: 40,   // 이미지 4장 생성 = 40 크레딧 (1장당 10크레딧)
+  GENERATION_2: 20,   // 이미지 2장 추가 생성 = 20 크레딧 (1장당 10크레딧)
   UPSCALE_4K: 10,     // 4K 업스케일링 1회 (1장) = 10 크레딧
 } as const;
 

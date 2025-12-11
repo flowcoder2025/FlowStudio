@@ -65,14 +65,14 @@ export async function POST(req: NextRequest) {
     const ai = getGenAIClient()
     console.log(`[API /generate] ✅ GenAI client initialized successfully (${genAIMode})`)
 
-    // 2. 크레딧 잔액 확인 (2K 생성 1회 = 20 크레딧)
-    const hasEnough = await hasEnoughCredits(session.user.id, CREDIT_PRICES.GENERATION_2K)
+    // 2. 크레딧 잔액 확인 (4장 생성 = 40 크레딧)
+    const hasEnough = await hasEnoughCredits(session.user.id, CREDIT_PRICES.GENERATION_4)
 
     if (!hasEnough) {
       return NextResponse.json(
         {
-          error: `크레딧이 부족합니다. 2K 이미지 생성에는 ${CREDIT_PRICES.GENERATION_2K} 크레딧이 필요합니다.`,
-          required: CREDIT_PRICES.GENERATION_2K
+          error: `크레딧이 부족합니다. 이미지 4장 생성에는 ${CREDIT_PRICES.GENERATION_4} 크레딧이 필요합니다.`,
+          required: CREDIT_PRICES.GENERATION_4
         },
         { status: 402 } // Payment Required
       )

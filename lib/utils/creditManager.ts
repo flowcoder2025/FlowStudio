@@ -4,8 +4,10 @@
  *
  * 가격 정책:
  * - 1 크레딧 = ₩100
- * - 2K 생성 (4장): 20 크레딧 (₩2,000)
- * - 업스케일링 (2K→4K, 1장): 10 크레딧 (₩1,000)
+ * - 이미지 1장당 10 크레딧
+ * - 처음 생성 (4장): 40 크레딧 (₩4,000)
+ * - 추가 생성 (2장): 20 크레딧 (₩2,000)
+ * - 업스케일링 (1장): 10 크레딧 (₩1,000)
  */
 
 import { prisma } from '@/lib/prisma'
@@ -19,7 +21,8 @@ type PrismaTransactionClient = Omit<
 
 // 크레딧 가격 상수
 export const CREDIT_PRICES = {
-  GENERATION_2K: 20,  // 2K 생성 1회 (4장) = 20 크레딧
+  GENERATION_4: 40,   // 처음 생성 (4장) = 40 크레딧 (1장당 10크레딧)
+  GENERATION_2: 20,   // 추가 생성 (2장) = 20 크레딧 (1장당 10크레딧)
   UPSCALE_4K: 10,     // 업스케일링 1회 (1장) = 10 크레딧
 } as const
 
@@ -227,7 +230,7 @@ export async function deductCredits(
 }
 
 /**
- * 2K 이미지 생성 크레딧 차감
+ * 이미지 4장 생성 크레딧 차감 (처음 생성)
  */
 export async function deductForGeneration(
   userId: string,
@@ -235,12 +238,32 @@ export async function deductForGeneration(
 ): Promise<{ balance: number }> {
   return deductCredits(
     userId,
-    CREDIT_PRICES.GENERATION_2K,
+    CREDIT_PRICES.GENERATION_4,
     'GENERATION',
-    '2K 이미지 생성 (4장)',
+    '이미지 생성 (4장)',
     {
       projectId,
       imageCount: 4,
+      resolution: '2K'
+    }
+  )
+}
+
+/**
+ * 이미지 2장 추가 생성 크레딧 차감
+ */
+export async function deductForAdditionalGeneration(
+  userId: string,
+  projectId: string
+): Promise<{ balance: number }> {
+  return deductCredits(
+    userId,
+    CREDIT_PRICES.GENERATION_2,
+    'GENERATION',
+    '이미지 추가 생성 (2장)',
+    {
+      projectId,
+      imageCount: 2,
       resolution: '2K'
     }
   )
