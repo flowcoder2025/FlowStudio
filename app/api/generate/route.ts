@@ -1,10 +1,14 @@
 /**
- * Image Generation API - Vertex AI Gemini (Base64 Return)
+ * Image Generation API - Vertex AI Imagen/Gemini (Base64 Return)
  * /api/generate
  *
  * Returns base64 images directly for preview.
  * Images are NOT auto-saved to storage - users must explicitly save via /api/images/save.
  * This reduces storage costs by only saving images the user actually wants.
+ *
+ * 하이브리드 모델 전략:
+ * - CREATE 모드 (텍스트만): Imagen 3 + generateImages API (빠름, 한 번에 2장)
+ * - EDIT/DETAIL_EDIT 모드 (이미지 입력): Gemini 2.5 Flash + generateContent API
  *
  * 변경사항 (Vertex AI 전환):
  * - 사용자 개별 API 키 불필요 → 중앙화된 Vertex AI 인증
@@ -31,7 +35,9 @@ import {
 import { hasWatermarkFree } from '@/lib/utils/subscriptionManager'
 import { addWatermarkBatch } from '@/lib/utils/watermark'
 
-const PRO_MODEL = VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE_PREVIEW
+// 모델 선택: CREATE는 Imagen (빠름), EDIT는 Gemini (이미지 입력 지원)
+const IMAGEN_MODEL = VERTEX_AI_MODELS.IMAGEN_3
+const GEMINI_IMAGE_MODEL = VERTEX_AI_MODELS.GEMINI_2_5_FLASH_IMAGE
 const COST_PER_IMAGE_USD = 0.14
 
 // Next.js 15+ App Router Configuration
@@ -117,54 +123,82 @@ export async function POST(req: NextRequest) {
       processedLogoImage = await ensureBase64(logoImage)
     }
 
-    // 6. 이미지 생성 함수 (base64로 생성)
-    const generateSingle = async () => {
-      const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = []
+    // 6. 하이브리드 이미지 생성 전략
+    // - 이미지 입력 없음: Imagen 3 + generateImages (빠름, 한 번에 2장)
+    // - 이미지 입력 있음: Gemini 2.5 Flash + generateContent (이미지 편집 지원)
+    const hasImageInput = processedSourceImage || processedRefImage || processedLogoImage
+    let base64Images: string[] = []
 
-      // Source image 먼저 추가 (EDIT, DETAIL_EDIT, POSTER 모드)
-      if (processedSourceImage) {
-        const { mimeType, data } = extractBase64Data(processedSourceImage)
-        parts.push({ inlineData: { mimeType, data } })
-      }
+    if (!hasImageInput) {
+      // ===== Imagen 모델: 텍스트만으로 빠른 이미지 생성 =====
+      console.log('[API /generate] Using Imagen 3 model (fast, text-only)...')
 
-      // Reference image 또는 Logo image 추가
-      // Priority: refImage > logoImage (모드에 따라 상호 배타적)
-      const secondaryImage = processedRefImage || processedLogoImage
-      if (secondaryImage) {
-        const { mimeType, data } = extractBase64Data(secondaryImage)
-        parts.push({ inlineData: { mimeType, data } })
-      }
-
-      // Text prompt는 마지막에 추가
-      parts.push({ text: finalPrompt })
-
-      const response = await ai.models.generateContent({
-        model: PRO_MODEL,
-        contents: parts, // ✅ 배열 직접 전달 [{ text: ... }, { inlineData: ... }]
+      const response = await ai.models.generateImages({
+        model: IMAGEN_MODEL,
+        prompt: finalPrompt,
         config: {
-          responseModalities: ['TEXT', 'IMAGE'], // 이미지 응답 명시
-          imageConfig: {
-            aspectRatio: aspectRatio || '1:1',
-            imageSize: '2K' // 기본 2K 해상도 설정
-          },
+          numberOfImages: 2,
+          aspectRatio: aspectRatio || '1:1',
+          outputMimeType: 'image/png',
+          // 참고: Imagen은 imageSize 파라미터가 없음 - 기본적으로 고품질 출력
         },
       })
 
-      // Extract generated image (base64)
-      for (const part of response.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
+      console.log('[API /generate] Imagen generation completed')
+
+      // Imagen 응답에서 이미지 추출
+      if (response.generatedImages) {
+        for (const generatedImage of response.generatedImages) {
+          if (generatedImage.image?.imageBytes) {
+            base64Images.push(`data:image/png;base64,${generatedImage.image.imageBytes}`)
+          }
         }
       }
+    } else {
+      // ===== Gemini 모델: 이미지 입력이 있는 경우 (편집 모드) =====
+      console.log('[API /generate] Using Gemini 2.5 Flash model (image editing)...')
 
-      return null
+      const generateWithGemini = async () => {
+        const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = []
+
+        // Source image 먼저 추가 (EDIT, DETAIL_EDIT, POSTER 모드)
+        if (processedSourceImage) {
+          const { mimeType, data } = extractBase64Data(processedSourceImage)
+          parts.push({ inlineData: { mimeType, data } })
+        }
+
+        // Reference image 또는 Logo image 추가
+        const secondaryImage = processedRefImage || processedLogoImage
+        if (secondaryImage) {
+          const { mimeType, data } = extractBase64Data(secondaryImage)
+          parts.push({ inlineData: { mimeType, data } })
+        }
+
+        // Text prompt는 마지막에 추가
+        parts.push({ text: finalPrompt })
+
+        const response = await ai.models.generateContent({
+          model: GEMINI_IMAGE_MODEL,
+          contents: parts,
+          config: {
+            responseModalities: ['TEXT', 'IMAGE'],
+          },
+        })
+
+        // Gemini 응답에서 이미지 추출
+        for (const part of response.candidates?.[0]?.content?.parts || []) {
+          if (part.inlineData) {
+            return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
+          }
+        }
+        return null
+      }
+
+      // Gemini는 한 번에 1장씩 생성하므로 병렬 호출
+      const results = await Promise.all([generateWithGemini(), generateWithGemini()])
+      console.log('[API /generate] Gemini generation completed')
+      base64Images = results.filter((img): img is string => img !== null)
     }
-
-    // 7. 2장 생성 (타임아웃 회피 - 추가 생성은 "더보기" 버튼으로 가능)
-    console.log('[API /generate] Generating 2 images...')
-    const results = await Promise.all([generateSingle(), generateSingle()])
-    console.log('[API /generate] Generation completed')
-    const base64Images = results.filter((img): img is string => img !== null)
 
     if (base64Images.length === 0) {
       // 생성 실패 이력 기록

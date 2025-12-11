@@ -21,7 +21,8 @@ import {
   CREDIT_PRICES
 } from '@/lib/utils/creditManager'
 
-const PRO_MODEL = VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE_PREVIEW
+// 업스케일은 이미지 입력이 필요하므로 Gemini 모델 사용
+const GEMINI_IMAGE_MODEL = VERTEX_AI_MODELS.GEMINI_2_5_FLASH_IMAGE
 const COST_PER_IMAGE_USD = 0.14
 
 // Next.js App Router Configuration
@@ -77,14 +78,12 @@ export async function POST(req: NextRequest) {
     ]
 
     // 5. Gemini API로 4K 업스케일 요청
+    // 참고: imageSize는 generateContent에서 지원되지 않음 - 프롬프트로 고해상도 요청
     const response = await ai.models.generateContent({
-      model: PRO_MODEL,
+      model: GEMINI_IMAGE_MODEL,
       contents: { parts },
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
-        imageConfig: {
-          imageSize: '4K' // 4K 고해상도 업스케일
-        }
       }
     })
 
