@@ -86,20 +86,15 @@ function validateVertexAIConfig() {
 
 /**
  * Google AI Studio 클라이언트 초기화
- * 명시적으로 generativelanguage.googleapis.com 엔드포인트 사용
+ * SDK가 자동으로 generativelanguage.googleapis.com 엔드포인트 선택
  */
 function initGoogleAIStudioClient(): GoogleGenAI {
   const { apiKey } = validateGoogleAIStudioConfig()
 
   log('[GenAI] Initializing Google AI Studio client...')
 
-  const client = new GoogleGenAI({
-    apiKey,
-    // Google AI Studio 엔드포인트 명시적 지정 (Vertex AI 라우팅 방지)
-    httpOptions: {
-      baseUrl: 'https://generativelanguage.googleapis.com',
-    },
-  })
+  // 공식 문서: new GoogleGenAI({ apiKey }) 또는 빈 객체 (환경변수 자동 로드)
+  const client = new GoogleGenAI({ apiKey })
 
   log('[GenAI] ✅ Google AI Studio client initialized successfully')
   return client

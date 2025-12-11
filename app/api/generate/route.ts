@@ -152,16 +152,13 @@ export async function POST(req: NextRequest) {
       // Text prompt 추가
       parts.push({ text: finalPrompt })
 
+      // 공식 문서 기반 설정: https://ai.google.dev/gemini-api/docs/gemini-3
       const response = await ai.models.generateContent({
         model: imageModel,
         contents: parts,
         config: {
-          responseModalities: ['TEXT', 'IMAGE'],
-          // 이미지 출력 설정: JPEG로 출력하여 파일 크기 최적화 (PNG 대비 50-70% 감소)
           imageConfig: {
             aspectRatio: aspectRatio || '1:1',
-            outputMimeType: 'image/jpeg',
-            outputCompressionQuality: 85,
           },
         },
       })

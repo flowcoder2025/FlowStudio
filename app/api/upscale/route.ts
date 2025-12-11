@@ -16,15 +16,13 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { uploadMultipleImages } from '@/lib/utils/imageStorage'
 import { ensureBase64, extractBase64Data } from '@/lib/utils/imageConverter'
-import { getGenAIClient, getGenAIMode, VERTEX_AI_MODELS } from '@/lib/vertexai'
+import { getGenAIClient, VERTEX_AI_MODELS } from '@/lib/vertexai'
 import {
   hasEnoughCredits,
   deductCredits,
   CREDIT_PRICES
 } from '@/lib/utils/creditManager'
 
-// 업스케일은 이미지 입력이 필요하므로 Gemini 3 Pro Image 모델 사용 (최고 품질)
-const GEMINI_IMAGE_MODEL = VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE
 const COST_PER_IMAGE_USD = 0.14
 
 // Next.js App Router Configuration
@@ -39,9 +37,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // 1. GenAI 클라이언트 초기화 (Google AI Studio 또는 Vertex AI)
-    const genAIMode = getGenAIMode()
-    console.log(`[API /upscale] Using GenAI client (mode: ${genAIMode})`)
+    // 1. GenAI 클라이언트 초기화
+    console.log('[API /upscale] Initializing GenAI client...')
     const ai = getGenAIClient()
 
     // 2. 크레딧 잔액 확인 (업스케일 1회 = 10 크레딧)
@@ -82,16 +79,13 @@ export async function POST(req: NextRequest) {
     ]
 
     // 5. Gemini API로 4K 업스케일 요청
-    // 참고: imageSize는 generateContent에서 지원되지 않음 - 프롬프트로 고해상도 요청
+    // 공식 문서: imageSize로 4K 해상도 요청 가능
     const response = await ai.models.generateContent({
-      model: GEMINI_IMAGE_MODEL,
+      model: VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE,
       contents: { parts },
       config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-        // 이미지 출력 설정: JPEG로 출력하여 파일 크기 최적화
         imageConfig: {
-          outputMimeType: 'image/jpeg',
-          outputCompressionQuality: 90, // 업스케일은 품질 우선 (90%)
+          imageSize: '4K', // 4K 해상도 출력
         },
       }
     })
