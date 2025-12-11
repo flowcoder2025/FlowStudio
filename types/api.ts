@@ -165,3 +165,82 @@ export interface UsageStats {
   todayUsage: number
   history: DailyUsage[]
 }
+
+// ============================================
+// Admin API Types
+// ============================================
+
+export interface AdminUser {
+  id: string
+  name: string | null
+  email: string | null
+  image: string | null
+  creditBalance: number
+  totalGenerated: number
+  createdAt: Date
+  businessVerified: boolean
+  subscriptionTier: string | null
+}
+
+export interface AdminUsersResponse {
+  users: AdminUser[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
+export interface AdminBonusRequest {
+  userId: string
+  amount: number
+  description: string
+  expiresInDays?: number | null  // null이면 무기한
+}
+
+export interface AdminBonusResponse {
+  success: true
+  transaction: {
+    id: string
+    userId: string
+    amount: number
+    description: string
+    expiresAt: Date | null
+  }
+  newBalance: number
+}
+
+export interface AdminStats {
+  users: {
+    total: number
+    newToday: number
+    newThisWeek: number
+    newThisMonth: number
+    businessVerified: number
+  }
+  credits: {
+    totalInCirculation: number
+    totalPurchased: number
+    totalBonusGranted: number
+    totalUsed: number
+    totalExpired: number
+  }
+  generations: {
+    total: number
+    today: number
+    thisWeek: number
+    thisMonth: number
+  }
+  subscriptions: {
+    free: number
+    plus: number
+    pro: number
+    enterprise: number
+  }
+}
+
+export interface AdminStatsResponse {
+  success: true
+  stats: AdminStats
+}

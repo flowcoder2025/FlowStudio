@@ -513,6 +513,84 @@ export async function processExpiredCredits(): Promise<{
 }
 
 /**
+ * 관리자가 보너스 크레딧 지급
+ * @param adminId - 지급하는 관리자 ID (감사 추적용)
+ * @param userId - 대상 사용자 ID
+ * @param amount - 지급 크레딧
+ * @param description - 지급 사유
+ * @param expiresInDays - 만료 기간 (null이면 무기한, 기본: 30일)
+ */
+export async function grantAdminBonus(
+  adminId: string,
+  userId: string,
+  amount: number,
+  description: string,
+  expiresInDays: number | null = 30
+): Promise<{
+  transaction: {
+    id: string
+    userId: string
+    amount: number
+    description: string
+    expiresAt: Date | null
+  }
+  newBalance: number
+}> {
+  if (amount <= 0) {
+    throw new ValidationError('지급 금액은 0보다 커야 합니다')
+  }
+
+  // 만료 시간 계산 (null이면 무기한)
+  const expiresAt = expiresInDays !== null
+    ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
+    : null
+
+  const result = await prisma.$transaction(async (tx) => {
+    // Credit 레코드가 없으면 생성
+    const credit = await tx.credit.upsert({
+      where: { userId },
+      create: {
+        userId,
+        balance: amount
+      },
+      update: {
+        balance: { increment: amount }
+      }
+    })
+
+    // 트랜잭션 기록
+    const transaction = await tx.creditTransaction.create({
+      data: {
+        userId,
+        amount,
+        remainingAmount: amount, // FIFO 차감 추적용
+        type: 'BONUS',
+        description,
+        metadata: {
+          type: 'admin_bonus',
+          adminId,
+          grantedAt: new Date().toISOString()
+        },
+        expiresAt
+      }
+    })
+
+    return { credit, transaction }
+  })
+
+  return {
+    transaction: {
+      id: result.transaction.id,
+      userId: result.transaction.userId,
+      amount: result.transaction.amount,
+      description: result.transaction.description || '',
+      expiresAt: result.transaction.expiresAt
+    },
+    newBalance: result.credit.balance
+  }
+}
+
+/**
  * 사용자의 만료 예정 크레딧 조회
  */
 export async function getExpiringCredits(userId: string): Promise<{
