@@ -382,7 +382,7 @@ function CreatePageContent() {
                   : 'bg-indigo-600 dark:bg-indigo-500 text-white hover:bg-indigo-700 dark:hover:bg-indigo-600 hover:shadow-indigo-200 dark:hover:shadow-indigo-900'
               }`}
             >
-              {isLoading ? '생성 중...' : '이미지 2장 생성하기'}
+              {isLoading ? '생성 중...' : '이미지 4장 생성하기'}
               {!isLoading && <Sparkles className="w-5 h-5" />}
             </button>
           </div>

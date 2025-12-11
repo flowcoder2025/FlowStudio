@@ -61,7 +61,7 @@ function DetailPageContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingDrafts, setIsLoadingDrafts] = useState(false);
 
-  // Section candidate selection state (2장 생성 후 선택, 추가 생성 가능)
+  // Section candidate selection state (4장 생성 후 선택, 추가 생성 가능)
   const [candidateImages, setCandidateImages] = useState<string[]>([]);
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
 
@@ -757,10 +757,10 @@ function DetailPageContent() {
         </div>
       </div>
 
-      <LoadingOverlay isVisible={isLoading} message="상세페이지 섹션 2장을 생성하고 있습니다..." />
+      <LoadingOverlay isVisible={isLoading} message="상세페이지 섹션 4장을 생성하고 있습니다..." />
       <LoadingOverlay isVisible={isCompressing} message="이미지 압축 중..." />
 
-      {/* 2장 생성 결과에서 선택 */}
+      {/* 4장 생성 결과에서 선택 */}
       {isSelectionModalOpen && (
         <ResultGrid
           images={candidateImages}

@@ -424,7 +424,7 @@ function PosterPageContent() {
                   : 'bg-rose-600 dark:bg-rose-500 text-white hover:bg-rose-700 dark:hover:bg-rose-600 hover:shadow-rose-200 dark:hover:shadow-rose-900'
               }`}
             >
-              {isLoading ? '생성 중...' : '포스터 2장 생성하기'}
+              {isLoading ? '생성 중...' : '포스터 4장 생성하기'}
               {!isLoading && <Sparkles className="w-5 h-5" />}
             </button>
           </div>

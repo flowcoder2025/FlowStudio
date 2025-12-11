@@ -418,7 +418,7 @@ function EditPageContent() {
                   : 'bg-emerald-600 dark:bg-emerald-500 text-white hover:bg-emerald-700 dark:hover:bg-emerald-600 hover:shadow-emerald-200 dark:hover:shadow-emerald-900'
               }`}
             >
-              {isLoading ? '생성 중...' : '이미지 2장 생성'}
+              {isLoading ? '생성 중...' : '이미지 4장 생성'}
               {!isLoading && <Wand2 className="w-5 h-5" />}
             </button>
           </div>
