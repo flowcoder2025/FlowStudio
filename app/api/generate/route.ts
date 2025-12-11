@@ -37,9 +37,9 @@ import {
 import { hasWatermarkFree } from '@/lib/utils/subscriptionManager'
 import { addWatermarkBatch } from '@/lib/utils/watermark'
 
-// 모델 선택: 모든 모드에서 Gemini 3 Pro Image (최고 품질) 사용
-// Gemini 3 Pro Image (Nano Banana Pro): Google의 최신 최고 품질 이미지 생성 모델
-const GEMINI_IMAGE_MODEL = VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE
+// 모델 선택: 모드에 따라 자동 선택
+// - Google AI Studio: gemini-2.0-flash-exp (빠름)
+// - Vertex AI: gemini-3-pro-image-preview (최고 품질)
 const COST_PER_IMAGE_USD = 0.14
 
 // Next.js 15+ App Router Configuration
@@ -126,11 +126,12 @@ export async function POST(req: NextRequest) {
       processedLogoImage = await ensureBase64(logoImage)
     }
 
-    // 6. Gemini 3 Pro Image 모델로 이미지 생성 (모든 모드 통일)
-    // Google의 최신 최고 품질 이미지 생성 모델 사용
+    // 6. Gemini 3 Pro Image 모델로 이미지 생성
+    // Google AI Studio / Vertex AI 모두 동일 모델 사용
     let base64Images: string[] = []
+    const imageModel = VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE
 
-    console.log('[API /generate] Using Gemini 3 Pro Image model (best quality)...')
+    console.log(`[API /generate] Using model: ${imageModel} (mode: ${genAIMode})`)
 
     const generateWithGemini = async () => {
       const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = []
@@ -152,7 +153,7 @@ export async function POST(req: NextRequest) {
       parts.push({ text: finalPrompt })
 
       const response = await ai.models.generateContent({
-        model: GEMINI_IMAGE_MODEL,
+        model: imageModel,
         contents: parts,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],

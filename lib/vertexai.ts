@@ -86,6 +86,7 @@ function validateVertexAIConfig() {
 
 /**
  * Google AI Studio 클라이언트 초기화
+ * 명시적으로 generativelanguage.googleapis.com 엔드포인트 사용
  */
 function initGoogleAIStudioClient(): GoogleGenAI {
   const { apiKey } = validateGoogleAIStudioConfig()
@@ -94,6 +95,10 @@ function initGoogleAIStudioClient(): GoogleGenAI {
 
   const client = new GoogleGenAI({
     apiKey,
+    // Google AI Studio 엔드포인트 명시적 지정 (Vertex AI 라우팅 방지)
+    httpOptions: {
+      baseUrl: 'https://generativelanguage.googleapis.com',
+    },
   })
 
   log('[GenAI] ✅ Google AI Studio client initialized successfully')
@@ -194,28 +199,21 @@ export function getVertexAIClient(): GoogleGenAI {
 /**
  * 이미지 생성용 모델 이름 상수
  *
- * Imagen 4 모델: 최신 이미지 전용 생성 모델 (빠름, 고품질)
- * - generateImages API 사용
- * - 한 번에 최대 4장 생성 가능 (Ultra는 1장)
- * - imageSize 파라미터 지원 (1K, 2K)
- *
- * Gemini 3 Pro Image 모델: 최고 품질 이미지 생성/편집
- * - generateContent API 사용
- * - 복잡한 다중 턴 이미지 생성에 최적화
- * - imageSize: '4K' 지원
+ * Gemini 3 Pro Image: Google AI Studio / Vertex AI 모두 지원
+ * Imagen 4: Vertex AI 전용 (generateImages API)
  */
 export const VERTEX_AI_MODELS = {
-  /** Imagen 4 Fast - 최고 속도의 이미지 생성 모델 */
+  /** Gemini 3 Pro Image - 최고 품질 이미지 생성/편집 모델 (Google AI Studio & Vertex AI) */
+  GEMINI_3_PRO_IMAGE: 'gemini-3-pro-image-preview',
+
+  /** Imagen 4 Fast - 최고 속도 (Vertex AI 전용) */
   IMAGEN_4_FAST: 'imagen-4.0-fast-generate-001',
 
-  /** Imagen 4 - 표준 이미지 생성 모델 (품질/속도 균형) */
+  /** Imagen 4 - 표준 품질 (Vertex AI 전용) */
   IMAGEN_4: 'imagen-4.0-generate-001',
 
-  /** Imagen 4 Ultra - 최고 품질 이미지 생성 모델 (한 번에 1장) */
+  /** Imagen 4 Ultra - 최고 품질 (Vertex AI 전용) */
   IMAGEN_4_ULTRA: 'imagen-4.0-ultra-generate-001',
-
-  /** Gemini 3 Pro Image (Nano Banana Pro) - 최고 품질 이미지 편집 모델 */
-  GEMINI_3_PRO_IMAGE: 'gemini-3-pro-image-preview',
 } as const
 
 /**
