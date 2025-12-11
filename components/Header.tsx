@@ -17,6 +17,15 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
   const { navigateToMode, navigateTo } = useNavigation();
   const { data: session, status } = useSession();
 
+  const colorMap: Record<string, { light: string; dark: string }> = {
+    indigo: { light: '#4f46e5', dark: '#6366f1' },
+    emerald: { light: '#059669', dark: '#10b981' },
+    blue: { light: '#2563eb', dark: '#3b82f6' },
+    violet: { light: '#7c3aed', dark: '#8b5cf6' },
+    rose: { light: '#e11d48', dark: '#f43f5e' },
+    amber: { light: '#d97706', dark: '#f59e0b' },
+  };
+
   const navigationItems = [
     { mode: AppMode.CREATE, icon: Sparkles, label: '생성', color: 'indigo' },
     { mode: AppMode.EDIT, icon: Wand2, label: '편집', color: 'emerald' },
@@ -49,23 +58,26 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
 
         {/* Desktop Navigation (hidden on mobile) */}
         <nav className="hidden lg:flex gap-1 flex-1 justify-center overflow-x-auto no-scrollbar">
-          {navigationItems.map(({ mode, icon: Icon, label, color }) => (
-            <button
-              key={mode}
-              onClick={() => navigateToMode(mode)}
-              className={`px-4 py-2 min-h-[44px] rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                currentMode === mode
-                  ? `bg-${color}-600 dark:bg-${color}-500 text-white shadow-md`
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
-              style={currentMode === mode ? {
-                backgroundColor: `var(--${color}-600)`,
-              } : undefined}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{label}</span>
-            </button>
-          ))}
+          {navigationItems.map(({ mode, icon: Icon, label, color }) => {
+            const isActive = currentMode === mode;
+            return (
+              <button
+                key={mode}
+                onClick={() => navigateToMode(mode)}
+                className={`px-4 py-2 min-h-[44px] rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                  isActive
+                    ? 'text-white shadow-md'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+                style={isActive ? {
+                  backgroundColor: colorMap[color].light,
+                } : undefined}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{label}</span>
+              </button>
+            );
+          })}
         </nav>
 
         {/* Right Side Actions */}
