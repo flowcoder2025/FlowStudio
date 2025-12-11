@@ -96,6 +96,50 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-slate-100 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="text-center text-sm text-slate-500 dark:text-slate-400 space-y-2">
+            <p className="font-medium text-slate-600 dark:text-slate-300">
+              © 2025 FlowCoder. All rights reserved.
+            </p>
+            <p>
+              주식회사 테크트리아이엔씨 (636-81-00865) | 통신판매번호: 2021-대구중구-0666
+            </p>
+            <p>
+              박현일 | 대구광역시 중구 동덕로 115, 9층 902호 내 512(삼덕동2가)
+            </p>
+            <p>
+              문의 사항이 있으신가요?{' '}
+              <a
+                href="mailto:flowcoder25@gmail.com"
+                className="text-indigo-600 dark:text-indigo-400 hover:underline"
+              >
+                flowcoder25@gmail.com
+              </a>
+              로 연락해주세요
+            </p>
+            <div className="flex items-center justify-center gap-2 pt-2 flex-wrap">
+              <a href="/privacy" className="hover:text-slate-700 dark:hover:text-slate-300 hover:underline">
+                개인정보 처리방침
+              </a>
+              <span>/</span>
+              <a href="/terms" className="hover:text-slate-700 dark:hover:text-slate-300 hover:underline">
+                서비스 이용약관
+              </a>
+              <span>/</span>
+              <a href="/refund" className="hover:text-slate-700 dark:hover:text-slate-300 hover:underline">
+                환불약관
+              </a>
+              <span>/</span>
+              <a href="mailto:flowcoder25@gmail.com" className="hover:text-slate-700 dark:hover:text-slate-300 hover:underline">
+                고객센터
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </>
   );
 }
