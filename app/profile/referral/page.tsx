@@ -12,8 +12,9 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import {
   Copy, Check, Users, UserCheck, Clock, Coins,
-  Gift, ChevronRight, AlertCircle
+  Gift, ChevronRight, AlertCircle, ArrowLeft
 } from 'lucide-react'
+import { useNavigation } from '@/hooks/useNavigation'
 
 interface ReferralStats {
   myReferralCode: string | null
@@ -52,6 +53,7 @@ interface ReferralStats {
 export default function ReferralPage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const { navigateTo } = useNavigation()
 
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<ReferralStats | null>(null)
@@ -238,6 +240,13 @@ export default function ReferralPage() {
       <div className="max-w-6xl mx-auto space-y-8">
         {/* 헤더 */}
         <div>
+          <button
+            onClick={() => navigateTo('/profile')}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>프로필로 돌아가기</span>
+          </button>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">추천 프로그램</h1>
           <p className="text-gray-600">
             친구를 초대하고 함께 크레딧을 받으세요! 추천받은 친구가 사업자 인증을 완료하면 각각 150 크레딧을 받습니다.
