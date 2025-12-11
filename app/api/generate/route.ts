@@ -23,6 +23,13 @@ import {
   deductForGeneration,
   CREDIT_PRICES
 } from '@/lib/utils/creditManager'
+import {
+  acquireGenerationSlot,
+  releaseGenerationSlot,
+  getConcurrencyStatus
+} from '@/lib/utils/concurrencyLimiter'
+import { hasWatermarkFree } from '@/lib/utils/subscriptionManager'
+import { addWatermarkBatch } from '@/lib/utils/watermark'
 
 const PRO_MODEL = VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE_PREVIEW
 const COST_PER_IMAGE_USD = 0.14
@@ -39,6 +46,9 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  // 동시 생성 슬롯 ID (에러 시에도 해제하기 위해 함수 스코프에서 선언)
+  let generationRequestId: string | null = null
 
   try {
     // 1. Vertex AI 클라이언트 초기화 (Application Default Credentials 사용)
@@ -59,7 +69,21 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 3. 요청 파싱
+    // 3. 동시 생성 제한 확인
+    const concurrencyStatus = await getConcurrencyStatus(session.user.id)
+    generationRequestId = await acquireGenerationSlot(session.user.id)
+
+    if (!generationRequestId) {
+      return NextResponse.json(
+        {
+          error: `동시 생성 제한에 도달했습니다. 현재 ${concurrencyStatus.active}건의 생성이 진행 중입니다. (최대 ${concurrencyStatus.limit}건)`,
+          concurrency: concurrencyStatus
+        },
+        { status: 429 } // Too Many Requests
+      )
+    }
+
+    // 4. 요청 파싱
     const body = await req.json()
     const { projectId, prompt, sourceImage, refImage, logoImage, category, style, aspectRatio, mode } = body
 
@@ -205,9 +229,21 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // 11. Base64 이미지 직접 반환 (Storage 자동 저장 없음)
+    // 10.5. 워터마크 적용 (FREE 플랜 사용자만)
+    let finalImages = base64Images
+    const isWatermarkFree = await hasWatermarkFree(session.user.id)
+    if (!isWatermarkFree) {
+      console.log('[API /generate] Applying watermark for FREE tier user...')
+      finalImages = await addWatermarkBatch(base64Images)
+      console.log('[API /generate] Watermark applied')
+    }
+
+    // 11. 동시 생성 슬롯 해제 (성공 시)
+    releaseGenerationSlot(session.user.id, generationRequestId)
+
+    // 12. Base64 이미지 직접 반환 (Storage 자동 저장 없음)
     // 사용자가 원하는 이미지만 /api/images/save로 선택 저장 가능
-    return NextResponse.json({ images: base64Images })
+    return NextResponse.json({ images: finalImages })
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     const errorStack = error instanceof Error ? error.stack : undefined
@@ -271,6 +307,11 @@ export async function POST(req: NextRequest) {
       })
     } catch (historyError) {
       console.error('Failed to record generation history:', historyError)
+    }
+
+    // 동시 생성 슬롯 해제 (에러 시)
+    if (generationRequestId) {
+      releaseGenerationSlot(session.user.id, generationRequestId)
     }
 
     return NextResponse.json(

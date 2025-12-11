@@ -65,3 +65,57 @@ export const CREDIT_BONUS = {
   SIGNUP_BUSINESS: 150,  // 사업자 회원 가입 보너스
   REFERRAL: 150,         // 추천인 보상 (양측 각각)
 } as const;
+
+// ========================================
+// Subscription Plan Constants
+// ========================================
+
+export type SubscriptionTier = 'FREE' | 'PLUS' | 'PRO' | 'BUSINESS';
+
+/**
+ * 구독 플랜 정의
+ * - 크레딧은 별도 구매 (정기 구독과 분리)
+ * - 구독은 스토리지, 기능, 처리 우선순위 제공
+ */
+export const SUBSCRIPTION_TIERS = {
+  FREE: {
+    name: '무료',
+    price: 0,
+    storageQuotaGB: 1,
+    concurrentLimit: 1,
+    watermarkFree: false,
+    priorityQueue: false,
+    historyDays: 7,
+    features: ['1GB 저장공간', '동시 1건 생성', '워터마크 포함', '7일 히스토리'],
+  },
+  PLUS: {
+    name: 'Plus',
+    price: 9900,
+    storageQuotaGB: 100,
+    concurrentLimit: 3,
+    watermarkFree: true,
+    priorityQueue: true,
+    historyDays: 30,
+    features: ['100GB 저장공간', '동시 3건 생성', '워터마크 제거', '우선 처리', '30일 히스토리'],
+  },
+  PRO: {
+    name: 'Pro',
+    price: 29900,
+    storageQuotaGB: 500,
+    concurrentLimit: 5,
+    watermarkFree: true,
+    priorityQueue: true,
+    historyDays: 90,
+    features: ['500GB 저장공간', '동시 5건 생성', '워터마크 제거', '우선 처리', '90일 히스토리', 'API 접근'],
+  },
+  BUSINESS: {
+    name: 'Business',
+    price: 99000,
+    storageQuotaGB: 1000, // 1TB, Fair Use Policy
+    concurrentLimit: 10,
+    watermarkFree: true,
+    priorityQueue: true,
+    historyDays: -1, // 무제한
+    features: ['1TB 저장공간', '동시 10건 생성', '워터마크 제거', '최우선 처리', '무제한 히스토리', 'API 접근', '팀 협업 (5명)'],
+  },
+} as const;

@@ -279,20 +279,23 @@ model Credit {
 
 // CreditTransaction - Credit usage/purchase history
 model CreditTransaction {
-  id          String   @id @default(cuid())
-  userId      String
-  amount      Int      // 양수: 충전/보너스, 음수: 사용
-  type        String   // 'PURCHASE', 'BONUS', 'REFERRAL', 'GENERATION', 'UPSCALE'
-  description String?  @db.Text
-  metadata    Json?    // 결제 정보, 이미지 생성 정보 등 (해상도, 생성 수량 등)
+  id              String    @id @default(cuid())
+  userId          String
+  amount          Int       // 양수: 충전/보너스, 음수: 사용
+  remainingAmount Int?      // 남은 크레딧 (보너스/레퍼럴만 해당, FIFO 차감 추적용)
+  type            String    // 'PURCHASE', 'BONUS', 'REFERRAL', 'GENERATION', 'UPSCALE', 'EXPIRED'
+  description     String?   @db.Text
+  metadata        Json?     // 결제 정보, 이미지 생성 정보 등 (해상도, 생성 수량 등)
+  expiresAt       DateTime? // 만료 시간 (무료 크레딧: 30일, 유료: null)
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime @default(now())
+  createdAt       DateTime  @default(now())
 
   @@index([userId, createdAt])
   @@index([type])
   @@index([createdAt])
+  @@index([expiresAt])
 }
 
 // ========================================

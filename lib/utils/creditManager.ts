@@ -23,6 +23,9 @@ export const CREDIT_PRICES = {
   UPSCALE_4K: 10,     // 업스케일링 1회 (1장) = 10 크레딧
 } as const
 
+// 무료 크레딧 만료 기간 (일)
+export const FREE_CREDIT_EXPIRY_DAYS = 30
+
 // 트랜잭션 타입
 export type CreditTransactionType =
   | 'PURCHASE'      // 유료 충전
@@ -30,6 +33,7 @@ export type CreditTransactionType =
   | 'REFERRAL'      // 레퍼럴 보상 (40 크레딧)
   | 'GENERATION'    // 2K 이미지 생성 사용
   | 'UPSCALE'       // 4K 업스케일링 사용
+  | 'EXPIRED'       // 만료된 무료 크레딧 차감
 
 interface CreditTransactionMetadata {
   // PURCHASE
@@ -84,17 +88,22 @@ export async function hasEnoughCredits(
 
 /**
  * 크레딧 추가 (충전, 보너스, 레퍼럴)
+ * @param expiresAt - 만료 시간 (무료 크레딧만 해당, 유료는 null)
  */
 export async function addCredits(
   userId: string,
   amount: number,
   type: 'PURCHASE' | 'BONUS' | 'REFERRAL',
   description: string,
-  metadata?: CreditTransactionMetadata
+  metadata?: CreditTransactionMetadata,
+  expiresAt?: Date | null
 ): Promise<{ balance: number }> {
   if (amount <= 0) {
     throw new ValidationError('충전 금액은 0보다 커야 합니다')
   }
+
+  // 무료 크레딧 (BONUS, REFERRAL)은 remainingAmount 추적
+  const trackRemaining = type === 'BONUS' || type === 'REFERRAL'
 
   const result = await prisma.$transaction(async (tx) => {
     // Credit 레코드가 없으면 생성
@@ -114,9 +123,11 @@ export async function addCredits(
       data: {
         userId,
         amount,
+        remainingAmount: trackRemaining ? amount : null,
         type,
         description,
-        metadata: metadata || {}
+        metadata: metadata || {},
+        expiresAt: expiresAt ?? null
       }
     })
 
@@ -256,7 +267,7 @@ export async function deductForUpscale(
 }
 
 /**
- * 가입 보너스 크레딧 지급
+ * 가입 보너스 크레딧 지급 (30일 후 만료)
  */
 export async function grantSignupBonus(
   userId: string,
@@ -267,11 +278,15 @@ export async function grantSignupBonus(
     ? '사업자 회원 가입 보너스 (150 크레딧)'
     : '일반 회원 가입 보너스 (30 크레딧)'
 
-  return addCredits(userId, amount, 'BONUS', description, { signupType })
+  // 30일 후 만료
+  const expiresAt = new Date()
+  expiresAt.setDate(expiresAt.getDate() + FREE_CREDIT_EXPIRY_DAYS)
+
+  return addCredits(userId, amount, 'BONUS', description, { signupType }, expiresAt)
 }
 
 /**
- * 레퍼럴 보상 지급
+ * 레퍼럴 보상 지급 (30일 후 만료)
  */
 export async function grantReferralReward(
   referrerId: string,
@@ -279,20 +294,26 @@ export async function grantReferralReward(
 ): Promise<{ referrerBalance: number; refereeBalance: number }> {
   const REFERRAL_AMOUNT = 40
 
+  // 30일 후 만료
+  const expiresAt = new Date()
+  expiresAt.setDate(expiresAt.getDate() + FREE_CREDIT_EXPIRY_DAYS)
+
   const [referrer, referee] = await Promise.all([
     addCredits(
       referrerId,
       REFERRAL_AMOUNT,
       'REFERRAL',
       '친구 추천 보상 (40 크레딧)',
-      { referrerId, refereeId }
+      { referrerId, refereeId },
+      expiresAt
     ),
     addCredits(
       refereeId,
       REFERRAL_AMOUNT,
       'REFERRAL',
       '추천인 가입 보상 (40 크레딧)',
-      { referrerId, refereeId }
+      { referrerId, refereeId },
+      expiresAt
     )
   ])
 
@@ -386,4 +407,147 @@ export async function initializeCredit(userId: string): Promise<void> {
     create: { userId, balance: 0 },
     update: {} // 이미 있으면 아무것도 하지 않음
   })
+}
+
+/**
+ * 만료된 무료 크레딧 처리
+ * - 만료된 트랜잭션의 remainingAmount를 찾아 차감
+ * - EXPIRED 트랜잭션 기록 생성
+ *
+ * @returns 처리된 사용자 수와 총 만료 크레딧
+ */
+export async function processExpiredCredits(): Promise<{
+  processedUsers: number
+  totalExpired: number
+}> {
+  const now = new Date()
+
+  // 만료된 크레딧이 있는 트랜잭션 조회
+  const expiredTransactions = await prisma.creditTransaction.findMany({
+    where: {
+      expiresAt: { lte: now },
+      remainingAmount: { gt: 0 },
+      type: { in: ['BONUS', 'REFERRAL'] }
+    },
+    orderBy: { createdAt: 'asc' }
+  })
+
+  if (expiredTransactions.length === 0) {
+    return { processedUsers: 0, totalExpired: 0 }
+  }
+
+  // 사용자별로 그룹화
+  const userExpiredMap = new Map<string, { transactionIds: string[]; totalAmount: number }>()
+  for (const tx of expiredTransactions) {
+    const existing = userExpiredMap.get(tx.userId) || { transactionIds: [], totalAmount: 0 }
+    existing.transactionIds.push(tx.id)
+    existing.totalAmount += tx.remainingAmount ?? 0
+    userExpiredMap.set(tx.userId, existing)
+  }
+
+  let processedUsers = 0
+  let totalExpired = 0
+
+  // 각 사용자별로 만료 처리
+  for (const [userId, { transactionIds, totalAmount }] of userExpiredMap) {
+    try {
+      await prisma.$transaction(async (tx) => {
+        // 1. 만료된 트랜잭션들의 remainingAmount를 0으로 설정
+        await tx.creditTransaction.updateMany({
+          where: { id: { in: transactionIds } },
+          data: { remainingAmount: 0 }
+        })
+
+        // 2. 사용자 크레딧 잔액 차감
+        await tx.credit.update({
+          where: { userId },
+          data: { balance: { decrement: totalAmount } }
+        })
+
+        // 3. EXPIRED 트랜잭션 기록 생성
+        await tx.creditTransaction.create({
+          data: {
+            userId,
+            amount: -totalAmount,
+            type: 'EXPIRED',
+            description: `무료 크레딧 만료 (${totalAmount} 크레딧)`,
+            metadata: {
+              expiredTransactionIds: transactionIds,
+              expiredAt: now.toISOString()
+            }
+          }
+        })
+      })
+
+      processedUsers++
+      totalExpired += totalAmount
+      console.log(`[CreditManager] Expired ${totalAmount} credits for user ${userId}`)
+    } catch (error) {
+      console.error(`[CreditManager] Failed to process expired credits for user ${userId}:`, error)
+    }
+  }
+
+  return { processedUsers, totalExpired }
+}
+
+/**
+ * 사용자의 만료 예정 크레딧 조회
+ */
+export async function getExpiringCredits(userId: string): Promise<{
+  expiringWithin7Days: number
+  expiringWithin30Days: number
+  transactions: Array<{
+    id: string
+    amount: number
+    remainingAmount: number
+    expiresAt: Date
+    type: string
+  }>
+}> {
+  const now = new Date()
+  const in7Days = new Date()
+  in7Days.setDate(in7Days.getDate() + 7)
+  const in30Days = new Date()
+  in30Days.setDate(in30Days.getDate() + 30)
+
+  const transactions = await prisma.creditTransaction.findMany({
+    where: {
+      userId,
+      expiresAt: { gt: now },
+      remainingAmount: { gt: 0 },
+      type: { in: ['BONUS', 'REFERRAL'] }
+    },
+    select: {
+      id: true,
+      amount: true,
+      remainingAmount: true,
+      expiresAt: true,
+      type: true
+    },
+    orderBy: { expiresAt: 'asc' }
+  })
+
+  let expiringWithin7Days = 0
+  let expiringWithin30Days = 0
+
+  for (const tx of transactions) {
+    if (tx.expiresAt && tx.expiresAt <= in7Days) {
+      expiringWithin7Days += tx.remainingAmount ?? 0
+    }
+    if (tx.expiresAt && tx.expiresAt <= in30Days) {
+      expiringWithin30Days += tx.remainingAmount ?? 0
+    }
+  }
+
+  return {
+    expiringWithin7Days,
+    expiringWithin30Days,
+    transactions: transactions.map(tx => ({
+      id: tx.id,
+      amount: tx.amount,
+      remainingAmount: tx.remainingAmount ?? 0,
+      expiresAt: tx.expiresAt!,
+      type: tx.type
+    }))
+  }
 }
