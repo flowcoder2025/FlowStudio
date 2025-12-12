@@ -40,8 +40,8 @@ export function LazyImage({
   sizes,
   priority = false,
   onClick,
-  rootMargin = '100px', // 100px 전에 미리 로딩 시작
-  threshold = 0.01,
+  rootMargin = '200px', // 200px 전에 미리 로딩 시작
+  threshold = 0,
 }: LazyImageProps) {
   const [isInView, setIsInView] = useState(priority);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -51,6 +51,22 @@ export function LazyImage({
   // Intersection Observer 설정
   useEffect(() => {
     if (priority || isInView) return;
+
+    const currentRef = imgRef.current;
+    if (!currentRef) return;
+
+    // 초기 뷰포트 체크 - 이미 화면에 보이는 경우 바로 로딩
+    const rect = currentRef.getBoundingClientRect();
+    const isAlreadyInView =
+      rect.top < window.innerHeight + 200 &&
+      rect.bottom > -200 &&
+      rect.left < window.innerWidth + 200 &&
+      rect.right > -200;
+
+    if (isAlreadyInView) {
+      setIsInView(true);
+      return;
+    }
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -65,15 +81,10 @@ export function LazyImage({
       }
     );
 
-    const currentRef = imgRef.current;
-    if (currentRef) {
-      observer.observe(currentRef);
-    }
+    observer.observe(currentRef);
 
     return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef);
-      }
+      observer.unobserve(currentRef);
       observer.disconnect();
     };
   }, [priority, isInView, rootMargin, threshold]);
