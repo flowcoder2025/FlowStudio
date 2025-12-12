@@ -227,7 +227,7 @@ export default function CreditPurchasePage() {
               <p className="text-amber-700 text-sm leading-relaxed">
                 현재 카드 결제 서비스가 심사 단계에 있어 <strong>계좌이체</strong>로 크레딧을 충전할 수 있습니다.
                 <br />
-                아래 계좌로 입금 후 신청서를 작성해주시면 <strong>24시간 내로 크레딧을 지급</strong>해 드립니다.
+                아래 계좌로 입금 후 신청서를 작성해주시면 <strong>1시간 내로 크레딧을 지급</strong>해 드립니다.
               </p>
             </div>
           </div>
@@ -322,7 +322,7 @@ export default function CreditPurchasePage() {
                 신청이 완료되었습니다!
               </h3>
               <p className="text-gray-600 mb-4">
-                입금 확인 후 24시간 내로 크레딧이 지급됩니다.
+                입금 확인 후 1시간 내로 크레딧이 지급됩니다.
               </p>
               <button
                 onClick={() => setSubmitSuccess(false)}
@@ -512,7 +512,7 @@ export default function CreditPurchasePage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-500">•</span>
-              <span>입금 확인 후 24시간 내로 크레딧이 지급됩니다</span>
+              <span>입금 확인 후 1시간 내로 크레딧이 지급됩니다</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-500">•</span>
