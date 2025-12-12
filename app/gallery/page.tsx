@@ -24,6 +24,7 @@ import {
   RefreshCw,
   RotateCcw,
   ZoomIn,
+  ArrowUpCircle,
 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { AppMode } from '@/types';
@@ -67,6 +68,7 @@ export default function GalleryPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingTags, setEditingTags] = useState<{ projectId: string; imageIndex: number } | null>(null);
   const [tagInput, setTagInput] = useState('');
+  const [upscalingId, setUpscalingId] = useState<string | null>(null); // 업스케일 중인 이미지 ID
 
   // Infinite scroll ref
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -219,6 +221,53 @@ export default function GalleryPage() {
       alert(err instanceof Error ? err.message : '삭제 중 오류가 발생했습니다.');
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  // Upscale image to 4K
+  const handleUpscale = async (image: UserImage) => {
+    if (image.isUpscaled) {
+      alert('이미 4K로 업스케일된 이미지입니다.');
+      return;
+    }
+
+    const imageKey = `${image.projectId}-${image.index}`;
+
+    if (!confirm('이 이미지를 4K로 업스케일하시겠습니까? (10 크레딧 소모)')) {
+      return;
+    }
+
+    try {
+      setUpscalingId(imageKey);
+
+      const response = await fetch('/api/upscale', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image: image.url }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '업스케일에 실패했습니다.');
+      }
+
+      // 업스케일된 이미지로 교체 (URL 업데이트 + isUpscaled 플래그)
+      setImages(prev =>
+        prev.map(img =>
+          img.projectId === image.projectId && img.index === image.index
+            ? { ...img, url: data.image, isUpscaled: true }
+            : img
+        )
+      );
+
+      alert('4K 업스케일이 완료되었습니다!');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '업스케일 중 오류가 발생했습니다.');
+    } finally {
+      setUpscalingId(null);
     }
   };
 
@@ -503,11 +552,16 @@ export default function GalleryPage() {
                     sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                   />
 
-                  {/* Mode Badge */}
-                  <div className="absolute top-2 left-2">
+                  {/* Mode Badge + 4K Badge */}
+                  <div className="absolute top-2 left-2 flex gap-1">
                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${getModeBadgeClass(image.mode)}`}>
                       {MODE_LABELS[image.mode as FilterMode]?.label || image.mode}
                     </span>
+                    {image.isUpscaled && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm">
+                        4K
+                      </span>
+                    )}
                   </div>
 
                   {/* Hover Overlay */}
@@ -590,6 +644,21 @@ export default function GalleryPage() {
                       <Download className="w-3 h-3" />
                       다운로드
                     </button>
+                    {/* 업스케일 버튼 - 4K가 아닌 경우만 표시 */}
+                    {!image.isUpscaled && (
+                      <button
+                        onClick={() => handleUpscale(image)}
+                        disabled={upscalingId === `${image.projectId}-${image.index}`}
+                        className="px-2 py-1.5 text-[10px] font-medium bg-amber-500 dark:bg-amber-600 text-white rounded hover:bg-amber-600 dark:hover:bg-amber-700 transition-colors disabled:opacity-50"
+                        title="4K로 업스케일 (10 크레딧)"
+                      >
+                        {upscalingId === `${image.projectId}-${image.index}` ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <ArrowUpCircle className="w-3 h-3" />
+                        )}
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDelete(image.projectId)}
                       disabled={deletingId === image.projectId}

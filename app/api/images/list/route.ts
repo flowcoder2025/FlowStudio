@@ -20,6 +20,7 @@ export interface UserImage {
   createdAt: string
   index: number
   tags: string[]
+  isUpscaled: boolean // 4K 업스케일된 이미지 여부 (URL 기반 판별)
 }
 
 export interface ImagesListResponse {
@@ -125,14 +126,16 @@ export async function GET(req: NextRequest) {
 
     for (const project of projects) {
       for (let i = 0; i < project.resultImages.length; i++) {
+        const imageUrl = project.resultImages[i]
         images.push({
-          url: project.resultImages[i],
+          url: imageUrl,
           projectId: project.id,
           projectTitle: project.title,
           mode: project.mode,
           createdAt: project.createdAt.toISOString(),
           index: i,
           tags: project.tags,
+          isUpscaled: imageUrl.includes('/upscaled/'), // URL에 upscaled 경로 포함 시 4K
         })
       }
     }
@@ -174,14 +177,16 @@ export async function GET(req: NextRequest) {
       // DetailPageDraft를 UserImage 형식으로 변환
       for (const draft of detailPageDrafts) {
         for (let i = 0; i < draft.detailPageSegments.length; i++) {
+          const segmentUrl = draft.detailPageSegments[i]
           images.push({
-            url: draft.detailPageSegments[i],
+            url: segmentUrl,
             projectId: `draft_${draft.id}`,
             projectTitle: draft.title,
             mode: 'DETAIL_PAGE',
             createdAt: draft.createdAt.toISOString(),
             index: i,
             tags: [],
+            isUpscaled: segmentUrl.includes('/upscaled/'), // URL에 upscaled 경로 포함 시 4K
           })
         }
       }

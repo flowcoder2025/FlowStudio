@@ -90,7 +90,7 @@ export async function getPortonePayment(paymentId: string) {
  * 포트원 웹훅 페이로드 타입 정의
  */
 export interface PortoneWebhookPayload {
-  type: 'Transaction.Paid' | 'Transaction.Failed' | 'Transaction.Cancelled'
+  type: 'Transaction.Paid' | 'Transaction.Failed' | 'Transaction.Cancelled' | 'BillingKey.Deleted'
   timestamp: string
   data: {
     paymentId: string
@@ -109,21 +109,30 @@ export interface PortoneWebhookPayload {
       type: 'EASY_PAY'
       easyPayProvider?: 'KAKAOPAY' | 'TOSSPAY' | 'NAVERPAY'
     }
-    customData?: string // JSON 문자열 (packageId 등 저장)
+    customData?: string // JSON 문자열 (packageId, tier, type 등 저장)
+    billingKey?: string // 빌링키 (정기 결제용)
   }
+}
+
+/**
+ * 포트원 커스텀 데이터 타입 (크레딧 및 구독 공용)
+ */
+export interface PortoneCustomData {
+  packageId?: string   // 크레딧 패키지 ID
+  userId?: string      // 사용자 ID
+  type?: 'credit' | 'subscription'  // 결제 유형
+  tier?: string        // 구독 티어 (PLUS, PRO, BUSINESS)
+  durationMonths?: number  // 구독 기간 (개월)
 }
 
 /**
  * 웹훅 페이로드에서 커스텀 데이터 파싱
  */
-export function parsePortoneCustomData(customDataString?: string) {
+export function parsePortoneCustomData(customDataString?: string): PortoneCustomData | null {
   if (!customDataString) return null
 
   try {
-    return JSON.parse(customDataString) as {
-      packageId?: string
-      userId?: string
-    }
+    return JSON.parse(customDataString) as PortoneCustomData
   } catch (error) {
     console.error('포트원 커스텀 데이터 파싱 오류:', error)
     return null

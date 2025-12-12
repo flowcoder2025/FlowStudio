@@ -3,14 +3,16 @@
  * /subscription
  *
  * 구독 플랜 선택 및 관리
+ * 포트원 V2 정기 결제 연동
  */
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Check, Crown, Zap, Building2, Sparkles } from 'lucide-react'
+import { Check, Crown, Zap, Building2, Sparkles, Loader2 } from 'lucide-react'
+import * as PortOne from '@portone/browser-sdk/v2'
 
 // 구독 플랜 정의
 const SUBSCRIPTION_PLANS = [
@@ -75,19 +77,10 @@ export default function SubscriptionPage() {
   const router = useRouter()
   const [currentSubscription, setCurrentSubscription] = useState<CurrentSubscription | null>(null)
   const [loading, setLoading] = useState(true)
+  const [processingTier, setProcessingTier] = useState<string | null>(null)
+  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling'>('idle')
 
-  useEffect(() => {
-    if (status === 'loading') return
-
-    if (!session) {
-      router.push('/login')
-      return
-    }
-
-    fetchSubscription()
-  }, [session, status, router])
-
-  const fetchSubscription = async () => {
+  const fetchSubscription = useCallback(async () => {
     try {
       const response = await fetch('/api/subscription')
       const data = await response.json()
@@ -99,9 +92,49 @@ export default function SubscriptionPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (status === 'loading') return
+
+    if (!session) {
+      router.push('/login')
+      return
+    }
+
+    fetchSubscription()
+  }, [session, status, router, fetchSubscription])
+
+  // 결제 후 구독 상태 폴링
+  const pollSubscriptionStatus = useCallback(async (targetTier: string, maxAttempts = 10) => {
+    setPaymentStatus('polling')
+
+    for (let i = 0; i < maxAttempts; i++) {
+      await new Promise(resolve => setTimeout(resolve, 3000)) // 3초 대기
+
+      const response = await fetch('/api/subscription')
+      const data = await response.json()
+
+      if (data.success && data.data.tier === targetTier) {
+        setCurrentSubscription(data.data)
+        setPaymentStatus('idle')
+        alert(`${SUBSCRIPTION_PLANS.find(p => p.tier === targetTier)?.name} 플랜으로 업그레이드되었습니다!`)
+        return true
+      }
+    }
+
+    setPaymentStatus('idle')
+    alert('결제가 완료되었습니다. 구독 상태가 곧 업데이트됩니다.')
+    fetchSubscription()
+    return false
+  }, [fetchSubscription])
 
   const handleUpgrade = async (tier: string) => {
+    if (!session?.user?.id || !session?.user?.email) {
+      alert('로그인이 필요합니다.')
+      return
+    }
+
     if (tier === 'BUSINESS') {
       // Business 플랜은 문의 양식으로 이동
       window.open('mailto:support@flowstudio.com?subject=Business 플랜 문의', '_blank')
@@ -112,27 +145,87 @@ export default function SubscriptionPage() {
       return
     }
 
-    // TODO: PortOne 정기 결제 연동
-    // 현재는 임시로 업그레이드 API 호출
+    const plan = SUBSCRIPTION_PLANS.find(p => p.tier === tier)
+    if (!plan || plan.price === 0) {
+      return
+    }
+
+    // 환경 변수 확인
+    const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID
+    const channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY
+
+    if (!storeId || !channelKey) {
+      alert('결제 시스템이 설정되지 않았습니다. 관리자에게 문의해주세요.')
+      return
+    }
+
     try {
-      const response = await fetch('/api/subscription/upgrade', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier, durationMonths: 1 })
+      setProcessingTier(tier)
+      setPaymentStatus('processing')
+
+      // 고유한 결제 ID 생성
+      const paymentId = `sub_${tier}_${session.user.id}_${Date.now()}`
+
+      // PortOne V2 결제 요청
+      const response = await PortOne.requestPayment({
+        storeId,
+        channelKey,
+        paymentId,
+        orderName: `FlowStudio ${plan.name} 구독 (1개월)`,
+        totalAmount: plan.price,
+        currency: 'CURRENCY_KRW',
+        payMethod: 'EASY_PAY',
+        customer: {
+          customerId: session.user.id,
+          email: session.user.email,
+          fullName: session.user.name || undefined,
+        },
+        customData: {
+          type: 'subscription',
+          tier: tier,
+          userId: session.user.id,
+          durationMonths: 1,
+        },
+        redirectUrl: `${window.location.origin}/subscription?payment=success&tier=${tier}`,
       })
 
-      const data = await response.json()
-      if (data.success) {
-        alert(data.message)
-        fetchSubscription()
-      } else {
-        alert(data.error || '업그레이드에 실패했습니다')
+      // 결제 응답 처리
+      if (response?.code) {
+        // 결제 실패 또는 취소
+        if (response.code === 'FAILURE_TYPE_PG') {
+          alert('결제가 실패했습니다. 다시 시도해주세요.')
+        } else {
+          console.log('결제 취소 또는 오류:', response.message)
+        }
+        setPaymentStatus('idle')
+        return
       }
+
+      // 결제 성공 - 웹훅에서 처리되므로 폴링으로 상태 확인
+      await pollSubscriptionStatus(tier)
+
     } catch (error) {
-      console.error('업그레이드 실패:', error)
-      alert('업그레이드 중 오류가 발생했습니다')
+      console.error('결제 오류:', error)
+      alert('결제 중 오류가 발생했습니다. 다시 시도해주세요.')
+      setPaymentStatus('idle')
+    } finally {
+      setProcessingTier(null)
     }
   }
+
+  // URL 파라미터로 결제 성공 시 폴링
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const payment = params.get('payment')
+    const tier = params.get('tier')
+
+    if (payment === 'success' && tier) {
+      // URL 정리
+      window.history.replaceState({}, '', '/subscription')
+      // 폴링 시작
+      pollSubscriptionStatus(tier)
+    }
+  }, [pollSubscriptionStatus])
 
   if (status === 'loading' || loading) {
     return (
@@ -244,18 +337,25 @@ export default function SubscriptionPage() {
                 {/* CTA Button */}
                 <button
                   onClick={() => handleUpgrade(plan.tier)}
-                  disabled={isCurrentPlan || (plan.tier === 'FREE' && currentSubscription?.tier !== 'FREE')}
-                  className={`w-full py-3 rounded-lg font-medium transition-all ${
+                  disabled={isCurrentPlan || (plan.tier === 'FREE' && currentSubscription?.tier !== 'FREE') || processingTier !== null || paymentStatus !== 'idle'}
+                  className={`w-full py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
                     isCurrentPlan
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 cursor-default'
+                      : processingTier === plan.tier
+                      ? 'bg-blue-400 text-white cursor-wait'
                       : plan.tier === 'FREE'
                       ? 'bg-slate-200 dark:bg-slate-700 text-slate-500 cursor-not-allowed'
-                      : isPlanHigher
+                      : isPlanHigher && processingTier === null
                       ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg'
                       : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                   }`}
                 >
-                  {isCurrentPlan ? '현재 플랜' :
+                  {processingTier === plan.tier ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      {paymentStatus === 'polling' ? '확인 중...' : '결제 중...'}
+                    </>
+                  ) : isCurrentPlan ? '현재 플랜' :
                    plan.tier === 'FREE' ? '기본 플랜' :
                    isPlanHigher ? plan.cta : '다운그레이드'}
                 </button>
