@@ -92,7 +92,7 @@ function ProfilePageContent() {
 
   const fetchCreditHistory = async () => {
     try {
-      const response = await fetch('/api/credits/history?limit=10');
+      const response = await fetch('/api/credits/history?limit=5');
       if (response.ok) {
         const data = await response.json();
         setCreditHistory(data.transactions || []);
@@ -333,7 +333,7 @@ function ProfilePageContent() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {creditHistory.slice(0, 10).map((transaction) => {
+                  {creditHistory.map((transaction) => {
                     const { icon, colorClass, bgClass, isPositive } = getTransactionDisplay(transaction);
                     return (
                       <div
@@ -364,8 +364,9 @@ function ProfilePageContent() {
                     );
                   })}
 
-                  {creditHistory.length > 10 && (
+                  {creditHistory.length >= 5 && (
                     <button
+                      onClick={() => router.push('/credits/history')}
                       className="w-full mt-4 text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
                     >
                       전체 내역 보기 →
