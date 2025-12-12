@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Settings, BarChart3, History, CheckCircle, Coins, Building2, CreditCard, TrendingUp, Calendar, Gift, Users } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { ProfileSkeleton } from '@/components/ProfileSkeleton';
 import { AppMode } from '@/types';
 import { useRouter } from 'next/navigation';
 
@@ -150,16 +151,12 @@ function ProfilePageContent() {
     }
   };
 
+  // [성능 최적화] 스켈레톤 UI로 로딩 상태 표시
   if (loading) {
     return (
       <>
         <Header currentMode={AppMode.PROFILE} />
-        <div className="max-w-4xl mx-auto px-4 py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-            <p className="mt-4 text-slate-600 dark:text-slate-400">로딩 중...</p>
-          </div>
-        </div>
+        <ProfileSkeleton />
       </>
     );
   }

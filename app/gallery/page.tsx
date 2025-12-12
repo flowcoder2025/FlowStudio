@@ -4,6 +4,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { LazyImageGridItem } from '@/components/LazyImage';
+import { GalleryPageSkeleton } from '@/components/ImageGridSkeleton';
 import {
   Download,
   Trash2,
@@ -155,7 +157,7 @@ export default function GalleryPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, filterMode, dateFrom, dateTo, selectedTag]);
 
-  // Infinite scroll observer
+  // Infinite scroll observer + 프리페칭
   useEffect(() => {
     if (observerRef.current) {
       observerRef.current.disconnect();
@@ -180,6 +182,46 @@ export default function GalleryPage() {
       }
     };
   }, [hasMore, loading, loadingMore, fetchImages]);
+
+  // [성능 최적화] 다음 페이지 프리페칭 및 이미지 프리로딩
+  useEffect(() => {
+    if (!hasMore || loading || loadingMore || images.length === 0) return;
+
+    // 다음 API 페이지 프리페칭
+    const nextOffset = currentOffsetRef.current;
+    const params = new URLSearchParams();
+    if (filterMode !== 'ALL') params.set('mode', filterMode);
+    if (dateFrom) params.set('dateFrom', dateFrom);
+    if (dateTo) params.set('dateTo', dateTo);
+    if (selectedTag) params.set('tag', selectedTag);
+    params.set('limit', String(ITEMS_PER_PAGE));
+    params.set('offset', String(nextOffset));
+
+    // 브라우저 Idle 시간에 프리페칭
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(() => {
+        fetch(`/api/images/list?${params.toString()}`, {
+          priority: 'low' as RequestPriority
+        }).catch(() => {/* 프리페칭 실패 무시 */});
+      });
+    }
+
+    // 현재 보이는 이미지의 처음 6개 프리로딩
+    const preloadImages = () => {
+      images.slice(0, 6).forEach(img => {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = img.url;
+        // 이미 존재하는 프리로드 링크는 추가하지 않음
+        if (!document.querySelector(`link[href="${img.url}"]`)) {
+          document.head.appendChild(link);
+        }
+      });
+    };
+
+    preloadImages();
+  }, [images, hasMore, loading, loadingMore, filterMode, dateFrom, dateTo, selectedTag]);
 
   // Download image
   const handleDownload = async (imageUrl: string, projectTitle: string, index: number) => {
@@ -362,16 +404,12 @@ export default function GalleryPage() {
 
   const hasActiveFilters = filterMode !== 'ALL' || dateFrom || dateTo || selectedTag;
 
+  // [성능 최적화] 세션 로딩 시 스켈레톤 UI 표시
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
         <Header currentMode={AppMode.HOME} />
-        <div className="flex items-center justify-center h-[calc(100vh-64px)]">
-          <div className="text-center">
-            <Loader2 className="w-12 h-12 text-indigo-600 dark:text-indigo-400 animate-spin mx-auto mb-4" />
-            <p className="text-slate-600 dark:text-slate-400">로딩 중...</p>
-          </div>
-        </div>
+        <GalleryPageSkeleton />
       </div>
     );
   }
@@ -539,16 +577,17 @@ export default function GalleryPage() {
                 key={`${image.projectId}-${image.index}-${index}`}
                 className="group relative bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-lg transition-all"
               >
-                {/* Image */}
+                {/* Image - [성능 최적화] LazyImageGridItem으로 지연 로딩 */}
                 <div
                   className="relative aspect-square bg-slate-100 dark:bg-slate-800 cursor-pointer"
                   onClick={() => setSelectedImage(image.url)}
                 >
-                  <Image
+                  <LazyImageGridItem
                     src={image.url}
                     alt={image.projectTitle}
                     fill
-                    className="object-cover"
+                    index={index}
+                    priorityCount={6}
                     sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                   />
 

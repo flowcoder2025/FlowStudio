@@ -41,6 +41,9 @@ const inheritanceMap: Record<Relation, Relation[]> = {
 /**
  * 권한 확인
  *
+ * [성능 최적화] 4회 순차 쿼리 → 1회 통합 쿼리로 개선 (75% 쿼리 감소)
+ * - 직접 권한, 상속 권한, 시스템 admin, 와일드카드를 OR 조건으로 통합
+ *
  * @param userId - 사용자 ID
  * @param namespace - 리소스 종류 ('image_project', 'system')
  * @param objectId - 리소스 ID
@@ -59,67 +62,42 @@ export async function check(
   objectId: string,
   relation: Relation
 ): Promise<boolean> {
-  // 1단계: 직접 권한 확인
-  const directPermission = await prisma.relationTuple.findFirst({
+  // 상속 권한 포함하여 확인할 관계 목록 생성
+  const inheritedRelations = [relation, ...getInheritedRelations(relation)]
+
+  // 단일 쿼리로 모든 권한 조건 확인
+  const permission = await prisma.relationTuple.findFirst({
     where: {
-      namespace,
-      objectId,
-      relation,
-      subjectType: 'user',
-      subjectId: userId,
+      OR: [
+        // 1. 직접 권한 + 상속 권한
+        {
+          namespace,
+          objectId,
+          relation: { in: inheritedRelations },
+          subjectType: 'user',
+          subjectId: userId,
+        },
+        // 2. 시스템 admin (모든 리소스 접근 가능)
+        {
+          namespace: 'system',
+          objectId: 'global',
+          relation: 'admin',
+          subjectType: 'user',
+          subjectId: userId,
+        },
+        // 3. 와일드카드 (공개 리소스)
+        {
+          namespace,
+          objectId,
+          relation,
+          subjectType: 'user',
+          subjectId: '*',
+        },
+      ],
     },
   })
 
-  if (directPermission) {
-    return true
-  }
-
-  // 2단계: 상속 권한 확인
-  const inheritedRelations = getInheritedRelations(relation)
-  if (inheritedRelations.length > 0) {
-    const inheritedPermission = await prisma.relationTuple.findFirst({
-      where: {
-        namespace,
-        objectId,
-        relation: { in: inheritedRelations },
-        subjectType: 'user',
-        subjectId: userId,
-      },
-    })
-
-    if (inheritedPermission) {
-      return true
-    }
-  }
-
-  // 3단계: 시스템 레벨 권한 확인
-  // admin 사용자는 모든 리소스에 대한 모든 권한 보유
-  const systemAdmin = await prisma.relationTuple.findFirst({
-    where: {
-      namespace: 'system',
-      objectId: 'global',
-      relation: 'admin',
-      subjectType: 'user',
-      subjectId: userId,
-    },
-  })
-
-  if (systemAdmin) {
-    return true
-  }
-
-  // 4단계: 와일드카드 확인 (공개 리소스)
-  const wildcardPermission = await prisma.relationTuple.findFirst({
-    where: {
-      namespace,
-      objectId,
-      relation,
-      subjectType: 'user',
-      subjectId: '*',
-    },
-  })
-
-  return !!wildcardPermission
+  return !!permission
 }
 
 /**

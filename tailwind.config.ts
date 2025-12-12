@@ -7,6 +7,16 @@ const config: Config = {
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  theme: {
+    extend: {
+      keyframes: {
+        // [성능 최적화] 이미지 로딩 shimmer 애니메이션
+        shimmer: {
+          '100%': { transform: 'translateX(100%)' },
+        },
+      },
+    },
+  },
 };
 
 export default config;

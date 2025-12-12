@@ -229,6 +229,67 @@ export async function deductCredits(
 }
 
 /**
+ * 크레딧 확인 + 차감을 단일 원자적 트랜잭션으로 수행
+ *
+ * [성능 최적화] 기존 hasEnoughCredits + deductCredits 2회 쿼리 → 1회 통합
+ * - 크레딧 확인과 차감을 WHERE 조건으로 원자적 수행
+ * - 중복 쿼리 50% 감소
+ *
+ * @returns success: true + balance (성공) | success: false + balance + error (실패)
+ */
+export async function deductCreditsAtomic(
+  userId: string,
+  amount: number,
+  type: 'GENERATION' | 'UPSCALE',
+  description: string,
+  metadata?: CreditTransactionMetadata
+): Promise<{ success: boolean; balance: number; error?: string }> {
+  if (amount <= 0) {
+    throw new ValidationError('사용 금액은 0보다 커야 합니다')
+  }
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      // 잔액 확인 + 차감을 원자적으로 수행
+      // balance >= amount 조건이 충족될 때만 업데이트됨
+      const credit = await tx.credit.update({
+        where: {
+          userId,
+          balance: { gte: amount } // 잔액이 충분할 때만 업데이트
+        },
+        data: { balance: { decrement: amount } }
+      })
+
+      // 트랜잭션 기록
+      await tx.creditTransaction.create({
+        data: {
+          userId,
+          amount: -amount,
+          type,
+          description,
+          metadata: metadata || {}
+        }
+      })
+
+      return credit
+    })
+
+    return { success: true, balance: result.balance }
+  } catch (error) {
+    // P2025: Record not found (잔액 부족으로 WHERE 조건 불충족)
+    if (error instanceof Error && 'code' in error && error.code === 'P2025') {
+      const balance = await getCreditBalance(userId)
+      return {
+        success: false,
+        balance,
+        error: `크레딧이 부족합니다 (필요: ${amount}, 보유: ${balance})`
+      }
+    }
+    throw error
+  }
+}
+
+/**
  * 이미지 4장 생성 크레딧 차감 (처음 생성)
  */
 export async function deductForGeneration(
