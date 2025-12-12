@@ -12,7 +12,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import {
   Copy, Check, Users, UserCheck, Clock, Coins,
-  Gift, ChevronRight, AlertCircle, ArrowLeft
+  Gift, ChevronRight, AlertCircle, ArrowLeft, ShieldCheck, ExternalLink
 } from 'lucide-react'
 import { useNavigation } from '@/hooks/useNavigation'
 
@@ -253,6 +253,32 @@ export default function ReferralPage() {
           </p>
         </div>
 
+        {/* 사업자 인증 필수 안내 배너 */}
+        {!stats.myBusinessVerified && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+            <div className="flex items-start gap-4">
+              <div className="p-2 bg-amber-100 rounded-lg flex-shrink-0">
+                <ShieldCheck className="w-6 h-6 text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-amber-900 mb-1">사업자 인증이 필요합니다</h3>
+                <p className="text-sm text-amber-800 mb-3">
+                  추천 프로그램의 크레딧을 받으려면 <strong>사업자 인증을 먼저 완료</strong>해야 합니다.
+                  추천 코드를 입력하거나 친구를 초대해도 사업자 인증이 완료되지 않으면 크레딧이 지급되지 않습니다.
+                </p>
+                <button
+                  onClick={() => navigateTo('/profile/business')}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg transition-colors text-sm"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  사업자 인증하러 가기
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 내 추천 코드 */}
         {stats.myReferralCode ? (
           <div className="bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl p-8 text-white shadow-lg">
@@ -322,6 +348,20 @@ export default function ReferralPage() {
             <p className="text-sm text-gray-600 mb-4">
               친구에게 받은 추천 코드가 있나요? 입력하고 사업자 인증을 완료하면 각각 150 크레딧을 받습니다.
             </p>
+            {!stats.myBusinessVerified && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                <p className="text-sm text-amber-800">
+                  추천 코드 적용 후 <strong>사업자 인증을 완료</strong>해야 크레딧이 지급됩니다.{' '}
+                  <button
+                    onClick={() => navigateTo('/profile/business')}
+                    className="text-amber-700 underline hover:text-amber-900 font-medium"
+                  >
+                    인증하러 가기
+                  </button>
+                </p>
+              </div>
+            )}
 
             <div className="flex gap-3">
               <input
@@ -576,6 +616,20 @@ export default function ReferralPage() {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
           <h4 className="font-semibold text-blue-900 mb-3">추천 프로그램 안내</h4>
           <ul className="space-y-2 text-sm text-blue-800">
+            <li className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600" />
+              <span className="font-medium text-amber-800">
+                <strong>중요:</strong> 크레딧 지급을 받으려면 추천인과 피추천인 모두 <strong>사업자 인증이 필수</strong>입니다.
+                {!stats.myBusinessVerified && (
+                  <button
+                    onClick={() => navigateTo('/profile/business')}
+                    className="ml-2 text-amber-700 underline hover:text-amber-900"
+                  >
+                    지금 인증하기 →
+                  </button>
+                )}
+              </span>
+            </li>
             <li className="flex items-start gap-2">
               <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
               <span>추천받은 친구가 가입 시 추천 코드를 입력하고 사업자 인증을 완료하면 크레딧이 지급됩니다.</span>
