@@ -2,7 +2,7 @@
  * 크레딧 충전 페이지
  * /credits/purchase
  *
- * 포트원 V2 + 카카오페이로 크레딧을 충전합니다.
+ * 결제 심사 중으로 계좌이체 방식으로 운영
  */
 
 'use client'
@@ -10,7 +10,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import * as PortOne from '@portone/browser-sdk/v2'
+import { ArrowLeft, Copy, Check, AlertCircle, Loader2, Send } from 'lucide-react'
 
 // 크레딧 패키지 정의 (pricing-strategy.md)
 const CREDIT_PACKAGES = [
@@ -52,12 +52,39 @@ const CREDIT_PACKAGES = [
   }
 ] as const
 
+// 계좌 정보
+const BANK_INFO = {
+  bank: '카카오뱅크',
+  account: '3333-01-3481868',
+  holder: '박현일'
+}
+
+// 내부 API 엔드포인트 (웹훅 프록시)
+const API_ENDPOINT = '/api/credits/request'
+
 export default function CreditPurchasePage() {
   const { data: session } = useSession()
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [processingPackageId, setProcessingPackageId] = useState<string | null>(null)
   const [currentBalance, setCurrentBalance] = useState<number | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  // 폼 상태
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    depositAmount: ''
+  })
+  // 세금계산서 발행 상태
+  const [needTaxInvoice, setNeedTaxInvoice] = useState(false)
+  const [taxInfo, setTaxInfo] = useState({
+    businessName: '',
+    businessNumber: '',
+    representativeName: '',
+    businessType: ''
+  })
+  const [submitting, setSubmitting] = useState(false)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
 
   useEffect(() => {
     // 로그인 확인
@@ -69,6 +96,13 @@ export default function CreditPurchasePage() {
     // 현재 잔액 조회
     if (session?.user) {
       fetchBalance()
+      // 이메일 자동 입력
+      if (session.user.email) {
+        setFormData(prev => ({ ...prev, email: session.user?.email || '' }))
+      }
+      if (session.user.name) {
+        setFormData(prev => ({ ...prev, name: session.user?.name || '' }))
+      }
     }
   }, [session, router])
 
@@ -84,88 +118,66 @@ export default function CreditPurchasePage() {
     }
   }
 
-  const handlePurchase = async (pkg: typeof CREDIT_PACKAGES[number]) => {
-    if (!session?.user?.id) {
-      alert('로그인이 필요합니다')
-      return
-    }
-
-    setLoading(true)
-    setProcessingPackageId(pkg.id)
-
+  const copyAccountNumber = async () => {
     try {
-      const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID
-      const channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY
-
-      if (!storeId || !channelKey) {
-        throw new Error('포트원 설정이 누락되었습니다')
-      }
-
-      // 포트원 결제 요청
-      const paymentId = `payment_${Date.now()}_${session.user.id}`
-
-      const response = await PortOne.requestPayment({
-        storeId,
-        channelKey, // 카카오페이 채널
-        paymentId,
-        orderName: `${pkg.name} 크레딧 패키지`,
-        totalAmount: pkg.price,
-        currency: 'CURRENCY_KRW',
-        payMethod: 'EASY_PAY',
-        customer: {
-          fullName: session.user.name || '사용자',
-          email: session.user.email || undefined
-        },
-        customData: {
-          packageId: pkg.id,
-          userId: session.user.id
-        },
-        redirectUrl: `${window.location.origin}/credits/purchase/success`
-      })
-
-      // 결제 결과 처리
-      if (response?.code != null) {
-        // 오류 발생
-        console.error('결제 오류:', response)
-        alert(`결제 실패: ${response.message || '알 수 없는 오류'}`)
-      } else {
-        // 결제 성공 (웹훅에서 크레딧 지급)
-        console.log('결제 요청 성공:', response)
-        alert('결제가 완료되었습니다! 크레딧을 지급 중입니다...')
-
-        // 폴링으로 잔액 확인 (최대 30초)
-        await pollBalanceUpdate(10, 3000) // 10회, 3초 간격
-      }
-
-    } catch (error: unknown) {
-      console.error('결제 요청 실패:', error)
-      const message = error instanceof Error ? error.message : '알 수 없는 오류'
-      alert(`결제 요청 실패: ${message}`)
-    } finally {
-      setLoading(false)
-      setProcessingPackageId(null)
+      await navigator.clipboard.writeText(BANK_INFO.account)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (error) {
+      console.error('복사 실패:', error)
     }
   }
 
-  // 잔액 업데이트 폴링
-  const pollBalanceUpdate = async (maxAttempts: number, interval: number) => {
-    const initialBalance = currentBalance
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
 
-    for (let i = 0; i < maxAttempts; i++) {
-      await new Promise(resolve => setTimeout(resolve, interval))
+  const handleTaxInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setTaxInfo(prev => ({ ...prev, [name]: value }))
+  }
 
-      const response = await fetch('/api/credits/balance')
-      const data = await response.json()
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
 
-      if (data.success && data.balance > (initialBalance || 0)) {
-        setCurrentBalance(data.balance)
-        alert(`크레딧이 지급되었습니다! 현재 잔액: ${data.balance} 크레딧`)
-        return
-      }
+    if (!formData.name || !formData.email || !formData.phone || !formData.depositAmount) {
+      alert('모든 항목을 입력해주세요.')
+      return
     }
 
-    // 타임아웃
-    alert('크레딧 지급이 지연되고 있습니다. 잠시 후 다시 확인해주세요.')
+    setSubmitting(true)
+
+    try {
+      const response = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          depositAmount: formData.depositAmount,
+          needTaxInvoice,
+          taxInfo: needTaxInvoice ? taxInfo : null
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setSubmitSuccess(true)
+        setFormData({ name: '', email: session?.user?.email || '', phone: '', depositAmount: '' })
+      } else {
+        throw new Error(data.error || '신청 실패')
+      }
+    } catch (error) {
+      console.error('신청 실패:', error)
+      alert('신청 중 오류가 발생했습니다. 다시 시도해주세요.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (session === undefined) {
@@ -174,10 +186,19 @@ export default function CreditPurchasePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-12">
-      <div className="container mx-auto px-4 max-w-6xl">
+      <div className="container mx-auto px-4 max-w-4xl">
+        {/* 뒤로가기 버튼 */}
+        <button
+          onClick={() => router.back()}
+          className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span>뒤로가기</span>
+        </button>
+
         {/* 헤더 */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
             크레딧 충전
           </h1>
           <p className="text-lg text-gray-600 mb-2">
@@ -191,99 +212,292 @@ export default function CreditPurchasePage() {
               <span className="text-lg font-bold text-blue-600">
                 {currentBalance.toLocaleString()} 크레딧
               </span>
-              <span className="text-sm text-blue-700">
-                (₩{(currentBalance * 100).toLocaleString()})
-              </span>
             </div>
           )}
         </div>
 
-        {/* 패키지 그리드 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {CREDIT_PACKAGES.map((pkg) => {
-            const isProcessing = processingPackageId === pkg.id
+        {/* 결제 심사 안내 */}
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-8">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-bold text-amber-800 mb-2">
+                결제 서비스 심사 중
+              </h3>
+              <p className="text-amber-700 text-sm leading-relaxed">
+                현재 카드 결제 서비스가 심사 단계에 있어 <strong>계좌이체</strong>로 크레딧을 충전할 수 있습니다.
+                <br />
+                아래 계좌로 입금 후 신청서를 작성해주시면 <strong>24시간 내로 크레딧을 지급</strong>해 드립니다.
+              </p>
+            </div>
+          </div>
+        </div>
 
-            return (
+        {/* 계좌 정보 */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            입금 계좌 정보
+          </h2>
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500 mb-1">{BANK_INFO.bank}</p>
+                <p className="text-2xl font-bold text-gray-900 tracking-wider">
+                  {BANK_INFO.account}
+                </p>
+                <p className="text-sm text-gray-600 mt-1">예금주: {BANK_INFO.holder}</p>
+              </div>
+              <button
+                onClick={copyAccountNumber}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>복사됨</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4" />
+                    <span>복사</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 크레딧 패키지 안내 */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            크레딧 패키지
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {CREDIT_PACKAGES.map((pkg) => (
               <div
                 key={pkg.id}
-                className={`relative bg-white rounded-2xl shadow-lg p-6 transition-all duration-200 ${
+                className={`relative rounded-xl p-4 border-2 ${
                   pkg.popular
-                    ? 'border-2 border-blue-500 scale-105'
-                    : 'border border-gray-200 hover:shadow-xl'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 bg-gray-50'
                 }`}
               >
-                {/* 인기 배지 */}
                 {pkg.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                  <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-blue-500 text-white px-3 py-0.5 rounded-full text-xs font-medium">
                     인기
                   </div>
                 )}
-
-                {/* 패키지 정보 */}
-                <div className="text-center mb-4">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    {pkg.name}
-                  </h3>
-                  <div className="text-3xl font-bold text-blue-600 mb-1">
+                <div className="text-center">
+                  <h3 className="font-bold text-gray-900 mb-1">{pkg.name}</h3>
+                  <p className="text-2xl font-bold text-blue-600">
                     {pkg.credits.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-gray-500 mb-2">크레딧</div>
-                  <div className="text-2xl font-bold text-gray-900">
+                  </p>
+                  <p className="text-xs text-gray-500 mb-2">크레딧</p>
+                  <p className="text-lg font-bold text-gray-900">
                     ₩{pkg.price.toLocaleString()}
-                  </div>
+                  </p>
                   {pkg.discount > 0 && (
-                    <div className="text-sm text-green-600 font-medium mt-1">
+                    <p className="text-xs text-green-600 font-medium">
                       {pkg.discount}% 할인
-                    </div>
+                    </p>
                   )}
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
-                {/* 설명 */}
-                <p className="text-sm text-gray-600 text-center mb-6">
-                  {pkg.description}
-                </p>
+        {/* 크레딧 신청 폼 */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            크레딧 충전 신청
+          </h2>
 
-                {/* 구매 버튼 */}
+          {submitSuccess ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Check className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                신청이 완료되었습니다!
+              </h3>
+              <p className="text-gray-600 mb-4">
+                입금 확인 후 24시간 내로 크레딧이 지급됩니다.
+              </p>
+              <button
+                onClick={() => setSubmitSuccess(false)}
+                className="text-blue-600 hover:underline"
+              >
+                추가 신청하기
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    이름 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="홍길동"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    이메일 (가입 메일) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="example@kakao.com"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    연락처 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    placeholder="010-1234-5678"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    입금액 (원) <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="depositAmount"
+                    value={formData.depositAmount}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    required
+                  >
+                    <option value="">입금액 선택</option>
+                    {CREDIT_PACKAGES.map((pkg) => (
+                      <option key={pkg.id} value={pkg.price}>
+                        ₩{pkg.price.toLocaleString()} ({pkg.name} - {pkg.credits}크레딧)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* 세금계산서 발행 */}
+              <div className="pt-4 border-t border-gray-200">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={needTaxInvoice}
+                    onChange={(e) => setNeedTaxInvoice(e.target.checked)}
+                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    세금계산서 발행 요청
+                  </span>
+                </label>
+
+                {needTaxInvoice && (
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        사업자명 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="businessName"
+                        value={taxInfo.businessName}
+                        onChange={handleTaxInfoChange}
+                        placeholder="(주)플로우코더"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        required={needTaxInvoice}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        사업자번호 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="businessNumber"
+                        value={taxInfo.businessNumber}
+                        onChange={handleTaxInfoChange}
+                        placeholder="123-45-67890"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        required={needTaxInvoice}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        대표자명 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="representativeName"
+                        value={taxInfo.representativeName}
+                        onChange={handleTaxInfoChange}
+                        placeholder="홍길동"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        required={needTaxInvoice}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        업종/업태 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="businessType"
+                        value={taxInfo.businessType}
+                        onChange={handleTaxInfoChange}
+                        placeholder="소프트웨어 개발/서비스업"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        required={needTaxInvoice}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-4">
                 <button
-                  onClick={() => handlePurchase(pkg)}
-                  disabled={loading}
-                  className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 ${
-                    pkg.popular
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
-                  } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors"
                 >
-                  {isProcessing ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                      처리 중...
-                    </span>
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>신청 중...</span>
+                    </>
                   ) : (
-                    '카카오페이로 구매'
+                    <>
+                      <Send className="w-5 h-5" />
+                      <span>크레딧 충전 신청하기</span>
+                    </>
                   )}
                 </button>
               </div>
-            )
-          })}
+            </form>
+          )}
         </div>
 
         {/* 안내사항 */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white rounded-xl shadow-lg p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">
             크레딧 사용 안내
           </h3>
@@ -298,15 +512,15 @@ export default function CreditPurchasePage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-500">•</span>
-              <span>크레딧은 충전 후 즉시 사용 가능합니다</span>
+              <span>입금 확인 후 24시간 내로 크레딧이 지급됩니다</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-500">•</span>
-              <span>크레딧에는 유효기간이 없습니다</span>
+              <span>크레딧 충전 후 6개월간 사용 가능합니다</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-500">•</span>
-              <span>결제는 카카오페이 간편결제로 안전하게 처리됩니다</span>
+              <span>문의: support@flow-coder.com</span>
             </li>
           </ul>
         </div>

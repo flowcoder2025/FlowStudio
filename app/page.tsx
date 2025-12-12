@@ -1,12 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { Sparkles, Layout, FilePenLine, Wand2, ArrowRight } from 'lucide-react';
 import { Header } from '@/components/Header';
+import { ContactModal } from '@/components/ContactModal';
 import { AppMode } from '@/types';
 
 export default function HomePage() {
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+
   return (
     <>
       <Header currentMode={AppMode.HOME} />
@@ -133,13 +136,22 @@ export default function HomePage() {
                 환불약관
               </a>
               <span>/</span>
-              <a href="mailto:flowcoder25@gmail.com" className="hover:text-slate-700 dark:hover:text-slate-300 hover:underline">
+              <button
+                onClick={() => setIsContactModalOpen(true)}
+                className="hover:text-slate-700 dark:hover:text-slate-300 hover:underline"
+              >
                 고객센터
-              </a>
+              </button>
             </div>
           </div>
         </div>
       </footer>
+
+      {/* 고객센터 모달 */}
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+      />
     </>
   );
 }
