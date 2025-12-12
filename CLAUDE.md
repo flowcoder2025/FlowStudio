@@ -58,6 +58,14 @@
   - 만료 예정 크레딧 알림: `CreditBalance` 컴포넌트에 툴팁 UI
   - PortOne V2 정기 구독 결제: `/api/subscription/portone/webhook` 웹훅 추가
   - 워터마크 기능: 임시 비활성화 (`WATERMARK_ENABLED = false`)
+- **성능 최적화 (Phase 9)** ⚡:
+  - **스켈레톤 UI**: `ProfileSkeleton`, `CreatePageSkeleton` 컴포넌트 추가
+  - **LazyImage 컴포넌트**: Intersection Observer 기반 지연 로딩
+    - 뷰포트 진입 시에만 이미지 로딩
+    - 초기 뷰포트 체크로 이미 보이는 이미지 즉시 로딩
+    - Shimmer 애니메이션 placeholder
+  - **프로필 페이지 최적화**: 크레딧 내역 5개만 조회 (10 → 5)
+  - **크레딧 내역 전체 페이지**: `/credits/history` 신설 (페이지네이션, 필터)
 
 ## 기술 스택
 
@@ -116,6 +124,7 @@ FlowStudio는 7가지 독립적인 모드로 운영됩니다 (`types/index.ts` A
 - `/gallery` - 생성된 이미지 갤러리 및 관리
 - `/profile` - 사용자 프로필 및 설정
 - `/credits/purchase` - 크레딧 구매
+- `/credits/history` - 크레딧 사용내역 전체 (페이지네이션, 필터)
 - `/subscription` - 구독 플랜 관리
 - `/admin` - 관리자 대시보드
 
@@ -232,6 +241,10 @@ await requireImageProjectEditor(userId, projectId) // 권한 없으면 에러
 - `ResultGrid.tsx` - 생성된 이미지 그리드 표시
 - `LoadingOverlay.tsx` - 생성 진행 상황 오버레이 UI
 - `ErrorBoundary.tsx` - React 에러 바운더리 (전역 에러 핸들링)
+- `LazyImage.tsx` - Intersection Observer 기반 지연 로딩 이미지
+  - `LazyImage`: 개별 이미지용 (priority, rootMargin 지원)
+  - `LazyImageGridItem`: 그리드용 (처음 N개 priority 자동 설정)
+- `ProfileSkeleton.tsx` - 로딩 상태 스켈레톤 UI 컴포넌트
 
 **훅**:
 - `hooks/useNavigation.ts` - 타입 안전한 네비게이션 커스텀 훅
