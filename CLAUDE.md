@@ -38,11 +38,16 @@
   - **주의**: `/api/generate`는 base64만 반환, Storage 저장은 `/api/images/save`에서 처리
   - 데이터베이스 부하 감소 및 쿼리 성능 대폭 향상
 - **Vertex AI 전환 (Phase 6)** 🚀:
-  - 사용자 개별 API 키 방식 → 중앙화된 Google Cloud Vertex AI 인증
-  - `lib/vertexai.ts`: Vertex AI 싱글톤 클라이언트 (Application Default Credentials)
-  - `/api/generate`, `/api/upscale`: API 키 로직 제거, Vertex AI 사용
+  - 사용자 개별 API 키 방식 → 중앙화된 GenAI 인증
+  - `lib/vertexai.ts`: 듀얼 모드 지원 (Google AI Studio / Vertex AI)
+  - `/api/generate`, `/api/upscale`: API 키 로직 제거, 중앙화된 GenAI 클라이언트 사용
   - UX 개선: 사용자는 크레딧만 구매하면 즉시 사용 가능 (API 키 설정 불필요)
   - 중앙화된 비용 관리 및 모니터링, 보안 향상
+- **GenAI 듀얼 모드 (Phase 6.1)** 🔄:
+  - `GOOGLE_GENAI_USE_VERTEXAI` 환경 변수로 모드 전환
+  - `false` (기본값): Google AI Studio 모드 (GOOGLE_API_KEY 필요)
+  - `true`: Vertex AI 모드 (GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION 필요)
+  - 모든 페이지에서 validateApiKey 함수 제거 (중앙화된 인증 사용)
 - **ReBAC 후방 호환성 (Phase 7)** 🔒:
   - `/api/images/list`: 기존 데이터를 위한 userId fallback 로직 추가
   - DetailPageDraft 이미지 갤러리 표시 지원
@@ -56,7 +61,7 @@
 - **파일 저장소**: Supabase Storage (@supabase/supabase-js)
 - **인증**: NextAuth.js 4.24.13 with Google OAuth + Kakao OAuth
 - **스타일링**: Tailwind CSS 4 with @tailwindcss/postcss
-- **AI 통합**: Google Cloud Vertex AI - Gemini 3 Pro Image Preview (@google/genai with Vertex AI mode)
+- **AI 통합**: Google GenAI 듀얼 모드 - Gemini 3 Pro Image Preview (@google/genai)
 - **타입 안정성**: TypeScript 5 (strict mode)
 
 ## 개발 명령어
@@ -255,13 +260,17 @@ KAKAO_CLIENT_SECRET="<Kakao Developers → 보안 → Client Secret>"
 # 콜백 URL: http://localhost:3000/api/auth/callback/kakao (로컬)
 #           https://your-domain.com/api/auth/callback/kakao (프로덕션)
 
-# Google Cloud Vertex AI (이미지 생성)
-GOOGLE_CLOUD_PROJECT="your-google-cloud-project-id"
-GOOGLE_CLOUD_LOCATION="us-central1"  # 또는 "asia-northeast3" (서울)
-GOOGLE_GENAI_USE_VERTEXAI="true"
+# Google GenAI (이미지 생성) - 듀얼 모드 지원
+# GOOGLE_GENAI_USE_VERTEXAI: true=Vertex AI, false=Google AI Studio (기본값)
+GOOGLE_GENAI_USE_VERTEXAI="false"
 
-# API 키 암호화 (레거시 - Phase 6에서 Vertex AI로 대체, 향후 제거 예정)
-# ENCRYPTION_KEY="<생성 명령: node -e 'console.log(require(\"crypto\").randomBytes(32).toString(\"hex\"))'>"
+# [Google AI Studio 모드] - GOOGLE_GENAI_USE_VERTEXAI="false"
+GOOGLE_API_KEY="<https://aistudio.google.com/apikey 에서 생성>"
+
+# [Vertex AI 모드] - GOOGLE_GENAI_USE_VERTEXAI="true" 시 활성화
+# GOOGLE_CLOUD_PROJECT="your-google-cloud-project-id"
+# GOOGLE_CLOUD_LOCATION="global"
+# Vercel 배포 시: GOOGLE_APPLICATION_CREDENTIALS='{"type":"service_account",...}'
 ```
 
 **참고**: Vertex AI 인증은 별도로 `gcloud auth application-default login` 명령을 통해 설정합니다. 자세한 내용은 [Vertex AI 인증](#vertex-ai-인증) 섹션을 참조하세요.
@@ -321,72 +330,47 @@ const projects = await prisma.imageProject.findMany({
 npx tsx scripts/migrate-project-permissions.ts
 ```
 
-## Vertex AI 인증
+## GenAI 듀얼 모드 인증
 
-**중요**: Phase 6에서 사용자 개별 API 키 방식을 Google Cloud Vertex AI로 전환 (2025-12-10)
+**Phase 6**: 사용자 개별 API 키 방식을 중앙화된 GenAI 인증으로 전환
 
-**인증 방식**:
-FlowStudio는 Google Cloud의 Application Default Credentials (ADC)를 사용하여 Vertex AI에 인증합니다.
+**듀얼 모드 지원** (`lib/vertexai.ts`):
+- `GOOGLE_GENAI_USE_VERTEXAI=false` (기본값): Google AI Studio 모드
+- `GOOGLE_GENAI_USE_VERTEXAI=true`: Vertex AI 모드
 
-### 로컬 개발 환경 설정
+### Google AI Studio 모드 (권장: 개발/테스트)
 
-1. **Google Cloud CLI 설치**:
-   ```bash
-   # macOS
-   brew install google-cloud-sdk
+```bash
+# .env.local
+GOOGLE_GENAI_USE_VERTEXAI="false"
+GOOGLE_API_KEY="your-api-key"  # https://aistudio.google.com/apikey
+```
 
-   # 다른 OS: https://cloud.google.com/sdk/docs/install
-   ```
+### Vertex AI 모드 (프로덕션)
 
-2. **인증 설정**:
-   ```bash
-   # Google 계정으로 로그인
-   gcloud auth application-default login
+**로컬 개발**:
+```bash
+# 1. gcloud CLI 인증
+gcloud auth application-default login
+gcloud config set project YOUR_PROJECT_ID
 
-   # 프로젝트 설정
-   gcloud config set project YOUR_PROJECT_ID
-   ```
+# 2. .env.local
+GOOGLE_GENAI_USE_VERTEXAI="true"
+GOOGLE_CLOUD_PROJECT="your-project-id"
+GOOGLE_CLOUD_LOCATION="global"  # gemini-3-pro-image-preview는 global만 지원
+```
 
-3. **환경 변수 설정** (`.env.local`):
-   ```bash
-   GOOGLE_CLOUD_PROJECT="your-google-cloud-project-id"
-   GOOGLE_CLOUD_LOCATION="global"  # ⚠️ 중요: gemini-3-pro-image-preview는 global만 지원
-   GOOGLE_GENAI_USE_VERTEXAI="true"
-   ```
-
-   **⚠️ 주의**: `gemini-3-pro-image-preview` 모델은 **Global endpoint만 지원**합니다.
-   - 반드시 `GOOGLE_CLOUD_LOCATION="global"`로 설정해야 합니다.
-   - `us-central1`, `asia-northeast3` 등 리전별 엔드포인트는 지원하지 않습니다.
-   - 참조: [Google Cloud Console - Gemini 3 Pro Image Preview](https://console.cloud.google.com/vertex-ai/publishers/google/model-garden/gemini-3-pro-image-preview)
-
-4. **개발 서버 실행**:
-   ```bash
-   npm run dev
-   ```
-
-### 프로덕션 배포 (Vercel)
-
-1. **서비스 계정 생성** (Google Cloud Console):
-   - IAM & Admin → Service Accounts → Create Service Account
-   - 권한: `Vertex AI User`, `AI Platform Developer`
-   - JSON 키 생성 및 다운로드
-
-2. **Vercel 환경 변수 설정**:
-   - `GOOGLE_CLOUD_PROJECT`: 프로젝트 ID
-   - `GOOGLE_CLOUD_LOCATION`: **반드시 `global`로 설정** (gemini-3-pro-image-preview는 global만 지원)
+**Vercel 배포**:
+1. 서비스 계정 생성 (Google Cloud Console → IAM → Service Accounts)
+2. 권한: `Vertex AI User`, `AI Platform Developer`
+3. JSON 키 생성 후 Vercel 환경 변수에 추가:
    - `GOOGLE_GENAI_USE_VERTEXAI`: `true`
-   - `GOOGLE_APPLICATION_CREDENTIALS`: JSON 키 파일 내용 전체 (Base64 인코딩 권장)
-
-3. **참고**: Cloud Run, GCE 등에서는 서비스 계정이 자동으로 적용되어 추가 설정 불필요
-
-### 장점
-- ✅ **UX 개선**: 사용자가 API 키를 설정할 필요 없음 (크레딧만 구매)
-- ✅ **보안 강화**: API 키가 사용자에게 노출되지 않음
-- ✅ **중앙 관리**: 모든 API 호출을 서버에서 통제 및 모니터링
-- ✅ **비용 최적화**: 통합 과금 및 예산 관리
+   - `GOOGLE_CLOUD_PROJECT`: 프로젝트 ID
+   - `GOOGLE_CLOUD_LOCATION`: `global`
+   - `GOOGLE_APPLICATION_CREDENTIALS`: JSON 키 전체 (한 줄로)
 
 ### 관련 파일
-- `lib/vertexai.ts`: Vertex AI 클라이언트 싱글톤
+- `lib/vertexai.ts`: GenAI 듀얼 모드 클라이언트
 - `/api/generate/route.ts`: 2K 이미지 생성 (4장)
 - `/api/upscale/route.ts`: 4K 업스케일링 (1장)
 

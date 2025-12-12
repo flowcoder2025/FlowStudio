@@ -253,25 +253,6 @@ function DetailEditPageContent() {
     });
   };
 
-  const validateApiKey = async (): Promise<boolean> => {
-    try {
-      const response = await fetch('/api/profile/api-key');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.exists) {
-          return true;
-        }
-      }
-      alert("이미지 생성을 위해 프로필 페이지에서 API 키를 설정해주세요.");
-      window.location.href = '/profile';
-      return false;
-    } catch (error) {
-      console.error('API key validation error:', error);
-      alert("API 키 확인 중 오류가 발생했습니다.");
-      return false;
-    }
-  };
-
   const handleGallerySelect = (imageUrl: string) => {
     setUploadedImage(imageUrl);
     setSelectionRect(null);
@@ -279,7 +260,6 @@ function DetailEditPageContent() {
   };
 
   const handleExtractText = async () => {
-    if (!(await validateApiKey())) return;
     if (!selectionRect) {
       alert("영역을 선택해주세요.");
       return;
@@ -305,7 +285,6 @@ function DetailEditPageContent() {
   };
 
   const handleDetailEditGenerate = async () => {
-    if (!(await validateApiKey())) return;
     if (!selectionRect || !uploadedImage) {
       alert("편집할 영역을 선택해주세요.");
       return;

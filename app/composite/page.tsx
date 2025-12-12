@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
-import { Layers, Plus, X, FolderOpen, Cloud, Loader2, Check, Download, Eye, RefreshCw } from 'lucide-react';
+import { Layers, Plus, X, FolderOpen, Cloud, Loader2, Check, Download } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
@@ -10,7 +10,7 @@ import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
 import { COMPOSITE_CATEGORIES, ASPECT_RATIOS } from '@/constants';
-import { generateImageVariations, generatePreview, upscaleImage } from '@/services/geminiService';
+import { generateImageVariations, upscaleImage } from '@/services/geminiService';
 import { compressImageWithStats, isFileTooLarge } from '@/lib/utils/imageCompression';
 
 const MAX_IMAGES = 10;
@@ -30,9 +30,7 @@ function CompositePageContent() {
   const [prompt, setPrompt] = useState('');
   const [selectedAspectRatio, setSelectedAspectRatio] = useState('1:1');
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [isUpscaling, setIsUpscaling] = useState(false);
   const [upscaledImage, setUpscaledImage] = useState<string | null>(null);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
@@ -95,66 +93,7 @@ function CompositePageContent() {
     setCompositeImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const validateApiKey = async (): Promise<boolean> => {
-    try {
-      const response = await fetch('/api/profile/api-key');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.exists) {
-          return true;
-        }
-      }
-      alert("이미지 생성을 위해 프로필 페이지에서 API 키를 설정해주세요.");
-      window.location.href = '/profile';
-      return false;
-    } catch (error) {
-      console.error('API key validation error:', error);
-      alert("API 키 확인 중 오류가 발생했습니다.");
-      return false;
-    }
-  };
-
-  const handlePreview = async () => {
-    if (!(await validateApiKey())) return;
-
-    if (compositeImages.length === 0) {
-      alert('합성할 이미지를 최소 1장 이상 업로드해주세요.');
-      return;
-    }
-
-    if (!prompt) {
-      alert('합성 요청 사항을 입력해주세요.');
-      return;
-    }
-
-    setIsPreviewLoading(true);
-    try {
-      const request: GenerationRequest = {
-        mode: AppMode.COMPOSITE,
-        prompt,
-        refImages: compositeImages,
-        category: selectedCategory || undefined,
-        style: selectedStyle || undefined,
-        aspectRatio: selectedAspectRatio
-      };
-
-      const result = await generatePreview(request);
-      if (result) {
-        setPreviewImage(result);
-      } else {
-        alert('미리보기 생성에 실패했습니다.');
-      }
-    } catch (error) {
-      console.error(error);
-      alert('오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-    } finally {
-      setIsPreviewLoading(false);
-    }
-  };
-
   const handleGenerate = async () => {
-    if (!(await validateApiKey())) return;
-
     if (compositeImages.length === 0) {
       alert('합성할 이미지를 최소 1장 이상 업로드해주세요.');
       return;
@@ -219,8 +158,6 @@ function CompositePageContent() {
   };
 
   const handleUpscale = async (imageUrl: string) => {
-    if (!(await validateApiKey())) return;
-
     setIsUpscaling(true);
     setIsUpscaledSaved(false);
     try {
@@ -436,64 +373,17 @@ function CompositePageContent() {
             placeholder="예: IMG 1의 운동화를 중앙에 놓고, IMG 2의 나뭇잎들을 주변에 배치해서 자연스러운 숲 속 느낌을 연출해줘."
             className="w-full p-4 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:focus:ring-cyan-400 min-h-[120px] transition-colors"
           />
-
-          {/* Preview Area */}
-          {previewImage && (
-            <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors">
-              <div className="flex justify-between items-center mb-3">
-                <h4 className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-cyan-600 dark:text-cyan-400" /> 미리보기 결과
-                </h4>
-                <button
-                  onClick={() => setPreviewImage(null)}
-                  className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 min-h-[28px] min-w-[28px]"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="aspect-square w-full max-w-sm mx-auto bg-white dark:bg-slate-800 rounded-lg shadow-sm overflow-hidden relative">
-                <Image
-                  src={previewImage}
-                  alt="Preview"
-                  fill
-                  className="object-cover"
-                  unoptimized={previewImage.startsWith('data:')}
-                />
-              </div>
-              <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-2">
-                미리보기는 1장만 빠르게 생성됩니다. 마음에 들면 하단 버튼으로 고화질 4장을 생성하세요.
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Fixed Action Bar */}
         <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4 pb-safe z-30 transition-colors">
           <div className="max-w-6xl mx-auto flex gap-3 justify-end">
-            {/* Preview Button */}
-            <button
-              onClick={handlePreview}
-              disabled={compositeImages.length === 0 || !prompt || isPreviewLoading || isLoading}
-              className={`flex-1 md:flex-none px-6 py-3 min-h-[52px] rounded-xl font-bold text-base flex items-center justify-center gap-2 border-2 transition-all ${
-                isPreviewLoading
-                  ? 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-400 dark:text-slate-500'
-                  : 'bg-white dark:bg-slate-700 border-cyan-600 dark:border-cyan-400 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20'
-              }`}
-            >
-              {isPreviewLoading ? (
-                <RefreshCw className="w-5 h-5 animate-spin" />
-              ) : (
-                <Eye className="w-5 h-5" />
-              )}
-              미리보기
-            </button>
-
             {/* Generate Button */}
             <button
               onClick={handleGenerate}
-              disabled={compositeImages.length === 0 || !selectedCategory || isLoading || isPreviewLoading}
+              disabled={compositeImages.length === 0 || !selectedCategory || isLoading}
               className={`flex-1 md:flex-none px-8 py-3 min-h-[52px] rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all ${
-                compositeImages.length === 0 || !selectedCategory || isLoading || isPreviewLoading
+                compositeImages.length === 0 || !selectedCategory || isLoading
                   ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-500 cursor-not-allowed'
                   : 'bg-cyan-600 dark:bg-cyan-500 text-white hover:bg-cyan-700 dark:hover:bg-cyan-600 hover:shadow-cyan-200 dark:hover:shadow-cyan-900'
               }`}
@@ -506,7 +396,6 @@ function CompositePageContent() {
       </div>
 
       <LoadingOverlay isVisible={isLoading} message="이미지 합성 중..." />
-      <LoadingOverlay isVisible={isPreviewLoading} message="미리보기 생성 중..." />
       <LoadingOverlay isVisible={isUpscaling} message="업스케일링 중..." />
       <LoadingOverlay isVisible={isCompressing} message="이미지 압축 중..." />
       <ResultGrid

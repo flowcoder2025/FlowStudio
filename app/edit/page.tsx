@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
-import { Wand2, ImageIcon, Eye, X, RefreshCw, FolderOpen, Cloud, Loader2, Check, Download } from 'lucide-react';
+import { Wand2, ImageIcon, X, FolderOpen, Cloud, Loader2, Check, Download } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
@@ -10,7 +10,7 @@ import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode, GenerationRequest } from '@/types';
 import { ASPECT_RATIOS } from '@/constants';
-import { generateImageVariations, generatePreview, upscaleImage } from '@/services/geminiService';
+import { generateImageVariations, upscaleImage } from '@/services/geminiService';
 import { compressImageWithStats, isFileTooLarge } from '@/lib/utils/imageCompression';
 
 export default function EditPage() {
@@ -24,10 +24,8 @@ export default function EditPage() {
 function EditPageContent() {
   const [prompt, setPrompt] = useState('');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [selectedAspectRatio, setSelectedAspectRatio] = useState('1:1');
   const [isUpscaling, setIsUpscaling] = useState(false);
   const [upscaledImage, setUpscaledImage] = useState<string | null>(null);
@@ -56,13 +54,11 @@ function EditPageContent() {
 
         console.log(`✅ 압축 완료: ${result.originalSizeMB.toFixed(2)}MB → ${result.compressedSizeMB.toFixed(2)}MB (${result.reductionPercent.toFixed(1)}% 감소)`);
         setUploadedImage(result.compressed);
-        setPreviewImage(null);
         setIsCompressing(false);
       } else {
         const reader = new FileReader();
         reader.onloadend = () => {
           setUploadedImage(reader.result as string);
-          setPreviewImage(null);
         };
         reader.readAsDataURL(file);
       }
@@ -75,63 +71,9 @@ function EditPageContent() {
 
   const handleGallerySelect = (imageUrl: string) => {
     setUploadedImage(imageUrl);
-    setPreviewImage(null);
-  };
-
-  const validateApiKey = async (): Promise<boolean> => {
-    try {
-      const response = await fetch('/api/profile/api-key');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.exists) {
-          return true;
-        }
-      }
-      alert("이미지 생성을 위해 프로필 페이지에서 API 키를 설정해주세요.");
-      window.location.href = '/profile';
-      return false;
-    } catch (error) {
-      console.error('API key validation error:', error);
-      alert("API 키 확인 중 오류가 발생했습니다.");
-      return false;
-    }
-  };
-
-  const handlePreview = async () => {
-    if (!(await validateApiKey())) return;
-
-    if (!uploadedImage || !prompt) {
-      alert('이미지를 업로드하고 편집 내용을 입력해주세요.');
-      return;
-    }
-
-    setIsPreviewLoading(true);
-    try {
-      const request: GenerationRequest = {
-        mode: AppMode.EDIT,
-        prompt,
-        image: uploadedImage,
-        aspectRatio: selectedAspectRatio
-      };
-
-      const result = await generatePreview(request);
-      if (result) {
-        setPreviewImage(result);
-        // Usage is now tracked server-side in /api/generate
-      } else {
-        alert('미리보기 생성에 실패했습니다.');
-      }
-    } catch (error) {
-      console.error(error);
-      alert('오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-    } finally {
-      setIsPreviewLoading(false);
-    }
   };
 
   const handleGenerate = async () => {
-    if (!(await validateApiKey())) return;
-
     if (!uploadedImage || !prompt) {
       alert('이미지를 업로드하고 편집 내용을 입력해주세요.');
       return;
@@ -188,8 +130,6 @@ function EditPageContent() {
   };
 
   const handleUpscale = async (imageUrl: string) => {
-    if (!(await validateApiKey())) return;
-
     setIsUpscaling(true);
     setIsUpscaledSaved(false);
     try {
@@ -349,71 +289,22 @@ function EditPageContent() {
               </button>
             ))}
           </div>
-          <div className="relative mb-4">
-            <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="예: 배경을 깔끔한 흰색으로 바꿔줘, 텍스트를 제거해줘."
-              className="w-full p-4 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 min-h-[120px] transition-colors"
-            />
-          </div>
-
-          {/* Preview Area */}
-          {previewImage && (
-            <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors">
-              <div className="flex justify-between items-center mb-3">
-                <h4 className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> 미리보기 결과
-                </h4>
-                <button
-                  onClick={() => setPreviewImage(null)}
-                  className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 min-h-[28px] min-w-[28px]"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="aspect-square w-full max-w-sm mx-auto bg-white dark:bg-slate-800 rounded-lg shadow-sm overflow-hidden relative">
-                <Image
-                  src={previewImage}
-                  alt="Preview"
-                  fill
-                  className="object-cover"
-                  unoptimized={previewImage.startsWith('data:')}
-                />
-              </div>
-              <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-2">
-                미리보기는 1장만 빠르게 생성됩니다. 마음에 들면 하단 버튼으로 고화질 4장을 생성하세요.
-              </p>
-            </div>
-          )}
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="예: 배경을 깔끔한 흰색으로 바꿔줘, 텍스트를 제거해줘."
+            className="w-full p-4 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 min-h-[120px] transition-colors"
+          />
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4 pb-safe z-30 transition-colors">
           <div className="max-w-6xl mx-auto flex gap-3 justify-end">
-            {/* Preview Button */}
-            <button
-              onClick={handlePreview}
-              disabled={!uploadedImage || !prompt || isPreviewLoading || isLoading}
-              className={`flex-1 md:flex-none px-6 py-3 min-h-[52px] rounded-xl font-bold text-base flex items-center justify-center gap-2 border-2 transition-all ${
-                isPreviewLoading
-                  ? 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-400 dark:text-slate-500'
-                  : 'bg-white dark:bg-slate-700 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
-              }`}
-            >
-              {isPreviewLoading ? (
-                <RefreshCw className="w-5 h-5 animate-spin" />
-              ) : (
-                <Eye className="w-5 h-5" />
-              )}
-              미리보기
-            </button>
-
             {/* Generate Button */}
             <button
               onClick={handleGenerate}
-              disabled={!uploadedImage || !prompt || isLoading || isPreviewLoading}
+              disabled={!uploadedImage || !prompt || isLoading}
               className={`flex-1 md:flex-none px-8 py-3 min-h-[52px] rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all ${
-                !uploadedImage || !prompt || isLoading || isPreviewLoading
+                !uploadedImage || !prompt || isLoading
                   ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-500 cursor-not-allowed'
                   : 'bg-emerald-600 dark:bg-emerald-500 text-white hover:bg-emerald-700 dark:hover:bg-emerald-600 hover:shadow-emerald-200 dark:hover:shadow-emerald-900'
               }`}
@@ -426,7 +317,6 @@ function EditPageContent() {
       </div>
 
       <LoadingOverlay isVisible={isLoading} message="이미지 생성 중..." />
-      <LoadingOverlay isVisible={isPreviewLoading} message="미리보기 생성 중..." />
       <LoadingOverlay isVisible={isUpscaling} message="업스케일링 중..." />
       <LoadingOverlay isVisible={isCompressing} message="이미지 압축 중..." />
       <ResultGrid

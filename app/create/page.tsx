@@ -77,28 +77,7 @@ function CreatePageContent() {
     }
   };
 
-  const validateApiKey = async (): Promise<boolean> => {
-    try {
-      const response = await fetch('/api/profile/api-key');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.exists) {
-          return true;
-        }
-      }
-      alert("이미지 생성을 위해 프로필 페이지에서 API 키를 설정해주세요.");
-      window.location.href = '/profile';
-      return false;
-    } catch (error) {
-      console.error('API key validation error:', error);
-      alert("API 키 확인 중 오류가 발생했습니다.");
-      return false;
-    }
-  };
-
   const handleGenerate = async () => {
-    if (!(await validateApiKey())) return;
-
     if (!selectedCategory) {
       alert('이미지의 종류를 선택해주세요.');
       return;
@@ -160,8 +139,6 @@ function CreatePageContent() {
   };
 
   const handleUpscale = async (imageUrl: string) => {
-    if (!(await validateApiKey())) return;
-
     setIsUpscaling(true);
     setIsUpscaledSaved(false);
     try {

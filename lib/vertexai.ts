@@ -1,19 +1,17 @@
 /**
  * GenAI Dual-Mode Client (Google AI Studio / Vertex AI)
  *
- * 환경 변수로 모드 전환 가능:
- * - GENAI_MODE=google-ai-studio (기본값): Google AI Studio API 사용 (빠름, 테스트용)
- * - GENAI_MODE=vertex-ai: Vertex AI API 사용 (프로덕션, 엔터프라이즈)
+ * 환경 변수: GOOGLE_GENAI_USE_VERTEXAI
+ * - false (기본값): Google AI Studio API 사용
+ * - true: Vertex AI API 사용
  *
- * Google AI Studio 모드:
+ * Google AI Studio 모드 (GOOGLE_GENAI_USE_VERTEXAI=false):
  * - GOOGLE_API_KEY 환경 변수 필요
- * - 빠른 응답 속도 (4장 병렬 생성 60초 이내)
- * - 개인/소규모 테스트에 적합
+ * - 빠른 응답 속도
  *
- * Vertex AI 모드:
+ * Vertex AI 모드 (GOOGLE_GENAI_USE_VERTEXAI=true):
  * - GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION 환경 변수 필요
  * - GOOGLE_APPLICATION_CREDENTIALS (서비스 계정 키) 필요
- * - 엔터프라이즈 보안 및 SLA
  */
 
 import { GoogleGenAI } from '@google/genai'
@@ -31,10 +29,14 @@ const logError = (message: string) => console.error(message) // 에러는 항상
 /**
  * 현재 GenAI 모드 확인
  * @returns {'google-ai-studio' | 'vertex-ai'} 현재 모드
+ *
+ * 환경 변수: GOOGLE_GENAI_USE_VERTEXAI
+ * - true: Vertex AI 모드
+ * - false 또는 미설정: Google AI Studio 모드 (기본값)
  */
 export function getGenAIMode(): 'google-ai-studio' | 'vertex-ai' {
-  const mode = process.env.GENAI_MODE?.toLowerCase()
-  if (mode === 'vertex-ai') {
+  const useVertexAI = process.env.GOOGLE_GENAI_USE_VERTEXAI?.toLowerCase()
+  if (useVertexAI === 'true') {
     return 'vertex-ai'
   }
   return 'google-ai-studio' // 기본값
