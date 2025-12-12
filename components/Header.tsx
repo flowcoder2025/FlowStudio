@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Sparkles, Wand2, Layout, FilePenLine, LogIn, Megaphone, SlidersHorizontal, Layers } from 'lucide-react';
+import { Sparkles, Wand2, Layout, FilePenLine, LogIn, Megaphone, SlidersHorizontal, Layers, Gift } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { AppMode } from '@/types';
 import { useNavigation } from '@/hooks/useNavigation';
@@ -59,14 +59,14 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
         </div>
 
         {/* Desktop Navigation (hidden on mobile) */}
-        <nav className="hidden lg:flex gap-1 flex-1 justify-center overflow-x-auto no-scrollbar">
+        <nav className="hidden lg:flex gap-0.5 flex-1 justify-center">
           {navigationItems.map(({ mode, icon: Icon, label, color }) => {
             const isActive = currentMode === mode;
             return (
               <button
                 key={mode}
                 onClick={() => navigateToMode(mode)}
-                className={`px-4 py-2 min-h-[44px] rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                className={`px-3 py-2 min-h-[40px] rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1 ${
                   isActive
                     ? 'text-white shadow-md'
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -75,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
                   backgroundColor: colorMap[color].light,
                 } : undefined}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-3.5 h-3.5" />
                 <span>{label}</span>
               </button>
             );
@@ -88,9 +88,18 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
           {status === 'loading' ? (
             <div className="px-2 py-1 text-xs text-slate-400 dark:text-slate-500">...</div>
           ) : session ? (
-            // Logged in state - Credit Balance + Profile Dropdown
+            // Logged in state - Credit Balance + Referral CTA + Profile Dropdown
             <div className="flex items-center gap-2">
               <CreditBalance />
+              {/* 레퍼럴 CTA 버튼 */}
+              <button
+                onClick={() => navigateTo('/profile/referral')}
+                className="hidden sm:flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-medium shadow-sm hover:shadow-md transition-all"
+                title="친구 초대하고 크레딧 받기"
+              >
+                <Gift className="w-4 h-4" />
+                <span className="hidden lg:inline">크래딧 받기</span>
+              </button>
               <ProfileDropdown />
             </div>
           ) : (

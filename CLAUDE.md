@@ -53,6 +53,11 @@
   - DetailPageDraft 이미지 갤러리 표시 지원
   - `scripts/migrate-project-permissions.ts`: 기존 프로젝트 권한 일괄 부여 스크립트
   - 모든 프로젝트 생성 경로에서 자동 권한 부여 확인 완료
+- **수익화 기능 강화 (Phase 8)** 💰:
+  - 갤러리 4K 업스케일 버튼: `/api/images/list`에 `isUpscaled` 필드 추가
+  - 만료 예정 크레딧 알림: `CreditBalance` 컴포넌트에 툴팁 UI
+  - PortOne V2 정기 구독 결제: `/api/subscription/portone/webhook` 웹훅 추가
+  - 워터마크 기능: 임시 비활성화 (`WATERMARK_ENABLED = false`)
 
 ## 기술 스택
 
@@ -209,6 +214,13 @@ await requireImageProjectEditor(userId, projectId) // 권한 없으면 에러
 - **DetailPageDraft 지원**: DETAIL_PAGE 모드 이미지 포함
 - **필터링**: mode, tag, dateFrom/dateTo 파라미터 지원
 - **응답**: 개별 이미지 단위 데이터 (UserImage 타입)
+- **4K 판별**: `isUpscaled` 필드로 업스케일 여부 확인 (URL에 `/upscaled/` 포함 시 true)
+
+**정기 구독 결제** (`/api/subscription/portone/webhook/route.ts`):
+- **PortOne V2 웹훅**: 결제 완료/실패/빌링키 삭제 이벤트 처리
+- **서명 검증**: HMAC-SHA256으로 웹훅 무결성 검증
+- **구독 활성화**: 결제 성공 시 자동으로 구독 티어 업그레이드
+- **유예 기간**: 결제 실패 시 7일 유예 후 다운그레이드
 
 ### 컴포넌트 구조
 
@@ -271,6 +283,12 @@ GOOGLE_API_KEY="<https://aistudio.google.com/apikey 에서 생성>"
 # GOOGLE_CLOUD_PROJECT="your-google-cloud-project-id"
 # GOOGLE_CLOUD_LOCATION="global"
 # Vercel 배포 시: GOOGLE_APPLICATION_CREDENTIALS='{"type":"service_account",...}'
+
+# PortOne V2 (결제 시스템)
+NEXT_PUBLIC_PORTONE_STORE_ID="..."      # 스토어 ID
+NEXT_PUBLIC_PORTONE_CHANNEL_KEY="..."   # 채널 키
+PORTONE_WEBHOOK_SECRET="..."            # 웹훅 서명 검증용
+PORTONE_API_SECRET="..."                # API 호출용
 ```
 
 **참고**: Vertex AI 인증은 별도로 `gcloud auth application-default login` 명령을 통해 설정합니다. 자세한 내용은 [Vertex AI 인증](#vertex-ai-인증) 섹션을 참조하세요.
@@ -438,16 +456,18 @@ GOOGLE_CLOUD_LOCATION="global"  # gemini-3-pro-image-preview는 global만 지원
    - 현재: ReBAC 권한 시스템으로 공유/편집 권한만 지원
    - 향후: WebSocket 기반 실시간 동시 편집 고려
 
-4. **구독 모델**:
-   - 현재: Prisma 스키마에 `Subscription` 모델 정의됨 (미사용)
-   - 향후: Stripe 연동 및 프리미엄 기능 구현
+4. **구독 모델**: ✅ 구현됨 (Phase 8)
+   - PortOne V2 정기 결제 연동 완료
+   - `/api/subscription/portone/webhook` 웹훅 처리
+   - 구독 페이지 UI 및 결제 플로우 구현
 
 ### 개선 우선순위
 1. ~~**High**: 이미지 저장소 마이그레이션 (Supabase Storage)~~ ✅ 완료 (Phase 5)
 2. **High**: Supabase Storage 버킷 설정 및 RLS (Row Level Security) 정책
-3. **Medium**: 구독 플랜 및 결제 시스템
+3. ~~**Medium**: 구독 플랜 및 결제 시스템~~ ✅ 완료 (Phase 8)
 4. **Medium**: 속도 제한 및 쿼터 관리
 5. **Low**: 실시간 협업 기능
+6. **Low**: 워터마크 기능 재활성화 (현재 임시 OFF)
 
 ### 추가 작업 필요 (Supabase Storage 설정)
 Phase 5 구현이 완료되었으나, Supabase Dashboard에서 수동 설정이 필요합니다:

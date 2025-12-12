@@ -265,10 +265,12 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // 10.5. 워터마크 적용 (FREE 플랜 사용자만)
+    // 10.5. 워터마크 적용 (FREE 플랜 사용자만) - 임시 비활성화
     let finalImages = base64Images
     const isWatermarkFree = await hasWatermarkFree(session.user.id)
-    if (!isWatermarkFree) {
+    // TODO: 워터마크 기능 임시 OFF - 추후 재활성화 필요
+    const WATERMARK_ENABLED = false
+    if (WATERMARK_ENABLED && !isWatermarkFree) {
       console.log('[API /generate] Applying watermark for FREE tier user...')
       finalImages = await addWatermarkBatch(base64Images)
       console.log('[API /generate] Watermark applied')
