@@ -44,13 +44,15 @@ export const CATEGORIES: Category[] = [
     ]
   },
   {
-    id: 'offline_ad',
-    label: '전단지/포스터/현수막',
-    icon: 'poster',
-    description: '오프라인 홍보를 위한 고화질의 주목도 높은 이미지',
+    id: 'thumbnail_banner',
+    label: '썸네일/배너',
+    icon: 'image',
+    description: '유튜브, 블로그, 쇼핑몰 배너용 임팩트 있는 이미지',
     styles: [
-      { id: 'vibrant', label: '강렬한 색감', promptModifier: 'vibrant colors, high contrast, eye-catching, pop art style', previewColor: 'bg-yellow-200' },
-      { id: 'clean_ad', label: '신뢰감 있는 광고', promptModifier: 'clean corporate style, bright lighting, trustworthy, professional advertisement', previewColor: 'bg-blue-200' },
+      { id: 'youtube_thumb', label: '유튜브 썸네일', promptModifier: 'bold youtube thumbnail style, attention-grabbing, dynamic composition, space for text overlay, high contrast colors', previewColor: 'bg-red-100' },
+      { id: 'blog_cover', label: '블로그 커버', promptModifier: 'elegant blog header image, clean aesthetic, balanced composition with text area, soft tones', previewColor: 'bg-teal-100' },
+      { id: 'shop_banner', label: '쇼핑몰 배너', promptModifier: 'professional e-commerce banner, product spotlight with promotional feel, clean layout for text, high quality', previewColor: 'bg-violet-100' },
+      { id: 'event_banner', label: '이벤트 배너', promptModifier: 'festive event banner, celebratory atmosphere, vibrant colors, exciting mood, promotional design', previewColor: 'bg-orange-100' },
     ]
   },
   {

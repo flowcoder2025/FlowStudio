@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Sparkles, Layout, FilePenLine, Wand2, ArrowRight } from 'lucide-react';
+import { Sparkles, Layout, FilePenLine, Wand2, ArrowRight, Layers, Megaphone, SlidersHorizontal } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { ContactModal } from '@/components/ContactModal';
 import { AppMode } from '@/types';
@@ -95,6 +95,57 @@ export default function HomePage() {
             </p>
             <div className="flex items-center text-violet-600 dark:text-violet-400 font-medium text-xs">
               편집하기 <ArrowRight className="w-3 h-3 ml-1" />
+            </div>
+          </div>
+
+          {/* Composite Card */}
+          <div
+            onClick={() => window.location.href = '/composite'}
+            className="group bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-xl hover:border-cyan-200 dark:hover:border-cyan-500 transition-all cursor-pointer min-h-[200px]"
+          >
+            <div className="bg-cyan-100 dark:bg-cyan-900/30 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Layers className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">연출</h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-3 text-xs h-10">
+              여러 제품 이미지를 합성하여 자연스러운 연출샷을 만들어냅니다.
+            </p>
+            <div className="flex items-center text-cyan-600 dark:text-cyan-400 font-medium text-xs">
+              연출하기 <ArrowRight className="w-3 h-3 ml-1" />
+            </div>
+          </div>
+
+          {/* Poster Card */}
+          <div
+            onClick={() => window.location.href = '/poster'}
+            className="group bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-xl hover:border-rose-200 dark:hover:border-rose-500 transition-all cursor-pointer min-h-[200px]"
+          >
+            <div className="bg-rose-100 dark:bg-rose-900/30 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Megaphone className="w-6 h-6 text-rose-600 dark:text-rose-400" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">포스터</h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-3 text-xs h-10">
+              로고와 제품 이미지로 SNS 홍보물, 이벤트 배너를 제작합니다.
+            </p>
+            <div className="flex items-center text-rose-600 dark:text-rose-400 font-medium text-xs">
+              제작하기 <ArrowRight className="w-3 h-3 ml-1" />
+            </div>
+          </div>
+
+          {/* Color Correction Card */}
+          <div
+            onClick={() => window.location.href = '/color-correction'}
+            className="group bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-xl hover:border-amber-200 dark:hover:border-amber-500 transition-all cursor-pointer min-h-[200px]"
+          >
+            <div className="bg-amber-100 dark:bg-amber-900/30 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <SlidersHorizontal className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">색감 보정</h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-3 text-xs h-10">
+              필터와 색상 조절로 사진의 분위기를 바꿔보세요. AI 없이 실시간 편집.
+            </p>
+            <div className="flex items-center text-amber-600 dark:text-amber-400 font-medium text-xs">
+              보정하기 <ArrowRight className="w-3 h-3 ml-1" />
             </div>
           </div>
         </div>
