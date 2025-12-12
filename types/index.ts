@@ -6,6 +6,7 @@ export enum AppMode {
   DETAIL_EDIT = 'DETAIL_EDIT', // Editing specific parts of a detail page
   POSTER = 'POSTER', // Poster creation mode
   COLOR_CORRECTION = 'COLOR_CORRECTION', // Non-AI color grading studio
+  COMPOSITE = 'COMPOSITE', // Multi-image composition/staging mode
   PROFILE = 'PROFILE' // User profile and settings
 }
 
@@ -41,6 +42,7 @@ export interface LayoutOption {
 export interface GenerationRequest {
   image?: string; // Base64 (Target image)
   refImage?: string; // Base64 (Reference/Replacement image)
+  refImages?: string[]; // Array of Base64 strings for multi-image composition
   logoImage?: string; // Base64 (Logo image for posters)
   prompt: string;
   category?: Category;

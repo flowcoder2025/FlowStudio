@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
 
     // 4. 요청 파싱
     const body = await req.json()
-    const { projectId, prompt, sourceImage, refImage, logoImage, category, style, aspectRatio, mode } = body
+    const { projectId, prompt, sourceImage, refImage, refImages, logoImage, category, style, aspectRatio, mode } = body
 
     if (!prompt) {
       return NextResponse.json({ error: '프롬프트를 입력해주세요.' }, { status: 400 })
@@ -115,6 +115,7 @@ export async function POST(req: NextRequest) {
     // 5. 이미지 URL → base64 변환 (갤러리에서 불러온 이미지 지원)
     let processedSourceImage: string | null = null
     let processedRefImage: string | null = null
+    let processedRefImages: string[] = []
     let processedLogoImage: string | null = null
 
     if (sourceImage) {
@@ -122,6 +123,12 @@ export async function POST(req: NextRequest) {
     }
     if (refImage) {
       processedRefImage = await ensureBase64(refImage)
+    }
+    // COMPOSITE 모드: 다중 이미지 배열 처리
+    if (refImages && Array.isArray(refImages)) {
+      processedRefImages = await Promise.all(
+        refImages.map((img: string) => ensureBase64(img))
+      )
     }
     if (logoImage) {
       processedLogoImage = await ensureBase64(logoImage)
@@ -143,9 +150,17 @@ export async function POST(req: NextRequest) {
         parts.push({ inlineData: { mimeType, data } })
       }
 
-      // Reference image 또는 Logo image 추가
+      // COMPOSITE 모드: 다중 이미지 배열 추가
+      if (processedRefImages.length > 0) {
+        for (const img of processedRefImages) {
+          const { mimeType, data } = extractBase64Data(img)
+          parts.push({ inlineData: { mimeType, data } })
+        }
+      }
+
+      // Reference image 또는 Logo image 추가 (단일 이미지 모드)
       const secondaryImage = processedRefImage || processedLogoImage
-      if (secondaryImage) {
+      if (secondaryImage && processedRefImages.length === 0) {
         const { mimeType, data } = extractBase64Data(secondaryImage)
         parts.push({ inlineData: { mimeType, data } })
       }

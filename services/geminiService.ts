@@ -21,6 +21,7 @@ export const generatePreview = async (request: GenerationRequest): Promise<strin
         prompt: buildPrompt(request),
         sourceImage: request.image,
         refImage: request.refImage,
+        refImages: request.refImages, // COMPOSITE mode: multi-image array
         logoImage: request.logoImage,
         category: request.category?.label,
         style: request.style?.label,
@@ -70,6 +71,7 @@ export const generateImageVariations = async (request: GenerationRequest): Promi
         prompt: buildPrompt(request),
         sourceImage: request.image,
         refImage: request.refImage,
+        refImages: request.refImages, // COMPOSITE mode: multi-image array
         logoImage: request.logoImage,
         category: request.category?.label,
         style: request.style?.label,
@@ -215,6 +217,22 @@ function buildPrompt(request: GenerationRequest): string {
       finalPrompt += "STYLE REFERENCE: Use the provided second image as a strict Style Reference. Mimic its colors, fonts, layout vibe, and lighting, but use the Main Product image for the content. ";
     }
     finalPrompt += "The image must be suitable for a continuous scrolling web page. Focus on high-quality visuals and clean layout. Maintain visual consistency with previous sections if implied.";
+  } else if (mode === AppMode.COMPOSITE) {
+    // Multi-image composition/staging mode
+    const imageCount = request.refImages?.length || 0;
+    finalPrompt = `You are given ${imageCount} material images. COMPOSE and ARRANGE them into a single cohesive image. `;
+    finalPrompt += `User instruction: ${prompt}. `;
+
+    if (category) {
+      finalPrompt += `Composition Theme: ${category.label}. `;
+    }
+    if (style) {
+      finalPrompt += `Visual Style: ${style.promptModifier}. `;
+    }
+
+    finalPrompt += "Create a professional, photorealistic composition where all objects blend naturally together. ";
+    finalPrompt += "Pay attention to lighting consistency, shadows, perspective, and scale. ";
+    finalPrompt += "The final image should look like a single, professionally shot photograph.";
   } else if (mode === AppMode.DETAIL_EDIT && request.refImage) {
     // Logic for Image Replacement
     finalPrompt = `Edit the provided target image. REPLACE the main subject or area in the center with the content of the reference image. Instruction: ${prompt}. Ensure the replaced object blends naturally with the lighting, shadows, and perspective of the original background. High quality composition.`;

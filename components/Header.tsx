@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Sparkles, Wand2, Layout, FilePenLine, LogIn, Megaphone, SlidersHorizontal } from 'lucide-react';
+import { Sparkles, Wand2, Layout, FilePenLine, LogIn, Megaphone, SlidersHorizontal, Layers } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { AppMode } from '@/types';
 import { useNavigation } from '@/hooks/useNavigation';
@@ -20,6 +20,7 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
   const colorMap: Record<string, { light: string; dark: string }> = {
     indigo: { light: '#4f46e5', dark: '#6366f1' },
     emerald: { light: '#059669', dark: '#10b981' },
+    cyan: { light: '#0891b2', dark: '#06b6d4' },
     blue: { light: '#2563eb', dark: '#3b82f6' },
     violet: { light: '#7c3aed', dark: '#8b5cf6' },
     rose: { light: '#e11d48', dark: '#f43f5e' },
@@ -29,6 +30,7 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
   const navigationItems = [
     { mode: AppMode.CREATE, icon: Sparkles, label: '생성', color: 'indigo' },
     { mode: AppMode.EDIT, icon: Wand2, label: '편집', color: 'emerald' },
+    { mode: AppMode.COMPOSITE, icon: Layers, label: '연출', color: 'cyan' },
     { mode: AppMode.DETAIL_PAGE, icon: Layout, label: '상세페이지', color: 'blue' },
     { mode: AppMode.DETAIL_EDIT, icon: FilePenLine, label: '상세 편집', color: 'violet' },
     { mode: AppMode.POSTER, icon: Megaphone, label: '포스터', color: 'rose' },

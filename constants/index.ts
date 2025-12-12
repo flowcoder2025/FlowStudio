@@ -211,6 +211,55 @@ export const IMAGE_RESOLUTIONS = [
 
 export type ImageResolution = typeof IMAGE_RESOLUTIONS[number]['value'];
 
+// Composite/Staging Categories for multi-image composition
+export const COMPOSITE_CATEGORIES: Category[] = [
+  {
+    id: 'product_staging',
+    label: '제품 연출/합성',
+    icon: 'layers',
+    description: '제품과 소품(재료)을 자연스럽게 배치하여 연출',
+    styles: [
+      { id: 'harmonious', label: '자연스러운 조화', promptModifier: 'seamless composition, harmonious arrangement of objects, natural interaction between items, photorealistic', previewColor: 'bg-indigo-50' },
+      { id: 'creative_float', label: '공중 부양', promptModifier: 'creative product photography, objects floating in mid-air, dynamic composition, clean background', previewColor: 'bg-sky-100' },
+      { id: 'flatlay_comp', label: '탑뷰 배치', promptModifier: 'organized flatlay, items arranged neatly on a surface, top-down view, balanced spacing', previewColor: 'bg-slate-100' },
+      ...COMMON_STYLES
+    ]
+  },
+  {
+    id: 'fashion_coordi',
+    label: '패션/코디',
+    icon: 'shirt',
+    description: '여러 의류/잡화 아이템을 모델 착용샷이나 코디셋으로 합성',
+    styles: [
+      { id: 'model_wear', label: '모델 착용', promptModifier: 'photo of a model wearing all the provided items together, fashion lookbook style, realistic fitting', previewColor: 'bg-rose-50' },
+      { id: 'ghost_mannequin', label: '고스트 마네킹', promptModifier: 'invisible mannequin style, 3D clothing effect, clean focus on outfit coordination', previewColor: 'bg-gray-100' },
+      ...COMMON_STYLES
+    ]
+  },
+  {
+    id: 'interior',
+    label: '인테리어/가구',
+    icon: 'armchair',
+    description: '가구와 소품을 하나의 공간에 배치',
+    styles: [
+      { id: 'room_set', label: '룸 세트', promptModifier: 'interior design photography, items arranged in a realistic room setting, cozy atmosphere', previewColor: 'bg-amber-100' },
+      { id: 'showroom', label: '쇼룸', promptModifier: 'professional furniture showroom, bright lighting, clean lines, modern interior', previewColor: 'bg-white border' },
+      ...COMMON_STYLES
+    ]
+  },
+  {
+    id: 'food_plating',
+    label: '음식 플레이팅',
+    icon: 'utensils',
+    description: '요리 재료와 완성된 음식을 함께 연출',
+    styles: [
+      { id: 'ingredients_together', label: '재료와 함께', promptModifier: 'food photography with fresh ingredients surrounding the dish, farm-to-table concept', previewColor: 'bg-green-100' },
+      { id: 'table_scene', label: '테이블 장면', promptModifier: 'beautiful table setting with multiple dishes, dinner party atmosphere, warm lighting', previewColor: 'bg-orange-100' },
+      ...COMMON_STYLES
+    ]
+  }
+];
+
 // Usage & Cost Estimation Constants
 export const ESTIMATED_COST_PER_IMAGE_USD = 0.14; // Estimated cost for gemini-3-pro-image-preview
 export const EXCHANGE_RATE_KRW = 1400; // Approximate exchange rate

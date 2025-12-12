@@ -18,6 +18,7 @@ export function useNavigation() {
       [AppMode.HOME]: '/',
       [AppMode.CREATE]: '/create',
       [AppMode.EDIT]: '/edit',
+      [AppMode.COMPOSITE]: '/composite',
       [AppMode.DETAIL_PAGE]: '/detail-page',
       [AppMode.DETAIL_EDIT]: '/detail-edit',
       [AppMode.POSTER]: '/poster',
