@@ -12,6 +12,7 @@ import {
   ImageIcon,
   Sparkles,
   Wand2,
+  Layers,
   Layout,
   FilePenLine,
   Megaphone,
@@ -58,6 +59,7 @@ export const ProfileDropdown: React.FC = () => {
   const modeButtons = [
     { mode: AppMode.CREATE, label: '생성', icon: Sparkles, color: 'indigo' },
     { mode: AppMode.EDIT, label: '편집', icon: Wand2, color: 'emerald' },
+    { mode: AppMode.COMPOSITE, label: '연출', icon: Layers, color: 'cyan' },
     { mode: AppMode.DETAIL_PAGE, label: '상세페이지', icon: Layout, color: 'blue' },
     { mode: AppMode.DETAIL_EDIT, label: '상세 편집', icon: FilePenLine, color: 'violet' },
     { mode: AppMode.POSTER, label: '포스터', icon: Megaphone, color: 'rose' },
