@@ -286,9 +286,18 @@ function CompositePageContent() {
             )}
           </div>
 
-          <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
+          <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
             * 제품 사진, 소품, 배경 질감 등을 업로드하세요. 순서는 중요하지 않습니다.
           </p>
+
+          {/* Divider with "또는" */}
+          <div className="relative flex items-center my-4">
+            <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
+            <span className="flex-shrink-0 mx-4 text-sm font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 px-2">
+              또는
+            </span>
+            <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
+          </div>
 
           <button
             onClick={() => setIsGalleryOpen(true)}

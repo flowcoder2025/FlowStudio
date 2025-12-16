@@ -489,15 +489,23 @@ function DetailEditPageContent() {
                 imageAlt="Detail Page"
                 minHeight="min-h-[200px]"
               />
-              <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-4">
-                <button
-                  onClick={() => setIsGalleryOpen(true)}
-                  className="flex items-center justify-center gap-2 py-3 px-6 min-h-[48px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-medium transition-colors w-full"
-                >
-                  <FolderOpen className="w-5 h-5" />
-                  이미지 저장소에서 불러오기
-                </button>
+
+              {/* Divider with "또는" */}
+              <div className="relative flex items-center my-5">
+                <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
+                <span className="flex-shrink-0 mx-4 text-sm font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 px-2">
+                  또는
+                </span>
+                <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
               </div>
+
+              <button
+                onClick={() => setIsGalleryOpen(true)}
+                className="flex items-center justify-center gap-2 py-3 px-6 min-h-[48px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-medium transition-colors w-full"
+              >
+                <FolderOpen className="w-5 h-5" />
+                이미지 저장소에서 불러오기
+              </button>
             </div>
           </div>
         ) : (
