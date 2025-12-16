@@ -51,6 +51,7 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
             width={40}
             height={40}
             className="rounded-lg"
+            style={{ height: "auto" }}
           />
           <div className="hidden sm:block">
             <h1 className="font-bold text-lg leading-tight text-slate-800 dark:text-slate-100">FlowStudio</h1>

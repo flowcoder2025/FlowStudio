@@ -26,6 +26,7 @@ export default function HomePage() {
             width={280}
             height={140}
             className="mx-auto mb-6"
+            style={{ height: "auto" }}
             priority
           />
           <p className="text-slate-600 dark:text-slate-300 text-lg">
