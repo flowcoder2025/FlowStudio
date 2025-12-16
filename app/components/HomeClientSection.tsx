@@ -5,11 +5,12 @@
  * - 모드 카드 클릭 이벤트
  * - 고객센터 모달
  * - Next.js Link로 클라이언트 사이드 네비게이션
+ * - 모드 카드 호버 시 비포/애프터 예시 툴팁
  */
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Sparkles,
@@ -53,7 +54,7 @@ const faqData = [
   },
 ]
 
-// 모드 카드 데이터 정의
+// 모드 카드 데이터 정의 (비포/애프터 예시 + 프롬프트 예시 포함)
 const modeCards = [
   {
     href: '/create',
@@ -66,6 +67,13 @@ const modeCards = [
       border: 'hover:border-indigo-200 dark:hover:border-indigo-500',
     },
     cta: '시작하기',
+    beforeAfter: {
+      beforeLabel: '제품 사진',
+      afterLabel: '생성된 홍보물',
+      beforeColor: 'bg-slate-200',
+      afterColor: 'bg-indigo-200',
+      promptExample: '"카페 분위기의 테이블 위에 커피와 함께 놓인 모습"',
+    },
   },
   {
     href: '/edit',
@@ -78,6 +86,13 @@ const modeCards = [
       border: 'hover:border-emerald-200 dark:hover:border-emerald-500',
     },
     cta: '편집하기',
+    beforeAfter: {
+      beforeLabel: '원본 사진',
+      afterLabel: '편집 완료',
+      beforeColor: 'bg-slate-200',
+      afterColor: 'bg-emerald-200',
+      promptExample: '"배경을 하얀색으로 바꾸고 제품만 남겨줘"',
+    },
   },
   {
     href: '/detail-page',
@@ -90,6 +105,13 @@ const modeCards = [
       border: 'hover:border-blue-200 dark:hover:border-blue-500',
     },
     cta: '제작하기',
+    beforeAfter: {
+      beforeLabel: '제품 이미지',
+      afterLabel: '상세페이지',
+      beforeColor: 'bg-slate-200',
+      afterColor: 'bg-blue-200',
+      promptExample: '"프리미엄 원두를 강조하는 고급스러운 상세페이지"',
+    },
   },
   {
     href: '/detail-edit',
@@ -102,6 +124,13 @@ const modeCards = [
       border: 'hover:border-violet-200 dark:hover:border-violet-500',
     },
     cta: '편집하기',
+    beforeAfter: {
+      beforeLabel: '기존 페이지',
+      afterLabel: '수정 완료',
+      beforeColor: 'bg-slate-200',
+      afterColor: 'bg-violet-200',
+      promptExample: '"가격 부분을 30% 할인 이벤트 문구로 변경해줘"',
+    },
   },
   {
     href: '/composite',
@@ -114,6 +143,13 @@ const modeCards = [
       border: 'hover:border-cyan-200 dark:hover:border-cyan-500',
     },
     cta: '연출하기',
+    beforeAfter: {
+      beforeLabel: '개별 제품들',
+      afterLabel: '연출샷 완성',
+      beforeColor: 'bg-slate-200',
+      afterColor: 'bg-cyan-200',
+      promptExample: '"3개 제품을 피크닉 배경에 자연스럽게 배치"',
+    },
   },
   {
     href: '/poster',
@@ -126,6 +162,13 @@ const modeCards = [
       border: 'hover:border-rose-200 dark:hover:border-rose-500',
     },
     cta: '제작하기',
+    beforeAfter: {
+      beforeLabel: '로고 + 제품',
+      afterLabel: '홍보 포스터',
+      beforeColor: 'bg-slate-200',
+      afterColor: 'bg-rose-200',
+      promptExample: '"여름 세일 50% 할인 이벤트 배너"',
+    },
   },
   {
     href: '/color-correction',
@@ -138,38 +181,223 @@ const modeCards = [
       border: 'hover:border-amber-200 dark:hover:border-amber-500',
     },
     cta: '보정하기',
+    beforeAfter: {
+      beforeLabel: '원본 색감',
+      afterLabel: '보정 완료',
+      beforeColor: 'bg-slate-200',
+      afterColor: 'bg-amber-200',
+      promptExample: '밝기 +20, 채도 +15, 따뜻한 필터 적용',
+    },
   },
 ]
 
-export function ModeCardsGrid() {
+// 비포/애프터 툴팁 컴포넌트
+interface TooltipPosition {
+  x: number
+  y: number
+}
+
+interface BeforeAfterTooltipProps {
+  isVisible: boolean
+  position: TooltipPosition
+  beforeLabel: string
+  afterLabel: string
+  beforeColor: string
+  afterColor: string
+  title: string
+  promptExample: string
+}
+
+function BeforeAfterTooltip({
+  isVisible,
+  position,
+  beforeLabel,
+  afterLabel,
+  beforeColor,
+  afterColor,
+  title,
+  promptExample,
+}: BeforeAfterTooltipProps) {
+  const tooltipRef = useRef<HTMLDivElement>(null)
+  const [adjustedPosition, setAdjustedPosition] = useState(position)
+
+  // 화면 경계를 고려하여 툴팁 위치 조정
+  useEffect(() => {
+    if (!isVisible || !tooltipRef.current) return
+
+    const tooltip = tooltipRef.current
+    const rect = tooltip.getBoundingClientRect()
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+
+    let newX = position.x + 20 // 마우스 오른쪽으로 20px
+    let newY = position.y + 10 // 마우스 아래로 10px
+
+    // 오른쪽 경계 체크
+    if (newX + rect.width > viewportWidth - 20) {
+      newX = position.x - rect.width - 20 // 왼쪽에 표시
+    }
+
+    // 하단 경계 체크
+    if (newY + rect.height > viewportHeight - 20) {
+      newY = position.y - rect.height - 10 // 위쪽에 표시
+    }
+
+    // 상단 경계 체크
+    if (newY < 20) {
+      newY = 20
+    }
+
+    // 왼쪽 경계 체크
+    if (newX < 20) {
+      newX = 20
+    }
+
+    setAdjustedPosition({ x: newX, y: newY })
+  }, [position, isVisible])
+
+  if (!isVisible) return null
+
   return (
-    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {modeCards.map((card) => {
-        const IconComponent = card.icon
-        return (
-          <Link
-            key={card.href}
-            href={card.href}
-            className={`group bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-xl ${card.colors.border} transition-all min-h-[200px] block`}
-          >
-            <div
-              className={`${card.colors.bg} w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
-            >
-              <IconComponent className={`w-6 h-6 ${card.colors.text}`} />
+    <div
+      ref={tooltipRef}
+      className="fixed z-50 pointer-events-none"
+      style={{
+        left: adjustedPosition.x,
+        top: adjustedPosition.y,
+      }}
+    >
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 p-4 animate-in fade-in zoom-in-95 duration-200 max-w-xs">
+        {/* 타이틀 */}
+        <div className="text-xs font-semibold text-slate-900 dark:text-slate-100 mb-2 text-center">
+          {title} 예시
+        </div>
+
+        {/* 프롬프트 예시 */}
+        <div className="bg-slate-100 dark:bg-slate-700/50 rounded-lg px-3 py-2 mb-3">
+          <div className="text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">프롬프트</div>
+          <div className="text-[11px] text-slate-700 dark:text-slate-200 font-medium leading-relaxed">
+            {promptExample}
+          </div>
+        </div>
+
+        {/* 비포/애프터 이미지 */}
+        <div className="flex items-center gap-3 justify-center">
+          {/* Before */}
+          <div className="flex flex-col items-center">
+            <div className={`w-20 h-20 ${beforeColor} dark:opacity-80 rounded-lg flex items-center justify-center relative overflow-hidden`}>
+              {/* 플레이스홀더 패턴 */}
+              <div className="absolute inset-0 opacity-30">
+                <div className="absolute inset-2 border-2 border-dashed border-slate-400 rounded" />
+              </div>
+              <span className="text-slate-500 text-[10px] font-medium z-10">원본</span>
             </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">
-              {card.title}
-            </h3>
-            <p className="text-slate-500 dark:text-slate-400 mb-3 text-xs h-10">
-              {card.description}
-            </p>
-            <div className={`flex items-center ${card.colors.text} font-medium text-xs`}>
-              {card.cta} <ArrowRight className="w-3 h-3 ml-1" />
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
+              {beforeLabel}
+            </span>
+          </div>
+
+          {/* 화살표 */}
+          <div className="flex flex-col items-center">
+            <ArrowRight className="w-4 h-4 text-slate-400" />
+          </div>
+
+          {/* After */}
+          <div className="flex flex-col items-center">
+            <div className={`w-20 h-20 ${afterColor} dark:opacity-80 rounded-lg flex items-center justify-center relative overflow-hidden`}>
+              {/* 플레이스홀더 패턴 - 더 완성된 느낌 */}
+              <div className="absolute inset-0 opacity-40">
+                <div className="absolute inset-1 bg-gradient-to-br from-white/50 to-transparent rounded" />
+              </div>
+              <Sparkles className="w-5 h-5 text-slate-600/60 z-10" />
             </div>
-          </Link>
-        )
-      })}
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
+              {afterLabel}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
+  )
+}
+
+export function ModeCardsGrid() {
+  // 호버 상태 관리
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null)
+  const [mousePosition, setMousePosition] = useState<TooltipPosition>({ x: 0, y: 0 })
+  const gridRef = useRef<HTMLDivElement>(null)
+
+  // 마우스 이동 핸들러 (throttle 적용)
+  const lastMoveTime = useRef(0)
+  const handleMouseMove = useCallback((e: React.MouseEvent, index: number) => {
+    const now = Date.now()
+    if (now - lastMoveTime.current < 16) return // ~60fps
+    lastMoveTime.current = now
+
+    setMousePosition({ x: e.clientX, y: e.clientY })
+    if (hoveredCard !== index) {
+      setHoveredCard(index)
+    }
+  }, [hoveredCard])
+
+  const handleMouseEnter = useCallback((e: React.MouseEvent, index: number) => {
+    setMousePosition({ x: e.clientX, y: e.clientY })
+    setHoveredCard(index)
+  }, [])
+
+  const handleMouseLeave = useCallback(() => {
+    setHoveredCard(null)
+  }, [])
+
+  const currentCard = hoveredCard !== null ? modeCards[hoveredCard] : null
+
+  return (
+    <>
+      <div ref={gridRef} className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {modeCards.map((card, index) => {
+          const IconComponent = card.icon
+          return (
+            <Link
+              key={card.href}
+              href={card.href}
+              className={`group bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-xl ${card.colors.border} transition-all min-h-[200px] block`}
+              onMouseEnter={(e) => handleMouseEnter(e, index)}
+              onMouseMove={(e) => handleMouseMove(e, index)}
+              onMouseLeave={handleMouseLeave}
+            >
+              <div
+                className={`${card.colors.bg} w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
+              >
+                <IconComponent className={`w-6 h-6 ${card.colors.text}`} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">
+                {card.title}
+              </h3>
+              <p className="text-slate-500 dark:text-slate-400 mb-3 text-xs h-10">
+                {card.description}
+              </p>
+              <div className={`flex items-center ${card.colors.text} font-medium text-xs`}>
+                {card.cta} <ArrowRight className="w-3 h-3 ml-1" />
+              </div>
+            </Link>
+          )
+        })}
+      </div>
+
+      {/* 비포/애프터 툴팁 */}
+      {currentCard && (
+        <BeforeAfterTooltip
+          isVisible={hoveredCard !== null}
+          position={mousePosition}
+          beforeLabel={currentCard.beforeAfter.beforeLabel}
+          afterLabel={currentCard.beforeAfter.afterLabel}
+          beforeColor={currentCard.beforeAfter.beforeColor}
+          afterColor={currentCard.beforeAfter.afterColor}
+          title={currentCard.title}
+          promptExample={currentCard.beforeAfter.promptExample}
+        />
+      )}
+    </>
   )
 }
 
