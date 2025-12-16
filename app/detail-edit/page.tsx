@@ -442,58 +442,59 @@ function DetailEditPageContent() {
     <>
       <Header currentMode={AppMode.DETAIL_EDIT} />
 
-      <div className="max-w-6xl mx-auto px-4 py-8 pb-32 h-[calc(100vh-64px)] flex flex-col">
-        <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-2xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
-            <FilePenLine className="text-violet-600 dark:text-violet-400" /> 상세페이지 편집
+      <div className="max-w-5xl mx-auto px-3 lg:px-4 py-4 lg:py-6 pb-24 h-[calc(100vh-56px)] flex flex-col">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg lg:text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+            <FilePenLine className="w-5 h-5 text-violet-600 dark:text-violet-400" /> 상세페이지 편집
           </h2>
           {uploadedImage && (
             <button
               onClick={handleNewProject}
-              className="flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center gap-1 px-2 md:px-2.5 py-1.5 min-h-[36px] bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium transition-colors"
               title="새로 시작하기"
             >
-              <FilePlus2 className="w-4 h-4" />
+              <FilePlus2 className="w-3.5 h-3.5" />
               새로하기
             </button>
           )}
         </div>
 
         {/* PC 버전 권장 안내 (모바일에서만 표시) */}
-        <div className="md:hidden mb-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 flex items-start gap-2">
+        <div className="md:hidden mb-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2.5 flex items-start gap-2">
           <div className="flex-shrink-0 mt-0.5">
-            <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <div className="flex-1 text-sm">
-            <p className="font-semibold text-amber-800 dark:text-amber-300 mb-1">PC 버전 권장</p>
-            <p className="text-amber-700 dark:text-amber-400 text-xs leading-relaxed">
+          <div className="flex-1 text-xs">
+            <p className="font-semibold text-amber-800 dark:text-amber-300 mb-0.5">PC 버전 권장</p>
+            <p className="text-amber-700 dark:text-amber-400 text-[10px] leading-relaxed">
               정밀한 편집 작업을 위해 PC 또는 태블릿 환경에서 사용하시는 것을 권장합니다.
             </p>
           </div>
         </div>
 
         {!uploadedImage ? (
-          <div className="flex-1 flex items-center justify-center bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
-            <div className="w-full max-w-md p-8">
+          <div className="flex-1 flex items-center justify-center bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
+            <div className="w-full max-w-sm p-6">
               <FileDropzone
                 value={uploadedImage}
                 onChange={handleUploadedImageChange}
                 onCompressing={setIsCompressing}
                 onError={(msg) => alert(msg)}
                 colorTheme="violet"
-                icon={<Layout className="w-10 h-10 text-violet-600 dark:text-violet-400" />}
+                icon={<Layout className="w-8 h-8 text-violet-600 dark:text-violet-400" />}
                 placeholder="편집할 상세페이지 업로드"
                 subPlaceholder="JPG, PNG 파일 지원 (최대 10MB)"
                 imageAlt="Detail Page"
-                minHeight="min-h-[200px]"
+                compact
+                minHeight="min-h-[160px]"
               />
 
               {/* Divider with "또는" */}
-              <div className="relative flex items-center my-5">
+              <div className="relative flex items-center my-4">
                 <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
-                <span className="flex-shrink-0 mx-4 text-sm font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 px-2">
+                <span className="flex-shrink-0 mx-3 text-xs font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 px-2">
                   또는
                 </span>
                 <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
@@ -501,17 +502,17 @@ function DetailEditPageContent() {
 
               <button
                 onClick={() => setIsGalleryOpen(true)}
-                className="flex items-center justify-center gap-2 py-3 px-6 min-h-[48px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-medium transition-colors w-full"
+                className="flex items-center justify-center gap-2 py-2.5 px-4 min-h-[40px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium text-sm transition-colors w-full"
               >
-                <FolderOpen className="w-5 h-5" />
+                <FolderOpen className="w-4 h-4" />
                 이미지 저장소에서 불러오기
               </button>
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex gap-6 overflow-hidden">
+          <div className="flex-1 flex gap-4 overflow-hidden">
             {/* Editor Canvas Area */}
-            <div className="flex-1 flex flex-col gap-2">
+            <div className="flex-1 flex flex-col gap-1.5">
               {/* Toolbar */}
               <div className="bg-white dark:bg-slate-800 p-2 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-2 transition-colors">
                 <div className="flex items-center gap-1 border-r border-slate-200 dark:border-slate-700 pr-2">
@@ -657,48 +658,48 @@ function DetailEditPageContent() {
             </div>
 
             {/* Right Control Panel */}
-            <div className="w-80 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 flex flex-col transition-colors">
-              <div className="mb-6">
-                <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-2 flex items-center gap-2">
-                  <MousePointer2 className="w-4 h-4 text-violet-500 dark:text-violet-400" />
+            <div className="w-72 lg:w-80 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3 flex flex-col transition-colors">
+              <div className="mb-4">
+                <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100 mb-1.5 flex items-center gap-1.5">
+                  <MousePointer2 className="w-3.5 h-3.5 text-violet-500 dark:text-violet-400" />
                   1. 영역 선택
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                  이미지에서 수정하고 싶은 부분을 마우스로 드래그하여 선택하세요.
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2">
+                  이미지에서 수정하고 싶은 부분을 드래그하여 선택하세요.
                 </p>
                 {!selectionRect ? (
-                  <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-center text-xs text-slate-400 dark:text-slate-500 border border-dashed border-slate-200 dark:border-slate-600 transition-colors">
+                  <div className="p-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-center text-[10px] text-slate-400 dark:text-slate-500 border border-dashed border-slate-200 dark:border-slate-600 transition-colors">
                     선택된 영역 없음
                   </div>
                 ) : (
-                  <div className="p-3 bg-violet-50 dark:bg-violet-900/30 rounded-lg text-center text-xs text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700 font-medium transition-colors">
+                  <div className="p-2 bg-violet-50 dark:bg-violet-900/30 rounded-lg text-center text-[10px] text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700 font-medium transition-colors">
                     영역 선택됨 ({Math.round(selectionRect.w)}x{Math.round(selectionRect.h)})
                   </div>
                 )}
               </div>
 
               <div className="flex-1 flex flex-col">
-                <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-3 flex items-center gap-2">
-                  <Wand2 className="w-4 h-4 text-violet-500 dark:text-violet-400" />
+                <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100 mb-2 flex items-center gap-1.5">
+                  <Wand2 className="w-3.5 h-3.5 text-violet-500 dark:text-violet-400" />
                   2. 편집 도구
                 </h3>
 
-                <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-lg mb-4 transition-colors">
+                <div className="flex bg-slate-100 dark:bg-slate-700 p-0.5 rounded-lg mb-3 transition-colors">
                   <button
                     onClick={() => { setEditModeSub('GENERAL'); setPrompt(''); }}
-                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${editModeSub === 'GENERAL' ? 'bg-white dark:bg-slate-600 shadow-sm text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                    className={`flex-1 py-1 text-[10px] font-medium rounded-md transition-all ${editModeSub === 'GENERAL' ? 'bg-white dark:bg-slate-600 shadow-sm text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                   >
                     AI 편집
                   </button>
                   <button
                     onClick={() => { setEditModeSub('TEXT'); setPrompt(''); }}
-                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${editModeSub === 'TEXT' ? 'bg-white dark:bg-slate-600 shadow-sm text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                    className={`flex-1 py-1 text-[10px] font-medium rounded-md transition-all ${editModeSub === 'TEXT' ? 'bg-white dark:bg-slate-600 shadow-sm text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                   >
                     텍스트
                   </button>
                   <button
                     onClick={() => { setEditModeSub('REPLACE'); setPrompt(''); }}
-                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${editModeSub === 'REPLACE' ? 'bg-white dark:bg-slate-600 shadow-sm text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                    className={`flex-1 py-1 text-[10px] font-medium rounded-md transition-all ${editModeSub === 'REPLACE' ? 'bg-white dark:bg-slate-600 shadow-sm text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                   >
                     이미지 교체
                   </button>
@@ -706,17 +707,17 @@ function DetailEditPageContent() {
 
                 {/* Tool-specific controls */}
                 {editModeSub === 'TEXT' && (
-                  <div className="mb-4">
+                  <div className="mb-3">
                     <button
                       onClick={handleExtractText}
                       disabled={!selectionRect || isLoading}
-                      className="w-full py-2 px-3 min-h-[40px] bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-medium rounded-lg hover:bg-violet-200 dark:hover:bg-violet-900/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+                      className="w-full py-1.5 px-2 min-h-[32px] bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-[10px] font-medium rounded-lg hover:bg-violet-200 dark:hover:bg-violet-900/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 transition-colors"
                     >
-                      <Type className="w-4 h-4" />
+                      <Type className="w-3.5 h-3.5" />
                       선택 영역의 텍스트 추출
                     </button>
                     {extractedText && (
-                      <div className="mt-2 p-2 bg-slate-50 dark:bg-slate-700/50 rounded text-xs text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 max-h-24 overflow-y-auto transition-colors">
+                      <div className="mt-1.5 p-1.5 bg-slate-50 dark:bg-slate-700/50 rounded text-[10px] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 max-h-20 overflow-y-auto transition-colors">
                         추출된 텍스트: {extractedText}
                       </div>
                     )}
@@ -724,26 +725,26 @@ function DetailEditPageContent() {
                 )}
 
                 {editModeSub === 'REPLACE' && (
-                  <div className="mb-4">
-                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">교체할 이미지</label>
+                  <div className="mb-3">
+                    <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">교체할 이미지</label>
                     <FileDropzone
                       value={replacementImage}
                       onChange={setReplacementImage}
                       onCompressing={setIsCompressing}
                       onError={(msg) => alert(msg)}
                       colorTheme="violet"
-                      icon={<ImagePlus className="w-6 h-6 text-violet-400 dark:text-violet-500" />}
+                      icon={<ImagePlus className="w-5 h-5 text-violet-400 dark:text-violet-500" />}
                       placeholder="이미지 선택"
                       imageAlt="Replacement"
                       compact
-                      minHeight="min-h-[80px]"
-                      imageMaxHeight="h-20"
+                      minHeight="min-h-[60px]"
+                      imageMaxHeight="h-16"
                     />
                   </div>
                 )}
 
-                <div className="mb-4">
-                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                <div className="mb-3">
+                  <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
                     {editModeSub === 'TEXT' ? '변경할 텍스트' : editModeSub === 'REPLACE' ? '교체 설명 (선택)' : '어떻게 변경할까요?'}
                   </label>
                   <textarea
@@ -756,20 +757,20 @@ function DetailEditPageContent() {
                           ? '예: 자연스럽게 교체'
                           : '예: 배경을 파란색으로, 제품을 좀 더 밝게'
                     }
-                    className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 dark:focus:ring-violet-400 min-h-[100px] text-sm transition-colors"
+                    className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 dark:focus:ring-violet-400 min-h-[70px] text-xs transition-colors"
                   />
                 </div>
 
                 <button
                   onClick={handleDetailEditGenerate}
                   disabled={!selectionRect || isLoading}
-                  className={`w-full py-3 min-h-[48px] rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all ${
+                  className={`w-full py-2 min-h-[40px] rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all ${
                     !selectionRect || isLoading
                       ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                       : 'bg-violet-600 dark:bg-violet-500 text-white hover:bg-violet-700 dark:hover:bg-violet-600'
                   }`}
                 >
-                  {isLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                  {isLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
                   {editModeSub === 'GENERAL' ? '선택 영역 변경하기' : editModeSub === 'TEXT' ? '텍스트 교체하기' : '이미지 교체하기'}
                 </button>
               </div>

@@ -167,30 +167,31 @@ function PosterPageContent() {
     <>
       <Header currentMode={AppMode.POSTER} />
 
-      <div className="max-w-6xl mx-auto px-4 py-8 pb-32">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
-          <Megaphone className="text-rose-600 dark:text-rose-400" />
+      <div className="max-w-5xl mx-auto px-3 lg:px-4 py-4 lg:py-6 pb-24">
+        <h2 className="text-lg lg:text-xl font-bold mb-4 flex items-center gap-2 text-slate-900 dark:text-slate-100">
+          <Megaphone className="w-5 h-5 text-rose-600 dark:text-rose-400" />
           홍보 포스터 제작
         </h2>
         {/* 제품 사진 업로드 (필수) */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
-          <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">1. 제품 사진 업로드 (필수)</h3>
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
+          <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">1. 제품 사진 업로드 (필수)</h3>
           <FileDropzone
             value={productImage}
             onChange={setProductImage}
             onCompressing={setIsCompressing}
             onError={(msg) => alert(msg)}
             colorTheme="rose"
-            icon={<Upload className="w-10 h-10 text-slate-400 dark:text-slate-500" />}
+            icon={<Upload className="w-8 h-8 text-slate-400 dark:text-slate-500" />}
             placeholder="제품 사진 업로드 또는 드래그 앤 드롭"
             subPlaceholder="PNG, JPG (최대 10MB)"
             imageAlt="Product"
+            compact
           />
 
           {/* Divider with "또는" */}
-          <div className="relative flex items-center my-5">
+          <div className="relative flex items-center my-4">
             <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
-            <span className="flex-shrink-0 mx-4 text-sm font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 px-2">
+            <span className="flex-shrink-0 mx-3 text-xs font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 px-2">
               또는
             </span>
             <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
@@ -199,33 +200,34 @@ function PosterPageContent() {
           {/* Gallery Button */}
           <button
             onClick={() => setIsProductGalleryOpen(true)}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 min-h-[44px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-medium transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 min-h-[40px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium text-sm transition-colors"
           >
-            <FolderOpen className="w-5 h-5" />
+            <FolderOpen className="w-4 h-4" />
             이미지 저장소에서 불러오기
           </button>
         </div>
 
         {/* 로고 이미지 업로드 (선택) */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
-          <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">2. 로고 이미지 (선택)</h3>
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
+          <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">2. 로고 이미지 (선택)</h3>
           <FileDropzone
             value={logoImage}
             onChange={setLogoImage}
             onCompressing={setIsCompressing}
             onError={(msg) => alert(msg)}
             colorTheme="amber"
-            icon={<Upload className="w-8 h-8 text-slate-400 dark:text-slate-500" />}
+            icon={<Upload className="w-6 h-6 text-slate-400 dark:text-slate-500" />}
             placeholder="로고 업로드 또는 드래그 앤 드롭 (선택)"
             subPlaceholder="PNG 권장 (투명 배경)"
             imageAlt="Logo"
-            imageMaxHeight="h-32"
+            imageMaxHeight="h-20"
+            compact
           />
 
           {/* Divider with "또는" */}
-          <div className="relative flex items-center my-4">
+          <div className="relative flex items-center my-3">
             <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
-            <span className="flex-shrink-0 mx-4 text-sm font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 px-2">
+            <span className="flex-shrink-0 mx-3 text-xs font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 px-2">
               또는
             </span>
             <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
@@ -234,17 +236,17 @@ function PosterPageContent() {
           {/* Gallery Button */}
           <button
             onClick={() => setIsLogoGalleryOpen(true)}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 min-h-[44px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-medium text-sm transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-2 px-4 min-h-[36px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium text-xs transition-colors"
           >
-            <FolderOpen className="w-4 h-4" />
+            <FolderOpen className="w-3.5 h-3.5" />
             이미지 저장소에서 불러오기
           </button>
         </div>
 
         {/* 카테고리 선택 */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
-          <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">3. 포스터 카테고리</h3>
-          <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
+          <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">3. 포스터 카테고리</h3>
+          <div className="grid grid-cols-2 gap-2">
             {POSTER_CATEGORIES.map((cat) => (
               <button
                 key={cat.id}
@@ -252,14 +254,14 @@ function PosterPageContent() {
                   setSelectedCategory(cat);
                   setSelectedStyle(null);
                 }}
-                className={`p-4 min-h-[88px] rounded-xl text-left transition-all border ${
+                className={`p-3 min-h-[60px] rounded-lg text-left transition-all border ${
                   selectedCategory?.id === cat.id
                     ? 'bg-rose-50 dark:bg-rose-900/30 border-rose-500 dark:border-rose-400 ring-1 ring-rose-500 dark:ring-rose-400'
                     : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-rose-300 dark:hover:border-rose-500'
                 }`}
               >
-                <span className="block font-semibold text-slate-800 dark:text-slate-100 mb-1">{cat.label}</span>
-                <span className="block text-xs text-slate-500 dark:text-slate-400">{cat.description}</span>
+                <span className="block font-semibold text-slate-800 dark:text-slate-100 text-xs mb-0.5">{cat.label}</span>
+                <span className="block text-[10px] text-slate-500 dark:text-slate-400">{cat.description}</span>
               </button>
             ))}
           </div>
@@ -267,21 +269,21 @@ function PosterPageContent() {
 
         {/* 스타일 선택 */}
         {selectedCategory && (
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 animate-fadeIn transition-colors">
-            <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">4. 디자인 스타일</h3>
-            <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 animate-fadeIn transition-colors">
+            <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">4. 디자인 스타일</h3>
+            <div className="grid grid-cols-2 gap-2">
               {selectedCategory.styles.map((style) => (
                 <button
                   key={style.id}
                   onClick={() => setSelectedStyle(style)}
-                  className={`p-3 min-h-[72px] rounded-xl text-center transition-all border relative overflow-hidden ${
+                  className={`p-2 min-h-[56px] rounded-lg text-center transition-all border relative overflow-hidden ${
                     selectedStyle?.id === style.id
                       ? 'border-rose-500 dark:border-rose-400 ring-2 ring-rose-500 dark:ring-rose-400'
                       : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'
                   }`}
                 >
-                  <div className={`w-full h-8 mb-2 rounded-lg ${style.previewColor}`}></div>
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{style.label}</span>
+                  <div className={`w-full h-6 mb-1.5 rounded ${style.previewColor}`}></div>
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{style.label}</span>
                 </button>
               ))}
             </div>
@@ -289,55 +291,55 @@ function PosterPageContent() {
         )}
 
         {/* 포스터 비율 */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
-          <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">5. 포스터 비율</h3>
-          <div className="grid grid-cols-3 gap-3">
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
+          <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">5. 포스터 비율</h3>
+          <div className="grid grid-cols-3 gap-2">
             {ASPECT_RATIOS.map((ratio) => (
               <button
                 key={ratio.value}
                 onClick={() => setSelectedAspectRatio(ratio.value)}
-                className={`p-4 min-h-[88px] rounded-xl text-center transition-all border ${
+                className={`p-2 min-h-[56px] rounded-lg text-center transition-all border ${
                   selectedAspectRatio === ratio.value
                     ? 'bg-rose-50 dark:bg-rose-900/30 border-rose-500 dark:border-rose-400 ring-1 ring-rose-500 dark:ring-rose-400'
                     : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-rose-300 dark:hover:border-rose-500'
                 }`}
               >
-                <span className="block font-semibold text-slate-800 dark:text-slate-100 mb-1">{ratio.label}</span>
-                <span className="block text-xs text-slate-500 dark:text-slate-400">{ratio.description}</span>
+                <span className="block font-semibold text-slate-800 dark:text-slate-100 text-xs">{ratio.label}</span>
+                <span className="block text-[10px] text-slate-500 dark:text-slate-400">{ratio.description}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* 포스터 컨셉/문구 */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
-          <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">6. 포스터 컨셉/문구</h3>
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
+          <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">6. 포스터 컨셉/문구</h3>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="예: 신메뉴 '프리미엄 버거' 출시! 50% 할인 이벤트"
-            className="w-full p-4 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500 dark:focus:ring-rose-400 min-h-[100px] transition-colors"
+            className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500 dark:focus:ring-rose-400 min-h-[80px] text-sm transition-colors"
           />
         </div>
 
         {/* Action Bar */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 p-4 pb-safe z-30 transition-colors">
-          <div className="max-w-6xl mx-auto flex justify-between items-center">
-            <p className="text-sm text-slate-500 dark:text-slate-400 hidden md:block">
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 p-3 pb-safe z-30 transition-colors">
+          <div className="max-w-5xl mx-auto flex justify-between items-center">
+            <p className="text-xs text-slate-500 dark:text-slate-400 hidden md:block">
               {selectedCategory ? `${selectedCategory.label}` : '카테고리 선택'}
               {selectedStyle ? ` > ${selectedStyle.label}` : ''}
             </p>
             <button
               onClick={handleGenerate}
               disabled={!productImage || !selectedCategory || !prompt.trim() || isLoading}
-              className={`w-full md:w-auto px-8 py-3.5 min-h-[52px] rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all ${
+              className={`w-full md:w-auto px-6 py-2.5 min-h-[44px] rounded-lg font-bold text-sm lg:text-base flex items-center justify-center gap-2 shadow-md transition-all ${
                 !productImage || !selectedCategory || !prompt.trim() || isLoading
                   ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                   : 'bg-rose-600 dark:bg-rose-500 text-white hover:bg-rose-700 dark:hover:bg-rose-600 hover:shadow-rose-200 dark:hover:shadow-rose-900'
               }`}
             >
               {isLoading ? '생성 중...' : '포스터 4장 생성하기'}
-              {!isLoading && <Sparkles className="w-5 h-5" />}
+              {!isLoading && <Sparkles className="w-4 h-4" />}
             </button>
           </div>
         </div>

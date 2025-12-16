@@ -418,77 +418,75 @@ export default function GalleryPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <Header currentMode={AppMode.HOME} />
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-3 lg:px-4 py-4 lg:py-6">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-3">
-            <ImageIcon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+        <div className="mb-4">
+          <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1 flex items-center gap-2">
+            <ImageIcon className="w-5 h-5 lg:w-6 lg:h-6 text-indigo-600 dark:text-indigo-400" />
             이미지 저장소
           </h1>
-          <p className="text-slate-600 dark:text-slate-400">
+          <p className="text-xs lg:text-sm text-slate-600 dark:text-slate-400">
             생성한 모든 이미지를 관리하고 다운로드할 수 있습니다.
           </p>
         </div>
 
         {/* Filter Section */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 mb-4">
           {/* Mode Filter Tabs */}
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2 overflow-x-auto">
+          <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto">
             {(Object.keys(MODE_LABELS) as FilterMode[]).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setFilterMode(mode)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                   filterMode === mode
                     ? 'bg-indigo-600 text-white'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
                 {MODE_LABELS[mode].icon}
-                {MODE_LABELS[mode].label}
+                <span className="hidden sm:inline">{MODE_LABELS[mode].label}</span>
               </button>
             ))}
             <button
               onClick={() => fetchImages(true)}
               disabled={loading}
-              className="ml-auto p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+              className="ml-auto p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
               title="새로고침"
             >
               <RefreshCw
-                className={`w-4 h-4 text-slate-500 ${loading ? 'animate-spin' : ''}`}
+                className={`w-3.5 h-3.5 text-slate-500 ${loading ? 'animate-spin' : ''}`}
               />
             </button>
           </div>
 
           {/* Date and Tag Filters */}
-          <div className="px-4 py-3 flex flex-wrap items-center gap-3">
+          <div className="px-3 py-2 flex flex-wrap items-center gap-2">
             {/* Date Filter */}
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-slate-500" />
-              <span className="text-xs text-slate-500 font-medium">기간:</span>
+            <div className="flex items-center gap-1">
+              <Calendar className="w-3 h-3 text-slate-500" />
               <input
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className="px-2 py-1 text-xs border border-slate-300 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="px-1.5 py-0.5 text-[10px] border border-slate-300 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
-              <span className="text-xs text-slate-400">~</span>
+              <span className="text-[10px] text-slate-400">~</span>
               <input
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
-                className="px-2 py-1 text-xs border border-slate-300 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="px-1.5 py-0.5 text-[10px] border border-slate-300 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
             </div>
 
             {/* Tag Filter */}
-            <div className="flex items-center gap-2">
-              <Tag className="w-4 h-4 text-slate-500" />
-              <span className="text-xs text-slate-500 font-medium">태그:</span>
+            <div className="flex items-center gap-1">
+              <Tag className="w-3 h-3 text-slate-500" />
               <select
                 value={selectedTag}
                 onChange={(e) => setSelectedTag(e.target.value)}
-                className="px-2 py-1 text-xs border border-slate-300 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="px-1.5 py-0.5 text-[10px] border border-slate-300 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               >
                 <option value="">전체</option>
                 {availableTags.map((tag) => (
@@ -503,48 +501,48 @@ export default function GalleryPage() {
             {hasActiveFilters && (
               <button
                 onClick={resetFilters}
-                className="flex items-center gap-1 px-2 py-1 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
+                className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
               >
-                <RotateCcw className="w-3 h-3" />
-                필터 초기화
+                <RotateCcw className="w-2.5 h-2.5" />
+                초기화
               </button>
             )}
 
             {/* Image count */}
-            <div className="ml-auto text-sm text-slate-500 dark:text-slate-400">
-              총 <span className="font-semibold text-indigo-600 dark:text-indigo-400">{totalCount}</span>개 프로젝트
-              {images.length > 0 && ` (이미지 ${images.length}개 표시)`}
+            <div className="ml-auto text-[10px] text-slate-500 dark:text-slate-400">
+              <span className="font-semibold text-indigo-600 dark:text-indigo-400">{totalCount}</span>개
+              {images.length > 0 && ` (${images.length}개 표시)`}
             </div>
           </div>
         </div>
 
         {/* Error display */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-red-800 dark:text-red-200">오류 발생</p>
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              <p className="text-xs font-medium text-red-800 dark:text-red-200">오류 발생</p>
+              <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
             </div>
           </div>
         )}
 
         {/* Loading state */}
         {loading && (
-          <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="w-12 h-12 text-indigo-600 dark:text-indigo-400 animate-spin mb-4" />
-            <p className="text-slate-600 dark:text-slate-400">이미지를 불러오는 중...</p>
+          <div className="flex flex-col items-center justify-center py-10">
+            <Loader2 className="w-8 h-8 text-indigo-600 dark:text-indigo-400 animate-spin mb-2" />
+            <p className="text-sm text-slate-600 dark:text-slate-400">이미지를 불러오는 중...</p>
           </div>
         )}
 
         {/* Empty state */}
         {!loading && images.length === 0 && (
-          <div className="text-center py-16">
-            <ImageIcon className="w-16 h-16 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
+          <div className="text-center py-10">
+            <ImageIcon className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
+            <h3 className="text-base font-medium text-slate-900 dark:text-slate-100 mb-1">
               {hasActiveFilters ? '검색 결과가 없습니다' : '저장된 이미지가 없습니다'}
             </h3>
-            <p className="text-slate-600 dark:text-slate-400 mb-6">
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
               {hasActiveFilters
                 ? '다른 필터 조건을 사용해보세요.'
                 : '이미지를 생성하고 저장하면 여기에 표시됩니다.'}
@@ -552,17 +550,17 @@ export default function GalleryPage() {
             {hasActiveFilters ? (
               <button
                 onClick={resetFilters}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
               >
-                <RotateCcw className="w-5 h-5" />
+                <RotateCcw className="w-4 h-4" />
                 필터 초기화
               </button>
             ) : (
               <button
                 onClick={() => router.push('/create')}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
               >
-                <Sparkles className="w-5 h-5" />
+                <Sparkles className="w-4 h-4" />
                 이미지 생성하러 가기
               </button>
             )}
@@ -571,7 +569,7 @@ export default function GalleryPage() {
 
         {/* Image Grid */}
         {!loading && images.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 lg:gap-3">
             {images.map((image, index) => (
               <div
                 key={`${image.projectId}-${image.index}-${index}`}

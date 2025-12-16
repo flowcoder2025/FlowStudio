@@ -166,31 +166,32 @@ function EditPageContent() {
     <>
       <Header currentMode={AppMode.EDIT} />
 
-      <div className="max-w-6xl mx-auto px-4 py-8 pb-32">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-slate-100">
-          <Wand2 className="text-emerald-600 dark:text-emerald-400" /> AI 이미지 편집
+      <div className="max-w-5xl mx-auto px-3 lg:px-4 py-4 lg:py-6 pb-24">
+        <h2 className="text-lg lg:text-xl font-bold mb-4 flex items-center gap-2 text-slate-900 dark:text-slate-100">
+          <Wand2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> AI 이미지 편집
         </h2>
 
         {/* Step 1: Mandatory Upload */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
-          <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">1. 편집할 사진을 올려주세요</h3>
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
+          <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">1. 편집할 사진을 올려주세요</h3>
           <FileDropzone
             value={uploadedImage}
             onChange={setUploadedImage}
             onCompressing={setIsCompressing}
             onError={(msg) => alert(msg)}
             colorTheme="emerald"
-            icon={<ImageIcon className="w-12 h-12 text-slate-400 dark:text-slate-500" />}
+            icon={<ImageIcon className="w-8 h-8 text-slate-400 dark:text-slate-500" />}
             placeholder="사진 업로드 또는 드래그 앤 드롭"
             subPlaceholder="PNG, JPG (최대 10MB)"
             imageAlt="To Edit"
-            imageMaxHeight="max-h-80"
+            imageMaxHeight="max-h-48"
+            compact
           />
 
           {/* Divider with "또는" */}
-          <div className="relative flex items-center my-5">
+          <div className="relative flex items-center my-4">
             <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
-            <span className="flex-shrink-0 mx-4 text-sm font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 px-2">
+            <span className="flex-shrink-0 mx-3 text-xs font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 px-2">
               또는
             </span>
             <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
@@ -199,43 +200,43 @@ function EditPageContent() {
           {/* Gallery Button */}
           <button
             onClick={() => setIsGalleryOpen(true)}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 min-h-[48px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-medium transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 min-h-[40px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium text-sm transition-colors"
           >
-            <FolderOpen className="w-5 h-5" />
+            <FolderOpen className="w-4 h-4" />
             이미지 저장소에서 불러오기
           </button>
         </div>
 
         {/* Step 2: Aspect Ratio Selection */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
-          <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">2. 결과 이미지 비율</h3>
-          <div className="grid grid-cols-3 gap-3">
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
+          <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">2. 결과 이미지 비율</h3>
+          <div className="grid grid-cols-3 gap-2">
             {ASPECT_RATIOS.map(ratio => (
               <button
                 key={ratio.value}
                 onClick={() => setSelectedAspectRatio(ratio.value)}
-                className={`p-3 min-h-[72px] rounded-xl text-center transition-all border ${
+                className={`p-2 min-h-[56px] rounded-lg text-center transition-all border ${
                   selectedAspectRatio === ratio.value
                     ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500 dark:border-emerald-400 ring-1 ring-emerald-500 dark:ring-emerald-400'
                     : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:border-emerald-300 dark:hover:border-emerald-500'
                 }`}
               >
-                <span className="block font-semibold text-slate-800 dark:text-slate-100 text-sm">{ratio.label}</span>
-                <span className="block text-xs text-slate-500 dark:text-slate-400">{ratio.description}</span>
+                <span className="block font-semibold text-slate-800 dark:text-slate-100 text-xs">{ratio.label}</span>
+                <span className="block text-[10px] text-slate-500 dark:text-slate-400">{ratio.description}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Step 3: Instruction & Preview */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
-          <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">3. 어떻게 바꿔드릴까요?</h3>
-          <div className="mb-4 flex flex-wrap gap-2">
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
+          <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">3. 어떻게 바꿔드릴까요?</h3>
+          <div className="mb-3 flex flex-wrap gap-1.5">
             {['레트로 필터 씌워줘', '배경에 있는 사람 지워줘', '배경을 사무실로 바꿔줘', '좀 더 화사하게 만들어줘'].map(suggestion => (
               <button
                 key={suggestion}
                 onClick={() => setPrompt(suggestion)}
-                className="px-3 py-1.5 min-h-[32px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-sm rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                className="px-2.5 py-1 min-h-[28px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
               >
                 {suggestion}
               </button>
@@ -245,24 +246,24 @@ function EditPageContent() {
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="예: 배경을 깔끔한 흰색으로 바꿔줘, 텍스트를 제거해줘."
-            className="w-full p-4 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 min-h-[120px] transition-colors"
+            className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 min-h-[80px] text-sm transition-colors"
           />
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4 pb-safe z-30 transition-colors">
-          <div className="max-w-6xl mx-auto flex gap-3 justify-end">
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-3 pb-safe z-30 transition-colors">
+          <div className="max-w-5xl mx-auto flex gap-2 justify-end">
             {/* Generate Button */}
             <button
               onClick={handleGenerate}
               disabled={!uploadedImage || !prompt || isLoading}
-              className={`flex-1 md:flex-none px-8 py-3 min-h-[52px] rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all ${
+              className={`flex-1 md:flex-none px-6 py-2.5 min-h-[44px] rounded-lg font-bold text-sm lg:text-base flex items-center justify-center gap-2 shadow-md transition-all ${
                 !uploadedImage || !prompt || isLoading
                   ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-500 cursor-not-allowed'
                   : 'bg-emerald-600 dark:bg-emerald-500 text-white hover:bg-emerald-700 dark:hover:bg-emerald-600 hover:shadow-emerald-200 dark:hover:shadow-emerald-900'
               }`}
             >
               {isLoading ? '생성 중...' : '이미지 4장 생성'}
-              {!isLoading && <Wand2 className="w-5 h-5" />}
+              {!isLoading && <Wand2 className="w-4 h-4" />}
             </button>
           </div>
         </div>

@@ -17,19 +17,19 @@ export default function HomePage() {
     <>
       <Header currentMode={AppMode.HOME} />
 
-      <div className="max-w-6xl mx-auto px-4 py-16">
+      <div className="max-w-6xl mx-auto px-4 py-8 lg:py-10">
         {/* Hero 섹션 - 서버 렌더링 */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-8 lg:mb-10">
           <Image
             src="/FlowStudio-removebg.png"
             alt="FlowStudio"
-            width={280}
-            height={140}
-            className="mx-auto mb-6"
+            width={200}
+            height={100}
+            className="mx-auto mb-4"
             style={{ height: "auto" }}
             priority
           />
-          <p className="text-slate-600 dark:text-slate-300 text-lg">
+          <p className="text-slate-600 dark:text-slate-300 text-sm lg:text-base">
             복잡한 포토샵 없이, 전문가급 제품 사진과 홍보물을 30초 만에 만들어보세요.
           </p>
         </div>

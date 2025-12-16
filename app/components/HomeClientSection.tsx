@@ -353,30 +353,30 @@ export function ModeCardsGrid() {
 
   return (
     <>
-      <div ref={gridRef} className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div ref={gridRef} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
         {modeCards.map((card, index) => {
           const IconComponent = card.icon
           return (
             <Link
               key={card.href}
               href={card.href}
-              className={`group bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-xl ${card.colors.border} transition-all min-h-[200px] block`}
+              className={`group bg-white dark:bg-slate-800 p-3 lg:p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-lg ${card.colors.border} transition-all block`}
               onMouseEnter={(e) => handleMouseEnter(e, index)}
               onMouseMove={(e) => handleMouseMove(e, index)}
               onMouseLeave={handleMouseLeave}
             >
               <div
-                className={`${card.colors.bg} w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
+                className={`${card.colors.bg} w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center mb-2 lg:mb-3 group-hover:scale-110 transition-transform`}
               >
-                <IconComponent className={`w-6 h-6 ${card.colors.text}`} />
+                <IconComponent className={`w-4 h-4 lg:w-5 lg:h-5 ${card.colors.text}`} />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">
+              <h3 className="text-sm lg:text-base font-bold text-slate-900 dark:text-slate-100 mb-0.5">
                 {card.title}
               </h3>
-              <p className="text-slate-500 dark:text-slate-400 mb-3 text-xs h-10">
+              <p className="text-slate-500 dark:text-slate-400 mb-2 text-[11px] lg:text-xs line-clamp-2">
                 {card.description}
               </p>
-              <div className={`flex items-center ${card.colors.text} font-medium text-xs`}>
+              <div className={`flex items-center ${card.colors.text} font-medium text-[11px] lg:text-xs`}>
                 {card.cta} <ArrowRight className="w-3 h-3 ml-1" />
               </div>
             </Link>
@@ -425,13 +425,13 @@ function AccordionItem({
         aria-expanded={isOpen}
         aria-controls={contentId}
         onClick={onToggle}
-        className="w-full flex items-center justify-between gap-4 py-5 px-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors rounded-lg -mx-4 sm:mx-0 sm:rounded-none"
+        className="w-full flex items-center justify-between gap-3 py-3 px-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors rounded-lg -mx-3 sm:mx-0 sm:rounded-none"
       >
-        <span className="font-medium text-slate-900 dark:text-slate-100 text-sm sm:text-base">
+        <span className="font-medium text-slate-900 dark:text-slate-100 text-xs sm:text-sm">
           {question}
         </span>
         <ChevronDown
-          className={`w-5 h-5 text-slate-500 dark:text-slate-400 flex-shrink-0 transition-transform duration-300 ${
+          className={`w-4 h-4 text-slate-500 dark:text-slate-400 flex-shrink-0 transition-transform duration-300 ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
@@ -444,7 +444,7 @@ function AccordionItem({
           isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <p className="pb-5 px-4 sm:px-0 text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+        <p className="pb-3 px-3 sm:px-0 text-slate-600 dark:text-slate-300 text-xs lg:text-sm leading-relaxed">
           {answer}
         </p>
       </div>
@@ -461,22 +461,22 @@ export function FAQSection() {
   }
 
   return (
-    <section className="max-w-3xl mx-auto px-4 py-16">
+    <section className="max-w-3xl mx-auto px-4 py-8 lg:py-10">
       {/* 섹션 헤더 */}
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 mb-4">
-          <HelpCircle className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+      <div className="text-center mb-6">
+        <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 mb-3">
+          <HelpCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
         </div>
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+        <h2 className="text-lg lg:text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
           자주 묻는 질문
         </h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm">
+        <p className="text-slate-500 dark:text-slate-400 text-xs lg:text-sm">
           FlowStudio 이용에 궁금한 점이 있으신가요?
         </p>
       </div>
 
       {/* 아코디언 리스트 */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 px-4 sm:px-6">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 px-3 sm:px-4">
         {faqData.map((item, index) => (
           <AccordionItem
             key={index}
@@ -498,24 +498,23 @@ export function HomeFooter() {
   return (
     <>
       <footer className="bg-slate-100 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700">
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="text-center text-sm text-slate-500 dark:text-slate-400 space-y-2">
+        <div className="max-w-6xl mx-auto px-4 py-5">
+          <div className="text-center text-xs text-slate-500 dark:text-slate-400 space-y-1">
             <p className="font-medium text-slate-600 dark:text-slate-300">
               © 2025 FlowCoder. All rights reserved.
             </p>
             <p>주식회사 테크트리아이엔씨 (636-81-00865) | 통신판매번호: 2021-대구중구-0666</p>
             <p>박현일 | 대구광역시 중구 동덕로 115, 9층 902호 내 512(삼덕동2가)</p>
             <p>
-              문의 사항이 있으신가요?{' '}
+              문의:{' '}
               <a
                 href="mailto:flowcoder25@gmail.com"
                 className="text-indigo-600 dark:text-indigo-400 hover:underline"
               >
                 flowcoder25@gmail.com
               </a>
-              로 연락해주세요
             </p>
-            <div className="flex items-center justify-center gap-2 pt-2 flex-wrap">
+            <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
               <Link href="/privacy" className="hover:text-slate-700 dark:hover:text-slate-300 hover:underline">
                 개인정보 처리방침
               </Link>

@@ -174,14 +174,14 @@ function ColorCorrectionPageContent() {
     <>
       <Header currentMode={AppMode.COLOR_CORRECTION} />
 
-      <div className="max-w-6xl mx-auto px-4 py-8 pb-32">
-        <div className="mb-8 flex items-center justify-between">
+      <div className="max-w-5xl mx-auto px-3 lg:px-4 py-4 lg:py-6 pb-24">
+        <div className="mb-4 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold mb-2 flex items-center gap-2 text-slate-900 dark:text-slate-100">
-              <SlidersHorizontal className="text-amber-500 dark:text-amber-400" size={28} />
+            <h2 className="text-lg lg:text-xl font-bold mb-1 flex items-center gap-2 text-slate-900 dark:text-slate-100">
+              <SlidersHorizontal className="w-5 h-5 text-amber-500 dark:text-amber-400" />
               색감 보정 스튜디오
             </h2>
-            <p className="text-slate-600 dark:text-slate-400">AI 없이 즉시 색감을 조절합니다 (무료/무제한)</p>
+            <p className="text-slate-600 dark:text-slate-400 text-xs">AI 없이 즉시 색감을 조절합니다 (무료/무제한)</p>
           </div>
 
           {uploadedImage && (
@@ -190,7 +190,7 @@ function ColorCorrectionPageContent() {
                 setUploadedImage(null);
                 setFilters(DEFAULT_FILTERS);
               }}
-              className="text-sm text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 flex items-center gap-1 transition-colors"
+              className="text-xs text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 flex items-center gap-1 transition-colors"
             >
               <RefreshCw className="w-3 h-3" /> 다른 이미지 열기
             </button>
@@ -198,25 +198,26 @@ function ColorCorrectionPageContent() {
         </div>
 
         {!uploadedImage ? (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 min-h-[500px] transition-colors">
-            <div className="max-w-md mx-auto space-y-6">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 min-h-[350px] transition-colors">
+            <div className="max-w-sm mx-auto space-y-4">
               <FileDropzone
                 value={uploadedImage}
                 onChange={setUploadedImage}
                 onCompressing={setIsCompressing}
                 onError={(msg) => alert(msg)}
                 colorTheme="amber"
-                icon={<ImageIcon className="w-10 h-10 text-amber-600 dark:text-amber-400" />}
+                icon={<ImageIcon className="w-8 h-8 text-amber-600 dark:text-amber-400" />}
                 placeholder="보정할 사진 업로드 또는 드래그 앤 드롭"
                 subPlaceholder="PNG, JPG (최대 10MB)"
                 imageAlt="To Correct"
-                minHeight="min-h-[300px]"
+                compact
+                minHeight="min-h-[200px]"
               />
 
               {/* Divider with "또는" */}
-              <div className="relative flex items-center my-5">
+              <div className="relative flex items-center my-4">
                 <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
-                <span className="flex-shrink-0 mx-4 text-sm font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 px-2">
+                <span className="flex-shrink-0 mx-3 text-xs font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 px-2">
                   또는
                 </span>
                 <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
@@ -224,7 +225,7 @@ function ColorCorrectionPageContent() {
 
               <button
                 onClick={() => setIsGalleryOpen(true)}
-                className="w-full py-3 px-4 min-h-[48px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-4 min-h-[40px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium text-sm rounded-lg transition-colors flex items-center justify-center gap-2"
               >
                 <FolderOpen className="w-4 h-4" />
                 이미지 저장소에서 불러오기
@@ -232,16 +233,16 @@ function ColorCorrectionPageContent() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Canvas Area */}
-            <div className="lg:col-span-2 bg-slate-900 dark:bg-slate-950 rounded-xl overflow-hidden relative border border-slate-700 dark:border-slate-800 shadow-inner flex items-center justify-center min-h-[600px] transition-colors">
-              <div className="max-w-full max-h-full p-4 relative">
-                <canvas ref={canvasRef} className="max-w-full max-h-[70vh] object-contain shadow-2xl" />
-                <div className="absolute bottom-6 right-6 flex gap-2">
+            <div className="lg:col-span-2 bg-slate-900 dark:bg-slate-950 rounded-xl overflow-hidden relative border border-slate-700 dark:border-slate-800 shadow-inner flex items-center justify-center min-h-[400px] lg:min-h-[500px] transition-colors">
+              <div className="max-w-full max-h-full p-3 relative">
+                <canvas ref={canvasRef} className="max-w-full max-h-[60vh] object-contain shadow-2xl" />
+                <div className="absolute bottom-4 right-4 flex gap-2">
                   <button
                     onClick={handleUpscale}
                     disabled={isLoading}
-                    className="px-4 py-2 bg-indigo-600/90 dark:bg-indigo-700/90 hover:bg-indigo-700 dark:hover:bg-indigo-800 text-white text-xs font-bold rounded-full shadow-lg backdrop-blur-sm flex items-center gap-1 transition-all disabled:opacity-50"
+                    className="px-3 py-1.5 bg-indigo-600/90 dark:bg-indigo-700/90 hover:bg-indigo-700 dark:hover:bg-indigo-800 text-white text-[10px] font-bold rounded-full shadow-lg backdrop-blur-sm flex items-center gap-1 transition-all disabled:opacity-50"
                   >
                     {isLoading ? (
                       <RefreshCw className="w-3 h-3 animate-spin" />
@@ -255,18 +256,18 @@ function ColorCorrectionPageContent() {
             </div>
 
             {/* Controls Panel */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex flex-col overflow-y-auto max-h-[600px] transition-colors">
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 flex flex-col overflow-y-auto max-h-[500px] transition-colors">
               {/* Presets */}
-              <div className="mb-6">
-                <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-3 text-sm flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-500 dark:text-amber-400" /> 전문가 필터 프리셋
+              <div className="mb-4">
+                <h3 className="font-semibold text-slate-800 dark:text-slate-100 mb-2 text-xs flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" /> 전문가 필터 프리셋
                 </h3>
-                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pr-1">
                   {FILTER_PRESETS.map((preset) => (
                     <button
                       key={preset.label}
                       onClick={() => setFilters(preset.filters)}
-                      className={`p-2 text-xs rounded transition-colors text-left font-medium border ${preset.color}`}
+                      className={`p-1.5 text-[10px] rounded transition-colors text-left font-medium border ${preset.color}`}
                     >
                       {preset.label}
                     </button>
@@ -275,9 +276,9 @@ function ColorCorrectionPageContent() {
               </div>
 
               {/* Sliders */}
-              <div className="space-y-4 flex-1">
-                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm flex items-center gap-2 border-t border-slate-100 dark:border-slate-700 pt-4">
-                  <SlidersHorizontal className="w-4 h-4 text-amber-500 dark:text-amber-400" /> 세부 조절
+              <div className="space-y-3 flex-1">
+                <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-xs flex items-center gap-1.5 border-t border-slate-100 dark:border-slate-700 pt-3">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" /> 세부 조절
                 </h3>
 
                 {/* Brightness */}
@@ -399,27 +400,27 @@ function ColorCorrectionPageContent() {
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-6 space-y-2">
-                <div className="flex gap-2">
+              <div className="mt-4 space-y-1.5">
+                <div className="flex gap-1.5">
                   <button
                     onClick={() => setFilters(DEFAULT_FILTERS)}
-                    className="flex-1 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl transition-colors flex items-center justify-center gap-1"
+                    className="flex-1 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors flex items-center justify-center gap-1"
                   >
-                    <RotateCcw className="w-4 h-4" /> 초기화
+                    <RotateCcw className="w-3.5 h-3.5" /> 초기화
                   </button>
                   <button
                     onClick={handleDownload}
-                    className="flex-[2] py-3 text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-xl transition-colors flex items-center justify-center gap-2"
+                    className="flex-[2] py-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-lg transition-colors flex items-center justify-center gap-1.5"
                   >
-                    <Download className="w-4 h-4" /> 다운로드
+                    <Download className="w-3.5 h-3.5" /> 다운로드
                   </button>
                 </div>
                 <button
                   onClick={handleSaveToCloud}
                   disabled={isLoading}
-                  className="w-full py-3 text-sm font-bold text-white bg-amber-500 dark:bg-amber-600 hover:bg-amber-600 dark:hover:bg-amber-700 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-amber-200 dark:shadow-amber-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-2 text-xs font-bold text-white bg-amber-500 dark:bg-amber-600 hover:bg-amber-600 dark:hover:bg-amber-700 rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-lg shadow-amber-200 dark:shadow-amber-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Cloud className="w-4 h-4" /> 이미지 저장소에 저장
+                  <Cloud className="w-3.5 h-3.5" /> 이미지 저장소에 저장
                 </button>
               </div>
             </div>
