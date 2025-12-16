@@ -9,7 +9,7 @@
 
 import Image from 'next/image'
 import { Header } from '@/components/Header'
-import { ModeCardsGrid, HomeFooter } from './components/HomeClientSection'
+import { ModeCardsGrid, FAQSection, HomeFooter } from './components/HomeClientSection'
 import { AppMode } from '@/types'
 
 export default function HomePage() {
@@ -37,6 +37,9 @@ export default function HomePage() {
         {/* 모드 카드 그리드 - 클라이언트 컴포넌트 (Link 사용) */}
         <ModeCardsGrid />
       </div>
+
+      {/* FAQ 섹션 - 클라이언트 컴포넌트 (아코디언 인터랙션) */}
+      <FAQSection />
 
       {/* 푸터 - 클라이언트 컴포넌트 (모달 포함) */}
       <HomeFooter />

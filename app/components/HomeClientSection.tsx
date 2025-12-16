@@ -20,8 +20,38 @@ import {
   Layers,
   Megaphone,
   SlidersHorizontal,
+  ChevronDown,
+  HelpCircle,
 } from 'lucide-react'
 import { ContactModal } from '@/components/ContactModal'
+
+// FAQ 데이터 정의
+const faqData = [
+  {
+    question: 'FlowStudio는 어떤 서비스인가요?',
+    answer: 'FlowStudio는 AI 기반 이미지 생성 플랫폼입니다. 전문가급 제품 사진, SNS 홍보물, 상세페이지 등을 텍스트 설명만으로 30초 만에 만들 수 있습니다. 포토샵이나 디자인 기술 없이도 누구나 쉽게 사용할 수 있습니다.',
+  },
+  {
+    question: '이미지 생성은 어떻게 하나요?',
+    answer: '원하는 이미지를 텍스트로 설명하거나, 참조 이미지를 업로드하면 AI가 자동으로 4장의 이미지를 생성합니다. 생성된 이미지 중 마음에 드는 것을 선택하여 저장하거나, 추가 편집을 진행할 수 있습니다.',
+  },
+  {
+    question: '크레딧은 어떻게 사용되나요?',
+    answer: '이미지 생성 시 20크레딧, 4K 업스케일 시 10크레딧이 차감됩니다. 신규 가입 시 무료 크레딧이 제공되며, 크레딧 구매 페이지에서 추가 구매가 가능합니다. 친구 초대 시 추가 크레딧을 받을 수 있습니다.',
+  },
+  {
+    question: '생성된 이미지의 해상도는 얼마인가요?',
+    answer: '기본적으로 2K(2048px) 해상도로 생성됩니다. 더 높은 품질이 필요한 경우 4K(4096px) 업스케일 기능을 이용하실 수 있습니다. 상업용 인쇄물에도 충분한 품질을 제공합니다.',
+  },
+  {
+    question: '생성된 이미지의 저작권은 누구에게 있나요?',
+    answer: '생성된 이미지의 저작권은 사용자에게 귀속됩니다. 상업적 용도(쇼핑몰, 광고, SNS 등)로 자유롭게 사용하실 수 있습니다. 단, AI 생성 이미지 관련 법률은 국가별로 다를 수 있으니 해외 사용 시 확인을 권장합니다.',
+  },
+  {
+    question: '환불은 어떻게 받을 수 있나요?',
+    answer: '미사용 크레딧에 대해 환불이 가능합니다. 결제일로부터 7일 이내에 고객센터로 문의해 주세요. 자세한 내용은 하단의 환불약관을 참조해 주세요.',
+  },
+]
 
 // 모드 카드 데이터 정의
 const modeCards = [
@@ -140,6 +170,97 @@ export function ModeCardsGrid() {
         )
       })}
     </div>
+  )
+}
+
+// 아코디언 아이템 컴포넌트
+function AccordionItem({
+  question,
+  answer,
+  isOpen,
+  onToggle,
+  index,
+}: {
+  question: string
+  answer: string
+  isOpen: boolean
+  onToggle: () => void
+  index: number
+}) {
+  const contentId = `faq-content-${index}`
+  const buttonId = `faq-button-${index}`
+
+  return (
+    <div className="border-b border-slate-200 dark:border-slate-700 last:border-b-0">
+      <button
+        id={buttonId}
+        aria-expanded={isOpen}
+        aria-controls={contentId}
+        onClick={onToggle}
+        className="w-full flex items-center justify-between gap-4 py-5 px-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors rounded-lg -mx-4 sm:mx-0 sm:rounded-none"
+      >
+        <span className="font-medium text-slate-900 dark:text-slate-100 text-sm sm:text-base">
+          {question}
+        </span>
+        <ChevronDown
+          className={`w-5 h-5 text-slate-500 dark:text-slate-400 flex-shrink-0 transition-transform duration-300 ${
+            isOpen ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+      <div
+        id={contentId}
+        role="region"
+        aria-labelledby={buttonId}
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <p className="pb-5 px-4 sm:px-0 text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+          {answer}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// FAQ 섹션 컴포넌트
+export function FAQSection() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+
+  const handleToggle = (index: number) => {
+    setOpenIndex(openIndex === index ? null : index)
+  }
+
+  return (
+    <section className="max-w-3xl mx-auto px-4 py-16">
+      {/* 섹션 헤더 */}
+      <div className="text-center mb-10">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 mb-4">
+          <HelpCircle className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+        </div>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+          자주 묻는 질문
+        </h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">
+          FlowStudio 이용에 궁금한 점이 있으신가요?
+        </p>
+      </div>
+
+      {/* 아코디언 리스트 */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 px-4 sm:px-6">
+        {faqData.map((item, index) => (
+          <AccordionItem
+            key={index}
+            question={item.question}
+            answer={item.answer}
+            isOpen={openIndex === index}
+            onToggle={() => handleToggle(index)}
+            index={index}
+          />
+        ))}
+      </div>
+    </section>
   )
 }
 
