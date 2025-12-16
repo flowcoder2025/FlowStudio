@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { Wand2, ImageIcon, X, FolderOpen, Cloud, Loader2, Check, Download } from 'lucide-react';
+import { FileDropzone } from '@/components/FileDropzone';
 import { Header } from '@/components/Header';
 import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
@@ -11,7 +12,6 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode, GenerationRequest } from '@/types';
 import { ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, upscaleImage } from '@/services/geminiService';
-import { compressImageWithStats, isFileTooLarge } from '@/lib/utils/imageCompression';
 
 export default function EditPage() {
   return (
@@ -33,41 +33,6 @@ function EditPageContent() {
   const [isCompressing, setIsCompressing] = useState(false);
   const [isUpscaledSaving, setIsUpscaledSaving] = useState(false);
   const [isUpscaledSaved, setIsUpscaledSaved] = useState(false);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const needsCompression = isFileTooLarge(file, 3);
-
-      if (needsCompression) {
-        setIsCompressing(true);
-        console.log(`🖼️ 이미지 압축 시작: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
-
-        const result = await compressImageWithStats(file, {
-          maxSizeMB: 2,
-          maxWidthOrHeight: 2048,
-        });
-
-        console.log(`✅ 압축 완료: ${result.originalSizeMB.toFixed(2)}MB → ${result.compressedSizeMB.toFixed(2)}MB (${result.reductionPercent.toFixed(1)}% 감소)`);
-        setUploadedImage(result.compressed);
-        setIsCompressing(false);
-      } else {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setUploadedImage(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      }
-    } catch (error) {
-      console.error('이미지 압축 오류:', error);
-      setIsCompressing(false);
-      alert('이미지 처리 중 오류가 발생했습니다. 다른 이미지를 시도해주세요.');
-    }
-  };
 
   const handleGallerySelect = (imageUrl: string) => {
     setUploadedImage(imageUrl);
@@ -209,41 +174,18 @@ function EditPageContent() {
         {/* Step 1: Mandatory Upload */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
           <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">1. 편집할 사진을 올려주세요</h3>
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${uploadedImage ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20' : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
-          >
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              accept="image/*"
-              className="hidden"
-            />
-            {uploadedImage ? (
-              <div className="relative max-h-80 mx-auto w-fit">
-                <Image
-                  src={uploadedImage}
-                  alt="To Edit"
-                  width={1080}
-                  height={1920}
-                  className="max-h-80 w-auto rounded-lg shadow-sm"
-                  unoptimized={uploadedImage.startsWith('data:')}
-                />
-                <button
-                  onClick={(e) => { e.stopPropagation(); setUploadedImage(null); }}
-                  className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 min-h-[36px] min-w-[36px] transition-colors"
-                >
-                  <span className="text-xs font-bold">변경</span>
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-3 py-8">
-                <ImageIcon className="w-12 h-12 text-slate-400 dark:text-slate-500" />
-                <p className="text-slate-600 dark:text-slate-300 font-medium text-lg">사진 업로드하기</p>
-              </div>
-            )}
-          </div>
+          <FileDropzone
+            value={uploadedImage}
+            onChange={setUploadedImage}
+            onCompressing={setIsCompressing}
+            onError={(msg) => alert(msg)}
+            colorTheme="emerald"
+            icon={<ImageIcon className="w-12 h-12 text-slate-400 dark:text-slate-500" />}
+            placeholder="사진 업로드 또는 드래그 앤 드롭"
+            subPlaceholder="PNG, JPG (최대 10MB)"
+            imageAlt="To Edit"
+            imageMaxHeight="max-h-80"
+          />
           {/* Gallery Button */}
           <button
             onClick={() => setIsGalleryOpen(true)}

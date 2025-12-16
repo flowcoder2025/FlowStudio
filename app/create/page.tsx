@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { Camera, Sparkles, X, FolderOpen, Cloud, Loader2, Check, Download } from 'lucide-react';
+import { FileDropzone } from '@/components/FileDropzone';
 import { Header } from '@/components/Header';
 import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
@@ -11,7 +12,6 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
 import { CATEGORIES, ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, upscaleImage } from '@/services/geminiService';
-import { compressImageWithStats, isFileTooLarge } from '@/lib/utils/imageCompression';
 
 export default function CreatePage() {
   return (
@@ -36,45 +36,8 @@ function CreatePageContent() {
   const [isUpscaledSaving, setIsUpscaledSaving] = useState(false);
   const [isUpscaledSaved, setIsUpscaledSaved] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const handleGallerySelect = (imageUrl: string) => {
     setUploadedImage(imageUrl);
-  };
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      // 파일 크기 확인 및 압축 필요 여부 판단
-      const needsCompression = isFileTooLarge(file, 3); // 3MB 이상이면 압축
-
-      if (needsCompression) {
-        setIsCompressing(true);
-        console.log(`🖼️ 이미지 압축 시작: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
-
-        const result = await compressImageWithStats(file, {
-          maxSizeMB: 2,
-          maxWidthOrHeight: 2048,
-        });
-
-        console.log(`✅ 압축 완료: ${result.originalSizeMB.toFixed(2)}MB → ${result.compressedSizeMB.toFixed(2)}MB (${result.reductionPercent.toFixed(1)}% 감소)`);
-        setUploadedImage(result.compressed);
-        setIsCompressing(false);
-      } else {
-        // 3MB 이하는 압축 없이 그대로 사용
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setUploadedImage(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      }
-    } catch (error) {
-      console.error('이미지 압축 오류:', error);
-      setIsCompressing(false);
-      alert('이미지 처리 중 오류가 발생했습니다. 다른 이미지를 시도해주세요.');
-    }
   };
 
   const handleGenerate = async () => {
@@ -221,42 +184,17 @@ function CreatePageContent() {
         {/* Step 1: Upload (Optional) */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 transition-colors">
           <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-100">1. 참고할 제품 사진이 있나요? (선택)</h3>
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${uploadedImage ? 'border-indigo-500 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20' : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
-          >
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              accept="image/*"
-              className="hidden"
-            />
-            {uploadedImage ? (
-              <div className="relative h-48 w-full flex items-center justify-center">
-                <Image
-                  src={uploadedImage}
-                  alt="Uploaded"
-                  fill
-                  className="object-contain rounded-lg shadow-sm"
-                  unoptimized={uploadedImage.startsWith('data:')}
-                />
-                <button
-                  onClick={(e) => { e.stopPropagation(); setUploadedImage(null); }}
-                  className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1"
-                >
-                  <span className="sr-only">Remove</span>
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-3">
-                <Camera className="w-10 h-10 text-slate-400 dark:text-slate-500" />
-                <p className="text-slate-600 dark:text-slate-300 font-medium">제품 사진 업로드 또는 촬영</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">사진이 없으면 텍스트로만 생성됩니다.</p>
-              </div>
-            )}
-          </div>
+          <FileDropzone
+            value={uploadedImage}
+            onChange={setUploadedImage}
+            onCompressing={setIsCompressing}
+            onError={(msg) => alert(msg)}
+            colorTheme="indigo"
+            icon={<Camera className="w-10 h-10 text-slate-400 dark:text-slate-500" />}
+            placeholder="제품 사진 업로드 또는 드래그 앤 드롭"
+            subPlaceholder="사진이 없으면 텍스트로만 생성됩니다."
+            imageAlt="Uploaded"
+          />
           {/* Gallery Button */}
           <button
             onClick={() => setIsGalleryOpen(true)}

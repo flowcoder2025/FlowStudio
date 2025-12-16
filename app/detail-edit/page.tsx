@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import NextImage from 'next/image';
 import { FilePenLine, Layout, RefreshCw, ZoomIn, ZoomOut, MousePointer2, Hand, Wand2, Type, ImagePlus, Check, FolderOpen, Download, Cloud, Loader2, FilePlus2 } from 'lucide-react';
+import { FileDropzone } from '@/components/FileDropzone';
 import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
@@ -10,7 +11,6 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode, GenerationRequest } from '@/types';
 import { generatePreview, extractTextFromImage } from '@/services/geminiService';
 import { recordUsage } from '@/services/usageService';
-import { compressImageWithStats, isFileTooLarge } from '@/lib/utils/imageCompression';
 
 type EditModeSub = 'GENERAL' | 'TEXT' | 'REPLACE';
 type ActiveTool = 'SELECT' | 'PAN';
@@ -50,8 +50,6 @@ function DetailEditPageContent() {
 
   const imageRef = useRef<HTMLImageElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const replacementFileInputRef = useRef<HTMLInputElement>(null);
 
   // Reset zoom when image changes
   useEffect(() => {
@@ -64,74 +62,10 @@ function DetailEditPageContent() {
     }
   }, [uploadedImage]);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const needsCompression = isFileTooLarge(file, 3);
-
-      if (needsCompression) {
-        setIsCompressing(true);
-        console.log(`🖼️ 이미지 압축 시작: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
-
-        const result = await compressImageWithStats(file, {
-          maxSizeMB: 2,
-          maxWidthOrHeight: 2048,
-        });
-
-        console.log(`✅ 압축 완료: ${result.originalSizeMB.toFixed(2)}MB → ${result.compressedSizeMB.toFixed(2)}MB (${result.reductionPercent.toFixed(1)}% 감소)`);
-        setUploadedImage(result.compressed);
-        setSelectionRect(null);
-        setEditedSectionOverlay(null);
-        setIsCompressing(false);
-      } else {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setUploadedImage(reader.result as string);
-          setSelectionRect(null);
-          setEditedSectionOverlay(null);
-        };
-        reader.readAsDataURL(file);
-      }
-    } catch (error) {
-      console.error('이미지 압축 오류:', error);
-      setIsCompressing(false);
-      alert('이미지 처리 중 오류가 발생했습니다. 다른 이미지를 시도해주세요.');
-    }
-  };
-
-  const handleReplacementImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const needsCompression = isFileTooLarge(file, 3);
-
-      if (needsCompression) {
-        setIsCompressing(true);
-        console.log(`🖼️ 교체 이미지 압축 시작: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
-
-        const result = await compressImageWithStats(file, {
-          maxSizeMB: 2,
-          maxWidthOrHeight: 2048,
-        });
-
-        console.log(`✅ 압축 완료: ${result.originalSizeMB.toFixed(2)}MB → ${result.compressedSizeMB.toFixed(2)}MB (${result.reductionPercent.toFixed(1)}% 감소)`);
-        setReplacementImage(result.compressed);
-        setIsCompressing(false);
-      } else {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setReplacementImage(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      }
-    } catch (error) {
-      console.error('교체 이미지 압축 오류:', error);
-      setIsCompressing(false);
-      alert('이미지 처리 중 오류가 발생했습니다. 다른 이미지를 시도해주세요.');
-    }
+  const handleUploadedImageChange = (image: string | null) => {
+    setUploadedImage(image);
+    setSelectionRect(null);
+    setEditedSectionOverlay(null);
   };
 
   const handleZoom = (delta: number) => {
@@ -542,28 +476,23 @@ function DetailEditPageContent() {
 
         {!uploadedImage ? (
           <div className="flex-1 flex items-center justify-center bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
-            <div className="text-center p-12">
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all p-6"
-              >
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleImageUpload}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <div className="bg-violet-100 dark:bg-violet-900/30 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Layout className="w-10 h-10 text-violet-600 dark:text-violet-400" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">편집할 상세페이지 업로드</h3>
-                <p className="text-slate-500 dark:text-slate-400">JPG, PNG 파일 지원 (최대 10MB)</p>
-              </div>
+            <div className="w-full max-w-md p-8">
+              <FileDropzone
+                value={uploadedImage}
+                onChange={handleUploadedImageChange}
+                onCompressing={setIsCompressing}
+                onError={(msg) => alert(msg)}
+                colorTheme="violet"
+                icon={<Layout className="w-10 h-10 text-violet-600 dark:text-violet-400" />}
+                placeholder="편집할 상세페이지 업로드"
+                subPlaceholder="JPG, PNG 파일 지원 (최대 10MB)"
+                imageAlt="Detail Page"
+                minHeight="min-h-[200px]"
+              />
               <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-4">
                 <button
                   onClick={() => setIsGalleryOpen(true)}
-                  className="flex items-center justify-center gap-2 py-3 px-6 min-h-[48px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-medium transition-colors mx-auto"
+                  className="flex items-center justify-center gap-2 py-3 px-6 min-h-[48px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-medium transition-colors w-full"
                 >
                   <FolderOpen className="w-5 h-5" />
                   내 이미지에서 불러오기
@@ -789,34 +718,19 @@ function DetailEditPageContent() {
                 {editModeSub === 'REPLACE' && (
                   <div className="mb-4">
                     <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">교체할 이미지</label>
-                    <div
-                      onClick={() => replacementFileInputRef.current?.click()}
-                      className="border-2 border-dashed border-violet-300 dark:border-violet-700 rounded-lg p-3 text-center cursor-pointer hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-colors"
-                    >
-                      <input
-                        type="file"
-                        ref={replacementFileInputRef}
-                        onChange={handleReplacementImageUpload}
-                        accept="image/*"
-                        className="hidden"
-                      />
-                      {replacementImage ? (
-                        <div className="relative w-20 h-20 mx-auto">
-                          <NextImage
-                            src={replacementImage}
-                            alt="Replacement"
-                            fill
-                            className="object-cover rounded"
-                            unoptimized={replacementImage.startsWith('data:')}
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center gap-1 py-2">
-                          <ImagePlus className="w-6 h-6 text-violet-400 dark:text-violet-500" />
-                          <span className="text-xs text-slate-600 dark:text-slate-300">이미지 선택</span>
-                        </div>
-                      )}
-                    </div>
+                    <FileDropzone
+                      value={replacementImage}
+                      onChange={setReplacementImage}
+                      onCompressing={setIsCompressing}
+                      onError={(msg) => alert(msg)}
+                      colorTheme="violet"
+                      icon={<ImagePlus className="w-6 h-6 text-violet-400 dark:text-violet-500" />}
+                      placeholder="이미지 선택"
+                      imageAlt="Replacement"
+                      compact
+                      minHeight="min-h-[80px]"
+                      imageMaxHeight="h-20"
+                    />
                   </div>
                 )}
 

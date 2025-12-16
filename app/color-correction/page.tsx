@@ -14,6 +14,7 @@ import {
   ImageIcon,
   Cloud,
 } from 'lucide-react';
+import { FileDropzone } from '@/components/FileDropzone';
 import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
@@ -21,7 +22,6 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode, FilterState } from '@/types';
 import { DEFAULT_FILTERS, FILTER_PRESETS } from '@/lib/constants';
 import { upscaleImage } from '@/services/geminiService';
-import { compressImageWithStats, isFileTooLarge } from '@/lib/utils/imageCompression';
 
 export default function ColorCorrectionPage() {
   return (
@@ -40,43 +40,9 @@ function ColorCorrectionPageContent() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sourceImageRef = useRef<HTMLImageElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleGallerySelect = (imageUrl: string) => {
     setUploadedImage(imageUrl);
-  };
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const needsCompression = isFileTooLarge(file, 3);
-
-      if (needsCompression) {
-        setIsCompressing(true);
-        console.log(`🖼️ 이미지 압축 시작: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
-
-        const result = await compressImageWithStats(file, {
-          maxSizeMB: 2,
-          maxWidthOrHeight: 2048,
-        });
-
-        console.log(`✅ 압축 완료: ${result.originalSizeMB.toFixed(2)}MB → ${result.compressedSizeMB.toFixed(2)}MB (${result.reductionPercent.toFixed(1)}% 감소)`);
-        setUploadedImage(result.compressed);
-        setIsCompressing(false);
-      } else {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setUploadedImage(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      }
-    } catch (error) {
-      console.error('이미지 압축 오류:', error);
-      setIsCompressing(false);
-      alert('이미지 처리 중 오류가 발생했습니다. 다른 이미지를 시도해주세요.');
-    }
   };
 
   const drawCanvas = useCallback(() => {
@@ -232,29 +198,24 @@ function ColorCorrectionPageContent() {
         </div>
 
         {!uploadedImage ? (
-          <div className="flex items-center justify-center bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-12 min-h-[500px] transition-colors">
-            <div className="text-center max-w-md space-y-6">
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="cursor-pointer p-12 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all"
-              >
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleImageUpload}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <div className="bg-amber-100 dark:bg-amber-900/40 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <ImageIcon className="w-10 h-10 text-amber-600 dark:text-amber-400" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">보정할 사진 업로드</h3>
-                <p className="text-slate-500 dark:text-slate-400">PNG, JPG (최대 10MB)</p>
-              </div>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 min-h-[500px] transition-colors">
+            <div className="max-w-md mx-auto space-y-6">
+              <FileDropzone
+                value={uploadedImage}
+                onChange={setUploadedImage}
+                onCompressing={setIsCompressing}
+                onError={(msg) => alert(msg)}
+                colorTheme="amber"
+                icon={<ImageIcon className="w-10 h-10 text-amber-600 dark:text-amber-400" />}
+                placeholder="보정할 사진 업로드 또는 드래그 앤 드롭"
+                subPlaceholder="PNG, JPG (최대 10MB)"
+                imageAlt="To Correct"
+                minHeight="min-h-[300px]"
+              />
 
               <button
                 onClick={() => setIsGalleryOpen(true)}
-                className="w-full py-3 px-4 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 min-h-[48px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
               >
                 <FolderOpen className="w-4 h-4" />
                 내 이미지에서 불러오기

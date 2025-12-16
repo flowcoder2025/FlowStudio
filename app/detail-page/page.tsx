@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import NextImage from 'next/image';
 import { Layout, Camera, Eye, X, Plus, Trash2, Grid, Columns, Square, MoveDiagonal2, FolderOpen, Save, FileText, Clock, FilePlus2 } from 'lucide-react';
+import { FileDropzone } from '@/components/FileDropzone';
 import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
@@ -11,7 +12,6 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode, Category, StyleOption, LayoutOption, GenerationRequest } from '@/types';
 import { DETAIL_PAGE_CATEGORIES, LAYOUT_OPTIONS } from '@/constants';
 import { generateImageVariations } from '@/services/geminiService';
-import { compressImageWithStats, isFileTooLarge } from '@/lib/utils/imageCompression';
 
 // Draft type for the list
 interface DraftSummary {
@@ -64,9 +64,6 @@ function DetailPageContent() {
   // Section candidate selection state (4장 생성 후 선택, 추가 생성 가능)
   const [candidateImages, setCandidateImages] = useState<string[]>([]);
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const refImageInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch drafts when load modal opens
   useEffect(() => {
@@ -244,72 +241,6 @@ function DetailPageContent() {
     setGalleryTarget(null);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const needsCompression = isFileTooLarge(file, 3);
-
-      if (needsCompression) {
-        setIsCompressing(true);
-        console.log(`🖼️ 이미지 압축 시작: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
-
-        const result = await compressImageWithStats(file, {
-          maxSizeMB: 2,
-          maxWidthOrHeight: 2048,
-        });
-
-        console.log(`✅ 압축 완료: ${result.originalSizeMB.toFixed(2)}MB → ${result.compressedSizeMB.toFixed(2)}MB (${result.reductionPercent.toFixed(1)}% 감소)`);
-        setUploadedImage(result.compressed);
-        setIsCompressing(false);
-      } else {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setUploadedImage(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      }
-    } catch (error) {
-      console.error('이미지 압축 오류:', error);
-      setIsCompressing(false);
-      alert('이미지 처리 중 오류가 발생했습니다. 다른 이미지를 시도해주세요.');
-    }
-  };
-
-  const handleRefImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const needsCompression = isFileTooLarge(file, 3);
-
-      if (needsCompression) {
-        setIsCompressing(true);
-        console.log(`🖼️ 참조 이미지 압축 시작: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
-
-        const result = await compressImageWithStats(file, {
-          maxSizeMB: 2,
-          maxWidthOrHeight: 2048,
-        });
-
-        console.log(`✅ 압축 완료: ${result.originalSizeMB.toFixed(2)}MB → ${result.compressedSizeMB.toFixed(2)}MB (${result.reductionPercent.toFixed(1)}% 감소)`);
-        setRefImage(result.compressed);
-        setIsCompressing(false);
-      } else {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setRefImage(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      }
-    } catch (error) {
-      console.error('참조 이미지 압축 오류:', error);
-      setIsCompressing(false);
-      alert('이미지 처리 중 오류가 발생했습니다. 다른 이미지를 시도해주세요.');
-    }
-  };
-
   const handleGenerate = async () => {
     if (!uploadedImage) {
       alert('제품 사진을 업로드해주세요.');
@@ -480,46 +411,20 @@ function DetailPageContent() {
           {/* Global Product Upload */}
           <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
             <h3 className="font-bold text-base mb-3 text-slate-800 dark:text-slate-100">1. 메인 제품 사진 (필수)</h3>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${uploadedImage ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/30' : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
-            >
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImageUpload}
-                accept="image/*"
-                className="hidden"
-              />
-              {uploadedImage ? (
-                <div className="flex items-center gap-4">
-                  <div className="relative w-16 h-16 flex-shrink-0">
-                    <NextImage
-                      src={uploadedImage}
-                      alt="Main Product"
-                      fill
-                      className="object-cover rounded-md"
-                      unoptimized={uploadedImage.startsWith('data:')}
-                    />
-                  </div>
-                  <div className="text-left flex-1">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">제품 사진 등록됨</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">모든 섹션 생성시 참조됩니다.</p>
-                  </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setUploadedImage(null); }}
-                    className="p-1.5 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center gap-2 py-2">
-                  <Camera className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-                  <span className="text-sm text-slate-600 dark:text-slate-300">제품 사진 업로드</span>
-                </div>
-              )}
-            </div>
+            <FileDropzone
+              value={uploadedImage}
+              onChange={setUploadedImage}
+              onCompressing={setIsCompressing}
+              onError={(msg) => alert(msg)}
+              colorTheme="blue"
+              icon={<Camera className="w-5 h-5 text-slate-400 dark:text-slate-500" />}
+              placeholder="제품 사진 업로드 또는 드래그 앤 드롭"
+              subPlaceholder="모든 섹션 생성시 참조됩니다."
+              imageAlt="Main Product"
+              compact
+              minHeight="min-h-[100px]"
+              imageMaxHeight="h-16"
+            />
             {/* Gallery Button */}
             <button
               onClick={() => setGalleryTarget('main')}
@@ -604,46 +509,20 @@ function DetailPageContent() {
           <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
             <h3 className="font-bold text-base mb-3 text-slate-800 dark:text-slate-100">3. 스타일 참조 이미지 (선택)</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">다른 상세페이지의 스타일을 참조하여 비슷한 분위기로 생성합니다.</p>
-            <div
-              onClick={() => refImageInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${refImage ? 'border-purple-500 dark:border-purple-400 bg-purple-50 dark:bg-purple-900/30' : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
-            >
-              <input
-                type="file"
-                ref={refImageInputRef}
-                onChange={handleRefImageUpload}
-                accept="image/*"
-                className="hidden"
-              />
-              {refImage ? (
-                <div className="flex items-center gap-4">
-                  <div className="relative w-16 h-16 flex-shrink-0">
-                    <NextImage
-                      src={refImage}
-                      alt="Reference"
-                      fill
-                      className="object-cover rounded-md"
-                      unoptimized={refImage.startsWith('data:')}
-                    />
-                  </div>
-                  <div className="text-left flex-1">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">참조 이미지 등록됨</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">이 이미지의 스타일을 참조합니다.</p>
-                  </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setRefImage(null); }}
-                    className="p-1.5 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center gap-2 py-2">
-                  <Eye className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-                  <span className="text-sm text-slate-600 dark:text-slate-300">스타일 참조 이미지 업로드 (선택)</span>
-                </div>
-              )}
-            </div>
+            <FileDropzone
+              value={refImage}
+              onChange={setRefImage}
+              onCompressing={setIsCompressing}
+              onError={(msg) => alert(msg)}
+              colorTheme="purple"
+              icon={<Eye className="w-5 h-5 text-slate-400 dark:text-slate-500" />}
+              placeholder="스타일 참조 이미지 업로드 (선택)"
+              subPlaceholder="이 이미지의 스타일을 참조합니다."
+              imageAlt="Reference"
+              compact
+              minHeight="min-h-[100px]"
+              imageMaxHeight="h-16"
+            />
             {/* Gallery Button */}
             <button
               onClick={() => setGalleryTarget('ref')}
