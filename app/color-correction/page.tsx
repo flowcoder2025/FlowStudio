@@ -158,13 +158,13 @@ function ColorCorrectionPageContent() {
       });
 
       if (!response.ok) {
-        throw new Error('클라우드 저장에 실패했습니다.');
+        throw new Error('이미지 저장소 저장에 실패했습니다.');
       }
 
-      alert('클라우드에 저장되었습니다!');
+      alert('이미지 저장소에 저장되었습니다!');
     } catch (error) {
       console.error('Cloud save error:', error);
-      alert(error instanceof Error ? error.message : '클라우드 저장에 실패했습니다.');
+      alert(error instanceof Error ? error.message : '이미지 저장소 저장에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -218,7 +218,7 @@ function ColorCorrectionPageContent() {
                 className="w-full py-3 px-4 min-h-[48px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
               >
                 <FolderOpen className="w-4 h-4" />
-                내 이미지에서 불러오기
+                이미지 저장소에서 불러오기
               </button>
             </div>
           </div>
@@ -410,7 +410,7 @@ function ColorCorrectionPageContent() {
                   disabled={isLoading}
                   className="w-full py-3 text-sm font-bold text-white bg-amber-500 dark:bg-amber-600 hover:bg-amber-600 dark:hover:bg-amber-700 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-amber-200 dark:shadow-amber-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Cloud className="w-4 h-4" /> 클라우드 저장
+                  <Cloud className="w-4 h-4" /> 이미지 저장소에 저장
                 </button>
               </div>
             </div>

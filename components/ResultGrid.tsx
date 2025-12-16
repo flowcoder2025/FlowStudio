@@ -110,7 +110,7 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
                 뒤로가기나 새로고침 시 데이터가 사라집니다
               </p>
               <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                이미지를 다운로드하거나 클라우드에 저장해주세요
+                이미지를 다운로드하거나 이미지 저장소에 저장해주세요
               </p>
             </div>
           </div>
@@ -209,7 +209,7 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
                               ) : (
                                 <>
                                   <Cloud className="w-4 h-4" />
-                                  클라우드 저장
+                                  이미지 저장소에 저장
                                 </>
                               )}
                             </button>
@@ -219,7 +219,7 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
                     </div>
                     {!onSelect && onSave && (
                       <p className="text-xs text-slate-500 dark:text-slate-400 text-center px-2">
-                        클라우드 저장 시, 다른 페이지에서 재사용 가능
+                        이미지 저장소에 저장하면 다른 페이지에서 재사용할 수 있어요
                       </p>
                     )}
                   </div>
@@ -350,7 +350,7 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
                 ) : (
                   <Cloud className="w-5 h-5" />
                 )}
-                {savedIndexes.has(previewIndex) ? '저장됨' : savingIndex === previewIndex ? '저장 중...' : '클라우드 저장'}
+                {savedIndexes.has(previewIndex) ? '저장됨' : savingIndex === previewIndex ? '저장 중...' : '이미지 저장소에 저장'}
               </button>
             )}
             {onSelect && (

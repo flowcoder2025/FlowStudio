@@ -150,7 +150,7 @@ function PosterPageContent() {
       if (response.ok) {
         const data = await response.json();
         setIsUpscaledSaved(true);
-        alert(data.message || '클라우드에 저장되었습니다.');
+        alert(data.message || '이미지 저장소에 저장되었습니다.');
       } else {
         const errorData = await response.json();
         alert(errorData.error || '저장에 실패했습니다.');
@@ -192,7 +192,7 @@ function PosterPageContent() {
             className="mt-4 w-full flex items-center justify-center gap-2 py-3 px-4 min-h-[44px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-medium transition-colors"
           >
             <FolderOpen className="w-5 h-5" />
-            내 이미지에서 불러오기
+            이미지 저장소에서 불러오기
           </button>
         </div>
 
@@ -217,7 +217,7 @@ function PosterPageContent() {
             className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 px-4 min-h-[44px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-medium text-sm transition-colors"
           >
             <FolderOpen className="w-4 h-4" />
-            내 이미지에서 불러오기
+            이미지 저장소에서 불러오기
           </button>
         </div>
 
@@ -414,7 +414,7 @@ function PosterPageContent() {
                   ) : (
                     <>
                       <Cloud className="w-5 h-5" />
-                      클라우드 저장
+                      이미지 저장소에 저장
                     </>
                   )}
                 </button>

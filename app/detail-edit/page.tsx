@@ -401,7 +401,7 @@ function DetailEditPageContent() {
 
       if (response.ok) {
         const data = await response.json();
-        alert(data.message || '클라우드에 저장되었습니다.');
+        alert(data.message || '이미지 저장소에 저장되었습니다.');
         // 저장된 URL로 업데이트 (다음 저장 시 중복 방지)
         if (data.urls && data.urls[0]) {
           setUploadedImage(data.urls[0]);
@@ -495,7 +495,7 @@ function DetailEditPageContent() {
                   className="flex items-center justify-center gap-2 py-3 px-6 min-h-[48px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-medium transition-colors w-full"
                 >
                   <FolderOpen className="w-5 h-5" />
-                  내 이미지에서 불러오기
+                  이미지 저장소에서 불러오기
                 </button>
               </div>
             </div>
@@ -559,14 +559,14 @@ function DetailEditPageContent() {
                         ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                         : 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 hover:bg-violet-200 dark:hover:bg-violet-900/50'
                     }`}
-                    title="클라우드에 저장"
+                    title="이미지 저장소에 저장"
                   >
                     {isSaving ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
                     ) : (
                       <Cloud className="w-3 h-3" />
                     )}
-                    {isSaving ? '저장 중...' : '클라우드 저장'}
+                    {isSaving ? '저장 중...' : '이미지 저장소에 저장'}
                   </button>
 
                   {/* Apply Edit Button */}
