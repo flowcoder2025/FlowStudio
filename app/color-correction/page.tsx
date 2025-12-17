@@ -198,8 +198,8 @@ function ColorCorrectionPageContent() {
         </div>
 
         {!uploadedImage ? (
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 min-h-[350px] transition-colors">
-            <div className="max-w-sm mx-auto space-y-4">
+          <div className="flex-1 flex items-center justify-center bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors min-h-[350px]">
+            <div className="w-full max-w-lg p-6">
               <FileDropzone
                 value={uploadedImage}
                 onChange={setUploadedImage}
@@ -211,7 +211,7 @@ function ColorCorrectionPageContent() {
                 subPlaceholder="PNG, JPG (최대 10MB)"
                 imageAlt="To Correct"
                 compact
-                minHeight="min-h-[200px]"
+                minHeight="min-h-[160px]"
               />
 
               {/* Divider with "또는" */}
@@ -225,7 +225,7 @@ function ColorCorrectionPageContent() {
 
               <button
                 onClick={() => setIsGalleryOpen(true)}
-                className="w-full py-2.5 px-4 min-h-[40px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium text-sm rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="flex items-center justify-center gap-2 py-2.5 px-4 min-h-[40px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium text-sm transition-colors w-full"
               >
                 <FolderOpen className="w-4 h-4" />
                 이미지 저장소에서 불러오기

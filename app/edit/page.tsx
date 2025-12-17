@@ -167,9 +167,12 @@ function EditPageContent() {
       <Header currentMode={AppMode.EDIT} />
 
       <div className="max-w-5xl mx-auto px-3 lg:px-4 pt-4 lg:pt-6 pb-20">
-        <h2 className="text-lg lg:text-xl font-bold mb-4 flex items-center gap-2 text-slate-900 dark:text-slate-100">
-          <Wand2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> AI 이미지 편집
-        </h2>
+        <div className="mb-4">
+          <h2 className="text-lg lg:text-xl font-bold mb-1 flex items-center gap-2 text-slate-900 dark:text-slate-100">
+            <Wand2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> AI 이미지 편집
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 text-xs">기존 이미지를 프롬프트에 따라 수정합니다</p>
+        </div>
 
         {/* Step 1: Mandatory Upload */}
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">

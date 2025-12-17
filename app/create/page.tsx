@@ -177,9 +177,12 @@ function CreatePageContent() {
       <Header currentMode={AppMode.CREATE} />
 
       <div className="max-w-5xl mx-auto px-3 lg:px-4 pt-4 lg:pt-6 pb-20">
-        <h2 className="text-lg lg:text-xl font-bold mb-4 flex items-center gap-2 text-slate-900 dark:text-slate-100">
-          <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" /> 이미지 생성 마법사
-        </h2>
+        <div className="mb-4">
+          <h2 className="text-lg lg:text-xl font-bold mb-1 flex items-center gap-2 text-slate-900 dark:text-slate-100">
+            <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" /> 이미지 생성 마법사
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 text-xs">프롬프트와 참조 이미지로 새로운 이미지를 생성합니다</p>
+        </div>
 
         {/* Step 1: Upload (Optional) */}
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">

@@ -444,9 +444,12 @@ function DetailEditPageContent() {
 
       <div className="max-w-5xl mx-auto px-3 lg:px-4 pt-4 lg:pt-6 pb-20 h-[calc(100vh-56px)] flex flex-col">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg lg:text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
-            <FilePenLine className="w-5 h-5 text-violet-600 dark:text-violet-400" /> 상세페이지 편집
-          </h2>
+          <div>
+            <h2 className="text-lg lg:text-xl font-bold mb-1 flex items-center gap-2 text-slate-900 dark:text-slate-100">
+              <FilePenLine className="w-5 h-5 text-violet-600 dark:text-violet-400" /> 상세페이지 편집
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 text-xs">상세페이지의 특정 영역을 AI로 편집합니다</p>
+          </div>
           {uploadedImage && (
             <button
               onClick={handleNewProject}

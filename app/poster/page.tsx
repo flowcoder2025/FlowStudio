@@ -168,10 +168,13 @@ function PosterPageContent() {
       <Header currentMode={AppMode.POSTER} />
 
       <div className="max-w-5xl mx-auto px-3 lg:px-4 pt-4 lg:pt-6 pb-20">
-        <h2 className="text-lg lg:text-xl font-bold mb-4 flex items-center gap-2 text-slate-900 dark:text-slate-100">
-          <Megaphone className="w-5 h-5 text-rose-600 dark:text-rose-400" />
-          홍보 포스터 제작
-        </h2>
+        <div className="mb-4">
+          <h2 className="text-lg lg:text-xl font-bold mb-1 flex items-center gap-2 text-slate-900 dark:text-slate-100">
+            <Megaphone className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+            홍보 포스터 제작
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 text-xs">제품 사진을 활용하여 홍보/마케팅용 포스터를 생성합니다</p>
+        </div>
         {/* 제품 사진 업로드 (필수) */}
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
           <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">1. 제품 사진 업로드 (필수)</h3>

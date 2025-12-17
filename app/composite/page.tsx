@@ -276,12 +276,14 @@ function CompositePageContent() {
       <Header currentMode={AppMode.COMPOSITE} />
 
       <div className="max-w-5xl mx-auto px-3 lg:px-4 pt-4 lg:pt-6 pb-20">
-        <h2 className="text-lg lg:text-xl font-bold mb-3 flex items-center gap-2 text-slate-900 dark:text-slate-100">
-          <Layers className="w-5 h-5 text-cyan-600 dark:text-cyan-400" /> 이미지 연출/합성
-        </h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mb-4 -mt-2">
-          여러 장의 이미지(제품, 소품, 배경 등)를 자연스럽게 하나로 합칩니다.
-        </p>
+        <div className="mb-4">
+          <h2 className="text-lg lg:text-xl font-bold mb-1 flex items-center gap-2 text-slate-900 dark:text-slate-100">
+            <Layers className="w-5 h-5 text-cyan-600 dark:text-cyan-400" /> 이미지 연출/합성
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 text-xs">
+            여러 장의 이미지(제품, 소품, 배경 등)를 자연스럽게 하나로 합칩니다
+          </p>
+        </div>
 
         {/* Step 1: Upload Images */}
         <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
