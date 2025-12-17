@@ -39,6 +39,12 @@ function PosterPageContent() {
   const [isUpscaledSaving, setIsUpscaledSaving] = useState(false);
   const [isUpscaledSaved, setIsUpscaledSaved] = useState(false);
   const [creditType, setCreditType] = useState<CreditType>('auto');
+  const [willHaveWatermark, setWillHaveWatermark] = useState(false);
+
+  const handleCreditSelect = (type: CreditType, hasWatermark: boolean) => {
+    setCreditType(type);
+    setWillHaveWatermark(hasWatermark);
+  };
 
   const handleProductGallerySelect = (imageUrl: string) => {
     setProductImage(imageUrl);
@@ -62,6 +68,14 @@ function PosterPageContent() {
     if (!prompt.trim()) {
       alert('포스터 컨셉이나 문구를 입력해주세요.');
       return;
+    }
+
+    // 워터마크 적용 확인
+    if (willHaveWatermark) {
+      const confirmed = confirm(
+        '무료 크레딧 사용 시 생성된 이미지에 워터마크가 적용됩니다.\n\n계속 진행하시겠습니까?'
+      );
+      if (!confirmed) return;
     }
 
     setIsLoading(true);
@@ -91,6 +105,14 @@ function PosterPageContent() {
 
   const handleGenerateMore = async () => {
     if (!selectedCategory || !productImage || !prompt.trim()) return;
+
+    // 워터마크 적용 확인
+    if (willHaveWatermark) {
+      const confirmed = confirm(
+        '무료 크레딧 사용 시 생성된 이미지에 워터마크가 적용됩니다.\n\n계속 진행하시겠습니까?'
+      );
+      if (!confirmed) return;
+    }
 
     setIsLoading(true);
     try {
@@ -332,7 +354,7 @@ function PosterPageContent() {
           <CreditSelector
             requiredCredits={20}
             selectedType={creditType}
-            onSelect={setCreditType}
+            onSelect={handleCreditSelect}
           />
         </div>
 

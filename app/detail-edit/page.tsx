@@ -49,6 +49,12 @@ function DetailEditPageContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
   const [creditType, setCreditType] = useState<CreditType>('auto');
+  const [willHaveWatermark, setWillHaveWatermark] = useState(false);
+
+  const handleCreditSelect = (type: CreditType, hasWatermark: boolean) => {
+    setCreditType(type);
+    setWillHaveWatermark(hasWatermark);
+  };
 
   const imageRef = useRef<HTMLImageElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -238,6 +244,14 @@ function DetailEditPageContent() {
       } else {
         setPrompt("Replace the content seamlessly.");
       }
+    }
+
+    // 워터마크 적용 확인
+    if (willHaveWatermark) {
+      const confirmed = confirm(
+        '무료 크레딧 사용 시 생성된 이미지에 워터마크가 적용됩니다.\n\n계속 진행하시겠습니까?'
+      );
+      if (!confirmed) return;
     }
 
     setIsLoading(true);
@@ -770,7 +784,7 @@ function DetailEditPageContent() {
                 <CreditSelector
                   requiredCredits={5}
                   selectedType={creditType}
-                  onSelect={setCreditType}
+                  onSelect={handleCreditSelect}
                   compact
                   className="mb-3"
                 />

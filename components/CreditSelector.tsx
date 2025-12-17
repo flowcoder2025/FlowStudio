@@ -33,8 +33,8 @@ interface CreditBalanceDetail {
 interface CreditSelectorProps {
   /** 필요한 크레딧 수량 */
   requiredCredits: number
-  /** 선택된 크레딧 타입 변경 콜백 */
-  onSelect: (creditType: CreditType) => void
+  /** 선택된 크레딧 타입 변경 콜백 (두 번째 인자: 워터마크 적용 여부) */
+  onSelect: (creditType: CreditType, willHaveWatermark: boolean) => void
   /** 현재 선택된 크레딧 타입 */
   selectedType?: CreditType
   /** 컴팩트 모드 (작은 화면용) */
@@ -119,7 +119,19 @@ export function CreditSelector({
 
   const handleSelect = (type: CreditType) => {
     setLocalSelected(type)
-    onSelect(type)
+    // 워터마크 적용 여부 계산
+    // - 구독자: 항상 false
+    // - free 선택: true
+    // - purchased 선택: false
+    // - auto 선택: 유료가 충분하면 false, 아니면 true
+    let willHaveWatermark = false
+    if (type === 'free') {
+      willHaveWatermark = true
+    } else if (type === 'auto') {
+      // auto일 때는 유료가 충분하면 유료 우선 사용 → 워터마크 없음
+      willHaveWatermark = balance!.purchased < requiredCredits
+    }
+    onSelect(type, willHaveWatermark)
   }
 
   // 잔액 부족 체크
