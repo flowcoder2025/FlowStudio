@@ -7,6 +7,7 @@
  * - 뷰포트 진입 시에만 이미지 로딩
  * - 로딩 중 blur placeholder 표시
  * - 부드러운 fade-in 애니메이션
+ * - base64 이미지 지원 (일반 img 태그 사용)
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -29,6 +30,20 @@ interface LazyImageProps {
 // 작은 blur placeholder SVG (인라인으로 사용)
 const BLUR_PLACEHOLDER =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZTJlOGYwIi8+PC9zdmc+';
+
+/**
+ * Check if the src is a base64 data URL
+ */
+function isBase64DataUrl(src: string): boolean {
+  return src?.startsWith('data:image/');
+}
+
+/**
+ * Check if the src is a valid URL (http/https)
+ */
+function isValidHttpUrl(src: string): boolean {
+  return src?.startsWith('http://') || src?.startsWith('https://');
+}
 
 // 초기 뷰포트 체크 함수 (렌더 외부에서 안전하게 호출)
 function checkInitialVisibility(element: HTMLElement | null): boolean {
@@ -117,12 +132,16 @@ export function LazyImage({
     setIsLoaded(true);
   }, []);
 
-  // 에러 상태 UI
-  if (hasError) {
+  // 빈 src 또는 유효하지 않은 src 처리
+  const isValidSrc = src && (isBase64DataUrl(src) || isValidHttpUrl(src));
+  const useNativeImg = isBase64DataUrl(src);
+
+  // 에러 상태 UI 또는 유효하지 않은 src
+  if (hasError || !isValidSrc) {
     return (
       <div
         ref={imgRef}
-        className={`flex items-center justify-center bg-slate-100 dark:bg-slate-800 ${className}`}
+        className={`flex items-center justify-center bg-slate-100 dark:bg-slate-800 ${fill ? 'w-full h-full' : ''} ${className}`}
         onClick={onClick}
       >
         <div className="text-center text-slate-400 dark:text-slate-500">
@@ -139,7 +158,7 @@ export function LazyImage({
               d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
             />
           </svg>
-          <span className="text-xs">로딩 실패</span>
+          <span className="text-xs">{!isValidSrc ? '이미지 없음' : '로딩 실패'}</span>
         </div>
       </div>
     );
@@ -148,7 +167,7 @@ export function LazyImage({
   return (
     <div
       ref={imgRef}
-      className={`relative overflow-hidden ${className}`}
+      className={`relative overflow-hidden ${fill ? 'w-full h-full' : ''} ${className}`}
       onClick={onClick}
     >
       {/* Placeholder/Loading 상태 */}
@@ -163,21 +182,36 @@ export function LazyImage({
 
       {/* 실제 이미지 - 뷰포트에 들어왔을 때만 로딩 */}
       {isInView && (
-        <Image
-          src={src}
-          alt={alt}
-          fill={fill}
-          width={!fill ? width : undefined}
-          height={!fill ? height : undefined}
-          className={`transition-opacity duration-300 ${
-            isLoaded ? 'opacity-100' : 'opacity-0'
-          } ${fill ? 'object-cover' : ''}`}
-          sizes={sizes}
-          onLoad={handleLoad}
-          onError={handleError}
-          placeholder="blur"
-          blurDataURL={BLUR_PLACEHOLDER}
-        />
+        useNativeImg ? (
+          // base64 이미지는 일반 img 태그 사용 (Next.js Image는 base64에 제한적)
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={src}
+            alt={alt}
+            className={`transition-opacity duration-300 ${
+              isLoaded ? 'opacity-100' : 'opacity-0'
+            } ${fill ? 'absolute inset-0 w-full h-full object-cover' : ''}`}
+            onLoad={handleLoad}
+            onError={handleError}
+          />
+        ) : (
+          // HTTP URL은 Next.js Image 컴포넌트 사용 (최적화)
+          <Image
+            src={src}
+            alt={alt}
+            fill={fill}
+            width={!fill ? width : undefined}
+            height={!fill ? height : undefined}
+            className={`transition-opacity duration-300 ${
+              isLoaded ? 'opacity-100' : 'opacity-0'
+            } ${fill ? 'object-cover' : ''}`}
+            sizes={sizes}
+            onLoad={handleLoad}
+            onError={handleError}
+            placeholder="blur"
+            blurDataURL={BLUR_PLACEHOLDER}
+          />
+        )
       )}
     </div>
   );
