@@ -9,6 +9,7 @@ import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { CreditSelector, CreditType } from '@/components/CreditSelector';
 import { AppMode, GenerationRequest } from '@/types';
 import { ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, upscaleImage } from '@/services/geminiService';
@@ -33,6 +34,7 @@ function EditPageContent() {
   const [isCompressing, setIsCompressing] = useState(false);
   const [isUpscaledSaving, setIsUpscaledSaving] = useState(false);
   const [isUpscaledSaved, setIsUpscaledSaved] = useState(false);
+  const [creditType, setCreditType] = useState<CreditType>('auto');
 
   const handleGallerySelect = (imageUrl: string) => {
     setUploadedImage(imageUrl);
@@ -53,7 +55,7 @@ function EditPageContent() {
         aspectRatio: selectedAspectRatio
       };
 
-      const images = await generateImageVariations(request);
+      const images = await generateImageVariations(request, creditType);
       if (images.length === 0) {
         alert('이미지 생성에 실패했습니다. 다시 시도해주세요.');
       } else {
@@ -80,7 +82,7 @@ function EditPageContent() {
         aspectRatio: selectedAspectRatio
       };
 
-      const images = await generateImageVariations(request);
+      const images = await generateImageVariations(request, creditType);
       if (images.length === 0) {
         alert('이미지 생성에 실패했습니다. 다시 시도해주세요.');
       } else {
@@ -248,6 +250,15 @@ function EditPageContent() {
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="예: 배경을 깔끔한 흰색으로 바꿔줘, 텍스트를 제거해줘."
             className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 min-h-[80px] text-sm transition-colors"
+          />
+        </div>
+
+        {/* Step 4: Credit Selection */}
+        <div className="mb-20">
+          <CreditSelector
+            requiredCredits={20}
+            selectedType={creditType}
+            onSelect={setCreditType}
           />
         </div>
 

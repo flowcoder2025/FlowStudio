@@ -9,6 +9,7 @@ import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { ResultGrid } from '@/components/ResultGrid';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { CreditSelector, CreditType } from '@/components/CreditSelector';
 import { AppMode, Category, StyleOption, LayoutOption, GenerationRequest } from '@/types';
 import { DETAIL_PAGE_CATEGORIES, LAYOUT_OPTIONS } from '@/constants';
 import { generateImageVariations } from '@/services/geminiService';
@@ -64,6 +65,7 @@ function DetailPageContent() {
   // Section candidate selection state (4장 생성 후 선택, 추가 생성 가능)
   const [candidateImages, setCandidateImages] = useState<string[]>([]);
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
+  const [creditType, setCreditType] = useState<CreditType>('auto');
 
   // Fetch drafts when load modal opens
   useEffect(() => {
@@ -265,7 +267,7 @@ function DetailPageContent() {
         aspectRatio: '9:16'
       };
 
-      const images = await generateImageVariations(request);
+      const images = await generateImageVariations(request, creditType);
       if (images.length > 0) {
         setCandidateImages(images);
         setIsSelectionModalOpen(true);
@@ -297,7 +299,7 @@ function DetailPageContent() {
         aspectRatio: '9:16'
       };
 
-      const images = await generateImageVariations(request);
+      const images = await generateImageVariations(request, creditType);
       if (images.length > 0) {
         setCandidateImages(prev => [...prev, ...images]);
       } else {
@@ -566,6 +568,15 @@ function DetailPageContent() {
                 ? "예: 제품 이름이 크게 들어간 임팩트 있는 인트로. '순수 비타민 세럼' 텍스트 포함."
                 : "예: 핵심 성분을 설명하는 섹션. 비타민 C의 효능을 강조하는 그래프와 아이콘."}
               className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 min-h-[80px] mb-3 text-sm transition-colors"
+            />
+
+            {/* Credit Selection */}
+            <CreditSelector
+              requiredCredits={20}
+              selectedType={creditType}
+              onSelect={setCreditType}
+              compact
+              className="mb-3"
             />
 
             <button

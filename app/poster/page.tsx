@@ -9,6 +9,7 @@ import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { CreditSelector, CreditType } from '@/components/CreditSelector';
 import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
 import { POSTER_CATEGORIES, ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, upscaleImage } from '@/services/geminiService';
@@ -37,6 +38,7 @@ function PosterPageContent() {
   const [isCompressing, setIsCompressing] = useState(false);
   const [isUpscaledSaving, setIsUpscaledSaving] = useState(false);
   const [isUpscaledSaved, setIsUpscaledSaved] = useState(false);
+  const [creditType, setCreditType] = useState<CreditType>('auto');
 
   const handleProductGallerySelect = (imageUrl: string) => {
     setProductImage(imageUrl);
@@ -77,7 +79,7 @@ function PosterPageContent() {
         aspectRatio: selectedAspectRatio,
       };
 
-      const images = await generateImageVariations(request);
+      const images = await generateImageVariations(request, creditType);
       setGeneratedImages(images);
     } catch (error) {
       console.error('Generation error:', error);
@@ -102,7 +104,7 @@ function PosterPageContent() {
         aspectRatio: selectedAspectRatio,
       };
 
-      const images = await generateImageVariations(request);
+      const images = await generateImageVariations(request, creditType);
       setGeneratedImages(prev => [...prev, ...images]);
     } catch (error) {
       console.error('Generation error:', error);
@@ -322,6 +324,15 @@ function PosterPageContent() {
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="예: 신메뉴 '프리미엄 버거' 출시! 50% 할인 이벤트"
             className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500 dark:focus:ring-rose-400 min-h-[80px] text-sm transition-colors"
+          />
+        </div>
+
+        {/* Step 7: Credit Selection */}
+        <div className="mb-20">
+          <CreditSelector
+            requiredCredits={20}
+            selectedType={creditType}
+            onSelect={setCreditType}
           />
         </div>
 

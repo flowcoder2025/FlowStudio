@@ -78,6 +78,50 @@ export async function getCreditBalance(userId: string): Promise<number> {
 }
 
 /**
+ * 크레딧 종류
+ */
+export type CreditType = 'free' | 'purchased' | 'auto'
+
+/**
+ * 크레딧 잔액 상세 정보
+ */
+export interface CreditBalanceDetail {
+  total: number      // 전체 잔액
+  free: number       // 무료 크레딧 (BONUS + REFERRAL)
+  purchased: number  // 유료 크레딧 (PURCHASE)
+}
+
+/**
+ * 사용자의 크레딧 잔액 상세 조회 (무료/유료 구분)
+ *
+ * 무료 크레딧: BONUS, REFERRAL (remainingAmount로 추적)
+ * 유료 크레딧: 총 잔액 - 무료 크레딧
+ */
+export async function getCreditBalanceDetail(userId: string): Promise<CreditBalanceDetail> {
+  // 1. 총 잔액 조회
+  const total = await getCreditBalance(userId)
+
+  // 2. 무료 크레딧(BONUS, REFERRAL)의 남은 양 합계
+  const freeCreditsResult = await prisma.creditTransaction.aggregate({
+    where: {
+      userId,
+      type: { in: ['BONUS', 'REFERRAL'] },
+      remainingAmount: { gt: 0 }
+    },
+    _sum: {
+      remainingAmount: true
+    }
+  })
+
+  const free = freeCreditsResult._sum.remainingAmount ?? 0
+
+  // 3. 유료 크레딧 = 총 잔액 - 무료 크레딧
+  const purchased = Math.max(0, total - free)
+
+  return { total, free, purchased }
+}
+
+/**
  * 크레딧 잔액이 충분한지 확인
  */
 export async function hasEnoughCredits(
@@ -226,6 +270,117 @@ export async function deductCredits(
   })
 
   return { balance: result.balance }
+}
+
+/**
+ * 크레딧 종류 선택하여 차감 (워터마크 정책 지원)
+ *
+ * @param creditType - 'free' (무료 크레딧), 'purchased' (유료 크레딧), 'auto' (FIFO)
+ * @returns 차감 결과 및 워터마크 적용 여부
+ */
+export async function deductCreditsWithType(
+  userId: string,
+  amount: number,
+  type: 'GENERATION' | 'UPSCALE',
+  description: string,
+  creditType: CreditType = 'auto',
+  metadata?: CreditTransactionMetadata
+): Promise<{ balance: number; usedCreditType: 'free' | 'purchased'; applyWatermark: boolean }> {
+  if (amount <= 0) {
+    throw new ValidationError('사용 금액은 0보다 커야 합니다')
+  }
+
+  // 현재 잔액 상세 조회
+  const balanceDetail = await getCreditBalanceDetail(userId)
+
+  // 사용할 크레딧 종류 결정
+  let usedCreditType: 'free' | 'purchased'
+  let availableAmount: number
+
+  if (creditType === 'free') {
+    // 무료 크레딧만 사용
+    availableAmount = balanceDetail.free
+    usedCreditType = 'free'
+    if (availableAmount < amount) {
+      throw new InsufficientCreditsError(
+        `무료 크레딧이 부족합니다 (필요: ${amount}, 보유: ${availableAmount})`
+      )
+    }
+  } else if (creditType === 'purchased') {
+    // 유료 크레딧만 사용
+    availableAmount = balanceDetail.purchased
+    usedCreditType = 'purchased'
+    if (availableAmount < amount) {
+      throw new InsufficientCreditsError(
+        `유료 크레딧이 부족합니다 (필요: ${amount}, 보유: ${availableAmount})`
+      )
+    }
+  } else {
+    // auto: 기존 FIFO 방식 - 무료 크레딧 우선 소진
+    availableAmount = balanceDetail.total
+    usedCreditType = balanceDetail.free >= amount ? 'free' :
+                     balanceDetail.purchased >= amount ? 'purchased' : 'free'
+    if (availableAmount < amount) {
+      throw new InsufficientCreditsError(
+        `크레딧이 부족합니다 (필요: ${amount}, 보유: ${availableAmount})`
+      )
+    }
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    // 1. 전체 잔액 차감
+    const credit = await tx.credit.update({
+      where: { userId },
+      data: { balance: { decrement: amount } }
+    })
+
+    // 2. 무료 크레딧 사용 시 remainingAmount 차감 (FIFO)
+    if (creditType === 'free' || (creditType === 'auto' && balanceDetail.free > 0)) {
+      let remaining = creditType === 'free' ? amount : Math.min(amount, balanceDetail.free)
+
+      // 가장 오래된 무료 크레딧부터 차감
+      const freeTransactions = await tx.creditTransaction.findMany({
+        where: {
+          userId,
+          type: { in: ['BONUS', 'REFERRAL'] },
+          remainingAmount: { gt: 0 }
+        },
+        orderBy: { createdAt: 'asc' }
+      })
+
+      for (const txn of freeTransactions) {
+        if (remaining <= 0) break
+        const deductFromThis = Math.min(remaining, txn.remainingAmount ?? 0)
+        await tx.creditTransaction.update({
+          where: { id: txn.id },
+          data: { remainingAmount: { decrement: deductFromThis } }
+        })
+        remaining -= deductFromThis
+      }
+    }
+
+    // 3. 사용 트랜잭션 기록
+    await tx.creditTransaction.create({
+      data: {
+        userId,
+        amount: -amount,
+        type,
+        description,
+        metadata: {
+          ...metadata,
+          creditType: usedCreditType, // 사용된 크레딧 종류 기록
+        }
+      }
+    })
+
+    return credit
+  })
+
+  return {
+    balance: result.balance,
+    usedCreditType,
+    applyWatermark: usedCreditType === 'free' // 무료 크레딧 사용 시 워터마크 적용
+  }
 }
 
 /**
@@ -649,6 +804,48 @@ export async function grantAdminBonus(
     },
     newBalance: result.credit.balance
   }
+}
+
+/**
+ * 사용자의 구매 크레딧 잔액 조회
+ *
+ * 계산 공식:
+ * 총 잔액 - 무료 크레딧 남은 양 = 구매 크레딧 잔액
+ *
+ * 무료 크레딧: BONUS, REFERRAL (remainingAmount로 추적)
+ * 구매 크레딧: PURCHASE (remainingAmount 없음)
+ */
+export async function getPurchasedCreditsRemaining(userId: string): Promise<number> {
+  // 1. 총 잔액 조회
+  const totalBalance = await getCreditBalance(userId)
+
+  // 2. 무료 크레딧(BONUS, REFERRAL)의 남은 양 합계
+  const freeCreditsResult = await prisma.creditTransaction.aggregate({
+    where: {
+      userId,
+      type: { in: ['BONUS', 'REFERRAL'] },
+      remainingAmount: { gt: 0 }
+    },
+    _sum: {
+      remainingAmount: true
+    }
+  })
+
+  const freeCreditsRemaining = freeCreditsResult._sum.remainingAmount ?? 0
+
+  // 3. 구매 크레딧 잔액 = 총 잔액 - 무료 크레딧 잔액
+  const purchasedCreditsRemaining = Math.max(0, totalBalance - freeCreditsRemaining)
+
+  return purchasedCreditsRemaining
+}
+
+/**
+ * 사용자가 구매 크레딧을 보유하고 있는지 확인
+ * (워터마크 적용 여부 판단에 사용)
+ */
+export async function hasPurchasedCredits(userId: string): Promise<boolean> {
+  const purchasedRemaining = await getPurchasedCreditsRemaining(userId)
+  return purchasedRemaining > 0
 }
 
 /**

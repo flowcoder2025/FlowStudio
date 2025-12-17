@@ -28,14 +28,18 @@ import { getGenAIClient, getGenAIMode, VERTEX_AI_MODELS } from '@/lib/vertexai'
 import {
   hasEnoughCredits,
   deductForGeneration,
-  CREDIT_PRICES
+  deductCreditsWithType,
+  getCreditBalanceDetail,
+  CREDIT_PRICES,
+  type CreditType
 } from '@/lib/utils/creditManager'
 import {
   acquireGenerationSlot,
   releaseGenerationSlot,
   getConcurrencyStatus
 } from '@/lib/utils/concurrencyLimiter'
-import { hasWatermarkFree } from '@/lib/utils/subscriptionManager'
+import { getUserTier } from '@/lib/utils/subscriptionManager'
+import { SUBSCRIPTION_TIERS } from '@/lib/constants'
 import { addWatermarkBatch } from '@/lib/utils/watermark'
 
 // 모델 선택: 모드에 따라 자동 선택
@@ -95,10 +99,46 @@ export async function POST(req: NextRequest) {
 
     // 4. 요청 파싱
     const body = await req.json()
-    const { projectId, prompt, sourceImage, refImage, refImages, logoImage, category, style, aspectRatio, mode } = body
+    const {
+      projectId,
+      prompt,
+      sourceImage,
+      refImage,
+      refImages,
+      logoImage,
+      category,
+      style,
+      aspectRatio,
+      mode,
+      creditType = 'auto' as CreditType  // 크레딧 종류 선택 (free/purchased/auto)
+    } = body
 
     if (!prompt) {
       return NextResponse.json({ error: '프롬프트를 입력해주세요.' }, { status: 400 })
+    }
+
+    // 4.1 크레딧 종류별 잔액 확인 (선택된 종류에 충분한 크레딧이 있는지)
+    const balanceDetail = await getCreditBalanceDetail(session.user.id)
+    const requiredCredits = CREDIT_PRICES.GENERATION_4
+
+    if (creditType === 'free' && balanceDetail.free < requiredCredits) {
+      return NextResponse.json(
+        {
+          error: `무료 크레딧이 부족합니다. (필요: ${requiredCredits}, 보유: ${balanceDetail.free})`,
+          required: requiredCredits,
+          balance: balanceDetail
+        },
+        { status: 402 }
+      )
+    } else if (creditType === 'purchased' && balanceDetail.purchased < requiredCredits) {
+      return NextResponse.json(
+        {
+          error: `유료 크레딧이 부족합니다. (필요: ${requiredCredits}, 보유: ${balanceDetail.purchased})`,
+          required: requiredCredits,
+          balance: balanceDetail
+        },
+        { status: 402 }
+      )
     }
 
     // 4. 프롬프트 구성
@@ -222,8 +262,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '이미지 생성에 실패했습니다.' }, { status: 500 })
     }
 
-    // 8. 크레딧 차감 (2K 생성 1회 = 20 크레딧)
-    await deductForGeneration(session.user.id, projectId || 'no-project-id')
+    // 8. 크레딧 차감 (2K 생성 1회 = 20 크레딧) - 선택한 크레딧 종류로 차감
+    const deductResult = await deductCreditsWithType(
+      session.user.id,
+      CREDIT_PRICES.GENERATION_4,
+      'GENERATION',
+      '이미지 생성 (4장)',
+      creditType,
+      { projectId: projectId || 'no-project-id', imageCount: 4, resolution: '2K' }
+    )
+    console.log(`[API /generate] Credits deducted: ${CREDIT_PRICES.GENERATION_4}, type: ${deductResult.usedCreditType}, watermark: ${deductResult.applyWatermark}`)
 
     // 9. 사용량 기록 (API 호출 비용 추적)
     const totalCost = base64Images.length * COST_PER_IMAGE_USD
@@ -265,15 +313,32 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // 10.5. 워터마크 적용 (FREE 플랜 사용자만) - 임시 비활성화
+    // 10.5. 워터마크 적용 (크레딧 차감 결과 기반)
+    // - 로고 이미지(FlowStudio_icon-removebg.png)를 우측 하단에 반투명하게 합성
+    // - 싱글톤 캐싱으로 Vercel 타임아웃 방지 (로고 로딩 ~50ms, 합성 ~100ms/장)
+    //
+    // 워터마크 적용 조건:
+    // - 무료 크레딧(free) 사용 → 워터마크 O
+    // - 유료 크레딧(purchased) 사용 → 워터마크 X
+    // - PLUS/PRO/BUSINESS 구독자 → 워터마크 X (크레딧 종류 무관)
     let finalImages = base64Images
-    const isWatermarkFree = await hasWatermarkFree(session.user.id)
-    // TODO: 워터마크 기능 임시 OFF - 추후 재활성화 필요
-    const WATERMARK_ENABLED = false
-    if (WATERMARK_ENABLED && !isWatermarkFree) {
-      console.log('[API /generate] Applying watermark for FREE tier user...')
+    const WATERMARK_ENABLED = true
+
+    // 구독자 확인 - 유료 구독자는 항상 워터마크 없음
+    const userTier = await getUserTier(session.user.id)
+    const isSubscriberWatermarkFree = SUBSCRIPTION_TIERS[userTier].watermarkFree
+
+    // 워터마크 적용 여부: 기능 활성화 AND 구독자 아님 AND 무료 크레딧 사용
+    const applyWatermark = WATERMARK_ENABLED && !isSubscriberWatermarkFree && deductResult.applyWatermark
+
+    if (applyWatermark) {
+      console.log('[API /generate] Applying watermark (free credits used)...')
+      const startTime = Date.now()
       finalImages = await addWatermarkBatch(base64Images)
-      console.log('[API /generate] Watermark applied')
+      console.log(`[API /generate] Watermark applied in ${Date.now() - startTime}ms`)
+    } else {
+      const reason = isSubscriberWatermarkFree ? `${userTier} subscriber` : `${deductResult.usedCreditType} credits used`
+      console.log(`[API /generate] Watermark skipped (${reason})`)
     }
 
     // 11. 동시 생성 슬롯 해제 (성공 시)

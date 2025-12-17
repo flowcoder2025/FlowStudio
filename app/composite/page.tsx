@@ -8,6 +8,7 @@ import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { CreditSelector, CreditType } from '@/components/CreditSelector';
 import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
 import { COMPOSITE_CATEGORIES, ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, upscaleImage } from '@/services/geminiService';
@@ -38,6 +39,7 @@ function CompositePageContent() {
   const [isUpscaledSaving, setIsUpscaledSaving] = useState(false);
   const [isUpscaledSaved, setIsUpscaledSaved] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [creditType, setCreditType] = useState<CreditType>('auto');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCountRef = useRef(0);
@@ -159,7 +161,7 @@ function CompositePageContent() {
         aspectRatio: selectedAspectRatio
       };
 
-      const images = await generateImageVariations(request);
+      const images = await generateImageVariations(request, creditType);
       if (images.length === 0) {
         alert('이미지 생성에 실패했습니다. 다시 시도해주세요.');
       } else {
@@ -187,7 +189,7 @@ function CompositePageContent() {
         aspectRatio: selectedAspectRatio
       };
 
-      const images = await generateImageVariations(request);
+      const images = await generateImageVariations(request, creditType);
       if (images.length === 0) {
         alert('이미지 생성에 실패했습니다. 다시 시도해주세요.');
       } else {
@@ -467,6 +469,15 @@ function CompositePageContent() {
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="예: IMG 1의 운동화를 중앙에 놓고, IMG 2의 나뭇잎들을 주변에 배치해서 자연스러운 숲 속 느낌을 연출해줘."
             className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:focus:ring-cyan-400 min-h-[80px] text-sm transition-colors"
+          />
+        </div>
+
+        {/* Step 6: Credit Selection */}
+        <div className="mb-20">
+          <CreditSelector
+            requiredCredits={20}
+            selectedType={creditType}
+            onSelect={setCreditType}
           />
         </div>
 

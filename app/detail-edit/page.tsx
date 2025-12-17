@@ -8,6 +8,7 @@ import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { CreditSelector, CreditType } from '@/components/CreditSelector';
 import { AppMode, GenerationRequest } from '@/types';
 import { generatePreview, extractTextFromImage } from '@/services/geminiService';
 import { recordUsage } from '@/services/usageService';
@@ -47,6 +48,7 @@ function DetailEditPageContent() {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [creditType, setCreditType] = useState<CreditType>('auto');
 
   const imageRef = useRef<HTMLImageElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -294,7 +296,7 @@ function DetailEditPageContent() {
         aspectRatio: closest.label
       };
 
-      const result = await generatePreview(request);
+      const result = await generatePreview(request, creditType);
 
       if (result) {
         setEditedSectionOverlay({
@@ -763,6 +765,15 @@ function DetailEditPageContent() {
                     className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 dark:focus:ring-violet-400 min-h-[70px] text-xs transition-colors"
                   />
                 </div>
+
+                {/* Credit Selection */}
+                <CreditSelector
+                  requiredCredits={5}
+                  selectedType={creditType}
+                  onSelect={setCreditType}
+                  compact
+                  className="mb-3"
+                />
 
                 <button
                   onClick={handleDetailEditGenerate}

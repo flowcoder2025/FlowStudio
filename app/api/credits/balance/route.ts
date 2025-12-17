@@ -1,53 +1,57 @@
 /**
- * 크레딧 잔액 조회 API
- * GET /api/credits/balance
+ * Credit Balance Detail API
+ * /api/credits/balance
  *
- * [성능 최적화] Next.js 캐싱 적용
- * - unstable_cache로 30초 캐싱
- * - 크레딧 변경 시 revalidateTag로 무효화
+ * 사용자의 크레딧 잔액 상세 정보를 반환합니다.
+ * - 전체 잔액
+ * - 무료 크레딧 (BONUS + REFERRAL)
+ * - 유료 크레딧 (PURCHASE)
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { unstable_cache } from 'next/cache'
 import { authOptions } from '@/lib/auth'
-import { getCreditBalance } from '@/lib/utils/creditManager'
-import { UnauthorizedError, formatApiError } from '@/lib/errors'
+import { getCreditBalanceDetail } from '@/lib/utils/creditManager'
+import { getUserTier } from '@/lib/utils/subscriptionManager'
+import { SUBSCRIPTION_TIERS } from '@/lib/constants'
 
-// 캐시된 크레딧 잔액 조회 함수
-const getCachedBalance = unstable_cache(
-  async (userId: string) => {
-    return getCreditBalance(userId)
-  },
-  ['credit-balance'],
-  {
-    revalidate: 30, // 30초 캐시
-    tags: ['credits']
-  }
-)
-
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
-      throw new UnauthorizedError('로그인이 필요합니다')
+      return NextResponse.json(
+        { error: '로그인이 필요합니다' },
+        { status: 401 }
+      )
     }
 
-    // 캐시된 잔액 조회
-    const balance = await getCachedBalance(session.user.id)
+    // 크레딧 잔액 상세 조회
+    const balance = await getCreditBalanceDetail(session.user.id)
+
+    // 구독 티어 확인 (워터마크 정책용)
+    const tier = await getUserTier(session.user.id)
+    const tierConfig = SUBSCRIPTION_TIERS[tier]
 
     return NextResponse.json({
-      success: true,
-      balance,
-      balanceKRW: balance * 100 // 1 크레딧 = ₩100
+      ...balance,
+      tier,
+      watermarkFree: tierConfig.watermarkFree,
+      // 워터마크 적용 조건 안내
+      watermarkPolicy: {
+        // 유료 구독자는 항상 워터마크 없음
+        isSubscriber: tierConfig.watermarkFree,
+        // FREE 플랜이고 유료 크레딧이 있으면 워터마크 없이 사용 가능
+        canUsePurchasedWithoutWatermark: !tierConfig.watermarkFree && balance.purchased > 0,
+        // FREE 플랜이고 무료 크레딧만 있으면 워터마크 적용
+        freeCreditsHaveWatermark: !tierConfig.watermarkFree && balance.free > 0,
+      }
     })
-
   } catch (error) {
-    const apiError = formatApiError(error)
+    console.error('[API /credits/balance] Error:', error)
     return NextResponse.json(
-      { success: false, error: apiError.error },
-      { status: apiError.statusCode }
+      { error: '크레딧 정보를 불러오는 중 오류가 발생했습니다' },
+      { status: 500 }
     )
   }
 }

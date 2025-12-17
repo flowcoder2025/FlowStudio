@@ -9,6 +9,7 @@ import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { CreditSelector, CreditType } from '@/components/CreditSelector';
 import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
 import { CATEGORIES, ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, upscaleImage } from '@/services/geminiService';
@@ -35,6 +36,7 @@ function CreatePageContent() {
   const [isCompressing, setIsCompressing] = useState(false);
   const [isUpscaledSaving, setIsUpscaledSaving] = useState(false);
   const [isUpscaledSaved, setIsUpscaledSaved] = useState(false);
+  const [creditType, setCreditType] = useState<CreditType>('auto');
 
   const handleGallerySelect = (imageUrl: string) => {
     setUploadedImage(imageUrl);
@@ -57,7 +59,7 @@ function CreatePageContent() {
         aspectRatio: selectedAspectRatio
       };
 
-      const images = await generateImageVariations(request);
+      const images = await generateImageVariations(request, creditType);
       if (images.length === 0) {
         alert('이미지 생성에 실패했습니다. 다시 시도해주세요.');
       } else {
@@ -86,7 +88,7 @@ function CreatePageContent() {
         aspectRatio: selectedAspectRatio
       };
 
-      const images = await generateImageVariations(request);
+      const images = await generateImageVariations(request, creditType);
       if (images.length === 0) {
         alert('이미지 생성에 실패했습니다. 다시 시도해주세요.');
       } else {
@@ -292,6 +294,15 @@ function CreatePageContent() {
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="예: 나무 테이블 위에 커피가 놓여있고, 아침 햇살이 들어오는 느낌으로 만들어줘."
             className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 min-h-[80px] transition-colors"
+          />
+        </div>
+
+        {/* Step 6: Credit Selection */}
+        <div className="mb-20">
+          <CreditSelector
+            requiredCredits={20}
+            selectedType={creditType}
+            onSelect={setCreditType}
           />
         </div>
 

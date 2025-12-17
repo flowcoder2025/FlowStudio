@@ -83,11 +83,43 @@ export async function getConcurrentLimit(userId: string): Promise<number> {
 }
 
 /**
- * 사용자가 워터마크 제거 권한이 있는지 확인
+ * 사용자가 워터마크 제거 권한이 있는지 확인 (구독 티어 기준)
  */
 export async function hasWatermarkFree(userId: string): Promise<boolean> {
   const tier = await getUserTier(userId)
   return SUBSCRIPTION_TIERS[tier].watermarkFree
+}
+
+/**
+ * 워터마크 적용 여부 결정 (옵션 2: 크레딧 종류 기반)
+ *
+ * 워터마크 적용 조건:
+ * - FREE 플랜 AND 구매 크레딧이 없음 (무료 크레딧만 보유)
+ *
+ * 워터마크 미적용 조건:
+ * - PLUS/PRO/BUSINESS 구독자
+ * - FREE 플랜이지만 구매 크레딧 보유 중
+ *
+ * @returns true = 워터마크 적용, false = 워터마크 미적용
+ */
+export async function shouldApplyWatermark(userId: string): Promise<boolean> {
+  // 1. 구독 티어 확인 - 유료 구독자는 항상 워터마크 없음
+  const tier = await getUserTier(userId)
+  if (SUBSCRIPTION_TIERS[tier].watermarkFree) {
+    return false // 워터마크 미적용
+  }
+
+  // 2. FREE 플랜인 경우 - 구매 크레딧 보유 여부 확인
+  // 동적 import로 순환 의존성 방지
+  const { hasPurchasedCredits } = await import('./creditManager')
+  const hasPurchased = await hasPurchasedCredits(userId)
+
+  if (hasPurchased) {
+    return false // 구매 크레딧 있음 → 워터마크 미적용
+  }
+
+  // 3. FREE 플랜 + 무료 크레딧만 보유 → 워터마크 적용
+  return true
 }
 
 /**

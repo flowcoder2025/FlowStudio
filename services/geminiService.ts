@@ -6,11 +6,15 @@
  */
 
 import { GenerationRequest, AppMode } from "@/types";
+import type { CreditType } from "@/components/CreditSelector";
 
 /**
  * Generate a preview image (single variation)
  */
-export const generatePreview = async (request: GenerationRequest): Promise<string | null> => {
+export const generatePreview = async (
+  request: GenerationRequest,
+  creditType: CreditType = 'auto'
+): Promise<string | null> => {
   try {
     const response = await fetch('/api/generate', {
       method: 'POST',
@@ -27,6 +31,7 @@ export const generatePreview = async (request: GenerationRequest): Promise<strin
         style: request.style?.label,
         aspectRatio: request.aspectRatio || '1:1',
         mode: request.mode,
+        creditType,
       }),
     });
 
@@ -60,7 +65,10 @@ export const generatePreview = async (request: GenerationRequest): Promise<strin
 /**
  * Generate multiple image variations (4 images)
  */
-export const generateImageVariations = async (request: GenerationRequest): Promise<string[]> => {
+export const generateImageVariations = async (
+  request: GenerationRequest,
+  creditType: CreditType = 'auto'
+): Promise<string[]> => {
   try {
     const response = await fetch('/api/generate', {
       method: 'POST',
@@ -77,6 +85,7 @@ export const generateImageVariations = async (request: GenerationRequest): Promi
         style: request.style?.label,
         aspectRatio: request.aspectRatio || '1:1',
         mode: request.mode,
+        creditType,
       }),
     });
 
