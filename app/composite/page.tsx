@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
-import { Layers, Plus, X, FolderOpen, Cloud, Loader2, Check, Download } from 'lucide-react';
+import { Layers, Plus, X, FolderOpen, Cloud, Loader2, Check, Download, ImageIcon } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
@@ -37,17 +37,21 @@ function CompositePageContent() {
   const [isCompressing, setIsCompressing] = useState(false);
   const [isUpscaledSaving, setIsUpscaledSaving] = useState(false);
   const [isUpscaledSaved, setIsUpscaledSaved] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragCountRef = useRef(0);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-
+  const processFiles = useCallback(async (files: File[]) => {
     const remainingSlots = MAX_IMAGES - compositeImages.length;
-    const filesToProcess = Array.from(files).slice(0, remainingSlots);
+    const filesToProcess = files.slice(0, remainingSlots);
 
     for (const file of filesToProcess) {
+      if (!file.type.startsWith('image/')) {
+        alert('이미지 파일만 업로드 가능합니다.');
+        continue;
+      }
+
       try {
         const needsCompression = isFileTooLarge(file, 3);
 
@@ -76,12 +80,52 @@ function CompositePageContent() {
         alert('이미지 처리 중 오류가 발생했습니다.');
       }
     }
+  }, [compositeImages.length]);
 
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    processFiles(Array.from(files));
     // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
+  }, [processFiles]);
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCountRef.current += 1;
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDragging(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCountRef.current -= 1;
+    if (dragCountRef.current === 0) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCountRef.current = 0;
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      processFiles(Array.from(files));
+    }
+  }, [processFiles]);
 
   const handleGallerySelect = (imageUrl: string) => {
     if (compositeImages.length < MAX_IMAGES) {
@@ -231,7 +275,7 @@ function CompositePageContent() {
     <>
       <Header currentMode={AppMode.COMPOSITE} />
 
-      <div className="max-w-5xl mx-auto px-3 lg:px-4 py-4 lg:py-6 pb-24">
+      <div className="max-w-5xl mx-auto px-3 lg:px-4 pt-4 lg:pt-6 pb-20">
         <h2 className="text-lg lg:text-xl font-bold mb-3 flex items-center gap-2 text-slate-900 dark:text-slate-100">
           <Layers className="w-5 h-5 text-cyan-600 dark:text-cyan-400" /> 이미지 연출/합성
         </h2>
@@ -245,48 +289,88 @@ function CompositePageContent() {
             1. 재료 이미지 업로드 (최대 {MAX_IMAGES}장)
           </h3>
 
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 mb-3">
-            {compositeImages.map((img, idx) => (
-              <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700">
-                <Image
-                  src={img}
-                  alt={`재료 ${idx + 1}`}
-                  fill
-                  className="object-cover"
-                  unoptimized={img.startsWith('data:')}
-                />
-                <button
-                  onClick={() => removeImage(idx)}
-                  className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1.5 hover:bg-red-500 transition-colors min-w-[28px] min-h-[28px] flex items-center justify-center"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-                <div className="absolute bottom-1 left-1 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">
-                  IMG {idx + 1}
-                </div>
-              </div>
-            ))}
+          {/* Hidden file input */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageUpload}
+            accept="image/*"
+            className="hidden"
+            multiple
+          />
 
-            {compositeImages.length < MAX_IMAGES && (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="aspect-square border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
-              >
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleImageUpload}
-                  accept="image/*"
-                  className="hidden"
-                  multiple
-                />
-                <Plus className="w-6 h-6 text-slate-400 dark:text-slate-500 mb-0.5" />
-                <span className="text-[10px] text-slate-500 dark:text-slate-400">추가</span>
+          {/* Drag & Drop Zone with Grid */}
+          <div
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`group border-2 border-dashed rounded-xl p-3 mb-3 transition-all duration-200 cursor-pointer ${
+              isDragging
+                ? 'border-cyan-500 dark:border-cyan-400 bg-cyan-100 dark:bg-cyan-900/40 scale-[1.01]'
+                : compositeImages.length > 0
+                ? 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'
+                : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:border-slate-400 dark:hover:border-slate-500'
+            }`}
+            onClick={() => compositeImages.length === 0 && fileInputRef.current?.click()}
+          >
+            {compositeImages.length === 0 ? (
+              /* Empty State - FileDropzone Style */
+              <div className="flex flex-col items-center justify-center py-6">
+                <ImageIcon className={`w-8 h-8 mb-2 transition-colors ${
+                  isDragging
+                    ? 'text-cyan-500 dark:text-cyan-400 animate-bounce'
+                    : 'text-slate-400 dark:text-slate-500 group-hover:text-cyan-500 dark:group-hover:text-cyan-400'
+                }`} />
+                <p className={`text-sm font-medium transition-colors ${
+                  isDragging
+                    ? 'text-cyan-600 dark:text-cyan-400'
+                    : 'text-slate-600 dark:text-slate-300 group-hover:text-slate-800 dark:group-hover:text-slate-100'
+                }`}>
+                  {isDragging ? '여기에 놓으세요!' : '이미지를 끌어다 놓거나 클릭해서 업로드하세요'}
+                </p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                  여러 장을 한 번에 선택할 수 있습니다
+                </p>
+              </div>
+            ) : (
+              /* Grid with Images */
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                {compositeImages.map((img, idx) => (
+                  <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700">
+                    <Image
+                      src={img}
+                      alt={`재료 ${idx + 1}`}
+                      fill
+                      className="object-cover"
+                      unoptimized={img.startsWith('data:')}
+                    />
+                    <button
+                      onClick={(e) => { e.stopPropagation(); removeImage(idx); }}
+                      className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1.5 hover:bg-red-500 transition-colors min-w-[28px] min-h-[28px] flex items-center justify-center"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                    <div className="absolute bottom-1 left-1 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">
+                      IMG {idx + 1}
+                    </div>
+                  </div>
+                ))}
+
+                {compositeImages.length < MAX_IMAGES && (
+                  <div
+                    onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                    className="aspect-square border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-cyan-400 dark:hover:border-cyan-500 transition-colors"
+                  >
+                    <Plus className="w-5 h-5 text-slate-400 dark:text-slate-500 mb-0.5" />
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400">추가</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 mb-1.5">
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 mb-2">
             * 제품 사진, 소품, 배경 질감 등을 업로드하세요. 순서는 중요하지 않습니다.
           </p>
 
@@ -301,7 +385,7 @@ function CompositePageContent() {
 
           <button
             onClick={() => setIsGalleryOpen(true)}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 min-h-[40px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-medium transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 min-h-[40px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium text-sm transition-colors"
           >
             <FolderOpen className="w-4 h-4" />
             이미지 저장소에서 불러오기

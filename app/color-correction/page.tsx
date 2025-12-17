@@ -174,7 +174,7 @@ function ColorCorrectionPageContent() {
     <>
       <Header currentMode={AppMode.COLOR_CORRECTION} />
 
-      <div className="max-w-5xl mx-auto px-3 lg:px-4 py-4 lg:py-6 pb-24">
+      <div className="max-w-5xl mx-auto px-3 lg:px-4 pt-4 lg:pt-6 pb-20">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-lg lg:text-xl font-bold mb-1 flex items-center gap-2 text-slate-900 dark:text-slate-100">
@@ -206,8 +206,8 @@ function ColorCorrectionPageContent() {
                 onCompressing={setIsCompressing}
                 onError={(msg) => alert(msg)}
                 colorTheme="amber"
-                icon={<ImageIcon className="w-8 h-8 text-amber-600 dark:text-amber-400" />}
-                placeholder="보정할 사진 업로드 또는 드래그 앤 드롭"
+                icon={<ImageIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
+                placeholder="보정할 이미지를 끌어다 놓거나 클릭해서 업로드하세요"
                 subPlaceholder="PNG, JPG (최대 10MB)"
                 imageAlt="To Correct"
                 compact

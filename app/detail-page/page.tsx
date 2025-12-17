@@ -363,7 +363,7 @@ function DetailPageContent() {
     <>
       <Header currentMode={AppMode.DETAIL_PAGE} />
 
-      <div className="max-w-5xl mx-auto px-3 lg:px-4 py-4 lg:py-6 pb-24 flex flex-col md:flex-row gap-4 lg:gap-6">
+      <div className="max-w-5xl mx-auto px-3 lg:px-4 pt-4 lg:pt-6 pb-20 flex flex-col md:flex-row gap-4 lg:gap-6">
         {/* Left Panel: Controls */}
         <div className="md:w-1/2 flex flex-col gap-4">
           <div className="flex items-center justify-between gap-2 md:gap-3">
@@ -418,7 +418,7 @@ function DetailPageContent() {
               onError={(msg) => alert(msg)}
               colorTheme="blue"
               icon={<Camera className="w-4 h-4 text-slate-400 dark:text-slate-500" />}
-              placeholder="제품 사진 업로드 또는 드래그 앤 드롭"
+              placeholder="제품 사진을 끌어다 놓거나 클릭해서 업로드하세요"
               subPlaceholder="모든 섹션 생성시 참조됩니다."
               imageAlt="Main Product"
               compact
@@ -526,7 +526,7 @@ function DetailPageContent() {
               onError={(msg) => alert(msg)}
               colorTheme="purple"
               icon={<Eye className="w-4 h-4 text-slate-400 dark:text-slate-500" />}
-              placeholder="스타일 참조 이미지 업로드 (선택)"
+              placeholder="참조 이미지를 끌어다 놓거나 클릭해서 업로드하세요 (선택)"
               subPlaceholder="이 이미지의 스타일을 참조합니다."
               imageAlt="Reference"
               compact

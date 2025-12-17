@@ -176,7 +176,7 @@ function CreatePageContent() {
     <>
       <Header currentMode={AppMode.CREATE} />
 
-      <div className="max-w-5xl mx-auto px-3 lg:px-4 py-4 lg:py-6 pb-24">
+      <div className="max-w-5xl mx-auto px-3 lg:px-4 pt-4 lg:pt-6 pb-20">
         <h2 className="text-lg lg:text-xl font-bold mb-4 flex items-center gap-2 text-slate-900 dark:text-slate-100">
           <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" /> 이미지 생성 마법사
         </h2>
@@ -190,10 +190,11 @@ function CreatePageContent() {
             onCompressing={setIsCompressing}
             onError={(msg) => alert(msg)}
             colorTheme="indigo"
-            icon={<Camera className="w-10 h-10 text-slate-400 dark:text-slate-500" />}
-            placeholder="제품 사진 업로드 또는 드래그 앤 드롭"
+            icon={<Camera className="w-5 h-5 text-slate-400 dark:text-slate-500" />}
+            placeholder="제품 사진을 끌어다 놓거나 클릭해서 업로드하세요"
             subPlaceholder="사진이 없으면 텍스트로만 생성됩니다."
             imageAlt="Uploaded"
+            compact
           />
 
           {/* Divider with "또는" */}

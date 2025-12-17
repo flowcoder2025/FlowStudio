@@ -442,7 +442,7 @@ function DetailEditPageContent() {
     <>
       <Header currentMode={AppMode.DETAIL_EDIT} />
 
-      <div className="max-w-5xl mx-auto px-3 lg:px-4 py-4 lg:py-6 pb-24 h-[calc(100vh-56px)] flex flex-col">
+      <div className="max-w-5xl mx-auto px-3 lg:px-4 pt-4 lg:pt-6 pb-20 h-[calc(100vh-56px)] flex flex-col">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg lg:text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
             <FilePenLine className="w-5 h-5 text-violet-600 dark:text-violet-400" /> 상세페이지 편집
@@ -476,15 +476,15 @@ function DetailEditPageContent() {
 
         {!uploadedImage ? (
           <div className="flex-1 flex items-center justify-center bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
-            <div className="w-full max-w-sm p-6">
+            <div className="w-full max-w-lg p-6">
               <FileDropzone
                 value={uploadedImage}
                 onChange={handleUploadedImageChange}
                 onCompressing={setIsCompressing}
                 onError={(msg) => alert(msg)}
                 colorTheme="violet"
-                icon={<Layout className="w-8 h-8 text-violet-600 dark:text-violet-400" />}
-                placeholder="편집할 상세페이지 업로드"
+                icon={<Layout className="w-5 h-5 text-violet-600 dark:text-violet-400" />}
+                placeholder="편집할 상세페이지를 끌어다 놓거나 클릭해서 업로드하세요"
                 subPlaceholder="JPG, PNG 파일 지원 (최대 10MB)"
                 imageAlt="Detail Page"
                 compact

@@ -167,7 +167,7 @@ function PosterPageContent() {
     <>
       <Header currentMode={AppMode.POSTER} />
 
-      <div className="max-w-5xl mx-auto px-3 lg:px-4 py-4 lg:py-6 pb-24">
+      <div className="max-w-5xl mx-auto px-3 lg:px-4 pt-4 lg:pt-6 pb-20">
         <h2 className="text-lg lg:text-xl font-bold mb-4 flex items-center gap-2 text-slate-900 dark:text-slate-100">
           <Megaphone className="w-5 h-5 text-rose-600 dark:text-rose-400" />
           홍보 포스터 제작
@@ -181,8 +181,8 @@ function PosterPageContent() {
             onCompressing={setIsCompressing}
             onError={(msg) => alert(msg)}
             colorTheme="rose"
-            icon={<Upload className="w-8 h-8 text-slate-400 dark:text-slate-500" />}
-            placeholder="제품 사진 업로드 또는 드래그 앤 드롭"
+            icon={<Upload className="w-5 h-5 text-slate-400 dark:text-slate-500" />}
+            placeholder="제품 사진을 끌어다 놓거나 클릭해서 업로드하세요"
             subPlaceholder="PNG, JPG (최대 10MB)"
             imageAlt="Product"
             compact
@@ -216,8 +216,8 @@ function PosterPageContent() {
             onCompressing={setIsCompressing}
             onError={(msg) => alert(msg)}
             colorTheme="amber"
-            icon={<Upload className="w-6 h-6 text-slate-400 dark:text-slate-500" />}
-            placeholder="로고 업로드 또는 드래그 앤 드롭 (선택)"
+            icon={<Upload className="w-5 h-5 text-slate-400 dark:text-slate-500" />}
+            placeholder="로고를 끌어다 놓거나 클릭해서 업로드하세요 (선택)"
             subPlaceholder="PNG 권장 (투명 배경)"
             imageAlt="Logo"
             imageMaxHeight="h-20"

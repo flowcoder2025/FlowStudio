@@ -166,7 +166,7 @@ function EditPageContent() {
     <>
       <Header currentMode={AppMode.EDIT} />
 
-      <div className="max-w-5xl mx-auto px-3 lg:px-4 py-4 lg:py-6 pb-24">
+      <div className="max-w-5xl mx-auto px-3 lg:px-4 pt-4 lg:pt-6 pb-20">
         <h2 className="text-lg lg:text-xl font-bold mb-4 flex items-center gap-2 text-slate-900 dark:text-slate-100">
           <Wand2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> AI 이미지 편집
         </h2>
@@ -180,11 +180,9 @@ function EditPageContent() {
             onCompressing={setIsCompressing}
             onError={(msg) => alert(msg)}
             colorTheme="emerald"
-            icon={<ImageIcon className="w-8 h-8 text-slate-400 dark:text-slate-500" />}
-            placeholder="사진 업로드 또는 드래그 앤 드롭"
-            subPlaceholder="PNG, JPG (최대 10MB)"
+            icon={<ImageIcon className="w-5 h-5 text-slate-400 dark:text-slate-500" />}
+            placeholder="편집할 이미지를 끌어다 놓거나 클릭해서 업로드하세요"
             imageAlt="To Edit"
-            imageMaxHeight="max-h-48"
             compact
           />
 

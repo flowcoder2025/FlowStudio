@@ -278,9 +278,9 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
             </button>
           </div>
 
-          {/* 이미지 */}
+          {/* 이미지 - 반응형으로 화면에 맞게 확대 */}
           <div
-            className="max-w-sm w-full max-h-[80vh] overflow-auto rounded-lg relative"
+            className="w-full max-w-4xl px-4 flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
             <Image
@@ -288,7 +288,7 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
               alt={`Preview ${previewIndex}`}
               width={1080}
               height={1920}
-              className="w-full h-auto"
+              className="max-w-full max-h-[75vh] w-auto h-auto object-contain rounded-lg"
               unoptimized={previewImage.startsWith('data:')}
             />
           </div>
