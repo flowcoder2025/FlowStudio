@@ -584,6 +584,13 @@ function DetailPageContent() {
               className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 min-h-[80px] mb-3 text-sm transition-colors"
             />
 
+            {/* 선택 경로 */}
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+              {selectedCategory ? selectedCategory.label : '카테고리 선택'}
+              {selectedStyle ? ` > ${selectedStyle.label}` : ''}
+              {selectedLayout ? ` > ${selectedLayout.label}` : ''}
+            </p>
+
             {/* 크레딧 선택 + 생성 버튼 */}
             <div className="flex items-center gap-2">
               <CreditSelectorDropdown

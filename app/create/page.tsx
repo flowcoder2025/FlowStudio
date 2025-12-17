@@ -327,8 +327,9 @@ function CreatePageContent() {
           <div className="max-w-5xl mx-auto flex justify-between items-center gap-3">
             {/* 선택 경로 */}
             <p className="text-xs text-slate-500 dark:text-slate-400 hidden md:block">
-              {selectedCategory ? `${selectedCategory.label}` : '종류 선택'}
+              {selectedCategory ? selectedCategory.label : '종류 선택'}
               {selectedStyle ? ` > ${selectedStyle.label}` : ''}
+              {` > ${selectedAspectRatio}`}
             </p>
             {/* 크레딧 드롭다운 + 버튼 */}
             <div className="flex items-center gap-2 ml-auto">

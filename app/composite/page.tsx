@@ -499,9 +499,15 @@ function CompositePageContent() {
 
         {/* Fixed Action Bar */}
         <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-3 pb-safe z-30 transition-colors">
-          <div className="max-w-5xl mx-auto flex gap-3 justify-end items-center">
+          <div className="max-w-5xl mx-auto flex justify-between items-center gap-3">
+            {/* 선택 경로 */}
+            <p className="text-xs text-slate-500 dark:text-slate-400 hidden md:block">
+              {selectedCategory ? selectedCategory.label : '테마 선택'}
+              {selectedStyle ? ` > ${selectedStyle.label}` : ''}
+              {` > ${selectedAspectRatio}`}
+            </p>
             {/* 크레딧 드롭다운 + 버튼 */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ml-auto">
               <CreditSelectorDropdown
                 requiredCredits={20}
                 selectedType={creditType}
