@@ -185,31 +185,31 @@ export default function CreditPurchasePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 py-4 lg:py-8">
       <div className="container mx-auto px-4 max-w-4xl">
         {/* 뒤로가기 버튼 */}
         <button
           onClick={() => router.back()}
-          className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          className="mb-4 flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors min-h-[44px]"
         >
           <ArrowLeft className="w-5 h-5" />
           <span>뒤로가기</span>
         </button>
 
         {/* 헤더 */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-4 lg:mb-6">
+          <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white mb-2">
             크레딧 충전
           </h1>
-          <p className="text-lg text-gray-600 mb-2">
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
             AI 이미지 생성에 필요한 크레딧을 충전하세요
           </p>
           {currentBalance !== null && (
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 rounded-full">
-              <span className="text-sm font-medium text-blue-900">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+              <span className="text-xs font-medium text-blue-900 dark:text-blue-200">
                 현재 보유 크레딧:
               </span>
-              <span className="text-lg font-bold text-blue-600">
+              <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
                 {currentBalance.toLocaleString()} 크레딧
               </span>
             </div>
@@ -217,16 +217,15 @@ export default function CreditPurchasePage() {
         </div>
 
         {/* 결제 심사 안내 */}
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-8">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3 lg:p-4 mb-4 lg:mb-6">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-bold text-amber-800 mb-2">
+              <h3 className="font-bold text-amber-800 dark:text-amber-300 text-sm mb-1">
                 결제 서비스 심사 중
               </h3>
-              <p className="text-amber-700 text-sm leading-relaxed">
+              <p className="text-amber-700 dark:text-amber-400 text-xs leading-relaxed">
                 현재 카드 결제 서비스가 심사 단계에 있어 <strong>계좌이체</strong>로 크레딧을 충전할 수 있습니다.
-                <br />
                 아래 계좌로 입금 후 신청서를 작성해주시면 <strong>1시간 내로 크레딧을 지급</strong>해 드립니다.
               </p>
             </div>
@@ -234,32 +233,32 @@ export default function CreditPurchasePage() {
         </div>
 
         {/* 계좌 정보 */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-3 lg:p-4 mb-4 lg:mb-6">
+          <h2 className="text-sm lg:text-base font-bold text-slate-900 dark:text-white mb-2">
             입금 계좌 정보
           </h2>
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 mb-1">{BANK_INFO.bank}</p>
-                <p className="text-2xl font-bold text-gray-900 tracking-wider">
+          <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">{BANK_INFO.bank}</p>
+                <p className="text-lg lg:text-xl font-bold text-slate-900 dark:text-white tracking-wider">
                   {BANK_INFO.account}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">예금주: {BANK_INFO.holder}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">예금주: {BANK_INFO.holder}</p>
               </div>
               <button
                 onClick={copyAccountNumber}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors min-h-[40px]"
               >
                 {copied ? (
                   <>
                     <Check className="w-4 h-4" />
-                    <span>복사됨</span>
+                    <span className="hidden sm:inline">복사됨</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-4 h-4" />
-                    <span>복사</span>
+                    <span className="hidden sm:inline">복사</span>
                   </>
                 )}
               </button>
@@ -268,36 +267,36 @@ export default function CreditPurchasePage() {
         </div>
 
         {/* 크레딧 패키지 안내 */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-3 lg:p-4 mb-4 lg:mb-6">
+          <h2 className="text-sm lg:text-base font-bold text-slate-900 dark:text-white mb-2">
             크레딧 패키지
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
             {CREDIT_PACKAGES.map((pkg) => (
               <div
                 key={pkg.id}
-                className={`relative rounded-xl p-4 border-2 ${
+                className={`relative rounded-lg p-2.5 lg:p-3 border-2 ${
                   pkg.popular
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 bg-gray-50'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+                    : 'border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700'
                 }`}
               >
                 {pkg.popular && (
-                  <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-blue-500 text-white px-3 py-0.5 rounded-full text-xs font-medium">
+                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-blue-500 text-white px-2 py-0.5 rounded-full text-[10px] font-medium">
                     인기
                   </div>
                 )}
                 <div className="text-center">
-                  <h3 className="font-bold text-gray-900 mb-1">{pkg.name}</h3>
-                  <p className="text-2xl font-bold text-blue-600">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-xs mb-0.5">{pkg.name}</h3>
+                  <p className="text-lg lg:text-xl font-bold text-blue-600 dark:text-blue-400">
                     {pkg.credits.toLocaleString()}
                   </p>
-                  <p className="text-xs text-gray-500 mb-2">크레딧</p>
-                  <p className="text-lg font-bold text-gray-900">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-1">크레딧</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">
                     ₩{pkg.price.toLocaleString()}
                   </p>
                   {pkg.discount > 0 && (
-                    <p className="text-xs text-green-600 font-medium">
+                    <p className="text-[10px] text-green-600 dark:text-green-400 font-medium">
                       {pkg.discount}% 할인
                     </p>
                   )}
@@ -308,34 +307,34 @@ export default function CreditPurchasePage() {
         </div>
 
         {/* 크레딧 신청 폼 */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-3 lg:p-4 mb-4 lg:mb-6">
+          <h2 className="text-sm lg:text-base font-bold text-slate-900 dark:text-white mb-3">
             크레딧 충전 신청
           </h2>
 
           {submitSuccess ? (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Check className="w-8 h-8 text-green-600" />
+            <div className="text-center py-6">
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Check className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
                 신청이 완료되었습니다!
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
                 입금 확인 후 1시간 내로 크레딧이 지급됩니다.
               </p>
               <button
                 onClick={() => setSubmitSuccess(false)}
-                className="text-blue-600 hover:underline"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
               >
                 추가 신청하기
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                     이름 <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -344,12 +343,12 @@ export default function CreditPurchasePage() {
                     value={formData.name}
                     onChange={handleInputChange}
                     placeholder="홍길동"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                     이메일 (가입 메일) <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -358,12 +357,12 @@ export default function CreditPurchasePage() {
                     value={formData.email}
                     onChange={handleInputChange}
                     placeholder="example@kakao.com"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                     연락처 <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -372,19 +371,19 @@ export default function CreditPurchasePage() {
                     value={formData.phone}
                     onChange={handleInputChange}
                     placeholder="010-1234-5678"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                     입금액 (원) <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="depositAmount"
                     value={formData.depositAmount}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     required
                   >
                     <option value="">입금액 선택</option>
@@ -398,23 +397,23 @@ export default function CreditPurchasePage() {
               </div>
 
               {/* 세금계산서 발행 */}
-              <div className="pt-4 border-t border-gray-200">
-                <label className="flex items-center gap-3 cursor-pointer">
+              <div className="pt-3 border-t border-slate-200 dark:border-slate-600">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={needTaxInvoice}
                     onChange={(e) => setNeedTaxInvoice(e.target.checked)}
-                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-blue-600 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500"
                   />
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
                     세금계산서 발행 요청
                   </span>
                 </label>
 
                 {needTaxInvoice && (
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                         사업자명 <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -423,12 +422,12 @@ export default function CreditPurchasePage() {
                         value={taxInfo.businessName}
                         onChange={handleTaxInfoChange}
                         placeholder="(주)플로우코더"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-600 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         required={needTaxInvoice}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                         사업자번호 <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -437,12 +436,12 @@ export default function CreditPurchasePage() {
                         value={taxInfo.businessNumber}
                         onChange={handleTaxInfoChange}
                         placeholder="123-45-67890"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-600 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         required={needTaxInvoice}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                         대표자명 <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -451,12 +450,12 @@ export default function CreditPurchasePage() {
                         value={taxInfo.representativeName}
                         onChange={handleTaxInfoChange}
                         placeholder="홍길동"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-600 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         required={needTaxInvoice}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                         업종/업태 <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -465,7 +464,7 @@ export default function CreditPurchasePage() {
                         value={taxInfo.businessType}
                         onChange={handleTaxInfoChange}
                         placeholder="소프트웨어 개발/서비스업"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-600 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         required={needTaxInvoice}
                       />
                     </div>
@@ -473,20 +472,20 @@ export default function CreditPurchasePage() {
                 )}
               </div>
 
-              <div className="pt-4">
+              <div className="pt-3">
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors min-h-[44px]"
                 >
                   {submitting ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin" />
                       <span>신청 중...</span>
                     </>
                   ) : (
                     <>
-                      <Send className="w-5 h-5" />
+                      <Send className="w-4 h-4" />
                       <span>크레딧 충전 신청하기</span>
                     </>
                   )}
@@ -497,28 +496,28 @@ export default function CreditPurchasePage() {
         </div>
 
         {/* 안내사항 */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-3 lg:p-4">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2">
             크레딧 사용 안내
           </h3>
-          <ul className="space-y-2 text-sm text-gray-600">
-            <li className="flex items-start gap-2">
+          <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
+            <li className="flex items-start gap-1.5">
               <span className="text-blue-500">•</span>
               <span>2K 이미지 생성 1회 (4장): 20 크레딧 (₩2,000)</span>
             </li>
-            <li className="flex items-start gap-2">
+            <li className="flex items-start gap-1.5">
               <span className="text-blue-500">•</span>
               <span>업스케일링 1회 (2K→4K, 1장): 10 크레딧 (₩1,000)</span>
             </li>
-            <li className="flex items-start gap-2">
+            <li className="flex items-start gap-1.5">
               <span className="text-blue-500">•</span>
               <span>입금 확인 후 1시간 내로 크레딧이 지급됩니다</span>
             </li>
-            <li className="flex items-start gap-2">
+            <li className="flex items-start gap-1.5">
               <span className="text-blue-500">•</span>
               <span>크레딧 충전 후 6개월간 사용 가능합니다</span>
             </li>
-            <li className="flex items-start gap-2">
+            <li className="flex items-start gap-1.5">
               <span className="text-blue-500">•</span>
               <span>문의: support@flow-coder.com</span>
             </li>

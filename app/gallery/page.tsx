@@ -28,6 +28,7 @@ import {
   ZoomIn,
   ArrowUpCircle,
 } from 'lucide-react';
+import { StorageUsageBar, StorageUsageBarSkeleton } from '@/components/StorageUsageBar';
 import { Header } from '@/components/Header';
 import { AppMode } from '@/types';
 import type { UserImage } from '@/app/api/images/list/route';
@@ -46,6 +47,14 @@ const MODE_LABELS: Record<FilterMode, { label: string; icon: React.ReactNode }> 
 
 const ITEMS_PER_PAGE = 30;
 
+interface StorageUsageData {
+  usedMB: number;
+  usedGB: number;
+  quotaGB: number;
+  usagePercent: number;
+  fileCount: number;
+}
+
 export default function GalleryPage() {
   const { status } = useSession();
   const router = useRouter();
@@ -57,6 +66,10 @@ export default function GalleryPage() {
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
+
+  // Storage usage state
+  const [storageUsage, setStorageUsage] = useState<StorageUsageData | null>(null);
+  const [storageLoading, setStorageLoading] = useState(true);
 
   // Filter state
   const [filterMode, setFilterMode] = useState<FilterMode>('ALL');
@@ -83,6 +96,31 @@ export default function GalleryPage() {
       router.push('/login');
     }
   }, [status, router]);
+
+  // Fetch storage usage
+  const fetchStorageUsage = useCallback(async () => {
+    setStorageLoading(true);
+    try {
+      const response = await fetch('/api/storage/usage');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setStorageUsage(data.data);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch storage usage:', err);
+    } finally {
+      setStorageLoading(false);
+    }
+  }, []);
+
+  // Load storage usage on mount
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchStorageUsage();
+    }
+  }, [status, fetchStorageUsage]);
 
   // Fetch images
   const fetchImages = useCallback(async (reset: boolean = false) => {
@@ -259,6 +297,9 @@ export default function GalleryPage() {
 
       // Remove all images from this project
       setImages(prev => prev.filter(img => img.projectId !== projectId));
+
+      // Refresh storage usage after deletion
+      fetchStorageUsage();
     } catch (err) {
       alert(err instanceof Error ? err.message : '삭제 중 오류가 발생했습니다.');
     } finally {
@@ -421,13 +462,32 @@ export default function GalleryPage() {
       <main className="max-w-7xl mx-auto px-3 lg:px-4 py-4 lg:py-6">
         {/* Header */}
         <div className="mb-4">
-          <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1 flex items-center gap-2">
-            <ImageIcon className="w-5 h-5 lg:w-6 lg:h-6 text-indigo-600 dark:text-indigo-400" />
-            이미지 저장소
-          </h1>
-          <p className="text-xs lg:text-sm text-slate-600 dark:text-slate-400">
-            생성한 모든 이미지를 관리하고 다운로드할 수 있습니다.
-          </p>
+          <div className="flex items-start justify-between gap-4 mb-1">
+            <div>
+              <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 lg:w-6 lg:h-6 text-indigo-600 dark:text-indigo-400" />
+                이미지 저장소
+              </h1>
+              <p className="text-xs lg:text-sm text-slate-600 dark:text-slate-400">
+                생성한 모든 이미지를 관리하고 다운로드할 수 있습니다.
+              </p>
+            </div>
+            {/* Storage Usage (Compact) */}
+            <div className="flex-shrink-0">
+              {storageLoading ? (
+                <StorageUsageBarSkeleton variant="compact" />
+              ) : storageUsage ? (
+                <StorageUsageBar
+                  usedMB={storageUsage.usedMB}
+                  usedGB={storageUsage.usedGB}
+                  quotaGB={storageUsage.quotaGB}
+                  usagePercent={storageUsage.usagePercent}
+                  variant="compact"
+                  showWarning={true}
+                />
+              ) : null}
+            </div>
+          </div>
         </div>
 
         {/* Filter Section */}

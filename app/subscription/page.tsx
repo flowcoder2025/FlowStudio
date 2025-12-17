@@ -11,7 +11,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Check, Crown, Zap, Building2, Sparkles, Loader2 } from 'lucide-react'
+import { Check, Crown, Zap, Building2, Sparkles, Loader2, ArrowLeft } from 'lucide-react'
 import * as PortOne from '@portone/browser-sdk/v2'
 
 // 구독 플랜 정의
@@ -236,21 +236,30 @@ export default function SubscriptionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 py-12 px-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 py-4 lg:py-8 px-4">
       <div className="max-w-6xl mx-auto">
+        {/* 뒤로가기 버튼 */}
+        <button
+          onClick={() => router.back()}
+          className="mb-4 flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors min-h-[44px]"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span>뒤로가기</span>
+        </button>
+
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+        <div className="text-center mb-6 lg:mb-8">
+          <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white mb-2">
             구독 플랜
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
             더 많은 저장공간과 빠른 처리 속도를 원하시나요?
             <br />
             구독 플랜을 업그레이드하고 모든 기능을 활용해보세요.
           </p>
           {currentSubscription && (
-            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-              <span className="text-sm text-blue-800 dark:text-blue-200">
+            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+              <span className="text-xs text-blue-800 dark:text-blue-200">
                 현재 플랜: <strong>{currentSubscription.tierConfig.name}</strong>
               </span>
               {currentSubscription.endDate && (
@@ -263,7 +272,7 @@ export default function SubscriptionPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           {SUBSCRIPTION_PLANS.map((plan) => {
             const Icon = plan.icon
             const isCurrentPlan = currentSubscription?.tier === plan.tier
@@ -273,7 +282,7 @@ export default function SubscriptionPage() {
             return (
               <div
                 key={plan.tier}
-                className={`relative rounded-2xl p-6 ${plan.color} ${plan.borderColor} border-2 ${
+                className={`relative rounded-xl p-3 lg:p-4 ${plan.color} ${plan.borderColor} border-2 ${
                   plan.popular ? 'ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-900' : ''
                 } ${isCurrentPlan ? 'ring-2 ring-green-500 ring-offset-2 dark:ring-offset-slate-900' : ''}`}
               >
@@ -296,40 +305,40 @@ export default function SubscriptionPage() {
                 )}
 
                 {/* Icon & Name */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`p-2 rounded-lg ${
+                <div className="flex items-center gap-2 mb-2 lg:mb-3">
+                  <div className={`p-1.5 rounded-lg ${
                     plan.tier === 'FREE' ? 'bg-slate-200 dark:bg-slate-700' :
                     plan.tier === 'PLUS' ? 'bg-blue-200 dark:bg-blue-800' :
                     plan.tier === 'PRO' ? 'bg-purple-200 dark:bg-purple-800' :
                     'bg-amber-200 dark:bg-amber-800'
                   }`}>
-                    <Icon className="w-5 h-5 text-slate-700 dark:text-slate-200" />
+                    <Icon className="w-4 h-4 text-slate-700 dark:text-slate-200" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-base lg:text-lg font-bold text-slate-900 dark:text-white">
                     {plan.name}
                   </h3>
                 </div>
 
                 {/* Price */}
-                <div className="mb-6">
+                <div className="mb-3 lg:mb-4">
                   {plan.price === 0 ? (
-                    <span className="text-3xl font-bold text-slate-900 dark:text-white">무료</span>
+                    <span className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white">무료</span>
                   ) : (
                     <>
-                      <span className="text-3xl font-bold text-slate-900 dark:text-white">
+                      <span className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white">
                         ₩{plan.price.toLocaleString()}
                       </span>
-                      <span className="text-slate-500 dark:text-slate-400 text-sm">/월</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-xs">/월</span>
                     </>
                   )}
                 </div>
 
                 {/* Features */}
-                <ul className="space-y-3 mb-6">
+                <ul className="space-y-1.5 lg:space-y-2 mb-3 lg:mb-4">
                   {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-slate-700 dark:text-slate-300">{feature}</span>
+                    <li key={idx} className="flex items-start gap-1.5">
+                      <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-xs text-slate-700 dark:text-slate-300">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -338,7 +347,7 @@ export default function SubscriptionPage() {
                 <button
                   onClick={() => handleUpgrade(plan.tier)}
                   disabled={isCurrentPlan || (plan.tier === 'FREE' && currentSubscription?.tier !== 'FREE') || processingTier !== null || paymentStatus !== 'idle'}
-                  className={`w-full py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
+                  className={`w-full py-2 lg:py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 min-h-[40px] ${
                     isCurrentPlan
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 cursor-default'
                       : processingTier === plan.tier
@@ -365,11 +374,11 @@ export default function SubscriptionPage() {
         </div>
 
         {/* Info Section */}
-        <div className="mt-12 text-center">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+        <div className="mt-6 lg:mt-8 text-center">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             구독은 언제든지 취소할 수 있습니다. 취소 시 현재 구독 기간이 끝날 때까지 혜택이 유지됩니다.
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
             크레딧은 구독과 별도로 충전하여 사용할 수 있습니다.{' '}
             <a href="/credits/purchase" className="text-blue-600 hover:underline">
               크레딧 충전하기 →
