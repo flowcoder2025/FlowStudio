@@ -8,7 +8,7 @@ import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
-import { CreditSelector, CreditType } from '@/components/CreditSelector';
+import { CreditSelectorDropdown, CreditType } from '@/components/CreditSelectorDropdown';
 import { AppMode, GenerationRequest } from '@/types';
 import { generatePreview, extractTextFromImage } from '@/services/geminiService';
 import { recordUsage } from '@/services/usageService';
@@ -780,27 +780,26 @@ function DetailEditPageContent() {
                   />
                 </div>
 
-                {/* Credit Selection */}
-                <CreditSelector
-                  requiredCredits={5}
-                  selectedType={creditType}
-                  onSelect={handleCreditSelect}
-                  compact
-                  className="mb-3"
-                />
-
-                <button
-                  onClick={handleDetailEditGenerate}
-                  disabled={!selectionRect || isLoading}
-                  className={`w-full py-2 min-h-[40px] rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all ${
-                    !selectionRect || isLoading
-                      ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                      : 'bg-violet-600 dark:bg-violet-500 text-white hover:bg-violet-700 dark:hover:bg-violet-600'
-                  }`}
-                >
-                  {isLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
-                  {editModeSub === 'GENERAL' ? '선택 영역 변경하기' : editModeSub === 'TEXT' ? '텍스트 교체하기' : '이미지 교체하기'}
-                </button>
+                {/* 크레딧 선택 + 생성 버튼 */}
+                <div className="flex items-center gap-2">
+                  <CreditSelectorDropdown
+                    requiredCredits={5}
+                    selectedType={creditType}
+                    onSelect={handleCreditSelect}
+                  />
+                  <button
+                    onClick={handleDetailEditGenerate}
+                    disabled={!selectionRect || isLoading}
+                    className={`flex-1 py-2 min-h-[40px] rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all ${
+                      !selectionRect || isLoading
+                        ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                        : 'bg-violet-600 dark:bg-violet-500 text-white hover:bg-violet-700 dark:hover:bg-violet-600'
+                    }`}
+                  >
+                    {isLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+                    {editModeSub === 'GENERAL' ? '변경하기' : editModeSub === 'TEXT' ? '교체하기' : '교체하기'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

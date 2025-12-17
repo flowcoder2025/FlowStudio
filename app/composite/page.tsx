@@ -8,7 +8,7 @@ import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
-import { CreditSelector, CreditType } from '@/components/CreditSelector';
+import { CreditSelectorDropdown, CreditType } from '@/components/CreditSelectorDropdown';
 import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
 import { COMPOSITE_CATEGORIES, ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, upscaleImage } from '@/services/geminiService';
@@ -494,18 +494,18 @@ function CompositePageContent() {
           />
         </div>
 
-        {/* Step 6: Credit Selection */}
-        <div className="mb-20">
-          <CreditSelector
-            requiredCredits={20}
-            selectedType={creditType}
-            onSelect={handleCreditSelect}
-          />
-        </div>
+        {/* Spacer for fixed bottom bar */}
+        <div className="h-16"></div>
 
         {/* Fixed Action Bar */}
         <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-3 pb-safe z-30 transition-colors">
-          <div className="max-w-5xl mx-auto flex gap-2 justify-end">
+          <div className="max-w-5xl mx-auto flex gap-3 justify-between items-center">
+            {/* 크레딧 선택 드롭다운 */}
+            <CreditSelectorDropdown
+              requiredCredits={20}
+              selectedType={creditType}
+              onSelect={handleCreditSelect}
+            />
             {/* Generate Button */}
             <button
               onClick={handleGenerate}

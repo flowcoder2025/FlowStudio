@@ -9,7 +9,7 @@ import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
-import { CreditSelector, CreditType } from '@/components/CreditSelector';
+import { CreditSelectorDropdown, CreditType } from '@/components/CreditSelectorDropdown';
 import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
 import { CATEGORIES, ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, upscaleImage } from '@/services/geminiService';
@@ -319,26 +319,22 @@ function CreatePageContent() {
           />
         </div>
 
-        {/* Step 6: Credit Selection */}
-        <div className="mb-20">
-          <CreditSelector
-            requiredCredits={20}
-            selectedType={creditType}
-            onSelect={handleCreditSelect}
-          />
-        </div>
+        {/* Spacer for fixed bottom bar */}
+        <div className="h-16"></div>
 
         {/* Action Bar */}
         <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 p-3 pb-safe z-30 transition-colors">
-          <div className="max-w-5xl mx-auto flex justify-between items-center">
-            <p className="text-xs text-slate-500 dark:text-slate-400 hidden md:block">
-              {selectedCategory ? `${selectedCategory.label}` : '종류 선택'}
-              {selectedStyle ? ` > ${selectedStyle.label}` : ''}
-            </p>
+          <div className="max-w-5xl mx-auto flex justify-between items-center gap-3">
+            {/* 크레딧 선택 드롭다운 */}
+            <CreditSelectorDropdown
+              requiredCredits={20}
+              selectedType={creditType}
+              onSelect={handleCreditSelect}
+            />
             <button
               onClick={handleGenerate}
               disabled={!selectedCategory || isLoading}
-              className={`w-full md:w-auto px-6 py-2.5 min-h-[44px] rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all ${
+              className={`flex-1 md:flex-none px-6 py-2.5 min-h-[44px] rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all ${
                 !selectedCategory || isLoading
                   ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                   : 'bg-indigo-600 dark:bg-indigo-500 text-white hover:bg-indigo-700 dark:hover:bg-indigo-600 hover:shadow-indigo-200 dark:hover:shadow-indigo-900'

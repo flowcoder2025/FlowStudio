@@ -9,7 +9,7 @@ import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { ResultGrid } from '@/components/ResultGrid';
 import { AuthGuard } from '@/components/auth/AuthGuard';
-import { CreditSelector, CreditType } from '@/components/CreditSelector';
+import { CreditSelectorDropdown, CreditType } from '@/components/CreditSelectorDropdown';
 import { AppMode, Category, StyleOption, LayoutOption, GenerationRequest } from '@/types';
 import { DETAIL_PAGE_CATEGORIES, LAYOUT_OPTIONS } from '@/constants';
 import { generateImageVariations } from '@/services/geminiService';
@@ -584,27 +584,26 @@ function DetailPageContent() {
               className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 min-h-[80px] mb-3 text-sm transition-colors"
             />
 
-            {/* Credit Selection */}
-            <CreditSelector
-              requiredCredits={20}
-              selectedType={creditType}
-              onSelect={handleCreditSelect}
-              compact
-              className="mb-3"
-            />
-
-            <button
-              onClick={handleGenerate}
-              disabled={!uploadedImage || !selectedCategory || isLoading}
-              className={`w-full py-2.5 min-h-[44px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all ${
-                !uploadedImage || !selectedCategory || isLoading
-                  ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                  : 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-blue-200 dark:hover:shadow-blue-900'
-              }`}
-            >
-              {isLoading ? '생성 중...' : (detailPageSegments.length === 0 ? '인트로 생성하기' : '다음 섹션 생성하기')}
-              {!isLoading && <Plus className="w-4 h-4" />}
-            </button>
+            {/* 크레딧 선택 + 생성 버튼 */}
+            <div className="flex items-center gap-2">
+              <CreditSelectorDropdown
+                requiredCredits={20}
+                selectedType={creditType}
+                onSelect={handleCreditSelect}
+              />
+              <button
+                onClick={handleGenerate}
+                disabled={!uploadedImage || !selectedCategory || isLoading}
+                className={`flex-1 py-2.5 min-h-[44px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all ${
+                  !uploadedImage || !selectedCategory || isLoading
+                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                    : 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-blue-200 dark:hover:shadow-blue-900'
+                }`}
+              >
+                {isLoading ? '생성 중...' : (detailPageSegments.length === 0 ? '인트로 생성하기' : '다음 섹션 생성하기')}
+                {!isLoading && <Plus className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
         </div>
 
