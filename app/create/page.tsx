@@ -331,7 +331,7 @@ function CreatePageContent() {
               {selectedStyle ? ` > ${selectedStyle.label}` : ''}
             </p>
             {/* 크레딧 드롭다운 + 버튼 */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ml-auto">
               <CreditSelectorDropdown
                 requiredCredits={20}
                 selectedType={creditType}
