@@ -282,7 +282,7 @@ export default function SubscriptionPage() {
             return (
               <div
                 key={plan.tier}
-                className={`relative rounded-xl p-3 lg:p-4 ${plan.color} ${plan.borderColor} border-2 ${
+                className={`relative rounded-xl p-3 lg:p-4 ${plan.color} ${plan.borderColor} border-2 flex flex-col ${
                   plan.popular ? 'ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-900' : ''
                 } ${isCurrentPlan ? 'ring-2 ring-green-500 ring-offset-2 dark:ring-offset-slate-900' : ''}`}
               >
@@ -333,8 +333,8 @@ export default function SubscriptionPage() {
                   )}
                 </div>
 
-                {/* Features */}
-                <ul className="space-y-1.5 lg:space-y-2 mb-3 lg:mb-4">
+                {/* Features - flex-1로 남은 공간 채우기 */}
+                <ul className="space-y-1.5 lg:space-y-2 mb-3 lg:mb-4 flex-1">
                   {plan.features.map((feature, idx) => (
                     <li key={idx} className="flex items-start gap-1.5">
                       <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
@@ -343,11 +343,11 @@ export default function SubscriptionPage() {
                   ))}
                 </ul>
 
-                {/* CTA Button */}
+                {/* CTA Button - mt-auto로 하단 고정 */}
                 <button
                   onClick={() => handleUpgrade(plan.tier)}
                   disabled={isCurrentPlan || (plan.tier === 'FREE' && currentSubscription?.tier !== 'FREE') || processingTier !== null || paymentStatus !== 'idle'}
-                  className={`w-full py-2 lg:py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 min-h-[40px] ${
+                  className={`w-full py-2 lg:py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 min-h-[40px] mt-auto ${
                     isCurrentPlan
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 cursor-default'
                       : processingTier === plan.tier
