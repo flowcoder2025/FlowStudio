@@ -325,30 +325,31 @@ function CreatePageContent() {
         {/* Action Bar */}
         <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 p-3 pb-safe z-30 transition-colors">
           <div className="max-w-5xl mx-auto flex justify-between items-center gap-3">
-            {/* 선택 경로 + 크레딧 드롭다운 */}
-            <div className="flex items-center gap-3">
-              <p className="text-xs text-slate-500 dark:text-slate-400 hidden md:block">
-                {selectedCategory ? `${selectedCategory.label}` : '종류 선택'}
-                {selectedStyle ? ` > ${selectedStyle.label}` : ''}
-              </p>
+            {/* 선택 경로 */}
+            <p className="text-xs text-slate-500 dark:text-slate-400 hidden md:block">
+              {selectedCategory ? `${selectedCategory.label}` : '종류 선택'}
+              {selectedStyle ? ` > ${selectedStyle.label}` : ''}
+            </p>
+            {/* 크레딧 드롭다운 + 버튼 */}
+            <div className="flex items-center gap-2">
               <CreditSelectorDropdown
                 requiredCredits={20}
                 selectedType={creditType}
                 onSelect={handleCreditSelect}
               />
+              <button
+                onClick={handleGenerate}
+                disabled={!selectedCategory || isLoading}
+                className={`px-4 py-1.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all ${
+                  !selectedCategory || isLoading
+                    ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                    : 'bg-indigo-600 dark:bg-indigo-500 text-white hover:bg-indigo-700 dark:hover:bg-indigo-600 hover:shadow-indigo-200 dark:hover:shadow-indigo-900'
+                }`}
+              >
+                {isLoading ? '생성 중...' : '이미지 4장 생성하기'}
+                {!isLoading && <Sparkles className="w-4 h-4" />}
+              </button>
             </div>
-            <button
-              onClick={handleGenerate}
-              disabled={!selectedCategory || isLoading}
-              className={`flex-1 md:flex-none px-6 py-2.5 min-h-[44px] rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all ${
-                !selectedCategory || isLoading
-                  ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
-                  : 'bg-indigo-600 dark:bg-indigo-500 text-white hover:bg-indigo-700 dark:hover:bg-indigo-600 hover:shadow-indigo-200 dark:hover:shadow-indigo-900'
-              }`}
-            >
-              {isLoading ? '생성 중...' : '이미지 4장 생성하기'}
-              {!isLoading && <Sparkles className="w-4 h-4" />}
-            </button>
           </div>
         </div>
       </div>

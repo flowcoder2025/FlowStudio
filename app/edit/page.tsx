@@ -279,26 +279,27 @@ function EditPageContent() {
         <div className="h-16"></div>
 
         <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-3 pb-safe z-30 transition-colors">
-          <div className="max-w-5xl mx-auto flex gap-3 justify-between items-center">
-            {/* 크레딧 선택 드롭다운 */}
-            <CreditSelectorDropdown
-              requiredCredits={20}
-              selectedType={creditType}
-              onSelect={handleCreditSelect}
-            />
-            {/* Generate Button */}
-            <button
-              onClick={handleGenerate}
-              disabled={!uploadedImage || !prompt || isLoading}
-              className={`flex-1 md:flex-none px-6 py-2.5 min-h-[44px] rounded-lg font-bold text-sm lg:text-base flex items-center justify-center gap-2 shadow-md transition-all ${
-                !uploadedImage || !prompt || isLoading
-                  ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-500 cursor-not-allowed'
-                  : 'bg-emerald-600 dark:bg-emerald-500 text-white hover:bg-emerald-700 dark:hover:bg-emerald-600 hover:shadow-emerald-200 dark:hover:shadow-emerald-900'
-              }`}
-            >
-              {isLoading ? '생성 중...' : '이미지 4장 생성'}
-              {!isLoading && <Wand2 className="w-4 h-4" />}
-            </button>
+          <div className="max-w-5xl mx-auto flex gap-3 justify-end items-center">
+            {/* 크레딧 드롭다운 + 버튼 */}
+            <div className="flex items-center gap-2">
+              <CreditSelectorDropdown
+                requiredCredits={20}
+                selectedType={creditType}
+                onSelect={handleCreditSelect}
+              />
+              <button
+                onClick={handleGenerate}
+                disabled={!uploadedImage || !prompt || isLoading}
+                className={`px-4 py-1.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all ${
+                  !uploadedImage || !prompt || isLoading
+                    ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-500 cursor-not-allowed'
+                    : 'bg-emerald-600 dark:bg-emerald-500 text-white hover:bg-emerald-700 dark:hover:bg-emerald-600 hover:shadow-emerald-200 dark:hover:shadow-emerald-900'
+                }`}
+              >
+                {isLoading ? '생성 중...' : '이미지 4장 생성'}
+                {!isLoading && <Wand2 className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
         </div>
       </div>

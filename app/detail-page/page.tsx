@@ -594,7 +594,7 @@ function DetailPageContent() {
               <button
                 onClick={handleGenerate}
                 disabled={!uploadedImage || !selectedCategory || isLoading}
-                className={`flex-1 py-2.5 min-h-[44px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all ${
+                className={`px-4 py-1.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all ${
                   !uploadedImage || !selectedCategory || isLoading
                     ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                     : 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-blue-200 dark:hover:shadow-blue-900'

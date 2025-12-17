@@ -499,26 +499,27 @@ function CompositePageContent() {
 
         {/* Fixed Action Bar */}
         <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-3 pb-safe z-30 transition-colors">
-          <div className="max-w-5xl mx-auto flex gap-3 justify-between items-center">
-            {/* 크레딧 선택 드롭다운 */}
-            <CreditSelectorDropdown
-              requiredCredits={20}
-              selectedType={creditType}
-              onSelect={handleCreditSelect}
-            />
-            {/* Generate Button */}
-            <button
-              onClick={handleGenerate}
-              disabled={compositeImages.length === 0 || !selectedCategory || isLoading}
-              className={`flex-1 md:flex-none px-6 py-2 min-h-[44px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg transition-all ${
-                compositeImages.length === 0 || !selectedCategory || isLoading
-                  ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-500 cursor-not-allowed'
-                  : 'bg-cyan-600 dark:bg-cyan-500 text-white hover:bg-cyan-700 dark:hover:bg-cyan-600 hover:shadow-cyan-200 dark:hover:shadow-cyan-900'
-              }`}
-            >
-              {isLoading ? '합성 중...' : '이미지 4장 합성'}
-              {!isLoading && <Layers className="w-4 h-4" />}
-            </button>
+          <div className="max-w-5xl mx-auto flex gap-3 justify-end items-center">
+            {/* 크레딧 드롭다운 + 버튼 */}
+            <div className="flex items-center gap-2">
+              <CreditSelectorDropdown
+                requiredCredits={20}
+                selectedType={creditType}
+                onSelect={handleCreditSelect}
+              />
+              <button
+                onClick={handleGenerate}
+                disabled={compositeImages.length === 0 || !selectedCategory || isLoading}
+                className={`px-4 py-1.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all ${
+                  compositeImages.length === 0 || !selectedCategory || isLoading
+                    ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-500 cursor-not-allowed'
+                    : 'bg-cyan-600 dark:bg-cyan-500 text-white hover:bg-cyan-700 dark:hover:bg-cyan-600 hover:shadow-cyan-200 dark:hover:shadow-cyan-900'
+                }`}
+              >
+                {isLoading ? '합성 중...' : '이미지 4장 합성'}
+                {!isLoading && <Layers className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
         </div>
       </div>
