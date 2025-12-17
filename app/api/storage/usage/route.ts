@@ -11,6 +11,7 @@ import { authOptions } from '@/lib/auth'
 import { getSupabaseClient, IMAGE_BUCKET } from '@/lib/supabase'
 import { getUserSubscription } from '@/lib/utils/subscriptionManager'
 import { UnauthorizedError, formatApiError } from '@/lib/errors'
+import { prisma } from '@/lib/prisma'
 
 interface StorageUsageResponse {
   usedBytes: number
@@ -23,64 +24,112 @@ interface StorageUsageResponse {
 }
 
 /**
+ * 특정 경로의 Storage 파일 크기를 합산
+ */
+async function sumStoragePath(
+  supabase: ReturnType<typeof getSupabaseClient>,
+  path: string
+): Promise<{ bytes: number; count: number }> {
+  let totalBytes = 0
+  let fileCount = 0
+  let offset = 0
+  const limit = 1000
+  let hasMore = true
+
+  while (hasMore) {
+    const { data: files, error } = await supabase.storage
+      .from(IMAGE_BUCKET)
+      .list(path, {
+        limit,
+        offset,
+        sortBy: { column: 'created_at', order: 'desc' },
+      })
+
+    if (error) {
+      // 폴더가 없거나 접근 권한 없음 - 무시
+      console.log(`[Storage] No files in ${path}:`, error.message)
+      break
+    }
+
+    if (!files || files.length === 0) {
+      break
+    }
+
+    // 파일 크기 합산 (폴더는 제외)
+    for (const file of files) {
+      if (file.metadata && typeof file.metadata.size === 'number') {
+        totalBytes += file.metadata.size
+        fileCount++
+      }
+    }
+
+    // 다음 페이지 확인
+    if (files.length < limit) {
+      hasMore = false
+    } else {
+      offset += limit
+    }
+  }
+
+  return { bytes: totalBytes, count: fileCount }
+}
+
+/**
  * 사용자의 Storage 사용량을 계산
  * Supabase Storage에서 사용자 폴더의 모든 파일 크기를 합산
+ *
+ * 저장 경로 패턴:
+ * 1. images/{userId}/ - 레거시 경로 (호환성 유지)
+ * 2. upscaled/{userId}/ - 4K 업스케일된 이미지
+ * 3. projects/{projectId}/{userId}/ - 프로젝트별 저장 이미지
  */
 async function calculateUserStorageUsage(userId: string): Promise<{ totalBytes: number; fileCount: number }> {
   const supabase = getSupabaseClient()
   let totalBytes = 0
   let fileCount = 0
 
-  // 사용자의 이미지 폴더들을 검색 (images/{userId}, upscaled/{userId})
-  const prefixes = ['images', 'upscaled']
+  // 1. 기존 경로 스캔: images/{userId}, upscaled/{userId}
+  const basicPrefixes = ['images', 'upscaled']
 
-  for (const prefix of prefixes) {
+  const basicPathPromises = basicPrefixes.map(async (prefix) => {
     const userPath = `${prefix}/${userId}`
-
     try {
-      // 폴더 내 파일 목록 조회 (최대 1000개씩 페이지네이션)
-      let offset = 0
-      const limit = 1000
-      let hasMore = true
-
-      while (hasMore) {
-        const { data: files, error } = await supabase.storage
-          .from(IMAGE_BUCKET)
-          .list(userPath, {
-            limit,
-            offset,
-            sortBy: { column: 'created_at', order: 'desc' },
-          })
-
-        if (error) {
-          // 폴더가 없거나 접근 권한 없음 - 무시
-          console.log(`[Storage] No files in ${userPath}:`, error.message)
-          break
-        }
-
-        if (!files || files.length === 0) {
-          break
-        }
-
-        // 파일 크기 합산 (폴더는 제외)
-        for (const file of files) {
-          if (file.metadata && typeof file.metadata.size === 'number') {
-            totalBytes += file.metadata.size
-            fileCount++
-          }
-        }
-
-        // 다음 페이지 확인
-        if (files.length < limit) {
-          hasMore = false
-        } else {
-          offset += limit
-        }
-      }
+      return await sumStoragePath(supabase, userPath)
     } catch (err) {
       console.error(`[Storage] Error listing ${userPath}:`, err)
+      return { bytes: 0, count: 0 }
     }
+  })
+
+  // 2. 프로젝트별 경로 스캔: projects/{projectId}/{userId}
+  // 사용자의 모든 프로젝트 ID 조회 (deletedAt이 없는 것만)
+  const userProjects = await prisma.imageProject.findMany({
+    where: {
+      userId,
+      deletedAt: null,
+    },
+    select: { id: true },
+  })
+
+  const projectPathPromises = userProjects.map(async (project) => {
+    const projectPath = `projects/${project.id}/${userId}`
+    try {
+      return await sumStoragePath(supabase, projectPath)
+    } catch (err) {
+      console.error(`[Storage] Error listing ${projectPath}:`, err)
+      return { bytes: 0, count: 0 }
+    }
+  })
+
+  // 3. 모든 경로 병렬 스캔 및 합산
+  const allResults = await Promise.all([...basicPathPromises, ...projectPathPromises])
+
+  for (const result of allResults) {
+    totalBytes += result.bytes
+    fileCount += result.count
   }
+
+  console.log(`[Storage] User ${userId}: ${fileCount} files, ${(totalBytes / 1024 / 1024).toFixed(2)} MB across ${basicPrefixes.length + userProjects.length} paths`)
 
   return { totalBytes, fileCount }
 }
