@@ -27,14 +27,22 @@ export async function GET() {
     }
 
     // 크레딧 잔액 상세 조회
-    const balance = await getCreditBalanceDetail(session.user.id)
+    const creditDetail = await getCreditBalanceDetail(session.user.id)
 
     // 구독 티어 확인 (워터마크 정책용)
     const tier = await getUserTier(session.user.id)
     const tierConfig = SUBSCRIPTION_TIERS[tier]
 
     return NextResponse.json({
-      ...balance,
+      success: true,
+      // 총 잔액 (호환성을 위해 balance와 total 모두 제공)
+      balance: creditDetail.total,
+      balanceKRW: creditDetail.total * 100, // 1 크레딧 = ₩100
+      // 상세 잔액
+      total: creditDetail.total,
+      free: creditDetail.free,
+      purchased: creditDetail.purchased,
+      // 구독 정보
       tier,
       watermarkFree: tierConfig.watermarkFree,
       // 워터마크 적용 조건 안내
@@ -42,9 +50,9 @@ export async function GET() {
         // 유료 구독자는 항상 워터마크 없음
         isSubscriber: tierConfig.watermarkFree,
         // FREE 플랜이고 유료 크레딧이 있으면 워터마크 없이 사용 가능
-        canUsePurchasedWithoutWatermark: !tierConfig.watermarkFree && balance.purchased > 0,
+        canUsePurchasedWithoutWatermark: !tierConfig.watermarkFree && creditDetail.purchased > 0,
         // FREE 플랜이고 무료 크레딧만 있으면 워터마크 적용
-        freeCreditsHaveWatermark: !tierConfig.watermarkFree && balance.free > 0,
+        freeCreditsHaveWatermark: !tierConfig.watermarkFree && creditDetail.free > 0,
       }
     })
   } catch (error) {

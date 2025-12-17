@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Settings, BarChart3, History, CheckCircle, Coins, Building2, CreditCard, TrendingUp, Calendar, Gift, Users, Crown, Zap, Sparkles, ChevronRight } from 'lucide-react';
+import { Settings, BarChart3, History, CheckCircle, Coins, Building2, CreditCard, TrendingUp, Calendar, Gift, Users, Crown, Zap, Sparkles, ChevronRight, Layers } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { ProfileSkeleton } from '@/components/ProfileSkeleton';
@@ -273,249 +273,251 @@ function ProfilePageContent() {
         </div>
 
         <div className="grid gap-3 lg:gap-4">
-          {/* 크레딧 잔액 카드 */}
-          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl lg:rounded-2xl shadow-lg overflow-hidden">
-            <div className="p-4 lg:p-5 text-white">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-sm lg:text-base flex items-center gap-1.5">
-                  <Coins className="w-4 h-4" /> 크레딧 잔액
-                </h3>
-                <button
-                  onClick={() => router.push('/credits/purchase')}
-                  className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-3 py-1.5 rounded-lg font-medium transition-colors text-xs lg:text-sm"
-                >
-                  충전하기
-                </button>
-              </div>
-
-              <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="text-3xl lg:text-4xl font-bold">{creditBalance?.balance ?? 0}</span>
-                <span className="text-base lg:text-lg opacity-90">크레딧</span>
-              </div>
-              <p className="text-white/80 text-xs lg:text-sm">
-                ≈ ₩{(creditBalance?.balanceKRW ?? 0).toLocaleString()}원
-              </p>
-
-              {/* 무료/유료 크레딧 분리 표시 */}
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className="text-[10px] text-white/70">유료 크레딧</span>
-                    {!creditBalance?.watermarkFree && creditBalance?.purchased && creditBalance.purchased > 0 && (
-                      <span className="text-[9px] bg-green-400/30 text-green-200 px-1.5 py-0.5 rounded">워터마크 X</span>
-                    )}
+          {/* 4개 카드 - 2x2 그리드 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* 1. 크레딧 잔액 카드 */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+              <div className="p-4">
+                {/* 헤더 */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                      <Coins className="w-4 h-4 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100">크레딧</h3>
                   </div>
-                  <p className="text-lg font-bold">{creditBalance?.purchased ?? 0}</p>
+                  <button
+                    onClick={() => router.push('/credits/purchase')}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-md font-medium transition-colors text-xs cursor-pointer"
+                  >
+                    충전
+                  </button>
                 </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className="text-[10px] text-white/70">무료 크레딧</span>
-                    {!creditBalance?.watermarkFree && creditBalance?.free && creditBalance.free > 0 && (
-                      <span className="text-[9px] bg-orange-400/30 text-orange-200 px-1.5 py-0.5 rounded">워터마크 O</span>
-                    )}
-                  </div>
-                  <p className="text-lg font-bold">{creditBalance?.free ?? 0}</p>
-                </div>
-              </div>
 
-              {/* 워터마크 정책 안내 (FREE 플랜만) */}
-              {creditBalance && !creditBalance.watermarkFree && (
-                <p className="mt-2 text-[10px] text-white/60 leading-relaxed">
-                  💡 무료 크레딧 사용 시 워터마크가 적용됩니다. 유료 크레딧 또는 구독 업그레이드로 워터마크 없이 이용하세요.
+                {/* 총 잔액 */}
+                <div className="flex items-baseline gap-1.5 mb-1">
+                  <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                    {(creditBalance?.balance ?? 0).toLocaleString()}
+                  </span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">크레딧</span>
+                </div>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-3">
+                  ≈ ₩{(creditBalance?.balanceKRW ?? 0).toLocaleString()}
                 </p>
-              )}
 
-              <div className="mt-3 pt-3 border-t border-white/20">
-                <div className="grid grid-cols-2 gap-3 text-xs lg:text-sm">
-                  <div>
-                    <p className="text-white/70 mb-0.5">2K 생성 (4장)</p>
-                    <p className="font-semibold">20 크레딧</p>
+                {/* 유료/무료 분리 */}
+                <div className="flex gap-2">
+                  <div className="flex-1 bg-slate-50 dark:bg-slate-700/50 rounded-md px-2.5 py-2">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">유료</span>
+                      {!creditBalance?.watermarkFree && creditBalance?.purchased && creditBalance.purchased > 0 && (
+                        <span className="text-[8px] bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-1 py-0.5 rounded">No 워터마크</span>
+                      )}
+                    </div>
+                    <p className="text-base font-bold text-slate-800 dark:text-slate-200">{creditBalance?.purchased ?? 0}</p>
                   </div>
-                  <div>
-                    <p className="text-white/70 mb-0.5">업스케일링 (1장)</p>
-                    <p className="font-semibold">10 크레딧</p>
+                  <div className="flex-1 bg-slate-50 dark:bg-slate-700/50 rounded-md px-2.5 py-2">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">무료</span>
+                      {!creditBalance?.watermarkFree && creditBalance?.free && creditBalance.free > 0 && (
+                        <span className="text-[8px] bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-1 py-0.5 rounded">워터마크</span>
+                      )}
+                    </div>
+                    <p className="text-base font-bold text-slate-800 dark:text-slate-200">{creditBalance?.free ?? 0}</p>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* 구독 정보 + 저장 공간 카드 */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-            <div className="p-4 lg:p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-sm lg:text-base text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                  {subscription && getTierIcon(subscription.tier)}
-                  구독 플랜
-                </h3>
-                {subscription && subscription.tier === 'FREE' ? (
-                  <button
-                    onClick={() => router.push('/subscription')}
-                    className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-3 py-1.5 rounded-lg font-medium transition-all text-xs flex items-center gap-0.5"
-                  >
-                    업그레이드
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => router.push('/subscription')}
-                    className="text-indigo-600 dark:text-indigo-400 hover:underline text-xs flex items-center gap-0.5"
-                  >
-                    플랜 관리
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* 현재 플랜 배지 */}
-              {subscription && (
-                <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r ${getTierBgColor(subscription.tier)} text-white mb-3`}>
-                  {getTierIcon(subscription.tier)}
-                  <span className="font-bold text-sm">{subscription.tierConfig.name}</span>
-                  {subscription.tier !== 'FREE' && subscription.endDate && (
-                    <span className="text-[10px] opacity-90">
-                      (~{new Date(subscription.endDate).toLocaleDateString('ko-KR')})
-                    </span>
+            {/* 2. 구독 플랜 카드 */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+              <div className="p-4">
+                {/* 헤더 */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getTierBgColor(subscription?.tier || 'FREE')} flex items-center justify-center`}>
+                      <Layers className="w-4 h-4 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100">구독</h3>
+                  </div>
+                  {subscription && subscription.tier === 'FREE' ? (
+                    <button
+                      onClick={() => router.push('/subscription')}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-md font-medium transition-colors text-xs cursor-pointer"
+                    >
+                      업그레이드
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => router.push('/subscription')}
+                      className="text-indigo-600 dark:text-indigo-400 hover:underline text-xs font-medium cursor-pointer"
+                    >
+                      관리
+                    </button>
                   )}
                 </div>
-              )}
 
-              {/* 플랜 혜택 요약 - 2x2 그리드 */}
-              {subscription && (
-                <div className="grid grid-cols-4 gap-2 mb-4">
-                  <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-2 text-center">
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">저장공간</p>
-                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{subscription.storageQuotaGB}GB</p>
+                {/* 플랜 배지 */}
+                {subscription && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                      {subscription.tierConfig.name}
+                    </span>
+                    {subscription.tier !== 'FREE' && subscription.endDate && (
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                        ~{new Date(subscription.endDate).toLocaleDateString('ko-KR')}
+                      </span>
+                    )}
                   </div>
-                  <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-2 text-center">
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">동시생성</p>
-                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{subscription.concurrentLimit}건</p>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-2 text-center">
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">워터마크</p>
-                    <p className="text-xs font-medium text-slate-800 dark:text-slate-100">
-                      {subscription.watermarkFree ? '제거 ✓' : '포함'}
-                    </p>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-2 text-center">
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">우선처리</p>
-                    <p className="text-xs font-medium text-slate-800 dark:text-slate-100">
-                      {subscription.priorityQueue ? '활성 ✓' : '-'}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* 저장 공간 사용량 */}
-              <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
-                <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">저장 공간 사용량</h4>
-                {storageLoading ? (
-                  <StorageUsageBarSkeleton />
-                ) : storageUsage ? (
-                  <StorageUsageBar
-                    usedMB={storageUsage.usedMB}
-                    usedGB={storageUsage.usedGB}
-                    quotaGB={storageUsage.quotaGB}
-                    usagePercent={storageUsage.usagePercent}
-                    fileCount={storageUsage.fileCount}
-                    showWarning={true}
-                  />
-                ) : (
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    사용량 정보를 불러올 수 없습니다.
-                  </p>
                 )}
+
+                {/* 혜택 요약 */}
+                {subscription && (
+                  <div className="grid grid-cols-4 gap-1.5 mb-3">
+                    <div className="bg-slate-50 dark:bg-slate-700/50 rounded-md px-1.5 py-1.5 text-center">
+                      <p className="text-[9px] text-slate-400 dark:text-slate-500">저장</p>
+                      <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{subscription.storageQuotaGB}GB</p>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-slate-700/50 rounded-md px-1.5 py-1.5 text-center">
+                      <p className="text-[9px] text-slate-400 dark:text-slate-500">동시</p>
+                      <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{subscription.concurrentLimit}건</p>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-slate-700/50 rounded-md px-1.5 py-1.5 text-center">
+                      <p className="text-[9px] text-slate-400 dark:text-slate-500">워터마크</p>
+                      <p className="text-[10px] font-medium text-slate-700 dark:text-slate-200">
+                        {subscription.watermarkFree ? '✓' : '-'}
+                      </p>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-slate-700/50 rounded-md px-1.5 py-1.5 text-center">
+                      <p className="text-[9px] text-slate-400 dark:text-slate-500">우선</p>
+                      <p className="text-[10px] font-medium text-slate-700 dark:text-slate-200">
+                        {subscription.priorityQueue ? '✓' : '-'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 저장 공간 */}
+                {storageLoading ? (
+                  <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
+                ) : storageUsage ? (
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          storageUsage.usagePercent > 90 ? 'bg-red-500' :
+                          storageUsage.usagePercent > 70 ? 'bg-amber-500' : 'bg-emerald-500'
+                        }`}
+                        style={{ width: `${Math.min(storageUsage.usagePercent, 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                      {storageUsage.usedMB < 1024
+                        ? `${storageUsage.usedMB.toFixed(1)}MB`
+                        : `${storageUsage.usedGB.toFixed(1)}GB`} / {storageUsage.quotaGB}GB
+                    </span>
+                  </div>
+                ) : null}
               </div>
             </div>
-          </div>
 
-          {/* 사업자 인증 + 추천 프로그램 - 2열 그리드 (모바일: 1열) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
-            {/* 사업자 인증 상태 카드 */}
-            <div className={`rounded-xl lg:rounded-2xl shadow-sm border overflow-hidden transition-colors ${
+            {/* 3. 사업자 인증 카드 */}
+            <div className={`rounded-xl border shadow-sm overflow-hidden transition-colors ${
               businessVerification?.verified
-                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                ? 'bg-white dark:bg-slate-800 border-emerald-300 dark:border-emerald-700'
                 : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
             }`}>
-              <div className="p-4 lg:p-5">
+              <div className="p-4">
+                {/* 헤더 */}
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className={`font-bold text-sm lg:text-base flex items-center gap-1.5 ${
-                    businessVerification?.verified
-                      ? 'text-green-700 dark:text-green-400'
-                      : 'text-slate-800 dark:text-slate-100'
-                  }`}>
-                    <Building2 className="w-4 h-4" /> 사업자 인증
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      businessVerification?.verified
+                        ? 'bg-emerald-500'
+                        : 'bg-slate-200 dark:bg-slate-700'
+                    }`}>
+                      <Building2 className={`w-4 h-4 ${
+                        businessVerification?.verified ? 'text-white' : 'text-slate-500 dark:text-slate-400'
+                      }`} />
+                    </div>
+                    <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100">사업자 인증</h3>
+                  </div>
                   {businessVerification?.verified ? (
-                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <CheckCircle className="w-5 h-5 text-emerald-500" />
                   ) : (
                     <button
                       onClick={() => router.push('/profile/business')}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-medium transition-colors text-xs"
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-md font-medium transition-colors text-xs cursor-pointer"
                     >
                       인증하기
                     </button>
                   )}
                 </div>
 
+                {/* 콘텐츠 */}
                 {businessVerification?.verified ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-green-700 dark:text-green-300">✓ 인증 완료</span>
+                      <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">인증 완료</span>
                       {businessVerification.bonusClaimed && (
-                        <span className="text-[10px] bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 px-1.5 py-0.5 rounded">
-                          150 크레딧 지급완료
+                        <span className="text-[10px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">
+                          +150 크레딧
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-green-600 dark:text-green-400">
+                    <p className="text-sm font-mono text-slate-600 dark:text-slate-400">
                       {businessVerification.businessNumber?.replace(/(\d{3})(\d{2})(\d{5})/, '$1-$2-$3')}
                     </p>
                   </div>
                 ) : (
                   <div>
                     <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
-                      사업자 인증 시 <strong className="text-indigo-600 dark:text-indigo-400">150 크레딧</strong> 보너스
+                      인증 완료 시 <strong className="text-indigo-600 dark:text-indigo-400">150 크레딧</strong> 즉시 지급
                     </p>
-                    <ul className="space-y-0.5 text-[10px] text-slate-500">
-                      <li>• 국세청 실시간 진위 확인</li>
-                      <li>• 1회 한정 보너스 지급</li>
-                    </ul>
+                    <div className="flex gap-2 text-[10px] text-slate-400 dark:text-slate-500">
+                      <span>• 국세청 진위확인</span>
+                      <span>• 1회 한정</span>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* 추천 프로그램 카드 */}
-            <div className="bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl lg:rounded-2xl shadow-lg overflow-hidden">
-              <div className="p-4 lg:p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                    <Gift className="w-4 h-4 text-white" />
+            {/* 4. 추천 프로그램 카드 */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+              <div className="p-4">
+                {/* 헤더 */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                      <Gift className="w-4 h-4 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100">추천 프로그램</h3>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-sm text-white">추천 프로그램</h3>
-                    <p className="text-[10px] text-white/80">친구와 함께 크레딧 받기</p>
-                  </div>
+                  <button
+                    onClick={() => router.push('/profile/referral')}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-md font-medium transition-colors text-xs cursor-pointer"
+                  >
+                    크레딧 받기
+                  </button>
                 </div>
 
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2.5 mb-3">
-                  <div className="flex items-start gap-2">
-                    <Users className="w-4 h-4 text-white/80 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-white/90 leading-relaxed">
-                      친구 초대 + 사업자 인증 완료 시 <strong className="text-white">각각 150 크레딧</strong>
-                    </p>
+                {/* 콘텐츠 */}
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+                  친구 초대 + 사업자 인증 시 <strong className="text-purple-600 dark:text-purple-400">각각 150 크레딧</strong>
+                </p>
+
+                {/* 혜택 요약 */}
+                <div className="flex gap-2">
+                  <div className="flex-1 bg-purple-50 dark:bg-purple-900/20 rounded-md px-2.5 py-2 text-center">
+                    <p className="text-[10px] text-purple-500 dark:text-purple-400 mb-0.5">추천인</p>
+                    <p className="text-sm font-bold text-purple-600 dark:text-purple-300">+150</p>
+                  </div>
+                  <div className="flex-1 bg-pink-50 dark:bg-pink-900/20 rounded-md px-2.5 py-2 text-center">
+                    <p className="text-[10px] text-pink-500 dark:text-pink-400 mb-0.5">피추천인</p>
+                    <p className="text-sm font-bold text-pink-600 dark:text-pink-300">+150</p>
                   </div>
                 </div>
-
-                <button
-                  onClick={() => router.push('/profile/referral')}
-                  className="w-full bg-white hover:bg-white/90 text-purple-600 font-medium py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs"
-                >
-                  <Gift className="w-3.5 h-3.5" />
-                  대시보드 보기
-                  <span className="text-sm">→</span>
-                </button>
               </div>
             </div>
           </div>
