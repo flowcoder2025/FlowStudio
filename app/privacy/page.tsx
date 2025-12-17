@@ -138,6 +138,31 @@ export default function PrivacyPolicyPage() {
             <Section title="제10조 (개인정보 처리방침의 변경)">
               <p>이 개인정보 처리방침은 법령, 정책 또는 보안기술의 변경에 따라 내용의 추가, 삭제 및 수정이 있을 수 있으며, 변경 시에는 시행 7일 전부터 서비스 내 공지사항을 통해 공지할 것입니다.</p>
             </Section>
+
+            <Section title="제11조 (AI 서비스 이용 시 데이터 처리)">
+              <p className="bg-amber-50 dark:bg-amber-900/30 p-4 rounded-lg border border-amber-200 dark:border-amber-700">
+                본 서비스는 인공지능 기반 이미지 생성 서비스로서, 「인공지능 발전과 신뢰 기반 조성 등에 관한 기본법」에 따른 데이터 처리 사항을 고지합니다.
+              </p>
+              <ol className="list-decimal pl-6 space-y-2 mt-4">
+                <li><strong>AI 처리를 위한 데이터 전송</strong>: 이용자가 서비스 이용 시 입력하는 프롬프트(텍스트), 참조 이미지 등의 데이터는 AI 이미지 생성을 위해 외부 AI 서비스 제공자(Google Vertex AI)에게 전송됩니다.</li>
+                <li><strong>데이터 활용 범위</strong>: 전송된 데이터는 이미지 생성 목적으로만 사용되며, AI 모델 학습에는 사용되지 않습니다.</li>
+                <li><strong>AI 생성물 표시 정보</strong>: 회사는 관련 법령에 따라 AI 생성물에 다음 정보를 포함할 수 있습니다:
+                  <ul className="list-disc pl-6 mt-2 space-y-1">
+                    <li>AI 생성 여부를 나타내는 워터마크</li>
+                    <li>생성 일시, 서비스명 등의 메타데이터</li>
+                  </ul>
+                </li>
+                <li><strong>비식별 정보</strong>: AI 생성물에 포함되는 표시 정보는 개인을 식별하지 않으며, 법령 준수를 위해 포함됩니다.</li>
+              </ol>
+            </Section>
+
+            <div className="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg mt-6">
+              <p className="font-medium">부칙</p>
+              <ol className="list-decimal pl-6 space-y-2 mt-2">
+                <li>본 개인정보 처리방침은 2025년 1월 1일부터 시행됩니다.</li>
+                <li>제11조(AI 서비스 이용 시 데이터 처리)의 규정 중 「인공지능 발전과 신뢰 기반 조성 등에 관한 기본법」에 따른 사항은 해당 법률 시행일인 2026년 1월 22일부터 효력이 발생합니다.</li>
+              </ol>
+            </div>
           </div>
         </div>
       </div>

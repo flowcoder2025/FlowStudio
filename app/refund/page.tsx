@@ -98,6 +98,7 @@ export default function RefundPolicyPage() {
                 <li>제3자에게 양도 또는 선물한 크레딧</li>
                 <li>서비스 이용약관 위반으로 계정이 정지된 경우</li>
                 <li>청약철회 기간(7일)이 경과한 경우</li>
+                <li>AI 생성물의 기술적 특성상 결과물이 이용자의 기대와 상이한 경우 (AI 기술의 고유한 한계로 인한 차이는 환불 사유가 되지 않습니다)</li>
               </ul>
             </Section>
 
@@ -143,6 +144,26 @@ export default function RefundPolicyPage() {
               </ol>
             </Section>
 
+            <Section title="제14조 (AI 생성물의 특성에 대한 이해)">
+              <div className="bg-amber-50 dark:bg-amber-900/30 p-4 rounded-lg border border-amber-200 dark:border-amber-700">
+                <p className="font-medium text-amber-800 dark:text-amber-200">AI 서비스 이용에 관한 중요 안내</p>
+                <p className="mt-2 text-amber-700 dark:text-amber-300 text-sm">
+                  본 서비스는 인공지능 기술을 기반으로 하며, 「인공지능 발전과 신뢰 기반 조성 등에 관한 기본법」의 적용을 받습니다.
+                </p>
+              </div>
+              <ol className="list-decimal pl-6 space-y-2 mt-4">
+                <li>이용자는 본 서비스가 인공지능 기술을 기반으로 한다는 점을 이해하고 다음 사항에 동의합니다:
+                  <ul className="list-disc pl-6 mt-2 space-y-1">
+                    <li>AI 생성물의 품질, 정확성, 적합성은 기술적 한계로 인해 보장되지 않습니다</li>
+                    <li>동일한 프롬프트라도 생성 결과가 매번 다를 수 있습니다</li>
+                    <li>AI 모델의 특성상 의도치 않은 결과물이 생성될 수 있습니다</li>
+                  </ul>
+                </li>
+                <li>위 1항의 사유로 인한 결과물 불만족은 청약철회 또는 환불 사유에 해당하지 않습니다.</li>
+                <li>단, 서비스의 기술적 오류로 인해 이미지가 전혀 생성되지 않는 경우에는 해당 크레딧을 환불 또는 복구해 드립니다.</li>
+              </ol>
+            </Section>
+
             <div className="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-lg border border-indigo-200 dark:border-indigo-700 mt-8">
               <p className="font-medium text-indigo-800 dark:text-indigo-200">문의처</p>
               <p className="mt-2 text-indigo-700 dark:text-indigo-300">
@@ -155,7 +176,10 @@ export default function RefundPolicyPage() {
 
             <div className="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg mt-6">
               <p className="font-medium">부칙</p>
-              <p className="mt-2">본 약관은 2025년 1월 1일부터 시행됩니다.</p>
+              <ol className="list-decimal pl-6 space-y-2 mt-2">
+                <li>본 약관은 2025년 1월 1일부터 시행됩니다.</li>
+                <li>제14조(AI 생성물의 특성에 대한 이해)의 규정 중 「인공지능 발전과 신뢰 기반 조성 등에 관한 기본법」에 따른 사항은 해당 법률 시행일인 2026년 1월 22일부터 효력이 발생합니다.</li>
+              </ol>
             </div>
           </div>
         </div>

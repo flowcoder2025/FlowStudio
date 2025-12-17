@@ -41,6 +41,8 @@ export default function TermsOfServicePage() {
                   <li><strong>&quot;회원&quot;</strong>이란 서비스에 가입하여 이용자 아이디를 부여받은 자를 말합니다.</li>
                   <li><strong>&quot;콘텐츠&quot;</strong>란 서비스를 통해 생성된 이미지, 텍스트 및 기타 창작물을 말합니다.</li>
                   <li><strong>&quot;크레딧&quot;</strong>이란 서비스 내에서 이미지 생성에 사용되는 가상의 재화를 말합니다.</li>
+                  <li><strong>&quot;AI 생성물&quot;</strong>이란 본 서비스의 인공지능 기술을 활용하여 생성된 이미지, 텍스트 및 기타 결과물을 말합니다.</li>
+                  <li><strong>&quot;AI 표시&quot;</strong>란 「인공지능 발전과 신뢰 기반 조성 등에 관한 기본법」에 따라 AI 생성물에 부착되는 워터마크, 메타데이터 또는 기타 식별 표시를 말합니다.</li>
                 </ol>
               </Section>
 
@@ -202,9 +204,53 @@ export default function TermsOfServicePage() {
               </Section>
             </Chapter>
 
+            <Chapter title="제9장 AI 생성물 및 법령 준수">
+              <Section title="제20조 (AI 생성물의 특성 및 표시)">
+                <ol className="list-decimal pl-6 space-y-2">
+                  <li>본 서비스를 통해 생성되는 모든 콘텐츠는 인공지능 기술에 의해 생성된 AI 생성물입니다.</li>
+                  <li>회사는 「인공지능 발전과 신뢰 기반 조성 등에 관한 기본법」(이하 &quot;AI 기본법&quot;) 제31조에 따라 AI 생성물에 다음과 같은 표시를 할 수 있습니다:
+                    <ul className="list-disc pl-6 mt-2 space-y-1">
+                      <li>워터마크 또는 시각적 식별 표시</li>
+                      <li>메타데이터 삽입</li>
+                      <li>기타 대통령령이 정하는 방식의 표시</li>
+                    </ul>
+                  </li>
+                  <li>이용자는 회사가 부착한 AI 표시를 임의로 제거, 변경 또는 훼손해서는 안 됩니다.</li>
+                  <li>AI 표시가 제거된 콘텐츠의 유통 및 이로 인해 발생하는 법적 책임은 전적으로 해당 이용자에게 있습니다.</li>
+                </ol>
+              </Section>
+
+              <Section title="제21조 (AI 생성물의 저작권 및 이용자 책임)">
+                <ol className="list-decimal pl-6 space-y-2">
+                  <li>AI 생성물은 현행 저작권법상 인간의 창작적 기여가 없는 경우 저작권 보호 대상이 되지 않을 수 있습니다. 이용자는 이러한 법적 특성을 이해하고 서비스를 이용합니다.</li>
+                  <li>이용자가 AI 생성물을 상업적 또는 비상업적으로 이용하는 경우, 관련 법령 준수 여부에 대한 책임은 이용자에게 있습니다.</li>
+                  <li>이용자는 AI 생성물을 이용함에 있어 다음 사항을 준수해야 합니다:
+                    <ul className="list-disc pl-6 mt-2 space-y-1">
+                      <li>AI 기본법 및 관련 법령에서 정한 표시 의무 준수</li>
+                      <li>제3자의 지식재산권 침해 금지</li>
+                      <li>허위정보 유포 또는 사회적 혼란 야기 목적의 사용 금지</li>
+                      <li>타인의 초상권, 명예권 등 인격권 침해 금지</li>
+                    </ul>
+                  </li>
+                </ol>
+              </Section>
+
+              <Section title="제22조 (AI 생성물 관련 면책)">
+                <ol className="list-decimal pl-6 space-y-2">
+                  <li>회사는 AI 기술의 특성상 생성 결과물이 이용자의 기대와 다를 수 있으며, 결과물의 품질, 정확성, 적합성에 대해 보증하지 않습니다.</li>
+                  <li>회사는 이용자가 AI 표시를 제거하거나 변경하여 발생한 법적 분쟁에 대해 책임을 지지 않습니다.</li>
+                  <li>회사는 이용자의 AI 생성물 사용으로 발생하는 제3자와의 분쟁(저작권, 초상권, 명예훼손 등)에 대해 책임을 지지 않습니다.</li>
+                  <li>이용자가 AI 생성물을 이용하여 법령을 위반하거나 제3자에게 손해를 입힌 경우, 그에 대한 모든 책임은 이용자에게 있습니다.</li>
+                </ol>
+              </Section>
+            </Chapter>
+
             <div className="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg mt-8">
               <p className="font-medium">부칙</p>
-              <p className="mt-2">본 약관은 2025년 1월 1일부터 시행됩니다.</p>
+              <ol className="list-decimal pl-6 space-y-2 mt-2">
+                <li>본 약관은 2025년 1월 1일부터 시행됩니다.</li>
+                <li>제9장(AI 생성물 및 법령 준수)의 규정 중 「인공지능 발전과 신뢰 기반 조성 등에 관한 기본법」에 따른 의무 조항은 해당 법률 시행일인 2026년 1월 22일부터 효력이 발생합니다.</li>
+              </ol>
             </div>
           </div>
         </div>
