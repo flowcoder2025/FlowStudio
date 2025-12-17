@@ -72,23 +72,40 @@ interface CurrentSubscription {
   }
 }
 
+interface CreditBalance {
+  balance: number
+  free: number
+  purchased: number
+  watermarkFree: boolean
+}
+
 export default function SubscriptionPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [currentSubscription, setCurrentSubscription] = useState<CurrentSubscription | null>(null)
+  const [creditBalance, setCreditBalance] = useState<CreditBalance | null>(null)
   const [loading, setLoading] = useState(true)
   const [processingTier, setProcessingTier] = useState<string | null>(null)
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling'>('idle')
 
   const fetchSubscription = useCallback(async () => {
     try {
-      const response = await fetch('/api/subscription')
-      const data = await response.json()
-      if (data.success) {
-        setCurrentSubscription(data.data)
+      const [subResponse, creditResponse] = await Promise.all([
+        fetch('/api/subscription'),
+        fetch('/api/credits/balance')
+      ])
+
+      const subData = await subResponse.json()
+      if (subData.success) {
+        setCurrentSubscription(subData.data)
+      }
+
+      if (creditResponse.ok) {
+        const creditData = await creditResponse.json()
+        setCreditBalance(creditData)
       }
     } catch (error) {
-      console.error('구독 정보 조회 실패:', error)
+      console.error('데이터 조회 실패:', error)
     } finally {
       setLoading(false)
     }
@@ -270,6 +287,50 @@ export default function SubscriptionPage() {
             </div>
           )}
         </div>
+
+        {/* 크레딧 잔액 표시 */}
+        {creditBalance && (
+          <div className="mb-6 lg:mb-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 text-white">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <p className="text-white/80 text-xs mb-1">보유 크레딧</p>
+                <p className="text-2xl font-bold">{creditBalance.balance} <span className="text-base font-normal opacity-80">크레딧</span></p>
+              </div>
+              <div className="flex gap-3">
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 text-center min-w-[80px]">
+                  <p className="text-[10px] text-white/70 mb-0.5">유료</p>
+                  <p className="font-bold">{creditBalance.purchased}</p>
+                  {!creditBalance.watermarkFree && creditBalance.purchased > 0 && (
+                    <span className="text-[8px] text-green-300">워터마크 X</span>
+                  )}
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 text-center min-w-[80px]">
+                  <p className="text-[10px] text-white/70 mb-0.5">무료</p>
+                  <p className="font-bold">{creditBalance.free}</p>
+                  {!creditBalance.watermarkFree && creditBalance.free > 0 && (
+                    <span className="text-[8px] text-orange-300">워터마크 O</span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => router.push('/credits/purchase')}
+                className="bg-white text-indigo-600 hover:bg-white/90 px-4 py-2 rounded-lg font-medium text-sm transition-colors"
+              >
+                크레딧 충전
+              </button>
+            </div>
+            {!creditBalance.watermarkFree && (
+              <p className="mt-3 text-[11px] text-white/70 border-t border-white/20 pt-2">
+                💡 무료 크레딧 사용 시 워터마크가 적용됩니다. 유료 크레딧을 사용하거나 구독을 업그레이드하면 워터마크 없이 이용할 수 있습니다.
+              </p>
+            )}
+            {creditBalance.watermarkFree && (
+              <p className="mt-3 text-[11px] text-green-300 border-t border-white/20 pt-2">
+                ✓ 구독 플랜 혜택으로 모든 생성물에 워터마크가 적용되지 않습니다.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Pricing Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">

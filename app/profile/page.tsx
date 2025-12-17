@@ -12,6 +12,10 @@ import { useRouter } from 'next/navigation';
 interface CreditBalance {
   balance: number;
   balanceKRW: number;
+  free: number;
+  purchased: number;
+  tier: string;
+  watermarkFree: boolean;
 }
 
 interface BusinessVerification {
@@ -292,7 +296,36 @@ function ProfilePageContent() {
                 ≈ ₩{(creditBalance?.balanceKRW ?? 0).toLocaleString()}원
               </p>
 
-              <div className="mt-4 pt-3 border-t border-white/20">
+              {/* 무료/유료 크레딧 분리 표시 */}
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-[10px] text-white/70">유료 크레딧</span>
+                    {!creditBalance?.watermarkFree && creditBalance?.purchased && creditBalance.purchased > 0 && (
+                      <span className="text-[9px] bg-green-400/30 text-green-200 px-1.5 py-0.5 rounded">워터마크 X</span>
+                    )}
+                  </div>
+                  <p className="text-lg font-bold">{creditBalance?.purchased ?? 0}</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-[10px] text-white/70">무료 크레딧</span>
+                    {!creditBalance?.watermarkFree && creditBalance?.free && creditBalance.free > 0 && (
+                      <span className="text-[9px] bg-orange-400/30 text-orange-200 px-1.5 py-0.5 rounded">워터마크 O</span>
+                    )}
+                  </div>
+                  <p className="text-lg font-bold">{creditBalance?.free ?? 0}</p>
+                </div>
+              </div>
+
+              {/* 워터마크 정책 안내 (FREE 플랜만) */}
+              {creditBalance && !creditBalance.watermarkFree && (
+                <p className="mt-2 text-[10px] text-white/60 leading-relaxed">
+                  💡 무료 크레딧 사용 시 워터마크가 적용됩니다. 유료 크레딧 또는 구독 업그레이드로 워터마크 없이 이용하세요.
+                </p>
+              )}
+
+              <div className="mt-3 pt-3 border-t border-white/20">
                 <div className="grid grid-cols-2 gap-3 text-xs lg:text-sm">
                   <div>
                     <p className="text-white/70 mb-0.5">2K 생성 (4장)</p>
