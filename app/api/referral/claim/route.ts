@@ -14,7 +14,7 @@ import { awardReferralCredits } from '@/lib/utils/referralManager'
 import { prisma } from '@/lib/prisma'
 import { UnauthorizedError, ValidationError, formatApiError } from '@/lib/errors'
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 

@@ -226,34 +226,40 @@ function BeforeAfterTooltip({
     if (!isVisible || !tooltipRef.current) return
 
     const tooltip = tooltipRef.current
-    const rect = tooltip.getBoundingClientRect()
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
 
-    let newX = position.x + 20 // 마우스 오른쪽으로 20px
-    let newY = position.y + 10 // 마우스 아래로 10px
+    // requestAnimationFrame으로 래핑하여 cascading render 방지
+    const rafId = requestAnimationFrame(() => {
+      const rect = tooltip.getBoundingClientRect()
+      const viewportWidth = window.innerWidth
+      const viewportHeight = window.innerHeight
 
-    // 오른쪽 경계 체크
-    if (newX + rect.width > viewportWidth - 20) {
-      newX = position.x - rect.width - 20 // 왼쪽에 표시
-    }
+      let newX = position.x + 20 // 마우스 오른쪽으로 20px
+      let newY = position.y + 10 // 마우스 아래로 10px
 
-    // 하단 경계 체크
-    if (newY + rect.height > viewportHeight - 20) {
-      newY = position.y - rect.height - 10 // 위쪽에 표시
-    }
+      // 오른쪽 경계 체크
+      if (newX + rect.width > viewportWidth - 20) {
+        newX = position.x - rect.width - 20 // 왼쪽에 표시
+      }
 
-    // 상단 경계 체크
-    if (newY < 20) {
-      newY = 20
-    }
+      // 하단 경계 체크
+      if (newY + rect.height > viewportHeight - 20) {
+        newY = position.y - rect.height - 10 // 위쪽에 표시
+      }
 
-    // 왼쪽 경계 체크
-    if (newX < 20) {
-      newX = 20
-    }
+      // 상단 경계 체크
+      if (newY < 20) {
+        newY = 20
+      }
 
-    setAdjustedPosition({ x: newX, y: newY })
+      // 왼쪽 경계 체크
+      if (newX < 20) {
+        newX = 20
+      }
+
+      setAdjustedPosition({ x: newX, y: newY })
+    })
+
+    return () => cancelAnimationFrame(rafId)
   }, [position, isVisible])
 
   if (!isVisible) return null

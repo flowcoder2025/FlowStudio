@@ -53,16 +53,20 @@ export function ImageGridSkeleton({ count = 12 }: ImageGridSkeletonProps) {
 /**
  * FilterSkeleton - 필터 영역 스켈레톤 UI
  */
+
+// 미리 정의된 필터 탭 너비 (Math.random 대신 결정적 값 사용)
+const FILTER_TAB_WIDTHS = [72, 65, 80, 68, 75, 70, 78];
+
 export function FilterSkeleton() {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 mb-6">
       {/* Mode Filter Tabs */}
       <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
-        {Array.from({ length: 7 }).map((_, index) => (
+        {FILTER_TAB_WIDTHS.map((width, index) => (
           <div
             key={index}
             className="h-7 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse"
-            style={{ width: `${60 + Math.random() * 30}px` }}
+            style={{ width: `${width}px` }}
           />
         ))}
       </div>

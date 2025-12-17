@@ -11,7 +11,7 @@ import { authOptions } from '@/lib/auth'
 import { assignReferralCode } from '@/lib/utils/referralManager'
 import { UnauthorizedError, formatApiError } from '@/lib/errors'
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 

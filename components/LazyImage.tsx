@@ -30,6 +30,18 @@ interface LazyImageProps {
 const BLUR_PLACEHOLDER =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZTJlOGYwIi8+PC9zdmc+';
 
+// 초기 뷰포트 체크 함수 (렌더 외부에서 안전하게 호출)
+function checkInitialVisibility(element: HTMLElement | null): boolean {
+  if (!element || typeof window === 'undefined') return false;
+  const rect = element.getBoundingClientRect();
+  return (
+    rect.top < window.innerHeight + 200 &&
+    rect.bottom > -200 &&
+    rect.left < window.innerWidth + 200 &&
+    rect.right > -200
+  );
+}
+
 export function LazyImage({
   src,
   alt,
@@ -43,10 +55,10 @@ export function LazyImage({
   rootMargin = '200px', // 200px 전에 미리 로딩 시작
   threshold = 0,
 }: LazyImageProps) {
+  const imgRef = useRef<HTMLDivElement>(null);
   const [isInView, setIsInView] = useState(priority);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const imgRef = useRef<HTMLDivElement>(null);
 
   // Intersection Observer 설정
   useEffect(() => {
@@ -55,37 +67,44 @@ export function LazyImage({
     const currentRef = imgRef.current;
     if (!currentRef) return;
 
-    // 초기 뷰포트 체크 - 이미 화면에 보이는 경우 바로 로딩
-    const rect = currentRef.getBoundingClientRect();
-    const isAlreadyInView =
-      rect.top < window.innerHeight + 200 &&
-      rect.bottom > -200 &&
-      rect.left < window.innerWidth + 200 &&
-      rect.right > -200;
-
-    if (isAlreadyInView) {
-      setIsInView(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setIsInView(true);
-          observer.disconnect();
-        }
-      },
-      {
-        rootMargin,
-        threshold,
+    // 초기 뷰포트 체크 - requestAnimationFrame으로 래핑하여 cascading render 방지
+    const checkVisibility = () => {
+      if (checkInitialVisibility(currentRef)) {
+        setIsInView(true);
+        return true;
       }
-    );
+      return false;
+    };
 
-    observer.observe(currentRef);
+    // 이미 보이는 경우 다음 프레임에서 상태 업데이트
+    const rafId = requestAnimationFrame(() => {
+      if (checkVisibility()) return;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            setIsInView(true);
+            observer.disconnect();
+          }
+        },
+        {
+          rootMargin,
+          threshold,
+        }
+      );
+
+      observer.observe(currentRef);
+
+      // cleanup을 위해 observer를 ref에 저장
+      (currentRef as HTMLElement & { _observer?: IntersectionObserver })._observer = observer;
+    });
 
     return () => {
-      observer.unobserve(currentRef);
-      observer.disconnect();
+      cancelAnimationFrame(rafId);
+      const observer = (currentRef as HTMLElement & { _observer?: IntersectionObserver })._observer;
+      if (observer) {
+        observer.disconnect();
+      }
     };
   }, [priority, isInView, rootMargin, threshold]);
 

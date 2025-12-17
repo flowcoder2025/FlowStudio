@@ -31,7 +31,6 @@ function CreditHistoryContent() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string>('');
 
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
@@ -52,7 +51,6 @@ function CreditHistoryContent() {
         const data = await response.json();
         setTransactions(data.transactions || []);
         setTotal(data.total || 0);
-        setHasMore(data.hasMore || false);
       }
     } catch (error) {
       console.error('Failed to fetch credit history:', error);

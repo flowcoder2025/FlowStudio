@@ -11,14 +11,14 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { checkBusinessStatus, normalizeBusinessNumber } from '@/lib/utils/businessVerification'
-import { addCredits, CREDIT_PRICES } from '@/lib/utils/creditManager'
+import { addCredits } from '@/lib/utils/creditManager'
 import { awardReferralCredits } from '@/lib/utils/referralManager'
 import { UnauthorizedError, ValidationError, formatApiError } from '@/lib/errors'
 
 /**
  * GET: 사업자 인증 상태 조회
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 

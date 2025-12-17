@@ -8,7 +8,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, Building2, User, Phone, AlertCircle, ArrowLeft } from 'lucide-react'
@@ -36,17 +36,22 @@ export default function BusinessVerificationPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  useEffect(() => {
-    if (!session?.user) {
-      router.push('/login')
-      return
+  const formatBusinessNumber = useCallback((value: string) => {
+    // 하이픈 제거 후 숫자만 추출
+    const numbers = value.replace(/[^\d]/g, '')
+    // 10자리 제한
+    const limited = numbers.slice(0, 10)
+    // 3-2-5 형식으로 포맷팅
+    if (limited.length <= 3) {
+      return limited
+    } else if (limited.length <= 5) {
+      return `${limited.slice(0, 3)}-${limited.slice(3)}`
+    } else {
+      return `${limited.slice(0, 3)}-${limited.slice(3, 5)}-${limited.slice(5)}`
     }
+  }, [])
 
-    // 인증 상태 조회
-    fetchVerificationStatus()
-  }, [session, router])
-
-  const fetchVerificationStatus = async () => {
+  const fetchVerificationStatus = useCallback(async () => {
     try {
       const response = await fetch('/api/profile/business-verification')
       const data = await response.json()
@@ -64,24 +69,17 @@ export default function BusinessVerificationPage() {
     } catch (error) {
       console.error('인증 상태 조회 실패:', error)
     }
-  }
+  }, [formatBusinessNumber])
 
-  const formatBusinessNumber = (value: string) => {
-    // 하이픈 제거 후 숫자만 추출
-    const numbers = value.replace(/[^\d]/g, '')
-
-    // 10자리 제한
-    const limited = numbers.slice(0, 10)
-
-    // 3-2-5 형식으로 포맷팅
-    if (limited.length <= 3) {
-      return limited
-    } else if (limited.length <= 5) {
-      return `${limited.slice(0, 3)}-${limited.slice(3)}`
-    } else {
-      return `${limited.slice(0, 3)}-${limited.slice(3, 5)}-${limited.slice(5)}`
+  useEffect(() => {
+    if (!session?.user) {
+      router.push('/login')
+      return
     }
-  }
+
+    // 인증 상태 조회
+    fetchVerificationStatus()
+  }, [session, router, fetchVerificationStatus])
 
   const handleBusinessNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatBusinessNumber(e.target.value)
