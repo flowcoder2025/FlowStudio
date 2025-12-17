@@ -370,7 +370,7 @@ function PosterPageContent() {
               <button
                 onClick={handleGenerate}
                 disabled={!productImage || !selectedCategory || !prompt.trim() || isLoading}
-                className={`px-4 py-1.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all ${
+                className={`px-4 py-2 min-h-[40px] rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all ${
                   !productImage || !selectedCategory || !prompt.trim() || isLoading
                     ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                     : 'bg-rose-600 dark:bg-rose-500 text-white hover:bg-rose-700 dark:hover:bg-rose-600 hover:shadow-rose-200 dark:hover:shadow-rose-900'

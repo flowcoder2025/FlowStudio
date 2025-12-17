@@ -510,7 +510,7 @@ function CompositePageContent() {
               <button
                 onClick={handleGenerate}
                 disabled={compositeImages.length === 0 || !selectedCategory || isLoading}
-                className={`px-4 py-1.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all ${
+                className={`px-4 py-2 min-h-[40px] rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all ${
                   compositeImages.length === 0 || !selectedCategory || isLoading
                     ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-500 cursor-not-allowed'
                     : 'bg-cyan-600 dark:bg-cyan-500 text-white hover:bg-cyan-700 dark:hover:bg-cyan-600 hover:shadow-cyan-200 dark:hover:shadow-cyan-900'

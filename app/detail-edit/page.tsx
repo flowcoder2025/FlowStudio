@@ -790,7 +790,7 @@ function DetailEditPageContent() {
                   <button
                     onClick={handleDetailEditGenerate}
                     disabled={!selectionRect || isLoading}
-                    className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition-all ${
+                    className={`px-3 py-2 min-h-[40px] rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition-all ${
                       !selectionRect || isLoading
                         ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                         : 'bg-violet-600 dark:bg-violet-500 text-white hover:bg-violet-700 dark:hover:bg-violet-600'
