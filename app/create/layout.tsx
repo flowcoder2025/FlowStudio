@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'AI 이미지 생성 | FlowStudio',
     description: '프롬프트와 참조 이미지로 전문가급 제품 사진을 30초 만에 생성하세요. 4장의 고품질 이미지 제작.',
-    url: 'https://flowstudio.com/create',
+    url: 'https://studio.flow-coder.com/create',
     type: 'website',
   },
   twitter: {

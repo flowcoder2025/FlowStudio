@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: '상세페이지 빌더 | FlowStudio',
     description: '모바일 최적화된 상세페이지를 AI로 자동 생성하세요. 섹션별 제작으로 완성도 UP.',
-    url: 'https://flowstudio.com/detail-page',
+    url: 'https://studio.flow-coder.com/detail-page',
     type: 'website',
   },
   twitter: {

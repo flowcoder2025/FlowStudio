@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: '구독 플랜 | FlowStudio',
     description: 'FlowStudio의 구독 플랜을 선택하고 더 많은 저장공간과 빠른 처리 속도를 누리세요.',
-    url: 'https://flowstudio.com/subscription',
+    url: 'https://studio.flow-coder.com/subscription',
     type: 'website',
   },
   twitter: {

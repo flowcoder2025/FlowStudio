@@ -17,6 +17,6 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
       },
     ],
-    sitemap: 'https://flowstudio.com/sitemap.xml',
+    sitemap: 'https://studio.flow-coder.com/sitemap.xml',
   }
 }

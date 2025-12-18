@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'AI 이미지 편집 | FlowStudio',
     description: '기존 이미지를 AI로 수정하고 배경을 바꾸거나 요소를 제거하세요. 프롬프트로 쉬운 편집.',
-    url: 'https://flowstudio.com/edit',
+    url: 'https://studio.flow-coder.com/edit',
     type: 'website',
   },
   twitter: {

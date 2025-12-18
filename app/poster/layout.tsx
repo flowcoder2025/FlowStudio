@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: '홍보 포스터 제작 | FlowStudio',
     description: '제품 사진을 활용하여 홍보용 포스터를 AI로 자동 생성하세요. 30초 만에 마케팅 자료 완성.',
-    url: 'https://flowstudio.com/poster',
+    url: 'https://studio.flow-coder.com/poster',
     type: 'website',
   },
   twitter: {
