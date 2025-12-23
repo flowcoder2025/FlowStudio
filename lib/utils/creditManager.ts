@@ -113,9 +113,13 @@ export async function getCreditBalanceDetail(userId: string): Promise<CreditBala
     }
   })
 
-  const free = freeCreditsResult._sum.remainingAmount ?? 0
+  const freeRaw = freeCreditsResult._sum.remainingAmount ?? 0
 
-  // 3. 유료 크레딧 = 총 잔액 - 무료 크레딧
+  // 3. 무료 크레딧 보정: remainingAmount 합계가 총 잔액을 초과할 수 없음
+  // (이전 버전 deductCredits가 remainingAmount를 차감하지 않은 경우 불일치 발생)
+  const free = Math.min(freeRaw, total)
+
+  // 4. 유료 크레딧 = 총 잔액 - 무료 크레딧
   const purchased = Math.max(0, total - free)
 
   return { total, free, purchased }
