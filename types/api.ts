@@ -244,3 +244,78 @@ export interface AdminStatsResponse {
   success: true
   stats: AdminStats
 }
+
+// ============================================
+// Admin Generations (생성 내역) API Types
+// ============================================
+
+export interface AdminGeneration {
+  id: string
+  user: {
+    id: string
+    name: string | null
+    email: string | null
+    image: string | null
+  }
+  mode: string
+  prompt: string | null
+  category: string | null
+  style: string | null
+  imageCount: number
+  costUsd: number
+  status: 'success' | 'failed'
+  errorMessage: string | null
+  createdAt: string
+  // 관련 프로젝트 이미지 (미리보기용)
+  projectImages: string[]
+}
+
+export interface AdminGenerationsResponse {
+  success: true
+  generations: AdminGeneration[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+  summary: {
+    totalToday: number
+    successToday: number
+    failedToday: number
+  }
+}
+
+// ============================================
+// Admin Errors (오류 내역) API Types
+// ============================================
+
+export interface AdminError {
+  id: string
+  user: {
+    id: string
+    name: string | null
+    email: string | null
+    image: string | null
+  }
+  mode: string
+  prompt: string | null
+  errorMessage: string | null
+  createdAt: string
+}
+
+export interface AdminErrorsResponse {
+  success: true
+  errors: AdminError[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+  summary: {
+    totalToday: number
+    totalThisWeek: number
+    totalThisMonth: number
+  }
+}
