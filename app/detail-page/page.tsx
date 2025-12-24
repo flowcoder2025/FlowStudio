@@ -67,6 +67,7 @@ function DetailPageContent() {
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
   const [creditType, setCreditType] = useState<CreditType>('auto');
   const [willHaveWatermark, setWillHaveWatermark] = useState(false);
+  const [isMerging, setIsMerging] = useState(false);
 
   const handleCreditSelect = (type: CreditType, hasWatermark: boolean) => {
     setCreditType(type);
@@ -369,6 +370,99 @@ function DetailPageContent() {
     setIsSelectionModalOpen(false);
   };
 
+  // 저장소에 저장하는 함수 (세그먼트 추가 없음, 다른 생성페이지와 동일)
+  const handleSaveToCloud = async (image: string) => {
+    try {
+      const response = await fetch('/api/images/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          images: [image],
+          mode: 'DETAIL_PAGE',
+          prompt: prompt || '상세페이지 섹션',
+          category: selectedCategory?.id,
+          style: selectedStyle?.id,
+          aspectRatio: '9:16',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(data.message || '이미지 저장소에 저장되었습니다.');
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || '저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Cloud save error:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 전체 병합 다운로드 (Canvas API)
+  const handleMergeDownload = async () => {
+    if (detailPageSegments.length === 0) {
+      alert('다운로드할 섹션이 없습니다.');
+      return;
+    }
+
+    setIsMerging(true);
+    try {
+      // 1. 모든 이미지 로드
+      const loadImage = (src: string): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+          const img = new window.Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = src;
+        });
+      };
+
+      const images = await Promise.all(detailPageSegments.map(loadImage));
+
+      // 2. 캔버스 크기 계산 (가로: 최대 너비, 세로: 모든 이미지 높이 합계)
+      const maxWidth = Math.max(...images.map(img => img.width));
+      const totalHeight = images.reduce((sum, img) => sum + img.height, 0);
+
+      // 3. 캔버스 생성 및 그리기
+      const canvas = document.createElement('canvas');
+      canvas.width = maxWidth;
+      canvas.height = totalHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        throw new Error('Canvas context not available');
+      }
+
+      // 배경을 흰색으로 설정
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, maxWidth, totalHeight);
+
+      let y = 0;
+      for (const img of images) {
+        // 이미지를 가로 중앙에 배치
+        const x = (maxWidth - img.width) / 2;
+        ctx.drawImage(img, x, y);
+        y += img.height;
+      }
+
+      // 4. 다운로드
+      const link = document.createElement('a');
+      link.download = `detail-page-merged-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      alert(`${detailPageSegments.length}개 섹션이 병합되어 다운로드되었습니다.`);
+    } catch (error) {
+      console.error('Merge download error:', error);
+      alert('이미지 병합 중 오류가 발생했습니다. 개별 섹션을 따로 저장해주세요.');
+    } finally {
+      setIsMerging(false);
+    }
+  };
+
   const removeSegment = (index: number) => {
     if (confirm('이 섹션을 삭제하시겠습니까?')) {
       setDetailPageSegments(detailPageSegments.filter((_, i) => i !== index));
@@ -657,10 +751,26 @@ function DetailPageContent() {
           {detailPageSegments.length > 0 && (
             <div className="mt-3 text-center">
               <button
-                onClick={() => alert("브라우저의 '이미지 저장' 기능을 이용해 개별 섹션을 저장한 후 포토샵 등에서 연결해주세요. (전체 병합 다운로드 기능 준비중)")}
-                className="text-xs text-slate-500 dark:text-slate-400 underline hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                onClick={handleMergeDownload}
+                disabled={isMerging}
+                className="inline-flex items-center gap-1.5 px-4 py-2 min-h-[36px] bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
               >
-                전체 이미지 다운로드 가이드
+                {isMerging ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    병합 중...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    전체 병합 다운로드 ({detailPageSegments.length}개 섹션)
+                  </>
+                )}
               </button>
             </div>
           )}
@@ -676,6 +786,7 @@ function DetailPageContent() {
           images={candidateImages}
           onClose={handleCloseSelection}
           onSelect={handleSelectCandidate}
+          onSave={handleSaveToCloud}
           onGenerateMore={handleGenerateMore}
         />
       )}

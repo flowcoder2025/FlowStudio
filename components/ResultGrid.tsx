@@ -7,7 +7,7 @@ import { Download, X, Check, Maximize2, ZoomIn, Cloud, Loader2 } from 'lucide-re
 interface ResultGridProps {
   images: string[];
   onClose: () => void;
-  onSelect?: (image: string) => void;
+  onSelect?: (image: string) => void | Promise<void>;
   onUpscale?: (image: string) => void;
   onSave?: (image: string) => Promise<void>;
   onGenerateMore?: () => Promise<void>;
@@ -19,6 +19,7 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
   const [savedIndexes, setSavedIndexes] = useState<Set<number>>(new Set());
   const [isGeneratingMore, setIsGeneratingMore] = useState(false);
+  const [selectingIndex, setSelectingIndex] = useState<number | null>(null);
 
   // Track previous images to detect when completely new images are loaded
   const prevImagesRef = useRef<string[]>([]);
@@ -49,6 +50,16 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
       setSavedIndexes(prev => new Set([...prev, idx]));
     } finally {
       setSavingIndex(null);
+    }
+  };
+
+  const handleSelect = async (img: string, idx: number) => {
+    if (!onSelect || selectingIndex !== null) return;
+    setSelectingIndex(idx);
+    try {
+      await onSelect(img);
+    } finally {
+      setSelectingIndex(null);
     }
   };
 
@@ -158,51 +169,67 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
                     )}
 
                     <div className="flex gap-1.5">
-                      {onSelect ? (
+                      {/* 다운로드 버튼 - 항상 표시 */}
+                      <button
+                        onClick={() => handleDownload(img, idx)}
+                        className="flex-1 flex items-center justify-center gap-1 px-2 py-2 min-h-[36px] bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg text-xs font-medium hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        저장
+                      </button>
+                      {/* 저장소 버튼 - onSave가 있으면 표시 */}
+                      {onSave && (
                         <button
-                          onClick={() => onSelect(img)}
-                          className="flex-1 flex items-center justify-center gap-1 px-2 py-2 min-h-[36px] bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors shadow-sm"
+                          onClick={() => handleSave(img, idx)}
+                          disabled={savingIndex === idx || savedIndexes.has(idx)}
+                          className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 min-h-[36px] rounded-lg text-xs font-medium transition-colors ${
+                            savedIndexes.has(idx)
+                              ? 'bg-green-500 dark:bg-green-600 text-white'
+                              : savingIndex === idx
+                              ? 'bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                              : 'bg-blue-500 dark:bg-blue-600 text-white hover:bg-blue-600 dark:hover:bg-blue-700'
+                          }`}
                         >
-                          <Check className="w-3.5 h-3.5" />
-                          선택
-                        </button>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => handleDownload(img, idx)}
-                            className="flex-1 flex items-center justify-center gap-1 px-2 py-2 min-h-[36px] bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg text-xs font-medium hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                            저장
-                          </button>
-                          {onSave && (
-                            <button
-                              onClick={() => handleSave(img, idx)}
-                              disabled={savingIndex === idx || savedIndexes.has(idx)}
-                              className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 min-h-[36px] rounded-lg text-xs font-medium transition-colors ${
-                                savedIndexes.has(idx)
-                                  ? 'bg-green-500 dark:bg-green-600 text-white'
-                                  : savingIndex === idx
-                                  ? 'bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 cursor-not-allowed'
-                                  : 'bg-blue-500 dark:bg-blue-600 text-white hover:bg-blue-600 dark:hover:bg-blue-700'
-                              }`}
-                            >
-                              {savingIndex === idx ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : savedIndexes.has(idx) ? (
-                                <>
-                                  <Check className="w-3.5 h-3.5" />
-                                  완료
-                                </>
-                              ) : (
-                                <>
-                                  <Cloud className="w-3.5 h-3.5" />
-                                  저장소
-                                </>
-                              )}
-                            </button>
+                          {savingIndex === idx ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : savedIndexes.has(idx) ? (
+                            <>
+                              <Check className="w-3.5 h-3.5" />
+                              완료
+                            </>
+                          ) : (
+                            <>
+                              <Cloud className="w-3.5 h-3.5" />
+                              저장소
+                            </>
                           )}
-                        </>
+                        </button>
+                      )}
+                      {/* 선택 버튼 - onSelect가 있으면 표시 (로딩 스피너 포함) */}
+                      {onSelect && (
+                        <button
+                          onClick={() => handleSelect(img, idx)}
+                          disabled={selectingIndex !== null}
+                          className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 min-h-[36px] rounded-lg text-xs font-medium shadow-sm transition-colors ${
+                            selectingIndex === idx
+                              ? 'bg-indigo-400 dark:bg-indigo-600 text-white cursor-wait'
+                              : selectingIndex !== null
+                              ? 'bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                              : 'bg-indigo-600 dark:bg-indigo-500 text-white hover:bg-indigo-700 dark:hover:bg-indigo-600'
+                          }`}
+                        >
+                          {selectingIndex === idx ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              선택 중...
+                            </>
+                          ) : (
+                            <>
+                              <Check className="w-3.5 h-3.5" />
+                              선택
+                            </>
+                          )}
+                        </button>
                       )}
                     </div>
                   </div>
@@ -329,14 +356,27 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
             )}
             {onSelect && (
               <button
-                onClick={() => {
-                  onSelect(previewImage);
-                  closePreview();
-                }}
-                className="flex items-center gap-1.5 px-4 py-2 min-h-[36px] bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition-colors shadow-lg"
+                onClick={() => handleSelect(previewImage, previewIndex)}
+                disabled={selectingIndex !== null}
+                className={`flex items-center gap-1.5 px-4 py-2 min-h-[36px] rounded-lg text-sm font-medium transition-colors shadow-lg ${
+                  selectingIndex === previewIndex
+                    ? 'bg-indigo-400 dark:bg-indigo-600 text-white cursor-wait'
+                    : selectingIndex !== null
+                    ? 'bg-white/10 text-white/50 cursor-not-allowed'
+                    : 'bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white'
+                }`}
               >
-                <Check className="w-4 h-4" />
-                선택
+                {selectingIndex === previewIndex ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    선택 중...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    선택
+                  </>
+                )}
               </button>
             )}
           </div>
