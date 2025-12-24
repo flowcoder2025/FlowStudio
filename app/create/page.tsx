@@ -10,6 +10,7 @@ import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { CreditSelectorDropdown, CreditType } from '@/components/CreditSelectorDropdown';
+import { useToast } from '@/components/Toast';
 import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
 import { CATEGORIES, ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, upscaleImage } from '@/services/geminiService';
@@ -38,6 +39,8 @@ function CreatePageContent() {
   const [isUpscaledSaved, setIsUpscaledSaved] = useState(false);
   const [creditType, setCreditType] = useState<CreditType>('auto');
   const [willHaveWatermark, setWillHaveWatermark] = useState(false);
+
+  const { showToast } = useToast();
 
   const handleCreditSelect = (type: CreditType, hasWatermark: boolean) => {
     setCreditType(type);
@@ -162,16 +165,29 @@ function CreatePageContent() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        if (isUpscaled) setIsUpscaledSaved(true);
-        alert(data.message || '이미지 저장소에 저장되었습니다.');
+        if (isUpscaled) {
+          setIsUpscaledSaved(true);
+          showToast('4K 이미지가 저장소에 저장되었습니다.', 'success');
+        }
+        // 일반 저장은 ResultGrid에서 toast 처리
       } else {
         const errorData = await response.json();
-        alert(errorData.error || '저장에 실패했습니다.');
+        const errorMessage = errorData.error || '저장에 실패했습니다.';
+        if (isUpscaled) {
+          showToast(errorMessage, 'error');
+        } else {
+          // ResultGrid가 에러를 catch하도록 throw
+          throw new Error(errorMessage);
+        }
       }
     } catch (error) {
       console.error('Cloud save error:', error);
-      alert('저장 중 오류가 발생했습니다.');
+      if (isUpscaled) {
+        showToast('저장 중 오류가 발생했습니다.', 'error');
+      } else {
+        // ResultGrid가 에러를 catch하도록 re-throw
+        throw error;
+      }
     } finally {
       if (isUpscaled) setIsUpscaledSaving(false);
     }

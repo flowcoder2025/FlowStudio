@@ -9,6 +9,7 @@ import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { CreditSelectorDropdown, CreditType } from '@/components/CreditSelectorDropdown';
+import { useToast } from '@/components/Toast';
 import { AppMode, GenerationRequest } from '@/types';
 import { generatePreview, extractTextFromImage } from '@/services/geminiService';
 import { recordUsage } from '@/services/usageService';
@@ -112,6 +113,8 @@ function DetailEditPageContent() {
   const [isCompressing, setIsCompressing] = useState(false);
   const [creditType, setCreditType] = useState<CreditType>('auto');
   const [willHaveWatermark, setWillHaveWatermark] = useState(false);
+
+  const { showToast } = useToast();
 
   const handleCreditSelect = (type: CreditType, hasWatermark: boolean) => {
     setCreditType(type);
@@ -556,18 +559,18 @@ Only modify the marked area. Keep everything else exactly the same.`;
 
       if (response.ok) {
         const data = await response.json();
-        alert(data.message || '이미지 저장소에 저장되었습니다.');
+        showToast(data.message || '이미지 저장소에 저장되었습니다.', 'success');
         // 저장된 URL로 업데이트 (다음 저장 시 중복 방지)
         if (data.urls && data.urls[0]) {
           setUploadedImage(data.urls[0]);
         }
       } else {
         const errorData = await response.json();
-        alert(errorData.error || '저장에 실패했습니다.');
+        showToast(errorData.error || '저장에 실패했습니다.', 'error');
       }
     } catch (error) {
       console.error('Cloud save error:', error);
-      alert('저장 중 오류가 발생했습니다.');
+      showToast('저장 중 오류가 발생했습니다.', 'error');
     } finally {
       setIsSaving(false);
     }

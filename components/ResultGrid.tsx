@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { Download, X, Check, Maximize2, ZoomIn, Cloud, Loader2 } from 'lucide-react';
+import { Download, X, Check, Maximize2, ZoomIn, Cloud, Loader2, CloudOff } from 'lucide-react';
+import { useToast } from './Toast';
 
 interface ResultGridProps {
   images: string[];
@@ -16,13 +17,23 @@ interface ResultGridProps {
 export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelect, onUpscale, onSave, onGenerateMore }) => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewIndex, setPreviewIndex] = useState<number>(0);
-  const [savingIndex, setSavingIndex] = useState<number | null>(null);
+  const [savingIndexes, setSavingIndexes] = useState<Set<number>>(new Set());
   const [savedIndexes, setSavedIndexes] = useState<Set<number>>(new Set());
   const [isGeneratingMore, setIsGeneratingMore] = useState(false);
   const [selectingIndex, setSelectingIndex] = useState<number | null>(null);
+  const [saveErrors, setSaveErrors] = useState<Set<number>>(new Set());
+
+  const { showToast } = useToast();
+
+  // Stable reference for showToast to avoid useEffect dependency issues
+  const showToastRef = useRef(showToast);
+  showToastRef.current = showToast;
 
   // Track previous images to detect when completely new images are loaded
   const prevImagesRef = useRef<string[]>([]);
+
+  // Track if we've already shown the "all saved" toast for current image set
+  const allSavedToastShownRef = useRef(false);
 
   // Reset savedIndexes when images array is replaced (not just appended)
   useEffect(() => {
@@ -32,24 +43,59 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
     // If the first image changed, it's a new generation
     if (images.length > 0 && prevImages.length > 0 && images[0] !== prevImages[0]) {
       setSavedIndexes(new Set());
+      setSavingIndexes(new Set());
+      setSaveErrors(new Set());
+      allSavedToastShownRef.current = false;
     }
 
     // Also reset if going from empty to having images
     if (prevImages.length === 0 && images.length > 0) {
       setSavedIndexes(new Set());
+      setSavingIndexes(new Set());
+      setSaveErrors(new Set());
+      allSavedToastShownRef.current = false;
     }
 
     prevImagesRef.current = images;
   }, [images]);
 
+  // 모든 이미지 저장 완료 시 알림
+  useEffect(() => {
+    if (onSave && images.length > 0 && savedIndexes.size === images.length && !allSavedToastShownRef.current) {
+      allSavedToastShownRef.current = true;
+      showToastRef.current(`모든 이미지 저장 완료! (${images.length}장)`, 'success', 4000);
+    }
+  }, [savedIndexes.size, images.length, onSave]);
+
   const handleSave = async (img: string, idx: number) => {
-    if (!onSave || savedIndexes.has(idx)) return;
-    setSavingIndex(idx);
+    if (!onSave || savedIndexes.has(idx) || savingIndexes.has(idx)) return;
+
+    // 저장 시작: Set에 추가
+    setSavingIndexes(prev => new Set([...prev, idx]));
+    setSaveErrors(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(idx);
+      return newSet;
+    });
+
     try {
       await onSave(img);
       setSavedIndexes(prev => new Set([...prev, idx]));
+      // 개별 저장 완료 알림 (마지막이 아닌 경우)
+      const newSavedCount = savedIndexes.size + 1;
+      if (newSavedCount < images.length) {
+        showToastRef.current(`이미지 #${idx + 1} 저장됨 (${newSavedCount}/${images.length})`, 'success');
+      }
+    } catch {
+      setSaveErrors(prev => new Set([...prev, idx]));
+      showToastRef.current(`이미지 #${idx + 1} 저장 실패`, 'error');
     } finally {
-      setSavingIndex(null);
+      // 저장 완료: Set에서 제거
+      setSavingIndexes(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(idx);
+        return newSet;
+      });
     }
   };
 
@@ -99,9 +145,44 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
       <div className="fixed inset-0 z-50 bg-white dark:bg-slate-900 flex flex-col transition-colors">
         {/* 컴팩트 헤더 */}
         <div className="flex-shrink-0 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-3 py-2.5 flex items-center justify-between z-10">
-          <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
-            {onSelect ? '사용할 이미지 선택' : `생성 결과 (${images.length}장)`}
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
+              {onSelect ? '사용할 이미지 선택' : `생성 결과 (${images.length}장)`}
+            </h2>
+            {/* 저장 진행률 표시 */}
+            {onSave && savedIndexes.size > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30">
+                  {savedIndexes.size === images.length ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-green-500" />
+                      <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                        모두 저장됨
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Cloud className="w-3.5 h-3.5 text-blue-500" />
+                      <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                        {savedIndexes.size}/{images.length} 저장됨
+                      </span>
+                    </>
+                  )}
+                </div>
+                {/* 진행률 바 */}
+                <div className="w-16 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${
+                      savedIndexes.size === images.length
+                        ? 'bg-green-500'
+                        : 'bg-blue-500 animate-progress-shine'
+                    }`}
+                    style={{ width: `${(savedIndexes.size / images.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="p-1.5 min-w-[32px] min-h-[32px] hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors flex items-center justify-center"
@@ -181,21 +262,28 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
                       {onSave && (
                         <button
                           onClick={() => handleSave(img, idx)}
-                          disabled={savingIndex === idx || savedIndexes.has(idx)}
+                          disabled={savingIndexes.has(idx) || savedIndexes.has(idx)}
                           className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 min-h-[36px] rounded-lg text-xs font-medium transition-colors ${
                             savedIndexes.has(idx)
                               ? 'bg-green-500 dark:bg-green-600 text-white'
-                              : savingIndex === idx
+                              : saveErrors.has(idx)
+                              ? 'bg-red-500 dark:bg-red-600 text-white hover:bg-red-600 dark:hover:bg-red-700'
+                              : savingIndexes.has(idx)
                               ? 'bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                               : 'bg-blue-500 dark:bg-blue-600 text-white hover:bg-blue-600 dark:hover:bg-blue-700'
                           }`}
                         >
-                          {savingIndex === idx ? (
+                          {savingIndexes.has(idx) ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                           ) : savedIndexes.has(idx) ? (
                             <>
                               <Check className="w-3.5 h-3.5" />
                               완료
+                            </>
+                          ) : saveErrors.has(idx) ? (
+                            <>
+                              <CloudOff className="w-3.5 h-3.5" />
+                              재시도
                             </>
                           ) : (
                             <>
@@ -335,23 +423,27 @@ export const ResultGrid: React.FC<ResultGridProps> = ({ images, onClose, onSelec
             {onSave && (
               <button
                 onClick={() => handleSave(previewImage, previewIndex)}
-                disabled={savingIndex === previewIndex || savedIndexes.has(previewIndex)}
+                disabled={savingIndexes.has(previewIndex) || savedIndexes.has(previewIndex)}
                 className={`flex items-center gap-1.5 px-3 py-2 min-h-[36px] rounded-lg text-sm font-medium transition-colors ${
                   savedIndexes.has(previewIndex)
                     ? 'bg-green-500 dark:bg-green-600 text-white'
-                    : savingIndex === previewIndex
+                    : saveErrors.has(previewIndex)
+                    ? 'bg-red-500 dark:bg-red-600 text-white hover:bg-red-600 dark:hover:bg-red-700'
+                    : savingIndexes.has(previewIndex)
                     ? 'bg-white/10 text-white/50'
                     : 'bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 text-white'
                 }`}
               >
-                {savingIndex === previewIndex ? (
+                {savingIndexes.has(previewIndex) ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : savedIndexes.has(previewIndex) ? (
                   <Check className="w-4 h-4" />
+                ) : saveErrors.has(previewIndex) ? (
+                  <CloudOff className="w-4 h-4" />
                 ) : (
                   <Cloud className="w-4 h-4" />
                 )}
-                {savedIndexes.has(previewIndex) ? '저장됨' : savingIndex === previewIndex ? '저장 중...' : '저장소'}
+                {savedIndexes.has(previewIndex) ? '저장됨' : savingIndexes.has(previewIndex) ? '저장 중...' : saveErrors.has(previewIndex) ? '재시도' : '저장소'}
               </button>
             )}
             {onSelect && (
