@@ -14,8 +14,8 @@ import { authOptions } from '@/lib/auth'
 import { ensureBase64, extractBase64Data } from '@/lib/utils/imageConverter'
 import { getGenAIClient, getGenAIMode } from '@/lib/vertexai'
 
-// OCR용 모델 - Gemini 2.5 Flash Lite (빠르고 경량화된 텍스트 모델)
-const OCR_MODEL = 'gemini-2.5-flash-lite'
+// OCR용 모델 - Gemini 2.5 Flash (Google AI Studio에서 빠른 텍스트 모델)
+const OCR_MODEL = 'gemini-2.5-flash'
 
 export const maxDuration = 60 // 최대 실행 시간 60초
 
@@ -58,14 +58,21 @@ export async function POST(req: NextRequest) {
           parts: [
             { inlineData: { mimeType, data } },
             {
-              text: `이 이미지에서 보이는 모든 텍스트를 정확히 추출해주세요.
+              text: `You are an OCR text extraction tool. Extract ALL visible text from this image.
 
-규칙:
-1. 줄바꿈과 공백을 원본 그대로 유지하세요
-2. 텍스트만 반환하고 다른 설명은 추가하지 마세요
-3. 텍스트가 없으면 빈 문자열을 반환하세요
-4. 한국어와 영어 모두 정확히 추출하세요
-5. 특수문자, 숫자, 이모지도 포함하세요`,
+IMPORTANT RULES:
+1. Extract EVERY piece of text you can see, including:
+   - Headlines and titles (대제목, 소제목)
+   - Body text and descriptions (본문, 설명)
+   - Labels and captions
+   - Buttons and UI elements
+   - Numbers and special characters
+2. Preserve line breaks as they appear
+3. Return ONLY the extracted text, no explanations
+4. If you see Korean text, extract it exactly as written
+5. Do NOT say "없음" or "no text" - look carefully for any text
+
+Extract all text now:`,
             },
           ],
         },

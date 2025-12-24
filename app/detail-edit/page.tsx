@@ -327,13 +327,25 @@ function DetailEditPageContent() {
 
     setIsLoading(true);
     try {
+      console.log('[handleExtractText] Calling extractTextFromImage...');
       const text = await extractTextFromImage(croppedData);
-      setExtractedText(text);
-      setPrompt(text);
-      setEditModeSub('TEXT');
-      recordUsage(1);
-    } catch {
-      alert("텍스트 추출 실패");
+      console.log('[handleExtractText] Extracted text:', text);
+      console.log('[handleExtractText] Text length:', text?.length);
+
+      if (text && text.trim()) {
+        setExtractedText(text);
+        setPrompt(text);
+        setEditModeSub('TEXT');
+        recordUsage(1);
+        console.log('[handleExtractText] ✅ Text set to prompt successfully');
+      } else {
+        console.log('[handleExtractText] ⚠️ Empty text returned');
+        alert('이미지에서 텍스트를 찾을 수 없습니다.');
+      }
+    } catch (error) {
+      console.error('[handleExtractText] Error:', error);
+      const errorMsg = error instanceof Error ? error.message : '텍스트 추출 실패';
+      alert(errorMsg);
     } finally {
       setIsLoading(false);
     }
