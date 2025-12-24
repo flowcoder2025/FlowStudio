@@ -135,9 +135,19 @@ function CompositePageContent() {
     }
   }, [processFiles]);
 
+  // 싱글 셀렉트 (기존 호환성)
   const handleGallerySelect = (imageUrl: string) => {
     if (compositeImages.length < MAX_IMAGES) {
       setCompositeImages(prev => [...prev, imageUrl]);
+    }
+  };
+
+  // 멀티 셀렉트 (여러 이미지 한 번에 추가)
+  const handleGalleryMultiSelect = (imageUrls: string[]) => {
+    const remainingSlots = MAX_IMAGES - compositeImages.length;
+    const urlsToAdd = imageUrls.slice(0, remainingSlots);
+    if (urlsToAdd.length > 0) {
+      setCompositeImages(prev => [...prev, ...urlsToAdd].slice(0, MAX_IMAGES));
     }
   };
 
@@ -611,12 +621,15 @@ function CompositePageContent() {
         </div>
       )}
 
-      {/* Image Gallery Modal */}
+      {/* Image Gallery Modal - 멀티 셀렉트 모드 */}
       <ImageGalleryModal
         isOpen={isGalleryOpen}
         onClose={() => setIsGalleryOpen(false)}
         onSelect={handleGallerySelect}
-        title="재료 이미지 선택"
+        onMultiSelect={handleGalleryMultiSelect}
+        multiSelect={true}
+        maxSelect={MAX_IMAGES - compositeImages.length}
+        title="재료 이미지 선택 (여러 장 선택 가능)"
       />
     </>
   );

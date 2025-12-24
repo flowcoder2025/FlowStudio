@@ -116,11 +116,6 @@ export async function GET(req: NextRequest) {
       skip: offset,
     })
 
-    // 전체 개수 조회
-    const totalProjects = await prisma.imageProject.count({
-      where: whereClause,
-    })
-
     // 이미지 목록 변환 (ImageProject)
     const images: UserImage[] = []
 
@@ -141,8 +136,6 @@ export async function GET(req: NextRequest) {
     }
 
     // DetailPageDraft 조회 (DETAIL_PAGE 모드이거나 전체 모드일 때만)
-    let totalDetailPageDrafts = 0
-
     if (!mode || mode === 'DETAIL_PAGE') {
       const detailPageDrafts = await prisma.detailPageDraft.findMany({
         where: {
@@ -191,27 +184,6 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      // DetailPageDraft 전체 개수 조회
-      totalDetailPageDrafts = await prisma.detailPageDraft.count({
-        where: {
-          userId: session.user.id,
-          detailPageSegments: { isEmpty: false },
-          ...(dateFrom || dateTo
-            ? {
-                createdAt: {
-                  ...(dateFrom && { gte: new Date(dateFrom) }),
-                  ...(dateTo && {
-                    lte: (() => {
-                      const endDate = new Date(dateTo)
-                      endDate.setDate(endDate.getDate() + 1)
-                      return endDate
-                    })(),
-                  }),
-                },
-              }
-            : {}),
-        },
-      })
     }
 
     // 생성일 기준 정렬 (최신순)
@@ -219,9 +191,19 @@ export async function GET(req: NextRequest) {
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
 
+    // URL 기반 중복 제거 (ImageProject와 DetailPageDraft 간 중복 방지)
+    const seenUrls = new Set<string>()
+    const deduplicatedImages: UserImage[] = []
+    for (const image of images) {
+      if (!seenUrls.has(image.url)) {
+        seenUrls.add(image.url)
+        deduplicatedImages.push(image)
+      }
+    }
+
     const response: ImagesListResponse = {
-      images,
-      total: totalProjects + totalDetailPageDrafts,
+      images: deduplicatedImages,
+      total: deduplicatedImages.length, // 중복 제거 후 실제 개수 반환
     }
 
     return NextResponse.json(response)

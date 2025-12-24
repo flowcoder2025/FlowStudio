@@ -25,6 +25,9 @@ interface ImageGalleryModalProps {
   isOpen: boolean
   onClose: () => void
   onSelect: (imageUrl: string) => void
+  onMultiSelect?: (imageUrls: string[]) => void  // 멀티 셀렉트용 콜백
+  multiSelect?: boolean  // 멀티 셀렉트 모드 활성화
+  maxSelect?: number  // 최대 선택 가능 개수 (기본값 무제한)
   title?: string
 }
 
@@ -44,6 +47,9 @@ export function ImageGalleryModal({
   isOpen,
   onClose,
   onSelect,
+  onMultiSelect,
+  multiSelect = false,
+  maxSelect,
   title = '이미지 저장소에서 불러오기',
 }: ImageGalleryModalProps) {
   const [images, setImages] = useState<UserImage[]>([])
@@ -51,6 +57,7 @@ export function ImageGalleryModal({
   const [error, setError] = useState<string | null>(null)
   const [filterMode, setFilterMode] = useState<FilterMode>('ALL')
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [selectedImages, setSelectedImages] = useState<string[]>([])  // 멀티 셀렉트용
 
   // 날짜 및 태그 필터
   const [dateFrom, setDateFrom] = useState<string>('')
@@ -104,18 +111,52 @@ export function ImageGalleryModal({
     if (isOpen) {
       fetchImages()
       setSelectedImage(null)
+      setSelectedImages([])  // 멀티 셀렉트 상태도 초기화
     }
   }, [isOpen, fetchImages])
 
   const handleSelect = () => {
-    if (selectedImage) {
-      onSelect(selectedImage)
-      onClose()
+    if (multiSelect) {
+      if (selectedImages.length > 0 && onMultiSelect) {
+        onMultiSelect(selectedImages)
+        onClose()
+      }
+    } else {
+      if (selectedImage) {
+        onSelect(selectedImage)
+        onClose()
+      }
     }
   }
 
   const handleImageClick = (url: string) => {
-    setSelectedImage(url === selectedImage ? null : url)
+    if (multiSelect) {
+      // 멀티 셀렉트 모드
+      setSelectedImages(prev => {
+        const isSelected = prev.includes(url)
+        if (isSelected) {
+          // 이미 선택된 이미지 클릭 시 선택 해제
+          return prev.filter(u => u !== url)
+        } else {
+          // 최대 선택 개수 체크
+          if (maxSelect && prev.length >= maxSelect) {
+            return prev  // 최대 개수 도달 시 추가 안 함
+          }
+          return [...prev, url]
+        }
+      })
+    } else {
+      // 싱글 셀렉트 모드
+      setSelectedImage(url === selectedImage ? null : url)
+    }
+  }
+
+  // 멀티 셀렉트 시 이미지 선택 여부 확인
+  const isImageSelected = (url: string) => {
+    if (multiSelect) {
+      return selectedImages.includes(url)
+    }
+    return selectedImage === url
   }
 
   const resetFilters = () => {
@@ -262,12 +303,15 @@ export function ImageGalleryModal({
             </div>
           ) : (
             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {images.map((image, index) => (
+              {images.map((image, index) => {
+                const selected = isImageSelected(image.url)
+                const selectionIndex = multiSelect ? selectedImages.indexOf(image.url) + 1 : 0
+                return (
                 <button
                   key={`${image.projectId}-${image.index}-${index}`}
                   onClick={() => handleImageClick(image.url)}
                   className={`group relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                    selectedImage === image.url
+                    selected
                       ? 'border-indigo-500 ring-2 ring-indigo-500 ring-offset-2'
                       : 'border-transparent hover:border-slate-300'
                   }`}
@@ -280,10 +324,14 @@ export function ImageGalleryModal({
                   />
 
                   {/* Selection Indicator */}
-                  {selectedImage === image.url && (
+                  {selected && (
                     <div className="absolute inset-0 bg-indigo-500/20 flex items-center justify-center">
-                      <div className="bg-indigo-500 text-white rounded-full p-2">
-                        <Check className="w-5 h-5" />
+                      <div className="bg-indigo-500 text-white rounded-full p-2 min-w-[36px] min-h-[36px] flex items-center justify-center">
+                        {multiSelect && selectionIndex > 0 ? (
+                          <span className="text-sm font-bold">{selectionIndex}</span>
+                        ) : (
+                          <Check className="w-5 h-5" />
+                        )}
                       </div>
                     </div>
                   )}
@@ -323,7 +371,7 @@ export function ImageGalleryModal({
                     </span>
                   </div>
                 </button>
-              ))}
+              )})}
             </div>
           )}
         </div>
@@ -331,9 +379,15 @@ export function ImageGalleryModal({
         {/* Footer */}
         <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50 rounded-b-2xl">
           <p className="text-sm text-slate-500">
-            {images.length > 0
-              ? `총 ${images.length}개의 이미지`
-              : '이미지를 선택해주세요'}
+            {multiSelect ? (
+              selectedImages.length > 0
+                ? `${selectedImages.length}개 선택됨${maxSelect ? ` (최대 ${maxSelect}개)` : ''}`
+                : `총 ${images.length}개의 이미지${maxSelect ? ` (최대 ${maxSelect}개 선택 가능)` : ''}`
+            ) : (
+              images.length > 0
+                ? `총 ${images.length}개의 이미지`
+                : '이미지를 선택해주세요'
+            )}
           </p>
           <div className="flex gap-3">
             <button
@@ -344,9 +398,9 @@ export function ImageGalleryModal({
             </button>
             <button
               onClick={handleSelect}
-              disabled={!selectedImage}
+              disabled={multiSelect ? selectedImages.length === 0 : !selectedImage}
               className={`px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-                selectedImage
+                (multiSelect ? selectedImages.length > 0 : selectedImage)
                   ? 'bg-indigo-600 text-white hover:bg-indigo-700'
                   : 'bg-slate-200 text-slate-400 cursor-not-allowed'
               }`}
