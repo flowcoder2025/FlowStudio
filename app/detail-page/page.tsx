@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import NextImage from 'next/image';
-import { Layout, Camera, Eye, X, Plus, Trash2, Grid, Columns, Square, MoveDiagonal2, FolderOpen, Save, FileText, Clock, FilePlus2 } from 'lucide-react';
+import { Layout, Camera, Eye, X, Plus, Trash2, Grid, Columns, Square, MoveDiagonal2, FolderOpen, Save, FileText, Clock, FilePlus2, History, RefreshCw } from 'lucide-react';
 import { FileDropzone } from '@/components/FileDropzone';
 import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
@@ -10,6 +10,8 @@ import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { ResultGrid } from '@/components/ResultGrid';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { CreditSelectorDropdown, CreditType } from '@/components/CreditSelectorDropdown';
+import { ConfirmationDialog } from '@/components/ConfirmationDialog';
+import { SessionHistoryModal, HistorySession } from '@/components/SessionHistoryModal';
 import { AppMode, Category, StyleOption, LayoutOption, GenerationRequest } from '@/types';
 import { DETAIL_PAGE_CATEGORIES, LAYOUT_OPTIONS } from '@/constants';
 import { generateImageVariations } from '@/services/geminiService';
@@ -68,6 +70,20 @@ function DetailPageContent() {
   const [creditType, setCreditType] = useState<CreditType>('auto');
   const [willHaveWatermark, setWillHaveWatermark] = useState(false);
   const [isMerging, setIsMerging] = useState(false);
+
+  // Session history state (임시 저장 기능)
+  const [sessionHistory, setSessionHistory] = useState<HistorySession[]>([]);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [replaceSegmentIndex, setReplaceSegmentIndex] = useState<number | null>(null);
+
+  // Confirmation dialog state (안전장치)
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [pendingSelectImage, setPendingSelectImage] = useState<string | null>(null);
+  const [pendingSelectIndex, setPendingSelectIndex] = useState<number | null>(null);
+  const [isSelectProcessing, setIsSelectProcessing] = useState(false);
+
+  // 현재 세션 ID (생성할 때마다 새로 생성)
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   const handleCreditSelect = (type: CreditType, hasWatermark: boolean) => {
     setCreditType(type);
@@ -284,6 +300,18 @@ function DetailPageContent() {
 
       const images = await generateImageVariations(request, creditType);
       if (images.length > 0) {
+        // 새 세션 생성 및 히스토리에 추가
+        const newSessionId = `session_${Date.now()}`;
+        setCurrentSessionId(newSessionId);
+
+        const newSession: HistorySession = {
+          id: newSessionId,
+          images: images,
+          prompt: prompt || (detailPageSegments.length === 0 ? '제품 인트로 섹션' : '제품 설명 섹션'),
+          timestamp: new Date(),
+        };
+        setSessionHistory(prev => [newSession, ...prev]);
+
         setCandidateImages(images);
         setIsSelectionModalOpen(true);
         // Usage is now tracked server-side in /api/generate
@@ -317,6 +345,15 @@ function DetailPageContent() {
       const images = await generateImageVariations(request, creditType);
       if (images.length > 0) {
         setCandidateImages(prev => [...prev, ...images]);
+
+        // 현재 세션에 이미지 추가
+        if (currentSessionId) {
+          setSessionHistory(prev => prev.map(session =>
+            session.id === currentSessionId
+              ? { ...session, images: [...session.images, ...images] }
+              : session
+          ));
+        }
       } else {
         alert('섹션 생성에 실패했습니다.');
       }
@@ -328,7 +365,26 @@ function DetailPageContent() {
     }
   };
 
-  const handleSelectCandidate = async (image: string) => {
+  // 선택 버튼 클릭 시 확인 다이얼로그 표시
+  const handleSelectCandidateClick = useCallback((image: string) => {
+    const imageIndex = candidateImages.indexOf(image);
+    const unsavedCount = candidateImages.length - 1; // 선택된 이미지 제외
+
+    setPendingSelectImage(image);
+    setPendingSelectIndex(imageIndex);
+
+    // 저장하지 않은 이미지가 있으면 확인 다이얼로그 표시
+    if (unsavedCount > 0) {
+      setIsConfirmDialogOpen(true);
+    } else {
+      // 저장하지 않은 이미지가 없으면 바로 선택 처리
+      processSelectCandidate(image, imageIndex);
+    }
+  }, [candidateImages]);
+
+  // 실제 선택 처리 함수
+  const processSelectCandidate = async (image: string, imageIndex: number) => {
+    setIsSelectProcessing(true);
     // Save the selected image to cloud storage
     try {
       const response = await fetch('/api/images/save', {
@@ -354,15 +410,126 @@ function DetailPageContent() {
         setDetailPageSegments([...detailPageSegments, image]);
         console.error('Failed to save image to cloud, using base64');
       }
+
+      // 세션 히스토리에 사용된 이미지 인덱스 표시
+      if (currentSessionId) {
+        setSessionHistory(prev => prev.map(session =>
+          session.id === currentSessionId
+            ? { ...session, usedImageIndex: imageIndex }
+            : session
+        ));
+      }
     } catch (error) {
       // Fallback to base64 on error
       setDetailPageSegments([...detailPageSegments, image]);
       console.error('Error saving image:', error);
+    } finally {
+      setIsSelectProcessing(false);
+      setIsConfirmDialogOpen(false);
+      setPendingSelectImage(null);
+      setPendingSelectIndex(null);
     }
 
     setCandidateImages([]);
     setIsSelectionModalOpen(false);
     setPrompt(''); // Clear prompt for next section
+  };
+
+  // 확인 다이얼로그에서 확인 클릭 시
+  const handleConfirmSelect = () => {
+    if (pendingSelectImage !== null && pendingSelectIndex !== null) {
+      processSelectCandidate(pendingSelectImage, pendingSelectIndex);
+    }
+  };
+
+  // 확인 다이얼로그 취소
+  const handleCancelSelect = () => {
+    setIsConfirmDialogOpen(false);
+    setPendingSelectImage(null);
+    setPendingSelectIndex(null);
+  };
+
+  // 히스토리에서 이미지 선택 (세그먼트 교체용)
+  const handleSelectFromHistory = async (image: string, sessionId: string, imageIndex: number) => {
+    if (replaceSegmentIndex === null) {
+      // 새로운 세그먼트로 추가
+      try {
+        const response = await fetch('/api/images/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            images: [image],
+            mode: 'DETAIL_PAGE',
+            prompt: '히스토리에서 선택',
+            category: selectedCategory?.id,
+            style: selectedStyle?.id,
+            aspectRatio: '9:16',
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setDetailPageSegments(prev => [...prev, data.urls[0]]);
+        } else {
+          setDetailPageSegments(prev => [...prev, image]);
+        }
+      } catch {
+        setDetailPageSegments(prev => [...prev, image]);
+      }
+    } else {
+      // 기존 세그먼트 교체
+      try {
+        const response = await fetch('/api/images/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            images: [image],
+            mode: 'DETAIL_PAGE',
+            prompt: '히스토리에서 교체',
+            category: selectedCategory?.id,
+            style: selectedStyle?.id,
+            aspectRatio: '9:16',
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setDetailPageSegments(prev => {
+            const newSegments = [...prev];
+            newSegments[replaceSegmentIndex] = data.urls[0];
+            return newSegments;
+          });
+        } else {
+          setDetailPageSegments(prev => {
+            const newSegments = [...prev];
+            newSegments[replaceSegmentIndex] = image;
+            return newSegments;
+          });
+        }
+      } catch {
+        setDetailPageSegments(prev => {
+          const newSegments = [...prev];
+          newSegments[replaceSegmentIndex] = image;
+          return newSegments;
+        });
+      }
+    }
+
+    // 세션 히스토리에 사용된 이미지 인덱스 표시
+    setSessionHistory(prev => prev.map(session =>
+      session.id === sessionId
+        ? { ...session, usedImageIndex: imageIndex }
+        : session
+    ));
+
+    setIsHistoryModalOpen(false);
+    setReplaceSegmentIndex(null);
+  };
+
+  // 세그먼트 교체 모드 시작
+  const startReplaceSegment = (index: number) => {
+    setReplaceSegmentIndex(index);
+    setIsHistoryModalOpen(true);
   };
 
   const handleCloseSelection = () => {
@@ -508,6 +675,17 @@ function DetailPageContent() {
                   <FileText className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">열기</span>
                 </button>
+                {/* 히스토리 버튼 - 세션 히스토리가 있을 때만 표시 */}
+                {sessionHistory.length > 0 && (
+                  <button
+                    onClick={() => { setReplaceSegmentIndex(null); setIsHistoryModalOpen(true); }}
+                    className="flex items-center justify-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 min-h-[32px] min-w-[32px] sm:min-w-0 bg-indigo-100 dark:bg-indigo-900/30 border border-indigo-300 dark:border-indigo-600 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-medium transition-colors"
+                    title="이미지 히스토리"
+                  >
+                    <History className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{sessionHistory.reduce((sum, s) => sum + s.images.length, 0)}</span>
+                  </button>
+                )}
                 <button
                   onClick={openSaveModal}
                   className="flex items-center justify-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 min-h-[32px] min-w-[32px] sm:min-w-0 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg text-xs font-medium transition-colors"
@@ -731,7 +909,17 @@ function DetailPageContent() {
                     className="w-full h-auto block"
                     unoptimized={segment.startsWith('data:')}
                   />
-                  <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                    {/* 교체 버튼 - 히스토리가 있을 때만 표시 */}
+                    {sessionHistory.length > 0 && (
+                      <button
+                        onClick={() => startReplaceSegment(idx)}
+                        className="p-1 bg-indigo-600 dark:bg-indigo-500 text-white rounded-md shadow-md hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
+                        title="다른 이미지로 교체"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                     <button
                       onClick={() => removeSegment(idx)}
                       className="p-1 bg-red-600 dark:bg-red-500 text-white rounded-md shadow-md hover:bg-red-700 dark:hover:bg-red-600 transition-colors"
@@ -785,7 +973,7 @@ function DetailPageContent() {
         <ResultGrid
           images={candidateImages}
           onClose={handleCloseSelection}
-          onSelect={handleSelectCandidate}
+          onSelect={handleSelectCandidateClick}
           onSave={handleSaveToCloud}
           onGenerateMore={handleGenerateMore}
         />
@@ -960,6 +1148,34 @@ function DetailPageContent() {
           </div>
         </div>
       )}
+
+      {/* 선택 확인 다이얼로그 (안전장치) */}
+      <ConfirmationDialog
+        isOpen={isConfirmDialogOpen}
+        onClose={handleCancelSelect}
+        onConfirm={handleConfirmSelect}
+        title="이미지 선택 확인"
+        message={`선택하신 이미지로 작업하시겠습니까? 확인을 누르시면 저장되지 않은 ${candidateImages.length - 1}장의 이미지는 히스토리에만 남고, 결과 화면에서는 닫힙니다.`}
+        description="💡 히스토리 버튼을 통해 나중에 다른 이미지로 교체할 수 있습니다."
+        confirmText="선택하기"
+        cancelText="취소"
+        variant="warning"
+        isLoading={isSelectProcessing}
+      />
+
+      {/* 세션 히스토리 모달 */}
+      <SessionHistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => { setIsHistoryModalOpen(false); setReplaceSegmentIndex(null); }}
+        sessions={sessionHistory}
+        onSelectImage={handleSelectFromHistory}
+        onSaveImage={handleSaveToCloud}
+        title={replaceSegmentIndex !== null ? `섹션 #${replaceSegmentIndex + 1} 교체` : '이미지 히스토리'}
+        subtitle={replaceSegmentIndex !== null
+          ? '아래 이미지 중 하나를 선택하면 해당 섹션이 교체됩니다.'
+          : '이번 세션에서 생성된 이미지들입니다. 이미지를 선택하여 새 섹션으로 추가할 수 있습니다.'
+        }
+      />
     </>
   );
 }
