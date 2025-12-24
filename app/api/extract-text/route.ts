@@ -49,40 +49,43 @@ export async function POST(req: NextRequest) {
 
     // 4. Gemini로 텍스트 추출 (OCR)
     console.log(`[API /extract-text] Extracting text using ${OCR_MODEL}...`)
+    console.log(`[API /extract-text] Image mimeType: ${mimeType}, data length: ${data.length}`)
 
-    // @google/genai SDK 공식 문서에 따른 올바른 API 호출 방식
-    // contents는 배열 또는 문자열, Part 객체 배열 가능
+    // @google/genai SDK - role/parts 구조 사용 (멀티모달 권장 형식)
     const response = await ai.models.generateContent({
       model: OCR_MODEL,
       contents: [
         {
-          inlineData: {
-            mimeType,
-            data,
-          },
-        },
-        {
-          text: `You are an OCR text extraction tool. Extract ALL visible text from this image.
-
-IMPORTANT RULES:
-1. Extract EVERY piece of text you can see, including:
-   - Headlines and titles (대제목, 소제목)
-   - Body text and descriptions (본문, 설명)
-   - Labels and captions
-   - Buttons and UI elements
-   - Numbers and special characters
-2. Preserve line breaks as they appear
-3. Return ONLY the extracted text, no explanations
-4. If you see Korean text, extract it exactly as written
-5. Do NOT say "없음" or "no text" - look carefully for any text
-
-Extract all text now:`,
+          role: 'user',
+          parts: [
+            {
+              inlineData: {
+                mimeType,
+                data,
+              },
+            },
+            {
+              text: `Extract ALL text from this image. Return ONLY the extracted text, nothing else.
+If you see Korean text (한글), extract it exactly as written.
+Include: titles, descriptions, labels, buttons, numbers.`,
+            },
+          ],
         },
       ],
     })
 
-    // 5. 응답에서 텍스트 추출 - SDK 공식 문서: response.text 직접 사용
-    const extractedText = response.text || ''
+    // 5. 디버깅: 전체 응답 구조 확인
+    console.log(`[API /extract-text] Response keys:`, Object.keys(response))
+    console.log(`[API /extract-text] Response.text:`, response.text)
+    console.log(`[API /extract-text] Response.candidates:`, JSON.stringify(response.candidates, null, 2))
+
+    // SDK 공식 문서: response.text 직접 사용, 없으면 candidates에서 추출
+    let extractedText = response.text || ''
+
+    // fallback: candidates에서 직접 추출
+    if (!extractedText && response.candidates?.[0]?.content?.parts?.[0]?.text) {
+      extractedText = response.candidates[0].content.parts[0].text
+    }
 
     console.log(`[API /extract-text] ✅ Text extracted (length: ${extractedText.length}): ${extractedText.substring(0, 100)}...`)
 
