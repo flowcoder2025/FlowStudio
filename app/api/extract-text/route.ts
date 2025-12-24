@@ -47,18 +47,22 @@ export async function POST(req: NextRequest) {
     const processedImage = await ensureBase64(image)
     const { mimeType, data } = extractBase64Data(processedImage)
 
-    // 4. Gemini 2.0 Flash로 텍스트 추출
+    // 4. Gemini로 텍스트 추출 (OCR)
     console.log(`[API /extract-text] Extracting text using ${OCR_MODEL}...`)
 
+    // @google/genai SDK 공식 문서에 따른 올바른 API 호출 방식
+    // contents는 배열 또는 문자열, Part 객체 배열 가능
     const response = await ai.models.generateContent({
       model: OCR_MODEL,
       contents: [
         {
-          role: 'user',
-          parts: [
-            { inlineData: { mimeType, data } },
-            {
-              text: `You are an OCR text extraction tool. Extract ALL visible text from this image.
+          inlineData: {
+            mimeType,
+            data,
+          },
+        },
+        {
+          text: `You are an OCR text extraction tool. Extract ALL visible text from this image.
 
 IMPORTANT RULES:
 1. Extract EVERY piece of text you can see, including:
@@ -73,16 +77,14 @@ IMPORTANT RULES:
 5. Do NOT say "없음" or "no text" - look carefully for any text
 
 Extract all text now:`,
-            },
-          ],
         },
       ],
     })
 
-    // 5. 응답에서 텍스트 추출
-    const extractedText = response.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    // 5. 응답에서 텍스트 추출 - SDK 공식 문서: response.text 직접 사용
+    const extractedText = response.text || ''
 
-    console.log(`[API /extract-text] ✅ Text extracted: ${extractedText.substring(0, 50)}...`)
+    console.log(`[API /extract-text] ✅ Text extracted (length: ${extractedText.length}): ${extractedText.substring(0, 100)}...`)
 
     return NextResponse.json({
       success: true,

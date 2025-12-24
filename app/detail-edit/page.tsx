@@ -468,22 +468,30 @@ Only modify the marked area. Keep everything else exactly the same.`;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Draw original
-    ctx.drawImage(img, 0, 0);
-
-    // Draw overlay
+    // Draw overlay (편집된 이미지)
     const overlayImg = new Image();
     overlayImg.crossOrigin = "anonymous";  // CORS 지원
     overlayImg.src = editedSectionOverlay.data;
     await new Promise(r => overlayImg.onload = r);
 
-    ctx.drawImage(
-      overlayImg,
-      editedSectionOverlay.rect.x,
-      editedSectionOverlay.rect.y,
-      editedSectionOverlay.rect.w,
-      editedSectionOverlay.rect.h
-    );
+    // 전체 이미지 편집인지 확인 (마스크 기반 편집)
+    const isFullImageEdit = editedSectionOverlay.rect.x === 0 && editedSectionOverlay.rect.y === 0;
+
+    if (isFullImageEdit) {
+      // 전체 이미지 편집: 편집된 이미지를 캔버스 전체에 스케일링하여 그리기
+      // Gemini가 반환한 이미지 크기가 원본과 다를 수 있으므로, 원본 크기에 맞게 스케일링
+      ctx.drawImage(overlayImg, 0, 0, img.width, img.height);
+    } else {
+      // 부분 편집: 원본 이미지 위에 오버레이
+      ctx.drawImage(img, 0, 0);
+      ctx.drawImage(
+        overlayImg,
+        editedSectionOverlay.rect.x,
+        editedSectionOverlay.rect.y,
+        editedSectionOverlay.rect.w,
+        editedSectionOverlay.rect.h
+      );
+    }
 
     // 새 이미지 생성
     const newImage = canvas.toDataURL('image/png');
@@ -818,22 +826,32 @@ Only modify the marked area. Keep everything else exactly the same.`;
                       )}
 
                       {/* Edited Result Overlay */}
-                      {editedSectionOverlay && imageRef.current && (
-                        <NextImage
-                          src={editedSectionOverlay.data}
-                          alt="Edited Segment"
-                          width={100}
-                          height={100}
-                          className="absolute z-20 shadow-xl border-2 border-green-400/80 dark:border-green-500/80"
-                          style={{
-                            left: `${(editedSectionOverlay.rect.x / imageRef.current.naturalWidth) * 100}%`,
-                            top: `${(editedSectionOverlay.rect.y / imageRef.current.naturalHeight) * 100}%`,
-                            width: `${(editedSectionOverlay.rect.w / imageRef.current.naturalWidth) * 100}%`,
-                            height: `${(editedSectionOverlay.rect.h / imageRef.current.naturalHeight) * 100}%`,
-                          }}
-                          unoptimized={editedSectionOverlay.data.startsWith('data:')}
-                        />
-                      )}
+                      {editedSectionOverlay && imageRef.current && (() => {
+                        // 전체 이미지 편집인지 확인 (마스크 기반 편집)
+                        const isFullImageEdit = editedSectionOverlay.rect.x === 0 && editedSectionOverlay.rect.y === 0;
+                        return (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={editedSectionOverlay.data}
+                            alt="Edited Segment"
+                            className="absolute z-20 shadow-xl border-2 border-green-400/80 dark:border-green-500/80"
+                            style={isFullImageEdit ? {
+                              // 전체 이미지 편집: 100%로 덮기
+                              left: 0,
+                              top: 0,
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                            } : {
+                              // 부분 편집: 정확한 위치/크기 계산
+                              left: `${(editedSectionOverlay.rect.x / imageRef.current.naturalWidth) * 100}%`,
+                              top: `${(editedSectionOverlay.rect.y / imageRef.current.naturalHeight) * 100}%`,
+                              width: `${(editedSectionOverlay.rect.w / imageRef.current.naturalWidth) * 100}%`,
+                              height: `${(editedSectionOverlay.rect.h / imageRef.current.naturalHeight) * 100}%`,
+                            }}
+                          />
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
