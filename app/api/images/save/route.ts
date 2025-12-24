@@ -151,11 +151,39 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error)
-    console.error('Image save error:', errorMessage)
+    const errorStack = error instanceof Error ? error.stack : undefined
+
+    // 상세 에러 로깅
+    console.error('========================================')
+    console.error('[API /images/save] Error Details:')
+    console.error('Message:', errorMessage)
+    console.error('Stack:', errorStack)
+    console.error('User ID:', session.user.id)
+    console.error('========================================')
+
+    // Supabase 관련 에러 메시지 분류
+    let userMessage = '이미지 저장 중 오류가 발생했습니다.'
+    let statusCode = 500
+
+    if (errorMessage.includes('Missing env.NEXT_PUBLIC_SUPABASE_URL')) {
+      userMessage = '서버 설정 오류: Supabase URL이 설정되지 않았습니다. 관리자에게 문의하세요.'
+      console.error('[API /images/save] ❌ NEXT_PUBLIC_SUPABASE_URL not configured')
+    } else if (errorMessage.includes('Missing env.SUPABASE_SERVICE_ROLE_KEY')) {
+      userMessage = '서버 설정 오류: Supabase 서비스 키가 설정되지 않았습니다. 관리자에게 문의하세요.'
+      console.error('[API /images/save] ❌ SUPABASE_SERVICE_ROLE_KEY not configured')
+    } else if (errorMessage.includes('Bucket not found') || errorMessage.includes('bucket')) {
+      userMessage = '서버 설정 오류: 이미지 저장소 버킷이 존재하지 않습니다. 관리자에게 문의하세요.'
+      console.error('[API /images/save] ❌ Storage bucket "flowstudio-images" not found')
+    } else if (errorMessage.includes('이미지 업로드 실패')) {
+      userMessage = errorMessage
+    } else if (errorMessage.includes('base64') || errorMessage.includes('Buffer')) {
+      userMessage = '이미지 데이터가 손상되었습니다. 다시 시도해주세요.'
+      statusCode = 400
+    }
 
     return NextResponse.json(
-      { error: '이미지 저장 중 오류가 발생했습니다.' },
-      { status: 500 }
+      { error: userMessage },
+      { status: statusCode }
     )
   }
 }

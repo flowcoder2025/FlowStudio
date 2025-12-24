@@ -27,6 +27,7 @@ export const generatePreview = async (
         refImage: request.refImage,
         refImages: request.refImages, // COMPOSITE mode: multi-image array
         logoImage: request.logoImage,
+        maskImage: request.maskImage, // DETAIL_EDIT mode: mask overlay image
         category: request.category?.label,
         style: request.style?.label,
         aspectRatio: request.aspectRatio || '1:1',
@@ -81,6 +82,7 @@ export const generateImageVariations = async (
         refImage: request.refImage,
         refImages: request.refImages, // COMPOSITE mode: multi-image array
         logoImage: request.logoImage,
+        maskImage: request.maskImage, // DETAIL_EDIT mode: mask overlay image
         category: request.category?.label,
         style: request.style?.label,
         aspectRatio: request.aspectRatio || '1:1',
@@ -117,33 +119,35 @@ export const generateImageVariations = async (
 
 /**
  * Extract text from image (OCR functionality)
- * Note: This feature may need a separate endpoint in the future
+ * Uses dedicated /api/extract-text endpoint with Gemini 2.0 Flash
  */
 export const extractTextFromImage = async (imageBase64: string): Promise<string> => {
   try {
-    const response = await fetch('/api/generate', {
+    const response = await fetch('/api/extract-text', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        prompt: "Extract all legible text from this image section. Return only the plain text found, preserving line breaks. If no text is found, return 'No text found'.",
-        sourceImage: imageBase64,
-        mode: 'EXTRACT_TEXT', // Special mode for text extraction
+        image: imageBase64,
       }),
     });
 
     if (!response.ok) {
-      throw new Error('텍스트 추출에 실패했습니다.');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || '텍스트 추출에 실패했습니다.');
     }
 
     const data = await response.json();
 
-    // For text extraction, the response text is in the first "image" field
-    return data.text || "텍스트 추출 중 오류가 발생했습니다.";
+    if (!data.success) {
+      throw new Error(data.error || '텍스트 추출에 실패했습니다.');
+    }
+
+    return data.text || '';
   } catch (error) {
     console.error('Text extraction error:', error);
-    return "텍스트 추출 중 오류가 발생했습니다.";
+    throw error; // 에러를 상위로 전파하여 UI에서 처리
   }
 };
 

@@ -44,6 +44,7 @@ export interface GenerationRequest {
   refImage?: string; // Base64 (Reference/Replacement image)
   refImages?: string[]; // Array of Base64 strings for multi-image composition
   logoImage?: string; // Base64 (Logo image for posters)
+  maskImage?: string; // Base64 (Mask image for DETAIL_EDIT - red overlay on edit area)
   prompt: string;
   category?: Category;
   style?: StyleOption;

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import NextImage from 'next/image';
-import { FilePenLine, Layout, RefreshCw, ZoomIn, ZoomOut, MousePointer2, Hand, Wand2, Type, ImagePlus, Check, FolderOpen, Download, Cloud, Loader2, FilePlus2 } from 'lucide-react';
+import { FilePenLine, Layout, RefreshCw, ZoomIn, ZoomOut, MousePointer2, Hand, Wand2, Type, ImagePlus, Check, FolderOpen, Download, Cloud, Loader2, FilePlus2, Undo2, Redo2 } from 'lucide-react';
 import { FileDropzone } from '@/components/FileDropzone';
 import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
@@ -16,6 +16,9 @@ import { recordUsage } from '@/services/usageService';
 type EditModeSub = 'GENERAL' | 'TEXT' | 'REPLACE';
 type ActiveTool = 'SELECT' | 'PAN';
 
+// 히스토리 최대 크기 (메모리 관리)
+const MAX_HISTORY_SIZE = 20;
+
 export default function DetailEditPage() {
   return (
     <AuthGuard>
@@ -28,6 +31,65 @@ function DetailEditPageContent() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // ============ 히스토리 관리 (Ctrl+Z 지원) ============
+  const [imageHistory, setImageHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
+  // 히스토리에 이미지 추가
+  const pushToHistory = useCallback((imageData: string) => {
+    setImageHistory(prev => {
+      // 현재 인덱스 이후의 히스토리는 삭제 (새로운 분기 생성)
+      const newHistory = [...prev.slice(0, historyIndex + 1), imageData];
+      // 최대 크기 제한
+      if (newHistory.length > MAX_HISTORY_SIZE) {
+        return newHistory.slice(-MAX_HISTORY_SIZE);
+      }
+      return newHistory;
+    });
+    setHistoryIndex(prev => Math.min(prev + 1, MAX_HISTORY_SIZE - 1));
+  }, [historyIndex]);
+
+  // 되돌리기 (Ctrl+Z)
+  const handleUndo = useCallback(() => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setUploadedImage(imageHistory[newIndex]);
+      setEditedSectionOverlay(null);
+      setSelectionRect(null);
+    }
+  }, [historyIndex, imageHistory]);
+
+  // 다시 실행 (Ctrl+Shift+Z / Ctrl+Y)
+  const handleRedo = useCallback(() => {
+    if (historyIndex < imageHistory.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setUploadedImage(imageHistory[newIndex]);
+      setEditedSectionOverlay(null);
+      setSelectionRect(null);
+    }
+  }, [historyIndex, imageHistory]);
+
+  // 키보드 단축키 처리
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Z 또는 Cmd+Z (되돌리기)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      }
+      // Ctrl+Shift+Z 또는 Cmd+Shift+Z 또는 Ctrl+Y (다시 실행)
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo, handleRedo]);
 
   // Selection state
   const [selectionRect, setSelectionRect] = useState<{x: number, y: number, w: number, h: number} | null>(null);
@@ -70,7 +132,15 @@ function DetailEditPageContent() {
     }
   }, [uploadedImage]);
 
+  // 이미지 업로드 시 히스토리 초기화
   const handleUploadedImageChange = (image: string | null) => {
+    if (image) {
+      setImageHistory([image]);
+      setHistoryIndex(0);
+    } else {
+      setImageHistory([]);
+      setHistoryIndex(-1);
+    }
     setUploadedImage(image);
     setSelectionRect(null);
     setEditedSectionOverlay(null);
@@ -195,7 +265,50 @@ function DetailEditPageContent() {
     });
   };
 
+  /**
+   * 마스크 이미지 생성: 원본 이미지 위에 선택 영역을 빨간색 반투명 오버레이로 표시
+   * Gemini에게 편집할 영역을 시각적으로 명확하게 전달하기 위함
+   */
+  const createMaskImage = async (rect: {x: number, y: number, w: number, h: number}): Promise<string | null> => {
+    if (!uploadedImage || rect.w < 1 || rect.h < 1) return null;
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = uploadedImage;
+
+    return new Promise((resolve) => {
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(null);
+          return;
+        }
+
+        // 1. 원본 이미지 그리기
+        ctx.drawImage(img, 0, 0);
+
+        // 2. 선택 영역에 빨간색 반투명 오버레이 그리기
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+        ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+
+        // 3. 선택 영역 테두리 강조 (더 명확하게)
+        ctx.strokeStyle = 'rgba(255, 0, 0, 0.9)';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => resolve(null);
+    });
+  };
+
   const handleGallerySelect = (imageUrl: string) => {
+    // 갤러리에서 선택 시 히스토리 초기화
+    setImageHistory([imageUrl]);
+    setHistoryIndex(0);
     setUploadedImage(imageUrl);
     setSelectionRect(null);
     setEditedSectionOverlay(null);
@@ -256,9 +369,20 @@ function DetailEditPageContent() {
 
     setIsLoading(true);
     try {
-      // Adaptive Aspect Ratio Logic
-      const currentRatio = selectionRect.w / selectionRect.h;
+      // ============ 개선된 마스크 기반 편집 방식 ============
+      // 원본 전체 이미지 + 마스크 이미지(편집 영역 표시) + 프롬프트를 전송
+      // Gemini가 전체 컨텍스트를 보고 선택 영역만 정확히 편집
 
+      // 1. 마스크 이미지 생성 (선택 영역에 빨간 오버레이)
+      const maskImage = await createMaskImage(selectionRect);
+      if (!maskImage) throw new Error("마스크 이미지 생성에 실패했습니다.");
+
+      // 2. 원본 이미지의 종횡비 계산
+      const imgWidth = imageRef.current?.naturalWidth || 1000;
+      const imgHeight = imageRef.current?.naturalHeight || 1000;
+      const originalRatio = imgWidth / imgHeight;
+
+      // 가장 가까운 표준 비율 찾기
       const targets = [
         { ratio: 1.0, label: "1:1" },
         { ratio: 3 / 4, label: "3:4" },
@@ -268,44 +392,30 @@ function DetailEditPageContent() {
       ];
 
       const closest = targets.reduce((prev, curr) =>
-        (Math.abs(curr.ratio - currentRatio) < Math.abs(prev.ratio - currentRatio) ? curr : prev)
+        (Math.abs(curr.ratio - originalRatio) < Math.abs(prev.ratio - originalRatio) ? curr : prev)
       );
 
-      let newW = selectionRect.w;
-      let newH = selectionRect.h;
-
-      if (currentRatio > closest.ratio) {
-        newH = newW / closest.ratio;
-      } else {
-        newW = newH * closest.ratio;
-      }
-
-      const cx = selectionRect.x + selectionRect.w / 2;
-      const cy = selectionRect.y + selectionRect.h / 2;
-      const expandedRect = {
-        x: cx - newW / 2,
-        y: cy - newH / 2,
-        w: newW,
-        h: newH
-      };
-
-      const contextImage = await getCroppedImage(expandedRect);
-
-      if (!contextImage) throw new Error("Failed to create context image");
-
+      // 3. 프롬프트 구성 (마스크 영역 설명 포함)
       let fullPrompt = prompt;
+
       if (editModeSub === 'TEXT') {
-        fullPrompt = `Replace the text in the selection with: "${prompt}". Maintain exact background, font style, and layout. High resolution text.`;
+        fullPrompt = `Replace the text in the red-marked area with: "${prompt}".
+Keep the exact same font style, size, background colors and design. Only change the text content.`;
       } else if (editModeSub === 'REPLACE') {
-        if (!fullPrompt) fullPrompt = "seamlessly replace.";
+        fullPrompt = `Replace the content in the red-marked area with the provided reference image.
+User instruction: ${prompt || 'seamlessly replace'}.
+Blend naturally with surrounding context, match lighting and perspective.`;
       } else {
-        fullPrompt = `Edit this image section: ${prompt}. Blend seamlessly. High quality product photography.`;
+        // GENERAL 모드
+        fullPrompt = `Edit the red-marked area as follows: ${prompt}.
+Only modify the marked area. Keep everything else exactly the same.`;
       }
 
       const request: GenerationRequest = {
         mode: AppMode.DETAIL_EDIT,
         prompt: fullPrompt,
-        image: contextImage,
+        image: uploadedImage,  // 원본 전체 이미지
+        maskImage: maskImage,  // 마스크 이미지 (편집 영역 표시)
         refImage: editModeSub === 'REPLACE' ? (replacementImage || undefined) : undefined,
         aspectRatio: closest.label
       };
@@ -313,9 +423,11 @@ function DetailEditPageContent() {
       const result = await generatePreview(request, creditType);
 
       if (result) {
+        // 전체 이미지가 반환되므로 오버레이 대신 전체 교체 준비
+        // 사용자가 "적용" 버튼을 눌러야 최종 반영됨
         setEditedSectionOverlay({
           data: result,
-          rect: expandedRect
+          rect: { x: 0, y: 0, w: imgWidth, h: imgHeight }  // 전체 이미지 영역
         });
         recordUsage(1);
       } else {
@@ -323,7 +435,8 @@ function DetailEditPageContent() {
       }
     } catch (e) {
       console.error(e);
-      alert("오류가 발생했습니다.");
+      const errorMessage = e instanceof Error ? e.message : '오류가 발생했습니다.';
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -360,8 +473,14 @@ function DetailEditPageContent() {
       editedSectionOverlay.rect.h
     );
 
+    // 새 이미지 생성
+    const newImage = canvas.toDataURL('image/png');
+
+    // 히스토리에 저장 (되돌리기 지원)
+    pushToHistory(newImage);
+
     // Update main image
-    setUploadedImage(canvas.toDataURL('image/png'));
+    setUploadedImage(newImage);
 
     // Cleanup
     setEditedSectionOverlay(null);
@@ -565,6 +684,39 @@ function DetailEditPageContent() {
                   >
                     <Hand className="w-4 h-4" /> 이동(Pan)
                   </button>
+                </div>
+
+                {/* 되돌리기/다시실행 버튼 */}
+                <div className="flex items-center gap-1 border-l border-slate-200 dark:border-slate-700 pl-2">
+                  <button
+                    onClick={handleUndo}
+                    disabled={historyIndex <= 0}
+                    className={`p-1.5 rounded transition-colors ${
+                      historyIndex > 0
+                        ? 'hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'
+                        : 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                    }`}
+                    title="되돌리기 (Ctrl+Z)"
+                  >
+                    <Undo2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleRedo}
+                    disabled={historyIndex >= imageHistory.length - 1}
+                    className={`p-1.5 rounded transition-colors ${
+                      historyIndex < imageHistory.length - 1
+                        ? 'hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'
+                        : 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                    }`}
+                    title="다시 실행 (Ctrl+Shift+Z)"
+                  >
+                    <Redo2 className="w-4 h-4" />
+                  </button>
+                  {imageHistory.length > 1 && (
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-1">
+                      {historyIndex + 1}/{imageHistory.length}
+                    </span>
+                  )}
                 </div>
 
                 {/* Action Buttons */}

@@ -106,6 +106,7 @@ export async function POST(req: NextRequest) {
       refImage,
       refImages,
       logoImage,
+      maskImage,  // DETAIL_EDIT mode: 편집 영역 마스크 이미지 (빨간 오버레이)
       category,
       style,
       aspectRatio,
@@ -157,6 +158,7 @@ export async function POST(req: NextRequest) {
     let processedRefImage: string | null = null
     let processedRefImages: string[] = []
     let processedLogoImage: string | null = null
+    let processedMaskImage: string | null = null
 
     if (sourceImage) {
       processedSourceImage = await ensureBase64(sourceImage)
@@ -172,6 +174,10 @@ export async function POST(req: NextRequest) {
     }
     if (logoImage) {
       processedLogoImage = await ensureBase64(logoImage)
+    }
+    // DETAIL_EDIT 모드: 마스크 이미지 처리
+    if (maskImage) {
+      processedMaskImage = await ensureBase64(maskImage)
     }
 
     // 6. Gemini 3 Pro Image 모델로 이미지 생성
@@ -190,6 +196,13 @@ export async function POST(req: NextRequest) {
         parts.push({ inlineData: { mimeType, data } })
       }
 
+      // DETAIL_EDIT 모드: 마스크 이미지 추가 (편집 영역 시각화)
+      // 마스크 이미지는 원본과 동일 크기이며, 편집할 영역이 빨간색 반투명 오버레이로 표시됨
+      if (processedMaskImage && mode === 'DETAIL_EDIT') {
+        const { mimeType, data } = extractBase64Data(processedMaskImage)
+        parts.push({ inlineData: { mimeType, data } })
+      }
+
       // COMPOSITE 모드: 다중 이미지 배열 추가
       if (processedRefImages.length > 0) {
         for (const img of processedRefImages) {
@@ -205,8 +218,27 @@ export async function POST(req: NextRequest) {
         parts.push({ inlineData: { mimeType, data } })
       }
 
+      // DETAIL_EDIT 모드에서 마스크 사용 시 프롬프트 보강
+      let enhancedPrompt = finalPrompt
+      if (processedMaskImage && mode === 'DETAIL_EDIT') {
+        enhancedPrompt = `You are given two images:
+1. The ORIGINAL image (first image)
+2. The MASK image (second image) - shows a RED semi-transparent overlay on the area to be edited
+
+TASK: Edit ONLY the area marked with the RED overlay in the original image.
+
+User's edit instruction: ${finalPrompt}
+
+CRITICAL RULES:
+- ONLY modify the red-highlighted area
+- Keep ALL other areas EXACTLY the same as the original
+- Blend the edited area seamlessly with surroundings
+- Match lighting, colors, and style of the original
+- Output the complete edited image at the same size as the original`
+      }
+
       // Text prompt 추가
-      parts.push({ text: finalPrompt })
+      parts.push({ text: enhancedPrompt })
 
       // 공식 문서 기반 설정: https://ai.google.dev/gemini-api/docs/gemini-3
       const response = await ai.models.generateContent({
