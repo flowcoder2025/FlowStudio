@@ -13,6 +13,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { getConcurrentLimit } from '@/lib/utils/subscriptionManager'
+import { logger } from '@/lib/logger'
 
 // 슬롯 만료 시간 (5분 - 타임아웃 안전장치)
 const SLOT_TTL_MS = 5 * 60 * 1000
@@ -43,7 +44,7 @@ export async function acquireGenerationSlot(userId: string): Promise<string | nu
 
       // 3. 제한 초과 확인
       if (activeCount >= limit) {
-        console.log('[Concurrency] Limit exceeded:', { userId, active: activeCount, limit })
+        logger.debug('Concurrency limit exceeded', { module: 'Concurrency', userId, active: activeCount, limit })
         return null
       }
 
@@ -57,7 +58,7 @@ export async function acquireGenerationSlot(userId: string): Promise<string | nu
         }
       })
 
-      console.log('[Concurrency] Slot acquired:', { userId, requestId, active: activeCount + 1, limit })
+      logger.debug('Slot acquired', { module: 'Concurrency', userId, requestId, active: activeCount + 1, limit })
       return requestId
     }, {
       isolationLevel: 'Serializable', // 동시성 안전 보장
@@ -68,11 +69,11 @@ export async function acquireGenerationSlot(userId: string): Promise<string | nu
   } catch (error) {
     // Serializable 트랜잭션 충돌 시 재시도 로직
     if (error instanceof Error && error.message.includes('could not serialize')) {
-      console.log('[Concurrency] Transaction conflict, retrying...')
+      logger.debug('Transaction conflict, retrying', { module: 'Concurrency', userId })
       // 한 번 재시도
       return acquireGenerationSlotRetry(userId, limit)
     }
-    console.error('[Concurrency] Error acquiring slot:', error)
+    logger.error('Error acquiring slot', { module: 'Concurrency' }, error instanceof Error ? error : new Error(String(error)))
     throw error
   }
 }
@@ -104,7 +105,7 @@ async function acquireGenerationSlotRetry(userId: string, limit: number): Promis
         expiresAt: new Date(now.getTime() + SLOT_TTL_MS)
       }
     })
-    console.log('[Concurrency] Slot acquired (retry):', { userId, requestId })
+    logger.debug('Slot acquired (retry)', { module: 'Concurrency', userId, requestId })
     return requestId
   } catch {
     // 유니크 충돌이면 null 반환
@@ -120,10 +121,10 @@ export async function releaseGenerationSlot(userId: string, requestId: string): 
     await prisma.concurrencySlot.deleteMany({
       where: { requestId }
     })
-    console.log('[Concurrency] Slot released:', { userId, requestId })
+    logger.debug('Slot released', { module: 'Concurrency', userId, requestId })
   } catch (error) {
     // 이미 삭제된 경우 무시
-    console.warn('[Concurrency] Slot release warning:', error)
+    logger.warn('Slot release warning', { module: 'Concurrency' }, error instanceof Error ? error : new Error(String(error)))
   }
 }
 
@@ -180,7 +181,7 @@ export async function cleanupExpiredSlots(): Promise<number> {
   })
 
   if (result.count > 0) {
-    console.log('[Concurrency] Cleaned up expired slots:', result.count)
+    logger.info('Cleaned up expired slots', { module: 'Concurrency', count: result.count })
   }
 
   return result.count

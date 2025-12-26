@@ -10,6 +10,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { SUBSCRIPTION_TIERS, type SubscriptionTier } from '@/lib/constants'
+import { logger } from '@/lib/logger'
 
 export interface UserSubscription {
   tier: SubscriptionTier
@@ -174,7 +175,8 @@ export async function createOrUpgradeSubscription(
     },
   })
 
-  console.log('[Subscription] Created/Updated:', {
+  logger.info('Subscription created/updated', {
+    module: 'Subscription',
     userId,
     tier,
     endDate: subscription.endDate
@@ -204,7 +206,7 @@ export async function cancelSubscription(userId: string): Promise<void> {
     }
   })
 
-  console.log('[Subscription] Cancelled:', userId)
+  logger.info('Subscription cancelled', { module: 'Subscription', userId })
 }
 
 /**
@@ -229,7 +231,7 @@ export async function downgradeToFree(userId: string): Promise<void> {
     }
   })
 
-  console.log('[Subscription] Downgraded to FREE:', userId)
+  logger.info('Subscription downgraded to FREE', { module: 'Subscription', userId })
 }
 
 /**
@@ -250,7 +252,7 @@ export async function processExpiredSubscriptions(): Promise<number> {
     await downgradeToFree(sub.userId)
   }
 
-  console.log('[Subscription] Processed expired subscriptions:', expiredSubscriptions.length)
+  logger.info('Processed expired subscriptions', { module: 'Subscription', count: expiredSubscriptions.length })
   return expiredSubscriptions.length
 }
 

@@ -7,6 +7,7 @@
 
 import { supabase, IMAGE_BUCKET } from '@/lib/supabase'
 import crypto from 'crypto'
+import { logger } from '@/lib/logger'
 
 /**
  * Upload a base64 image to Supabase Storage
@@ -57,7 +58,7 @@ export async function uploadImageToStorage(
       })
 
     if (error) {
-      console.error('Supabase Storage upload error:', error)
+      logger.error('Supabase Storage upload error', { module: 'ImageStorage' }, new Error(error.message))
       throw new Error(`이미지 업로드 실패: ${error.message}`)
     }
 
@@ -68,7 +69,7 @@ export async function uploadImageToStorage(
 
     return publicUrl
   } catch (error) {
-    console.error('Image upload error:', error)
+    logger.error('Image upload error', { module: 'ImageStorage' }, error instanceof Error ? error : new Error(String(error)))
     throw error
   }
 }
@@ -114,11 +115,11 @@ export async function deleteImageFromStorage(imageUrl: string): Promise<void> {
     const { error } = await supabase.storage.from(IMAGE_BUCKET).remove([filePath])
 
     if (error) {
-      console.error('Supabase Storage delete error:', error)
+      logger.error('Supabase Storage delete error', { module: 'ImageStorage' }, new Error(error.message))
       throw new Error(`이미지 삭제 실패: ${error.message}`)
     }
   } catch (error) {
-    console.error('Image deletion error:', error)
+    logger.error('Image deletion error', { module: 'ImageStorage' }, error instanceof Error ? error : new Error(String(error)))
     throw error
   }
 }

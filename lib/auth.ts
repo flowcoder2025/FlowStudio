@@ -11,6 +11,7 @@ import { Adapter } from 'next-auth/adapters'
 import GoogleProvider from 'next-auth/providers/google'
 import KakaoProvider from 'next-auth/providers/kakao'
 import { prisma } from '@/lib/prisma'
+import { logger } from '@/lib/logger'
 import { grantSignupBonus, initializeCredit } from '@/lib/utils/creditManager'
 import { assignReferralCode } from '@/lib/utils/referralManager'
 import { initializeSubscription } from '@/lib/utils/subscriptionManager'
@@ -27,7 +28,7 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.KAKAO_CLIENT_SECRET!,
       // 카카오 프로필 정보 명시적 매핑
       profile(profile) {
-        console.log('[Kakao] Profile response:', JSON.stringify(profile, null, 2))
+        logger.debug('Kakao profile response', { module: 'Auth', profile })
         return {
           id: String(profile.id),
           name: profile.kakao_account?.profile?.nickname ?? profile.properties?.nickname ?? null,
@@ -63,7 +64,7 @@ export const authOptions: NextAuthOptions = {
   events: {
     async createUser({ user }) {
       // 신규 가입 시 초기화 및 보너스 지급
-      console.log('[Auth] New user created:', user.id)
+      logger.info('New user created', { module: 'Auth', userId: user.id })
 
       try {
         // 1. 크레딧 레코드 초기화
@@ -71,18 +72,18 @@ export const authOptions: NextAuthOptions = {
 
         // 2. 일반 회원 가입 보너스 지급 (30 크레딧)
         await grantSignupBonus(user.id, 'general')
-        console.log('[Auth] Signup bonus granted: 30 credits')
+        logger.info('Signup bonus granted', { module: 'Auth', credits: 30 })
 
         // 3. 추천 코드 할당
         const referralCode = await assignReferralCode(user.id)
-        console.log('[Auth] Referral code assigned:', referralCode)
+        logger.info('Referral code assigned', { module: 'Auth', referralCode })
 
         // 4. 구독 초기화 (FREE 플랜)
         await initializeSubscription(user.id)
-        console.log('[Auth] Subscription initialized: FREE tier')
+        logger.info('Subscription initialized', { module: 'Auth', tier: 'FREE' })
       } catch (error) {
         // 보너스 지급 실패가 가입을 차단하지 않도록 에러 로깅만
-        console.error('[Auth] Post-signup initialization failed:', error)
+        logger.error('Post-signup initialization failed', { module: 'Auth' }, error instanceof Error ? error : new Error(String(error)))
       }
     },
   },

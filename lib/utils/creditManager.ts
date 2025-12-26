@@ -11,6 +11,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { ValidationError, InsufficientCreditsError } from '@/lib/errors'
+import { logger } from '@/lib/logger'
 
 // Prisma 트랜잭션 클라이언트 타입
 type PrismaTransactionClient = Omit<
@@ -723,9 +724,9 @@ export async function processExpiredCredits(): Promise<{
 
       processedUsers++
       totalExpired += totalAmount
-      console.log(`[CreditManager] Expired ${totalAmount} credits for user ${userId}`)
+      logger.info(`Expired ${totalAmount} credits for user`, { module: 'CreditManager', userId, totalAmount })
     } catch (error) {
-      console.error(`[CreditManager] Failed to process expired credits for user ${userId}:`, error)
+      logger.error(`Failed to process expired credits for user ${userId}`, { module: 'CreditManager' }, error instanceof Error ? error : new Error(String(error)))
     }
   }
 
