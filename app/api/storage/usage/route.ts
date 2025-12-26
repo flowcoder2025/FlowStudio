@@ -12,6 +12,7 @@ import { getSupabaseClient, IMAGE_BUCKET } from '@/lib/supabase'
 import { getUserSubscription } from '@/lib/utils/subscriptionManager'
 import { UnauthorizedError, formatApiError } from '@/lib/errors'
 import { prisma } from '@/lib/prisma'
+import { logger } from '@/lib/logger'
 
 interface StorageUsageResponse {
   usedBytes: number
@@ -47,7 +48,7 @@ async function sumStoragePath(
 
     if (error) {
       // 폴더가 없거나 접근 권한 없음 - 무시
-      console.log(`[Storage] No files in ${path}:`, error.message)
+      logger.debug('No files in path', { module: 'Storage', path, message: error.message })
       break
     }
 
@@ -96,7 +97,7 @@ async function calculateUserStorageUsage(userId: string): Promise<{ totalBytes: 
     try {
       return await sumStoragePath(supabase, userPath)
     } catch (err) {
-      console.error(`[Storage] Error listing ${userPath}:`, err)
+      logger.error('Error listing storage path', { module: 'Storage', path: userPath }, err instanceof Error ? err : new Error(String(err)))
       return { bytes: 0, count: 0 }
     }
   })
@@ -116,7 +117,7 @@ async function calculateUserStorageUsage(userId: string): Promise<{ totalBytes: 
     try {
       return await sumStoragePath(supabase, projectPath)
     } catch (err) {
-      console.error(`[Storage] Error listing ${projectPath}:`, err)
+      logger.error('Error listing project path', { module: 'Storage', path: projectPath }, err instanceof Error ? err : new Error(String(err)))
       return { bytes: 0, count: 0 }
     }
   })
@@ -129,7 +130,13 @@ async function calculateUserStorageUsage(userId: string): Promise<{ totalBytes: 
     fileCount += result.count
   }
 
-  console.log(`[Storage] User ${userId}: ${fileCount} files, ${(totalBytes / 1024 / 1024).toFixed(2)} MB across ${basicPrefixes.length + userProjects.length} paths`)
+  logger.info('Storage usage calculated', {
+    module: 'Storage',
+    userId,
+    fileCount,
+    sizeMB: (totalBytes / 1024 / 1024).toFixed(2),
+    pathCount: basicPrefixes.length + userProjects.length
+  })
 
   return { totalBytes, fileCount }
 }

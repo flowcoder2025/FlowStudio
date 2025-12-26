@@ -13,6 +13,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { ensureBase64, extractBase64Data } from '@/lib/utils/imageConverter'
 import { getGenAIClient, getGenAIMode } from '@/lib/vertexai'
+import { logger } from '@/lib/logger'
 
 // OCR용 모델 - Gemini 3 Flash Preview (빠른 텍스트 추출)
 const OCR_MODEL = 'gemini-3-flash-preview'
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
   try {
     // 1. GenAI 클라이언트 초기화
     const genAIMode = getGenAIMode()
-    console.log(`[API /extract-text] Initializing GenAI client (mode: ${genAIMode})...`)
+    logger.debug('Initializing GenAI client', { module: 'ExtractText', mode: genAIMode })
     const ai = getGenAIClient()
 
     // 2. 요청 파싱
@@ -48,8 +49,7 @@ export async function POST(req: NextRequest) {
     const { mimeType, data } = extractBase64Data(processedImage)
 
     // 4. Gemini로 텍스트 추출 (OCR)
-    console.log(`[API /extract-text] Extracting text using ${OCR_MODEL}...`)
-    console.log(`[API /extract-text] Image mimeType: ${mimeType}, data length: ${data.length}`)
+    logger.debug('Extracting text', { module: 'ExtractText', model: OCR_MODEL, mimeType, dataLength: data.length })
 
     // @google/genai SDK - role/parts 구조 사용 (멀티모달 권장 형식)
     const response = await ai.models.generateContent({
@@ -75,9 +75,7 @@ Include: titles, descriptions, labels, buttons, numbers.`,
     })
 
     // 5. 디버깅: 전체 응답 구조 확인
-    console.log(`[API /extract-text] Response keys:`, Object.keys(response))
-    console.log(`[API /extract-text] Response.text:`, response.text)
-    console.log(`[API /extract-text] Response.candidates:`, JSON.stringify(response.candidates, null, 2))
+    logger.debug('Response structure', { module: 'ExtractText', keys: Object.keys(response), hasText: !!response.text })
 
     // SDK 공식 문서: response.text 직접 사용, 없으면 candidates에서 추출
     let extractedText = response.text || ''
@@ -87,7 +85,7 @@ Include: titles, descriptions, labels, buttons, numbers.`,
       extractedText = response.candidates[0].content.parts[0].text
     }
 
-    console.log(`[API /extract-text] ✅ Text extracted (length: ${extractedText.length}): ${extractedText.substring(0, 100)}...`)
+    logger.info('Text extracted', { module: 'ExtractText', length: extractedText.length })
 
     return NextResponse.json({
       success: true,
@@ -95,7 +93,7 @@ Include: titles, descriptions, labels, buttons, numbers.`,
     })
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error)
-    console.error('[API /extract-text] Error:', errorMessage)
+    logger.error('Text extraction error', { module: 'ExtractText' }, error instanceof Error ? error : new Error(errorMessage))
 
     // 사용자 친화적 에러 메시지
     let userMessage = '텍스트 추출 중 오류가 발생했습니다.'

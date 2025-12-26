@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 /**
  * GET /api/images
@@ -117,7 +118,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ projects: allProjects });
   } catch (error) {
-    console.error('Image list error:', error);
+    logger.error('Image list error', { module: 'Images' }, error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: '이미지 목록을 가져오는 중 오류가 발생했습니다.' },
       { status: 500 }

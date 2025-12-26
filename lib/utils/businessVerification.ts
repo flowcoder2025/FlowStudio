@@ -5,6 +5,8 @@
  * https://www.data.go.kr/
  */
 
+import { logger } from '@/lib/logger'
+
 /**
  * 국세청 API 응답 타입
  */
@@ -104,7 +106,8 @@ export async function verifyBusinessWithNTS(
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => '')
-      console.error('[NTS API] HTTP Error:', {
+      logger.error('NTS API HTTP Error', {
+        module: 'BusinessVerification',
         status: response.status,
         statusText: response.statusText,
         body: errorText
@@ -120,14 +123,14 @@ export async function verifyBusinessWithNTS(
     const data: NTSBusinessStatusResponse = await response.json()
 
     if (data.status_code !== 'OK') {
-      console.error('[NTS API] Status Error:', data)
+      logger.error('NTS API Status Error', { module: 'BusinessVerification', response: data })
       throw new Error(data.message || '국세청 API 응답 오류')
     }
 
     return data
 
   } catch (error) {
-    console.error('[NTS API] Unexpected Error:', error)
+    logger.error('NTS API Unexpected Error', { module: 'BusinessVerification' }, error instanceof Error ? error : new Error(String(error)))
     throw error
   }
 }
@@ -172,7 +175,7 @@ export async function checkBusinessStatus(businessNumber: string): Promise<{
     }
 
   } catch (error: unknown) {
-    console.error('[Business Verification] Error:', error)
+    logger.error('Business verification error', { module: 'BusinessVerification' }, error instanceof Error ? error : new Error(String(error)))
 
     const message = error instanceof Error ? error.message : '사업자 확인 중 오류가 발생했습니다'
     return {

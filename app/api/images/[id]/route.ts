@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { requireImageProjectOwner } from '@/lib/permissions';
+import { logger } from '@/lib/logger';
 
 /**
  * DELETE /api/images/[id]
@@ -85,7 +86,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Image delete error:', error);
+    logger.error('Image delete error', { module: 'Images' }, error instanceof Error ? error : new Error(String(error)));
 
     if (error instanceof Error && error.message.includes('Forbidden')) {
       return NextResponse.json(

@@ -9,6 +9,7 @@
  */
 
 import sharp from 'sharp'
+import { logger } from '@/lib/logger'
 
 /**
  * Check if the input is a URL (not base64)
@@ -69,7 +70,7 @@ export async function urlToBase64(url: string): Promise<string> {
     // Always return as JPEG after compression for consistency
     return `data:image/jpeg;base64,${base64}`
   } catch (error) {
-    console.error('URL to base64 conversion failed:', error)
+    logger.error('URL to base64 conversion failed', { module: 'ImageConverter' }, error instanceof Error ? error : new Error(String(error)))
     throw new Error('이미지 URL을 처리할 수 없습니다.')
   }
 }
@@ -130,11 +131,15 @@ async function compressImageBuffer(buffer: Buffer): Promise<Buffer> {
         .toBuffer()
     }
 
-    console.log(`Image compressed: ${(buffer.length / 1024 / 1024).toFixed(2)}MB → ${(compressed.length / 1024 / 1024).toFixed(2)}MB`)
+    logger.debug('Image compressed', {
+      module: 'ImageConverter',
+      originalMB: (buffer.length / 1024 / 1024).toFixed(2),
+      compressedMB: (compressed.length / 1024 / 1024).toFixed(2)
+    })
 
     return compressed
   } catch (error) {
-    console.error('Image compression failed, returning original:', error)
+    logger.error('Image compression failed, returning original', { module: 'ImageConverter' }, error instanceof Error ? error : new Error(String(error)))
     // Fallback: return original buffer if compression fails
     return buffer
   }

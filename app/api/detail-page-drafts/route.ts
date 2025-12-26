@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { logger } from '@/lib/logger'
 
 // GET - List all drafts for current user
 export async function GET() {
@@ -35,7 +36,7 @@ export async function GET() {
 
     return NextResponse.json({ drafts })
   } catch (error) {
-    console.error('Failed to fetch drafts:', error)
+    logger.error('Failed to fetch drafts', { module: 'DetailPageDrafts' }, error instanceof Error ? error : new Error(String(error)))
     return NextResponse.json(
       { error: '초안 목록을 불러오는데 실패했습니다.' },
       { status: 500 }
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ draft })
   } catch (error) {
-    console.error('Failed to create draft:', error)
+    logger.error('Failed to create draft', { module: 'DetailPageDrafts' }, error instanceof Error ? error : new Error(String(error)))
     return NextResponse.json(
       { error: '초안 저장에 실패했습니다.' },
       { status: 500 }

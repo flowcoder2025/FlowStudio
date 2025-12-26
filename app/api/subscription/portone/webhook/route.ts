@@ -16,6 +16,7 @@ import {
   parsePortoneCustomData,
   type PortoneWebhookPayload
 } from '@/lib/utils/portoneWebhook'
+import { logger } from '@/lib/logger'
 
 // 정기 구독 플랜 가격 (원)
 const SUBSCRIPTION_PRICES: Record<SubscriptionTier, number> = {
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
     // 1. 웹훅 시크릿 확인
     const webhookSecret = process.env.PORTONE_WEBHOOK_SECRET
     if (!webhookSecret) {
-      console.error('[Subscription Webhook] PORTONE_WEBHOOK_SECRET 환경 변수가 설정되지 않았습니다')
+      logger.error('PORTONE_WEBHOOK_SECRET not configured', { module: 'SubscriptionWebhook' })
       return NextResponse.json(
         { success: false, error: 'Webhook secret not configured' },
         { status: 500 }
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     const isValid = verifyPortoneWebhookSignature(signature, rawBody, webhookSecret)
 
     if (!isValid) {
-      console.error('[Subscription Webhook] 서명 검증 실패')
+      logger.error('Webhook signature verification failed', { module: 'SubscriptionWebhook' })
       return NextResponse.json(
         { success: false, error: 'Invalid signature' },
         { status: 401 }
@@ -54,7 +55,8 @@ export async function POST(request: NextRequest) {
     // 3. 페이로드 파싱
     const payload: PortoneWebhookPayload = JSON.parse(rawBody)
 
-    console.log('[Subscription Webhook] 수신:', {
+    logger.info('Webhook received', {
+      module: 'SubscriptionWebhook',
       type: payload.type,
       paymentId: payload.data.paymentId,
       status: payload.data.status
@@ -72,12 +74,12 @@ export async function POST(request: NextRequest) {
         return handleBillingKeyDeleted(payload)
 
       default:
-        console.log('[Subscription Webhook] 처리하지 않는 이벤트:', payload.type)
+        logger.debug('Unhandled event type', { module: 'SubscriptionWebhook', type: payload.type })
         return NextResponse.json({ success: true, message: 'Event ignored' })
     }
 
   } catch (error) {
-    console.error('[Subscription Webhook] 처리 오류:', error)
+    logger.error('Webhook processing error', { module: 'SubscriptionWebhook' }, error instanceof Error ? error : new Error(String(error)))
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
@@ -96,12 +98,12 @@ async function handlePaymentPaid(payload: PortoneWebhookPayload) {
 
   // 정기 구독 결제가 아닌 경우 무시 (크레딧 웹훅에서 처리)
   if (!isSubscription) {
-    console.log('[Subscription Webhook] 정기 구독 결제 아님, 무시')
+    logger.debug('Not a subscription payment, ignoring', { module: 'SubscriptionWebhook' })
     return NextResponse.json({ success: true, message: 'Not a subscription payment' })
   }
 
   if (!tier || !userId) {
-    console.error('[Subscription Webhook] 커스텀 데이터 누락:', customData)
+    logger.error('Missing custom data', { module: 'SubscriptionWebhook', customData })
     return NextResponse.json(
       { success: false, error: 'Missing tier or user ID' },
       { status: 400 }
@@ -110,7 +112,7 @@ async function handlePaymentPaid(payload: PortoneWebhookPayload) {
 
   // 유효한 티어인지 확인
   if (!SUBSCRIPTION_TIERS[tier]) {
-    console.error('[Subscription Webhook] 유효하지 않은 티어:', tier)
+    logger.error('Invalid tier', { module: 'SubscriptionWebhook', tier })
     return NextResponse.json(
       { success: false, error: 'Invalid subscription tier' },
       { status: 400 }
@@ -119,7 +121,7 @@ async function handlePaymentPaid(payload: PortoneWebhookPayload) {
 
   // FREE 플랜은 결제 불필요
   if (tier === 'FREE') {
-    console.error('[Subscription Webhook] FREE 플랜은 결제 불필요')
+    logger.error('Free tier payment attempt', { module: 'SubscriptionWebhook' })
     return NextResponse.json(
       { success: false, error: 'Free tier does not require payment' },
       { status: 400 }
@@ -129,7 +131,8 @@ async function handlePaymentPaid(payload: PortoneWebhookPayload) {
   // 금액 검증
   const expectedAmount = SUBSCRIPTION_PRICES[tier]
   if (payload.data.paidAmount !== expectedAmount) {
-    console.error('[Subscription Webhook] 금액 불일치:', {
+    logger.error('Amount mismatch', {
+      module: 'SubscriptionWebhook',
       expected: expectedAmount,
       actual: payload.data.paidAmount
     })
@@ -148,7 +151,7 @@ async function handlePaymentPaid(payload: PortoneWebhookPayload) {
   })
 
   if (existingPayment) {
-    console.log('[Subscription Webhook] 이미 처리된 결제:', payload.data.paymentId)
+    logger.debug('Payment already processed', { module: 'SubscriptionWebhook', paymentId: payload.data.paymentId })
     return NextResponse.json({
       success: true,
       message: 'Already processed'
@@ -159,7 +162,7 @@ async function handlePaymentPaid(payload: PortoneWebhookPayload) {
   const paymentInfo = await getPortonePayment(payload.data.paymentId)
 
   if (paymentInfo.status !== 'PAID') {
-    console.error('[Subscription Webhook] 포트원 API 결제 상태 불일치:', paymentInfo.status)
+    logger.error('Payment status mismatch', { module: 'SubscriptionWebhook', status: paymentInfo.status })
     return NextResponse.json(
       { success: false, error: 'Payment status mismatch' },
       { status: 400 }
@@ -185,11 +188,12 @@ async function handlePaymentPaid(payload: PortoneWebhookPayload) {
       }
     }).catch(() => {
       // billingKey 필드가 없으면 무시
-      console.log('[Subscription Webhook] billingKey 필드 없음, 무시')
+      logger.debug('billingKey field not found, ignoring', { module: 'SubscriptionWebhook' })
     })
   }
 
-  console.log('[Subscription Webhook] 구독 활성화 완료:', {
+  logger.info('Subscription activated', {
+    module: 'SubscriptionWebhook',
     userId,
     tier,
     paymentId: payload.data.paymentId
@@ -213,7 +217,8 @@ async function handlePaymentFailed(payload: PortoneWebhookPayload) {
     return NextResponse.json({ success: true, message: 'Not a subscription payment' })
   }
 
-  console.log('[Subscription Webhook] 결제 실패:', {
+  logger.info('Payment failed', {
+    module: 'SubscriptionWebhook',
     userId,
     paymentId: payload.data.paymentId
   })
@@ -238,7 +243,7 @@ async function handlePaymentFailed(payload: PortoneWebhookPayload) {
       }
     })
 
-    console.log('[Subscription Webhook] 구독 일시 정지 (유예 기간 7일):', userId)
+    logger.info('Subscription paused with grace period', { module: 'SubscriptionWebhook', userId, graceDays: 7 })
   }
 
   return NextResponse.json({
@@ -252,7 +257,7 @@ async function handlePaymentFailed(payload: PortoneWebhookPayload) {
  */
 async function handleBillingKeyDeleted(payload: PortoneWebhookPayload) {
   // 빌링키 삭제 이벤트 - 필요한 경우 구독 취소 처리
-  console.log('[Subscription Webhook] 빌링키 삭제:', payload.data)
+  logger.info('Billing key deleted', { module: 'SubscriptionWebhook', paymentId: payload.data.paymentId })
 
   // 빌링키와 연결된 사용자 찾기 (커스텀 데이터에서)
   const customData = parsePortoneCustomData(payload.data.customData)
@@ -266,7 +271,7 @@ async function handleBillingKeyDeleted(payload: PortoneWebhookPayload) {
     if (subscription && subscription.tier !== 'FREE') {
       // 현재 구독 기간은 유지하고, 다음 갱신 시 FREE로 다운그레이드 예약
       // (endDate가 지나면 자동으로 downgradeToFree 호출됨)
-      console.log('[Subscription Webhook] 다음 갱신 시 다운그레이드 예약:', userId)
+      logger.info('Downgrade scheduled for next renewal', { module: 'SubscriptionWebhook', userId })
     }
   }
 

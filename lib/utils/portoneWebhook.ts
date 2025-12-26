@@ -6,6 +6,7 @@
  */
 
 import { createHmac } from 'crypto'
+import { logger } from '@/lib/logger'
 
 /**
  * 포트원 웹훅 서명 검증
@@ -30,7 +31,7 @@ export function verifyPortoneWebhookSignature(
     return timingSafeEqual(signature, computedSignature)
 
   } catch (error) {
-    console.error('포트원 웹훅 서명 검증 오류:', error)
+    logger.error('PortOne webhook signature verification error', { module: 'PortoneWebhook' }, error instanceof Error ? error : new Error(String(error)))
     return false
   }
 }
@@ -134,7 +135,7 @@ export function parsePortoneCustomData(customDataString?: string): PortoneCustom
   try {
     return JSON.parse(customDataString) as PortoneCustomData
   } catch (error) {
-    console.error('포트원 커스텀 데이터 파싱 오류:', error)
+    logger.error('PortOne custom data parse error', { module: 'PortoneWebhook' }, error instanceof Error ? error : new Error(String(error)))
     return null
   }
 }

@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { logger } from '@/lib/logger'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ draft })
   } catch (error) {
-    console.error('Failed to fetch draft:', error)
+    logger.error('Failed to fetch draft', { module: 'DetailPageDrafts' }, error instanceof Error ? error : new Error(String(error)))
     return NextResponse.json(
       { error: '초안을 불러오는데 실패했습니다.' },
       { status: 500 }
@@ -118,7 +119,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ draft })
   } catch (error) {
-    console.error('Failed to update draft:', error)
+    logger.error('Failed to update draft', { module: 'DetailPageDrafts' }, error instanceof Error ? error : new Error(String(error)))
     return NextResponse.json(
       { error: '초안 업데이트에 실패했습니다.' },
       { status: 500 }
@@ -158,7 +159,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Failed to delete draft:', error)
+    logger.error('Failed to delete draft', { module: 'DetailPageDrafts' }, error instanceof Error ? error : new Error(String(error)))
     return NextResponse.json(
       { error: '초안 삭제에 실패했습니다.' },
       { status: 500 }

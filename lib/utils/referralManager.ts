@@ -8,6 +8,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { addCreditsWithTx } from '@/lib/utils/creditManager'
+import { logger } from '@/lib/logger'
 
 // 레퍼럴 보너스 크레딧
 export const REFERRAL_BONUS_CREDITS = 50
@@ -120,7 +121,8 @@ export async function createReferral(
     data: { referredBy: referrer.id }
   })
 
-  console.log('[Referral] Created:', {
+  logger.info('Referral created', {
+    module: 'ReferralManager',
     referralId: referral.id,
     referrer: referrer.id,
     referred: referredUserId
@@ -151,7 +153,7 @@ export async function awardReferralCredits(
   })
 
   if (!referral) {
-    console.log('[Referral] No pending referral found for user:', referredUserId)
+    logger.debug('No pending referral found for user', { module: 'ReferralManager', userId: referredUserId })
     return false
   }
 
@@ -197,7 +199,8 @@ export async function awardReferralCredits(
       })
     })
 
-    console.log('[Referral] Credits awarded:', {
+    logger.info('Referral credits awarded', {
+      module: 'ReferralManager',
       referralId: referral.id,
       referrer: referral.referrerId,
       referred: referredUserId,
@@ -206,7 +209,7 @@ export async function awardReferralCredits(
 
     return true
   } catch (error) {
-    console.error('[Referral] Credit award failed:', error)
+    logger.error('Referral credit award failed', { module: 'ReferralManager' }, error instanceof Error ? error : new Error(String(error)))
     throw error
   }
 }

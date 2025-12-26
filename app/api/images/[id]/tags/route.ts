@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { requireImageProjectEditor } from '@/lib/permissions';
+import { logger } from '@/lib/logger';
 
 /**
  * PATCH /api/images/[id]/tags
@@ -65,7 +66,7 @@ export async function PATCH(
 
     return NextResponse.json({ project: updatedProject });
   } catch (error) {
-    console.error('Tag update error:', error);
+    logger.error('Tag update error', { module: 'Images' }, error instanceof Error ? error : new Error(String(error)));
 
     if (error instanceof Error && error.message.includes('Forbidden')) {
       return NextResponse.json(

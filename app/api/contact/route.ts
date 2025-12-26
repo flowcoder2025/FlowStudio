@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 // 웹훅 URL
 const WEBHOOK_URL = 'https://jerome87.com/webhook/176a6de9-064d-4015-9ea7-b674919b6e1a'
@@ -48,8 +49,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 웹훅 전송
-    console.log('[Contact] 웹훅 전송 시작:', WEBHOOK_URL)
-    console.log('[Contact] 웹훅 바디:', JSON.stringify(webhookBody, null, 2))
+    logger.debug('웹훅 전송 시작', { module: 'Contact', url: WEBHOOK_URL })
+    logger.debug('웹훅 바디', { module: 'Contact', body: webhookBody })
 
     const response = await fetch(WEBHOOK_URL, {
       method: 'POST',
@@ -61,21 +62,17 @@ export async function POST(request: NextRequest) {
     })
 
     const responseText = await response.text()
-    console.log('[Contact] 웹훅 응답:', response.status, responseText)
+    logger.debug('웹훅 응답', { module: 'Contact', status: response.status, body: responseText })
 
     if (!response.ok) {
-      console.error('[Contact] 웹훅 전송 실패:', response.status, response.statusText, responseText)
+      logger.error('웹훅 전송 실패', { module: 'Contact', status: response.status, statusText: response.statusText })
       return NextResponse.json(
         { success: false, error: '문의 전송에 실패했습니다' },
         { status: 500 }
       )
     }
 
-    console.log('[Contact] 문의 접수 완료:', {
-      name,
-      email,
-      inquiryType
-    })
+    logger.info('문의 접수 완료', { module: 'Contact', name, email, inquiryType })
 
     return NextResponse.json({
       success: true,
@@ -83,7 +80,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('[Contact] 오류:', error)
+    logger.error('문의 처리 오류', { module: 'Contact' }, error instanceof Error ? error : new Error(String(error)))
     const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류'
     return NextResponse.json(
       { success: false, error: `서버 오류: ${errorMessage}` },

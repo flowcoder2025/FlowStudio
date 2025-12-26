@@ -18,6 +18,7 @@ import { prisma } from '@/lib/prisma'
 import { uploadMultipleImages } from '@/lib/utils/imageStorage'
 import { isBase64DataUrl } from '@/lib/utils/imageConverter'
 import { grantImageProjectOwnership } from '@/lib/permissions'
+import { logger } from '@/lib/logger'
 
 /**
  * Check if a URL is from Supabase Storage
@@ -154,12 +155,11 @@ export async function POST(req: NextRequest) {
     const errorStack = error instanceof Error ? error.stack : undefined
 
     // 상세 에러 로깅
-    console.error('========================================')
-    console.error('[API /images/save] Error Details:')
-    console.error('Message:', errorMessage)
-    console.error('Stack:', errorStack)
-    console.error('User ID:', session.user.id)
-    console.error('========================================')
+    logger.error('Image save failed', {
+      module: 'ImageSave',
+      userId: session.user.id,
+      message: errorMessage,
+    }, error instanceof Error ? error : new Error(errorMessage))
 
     // Supabase 관련 에러 메시지 분류
     let userMessage = '이미지 저장 중 오류가 발생했습니다.'
@@ -167,13 +167,13 @@ export async function POST(req: NextRequest) {
 
     if (errorMessage.includes('Missing env.NEXT_PUBLIC_SUPABASE_URL')) {
       userMessage = '서버 설정 오류: Supabase URL이 설정되지 않았습니다. 관리자에게 문의하세요.'
-      console.error('[API /images/save] ❌ NEXT_PUBLIC_SUPABASE_URL not configured')
+      logger.error('NEXT_PUBLIC_SUPABASE_URL not configured', { module: 'ImageSave' })
     } else if (errorMessage.includes('Missing env.SUPABASE_SERVICE_ROLE_KEY')) {
       userMessage = '서버 설정 오류: Supabase 서비스 키가 설정되지 않았습니다. 관리자에게 문의하세요.'
-      console.error('[API /images/save] ❌ SUPABASE_SERVICE_ROLE_KEY not configured')
+      logger.error('SUPABASE_SERVICE_ROLE_KEY not configured', { module: 'ImageSave' })
     } else if (errorMessage.includes('Bucket not found') || errorMessage.includes('bucket')) {
       userMessage = '서버 설정 오류: 이미지 저장소 버킷이 존재하지 않습니다. 관리자에게 문의하세요.'
-      console.error('[API /images/save] ❌ Storage bucket "flowstudio-images" not found')
+      logger.error('Storage bucket not found', { module: 'ImageSave' })
     } else if (errorMessage.includes('이미지 업로드 실패')) {
       userMessage = errorMessage
     } else if (errorMessage.includes('base64') || errorMessage.includes('Buffer')) {

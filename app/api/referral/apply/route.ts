@@ -15,6 +15,7 @@ import { authOptions } from '@/lib/auth'
 import { createReferral, getReferrerByCode, awardReferralCredits } from '@/lib/utils/referralManager'
 import { prisma } from '@/lib/prisma'
 import { UnauthorizedError, ValidationError, formatApiError } from '@/lib/errors'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,10 +69,10 @@ export async function POST(request: NextRequest) {
       try {
         creditsAwarded = await awardReferralCredits(session.user.id)
         if (creditsAwarded) {
-          console.log('[Referral Apply] Credits awarded immediately (already business verified)')
+          logger.info('Referral credits awarded immediately', { module: 'ReferralApply', reason: 'already business verified' })
         }
       } catch (awardError) {
-        console.error('[Referral Apply] Credit award failed:', awardError)
+        logger.error('Referral credit award failed', { module: 'ReferralApply' }, awardError instanceof Error ? awardError : new Error(String(awardError)))
       }
     }
 

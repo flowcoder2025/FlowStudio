@@ -14,6 +14,7 @@ import { checkBusinessStatus, normalizeBusinessNumber } from '@/lib/utils/busine
 import { addCredits } from '@/lib/utils/creditManager'
 import { awardReferralCredits } from '@/lib/utils/referralManager'
 import { UnauthorizedError, ValidationError, formatApiError } from '@/lib/errors'
+import { logger } from '@/lib/logger'
 
 /**
  * GET: 사업자 인증 상태 조회
@@ -122,11 +123,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 국세청 API로 사업자 진위 확인
-    console.log('[Business Verification] Checking business number:', normalized)
+    logger.debug('Checking business number', { module: 'BusinessVerification', businessNumber: normalized })
     const verification = await checkBusinessStatus(normalized)
 
     if (!verification.valid) {
-      console.log('[Business Verification] Failed:', verification)
+      logger.info('Business verification failed', { module: 'BusinessVerification', ...verification })
       return NextResponse.json(
         {
           success: false,
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[Business Verification] Success:', verification)
+    logger.info('Business verification success', { module: 'BusinessVerification', ...verification })
 
     // 사용자 정보 업데이트 (인증 완료)
     const updatedUser = await prisma.user.update({
@@ -170,7 +171,7 @@ export async function POST(request: NextRequest) {
         data: { businessBonusClaimed: true }
       })
 
-      console.log('[Business Verification] Bonus credited: 100 credits')
+      logger.info('Business bonus credited', { module: 'BusinessVerification', credits: 100 })
     }
 
     // 레퍼럴 크레딧 지급 (추천인과 가입자 각각 50 크레딧)
@@ -178,11 +179,11 @@ export async function POST(request: NextRequest) {
     try {
       const referralAwarded = await awardReferralCredits(session.user.id)
       if (referralAwarded) {
-        console.log('[Business Verification] Referral credits awarded: 50 credits each to referrer and referred')
+        logger.info('Referral credits awarded', { module: 'BusinessVerification', creditsEach: 50 })
       }
     } catch (referralError) {
       // 레퍼럴 크레딧 지급 실패는 사업자 인증을 차단하지 않음
-      console.error('[Business Verification] Referral credit award failed:', referralError)
+      logger.error('Referral credit award failed', { module: 'BusinessVerification' }, referralError instanceof Error ? referralError : new Error(String(referralError)))
     }
 
     return NextResponse.json({
@@ -198,7 +199,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: unknown) {
-    console.error('[Business Verification] API Error:', error)
+    logger.error('Business verification API error', { module: 'BusinessVerification' }, error instanceof Error ? error : new Error(String(error)))
 
     const apiError = formatApiError(error)
     return NextResponse.json(

@@ -8,6 +8,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { check } from '@/lib/permissions'
+import { logger } from '@/lib/logger'
 
 // GET /api/projects/[id] - 프로젝트 상세 조회
 export async function GET(
@@ -50,7 +51,7 @@ export async function GET(
 
     return NextResponse.json(project)
   } catch (error) {
-    console.error('Project fetch error:', error)
+    logger.error('Project fetch error', { module: 'Projects' }, error instanceof Error ? error : new Error(String(error)))
     return NextResponse.json({ error: '프로젝트 조회에 실패했습니다.' }, { status: 500 })
   }
 }
@@ -91,7 +92,7 @@ export async function PUT(
 
     return NextResponse.json(project)
   } catch (error) {
-    console.error('Project update error:', error)
+    logger.error('Project update error', { module: 'Projects' }, error instanceof Error ? error : new Error(String(error)))
     return NextResponse.json({ error: '프로젝트 수정에 실패했습니다.' }, { status: 500 })
   }
 }
@@ -125,7 +126,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Project delete error:', error)
+    logger.error('Project delete error', { module: 'Projects' }, error instanceof Error ? error : new Error(String(error)))
     return NextResponse.json({ error: '프로젝트 삭제에 실패했습니다.' }, { status: 500 })
   }
 }

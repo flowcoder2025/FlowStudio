@@ -17,6 +17,7 @@
 import sharp from 'sharp'
 import fs from 'fs'
 import path from 'path'
+import { logger } from '@/lib/logger'
 
 // 워터마크 설정
 const WATERMARK_OPACITY = 0.5 // 로고 투명도 (50%)
@@ -50,11 +51,11 @@ async function getLogoBuffer(): Promise<Buffer | null> {
 
     // 동기 로드로 일관된 동작 보장
     logoBufferCache = fs.readFileSync(logoPath)
-    console.log('[Watermark] Logo loaded successfully:', logoPath)
+    logger.debug('Logo loaded successfully', { module: 'Watermark', path: logoPath })
     return logoBufferCache
   } catch (error) {
     logoLoadError = error as Error
-    console.error('[Watermark] Failed to load logo:', error)
+    logger.error('Failed to load logo', { module: 'Watermark' }, error instanceof Error ? error : new Error(String(error)))
     return null
   }
 }
@@ -109,14 +110,14 @@ export async function addWatermark(base64Image: string): Promise<string> {
     // 로고 로드 (캐시됨)
     const logoBuffer = await getLogoBuffer()
     if (!logoBuffer) {
-      console.warn('[Watermark] Logo not available, returning original image')
+      logger.warn('Logo not available, returning original image', { module: 'Watermark' })
       return base64Image
     }
 
     // base64 데이터 추출
     const matches = base64Image.match(/^data:image\/(\w+);base64,(.+)$/)
     if (!matches) {
-      console.error('[Watermark] Invalid base64 image format')
+      logger.error('Invalid base64 image format', { module: 'Watermark' })
       return base64Image
     }
 
@@ -163,7 +164,7 @@ export async function addWatermark(base64Image: string): Promise<string> {
     const watermarkedBase64 = watermarkedBuffer.toString('base64')
     return `data:image/${format};base64,${watermarkedBase64}`
   } catch (error) {
-    console.error('[Watermark] Failed to add watermark:', error)
+    logger.error('Failed to add watermark', { module: 'Watermark' }, error instanceof Error ? error : new Error(String(error)))
     return base64Image // 에러 시 원본 반환
   }
 }
