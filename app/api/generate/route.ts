@@ -23,6 +23,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { genaiLogger } from '@/lib/logger'
+import { apiErrorResponse } from '@/lib/errors'
 import { ensureBase64, extractBase64Data } from '@/lib/utils/imageConverter'
 import { getGenAIClient, getGenAIMode, VERTEX_AI_MODELS } from '@/lib/vertexai'
 import {
@@ -66,9 +68,9 @@ export async function POST(req: NextRequest) {
   try {
     // 1. GenAI 클라이언트 초기화 (Google AI Studio 또는 Vertex AI)
     const genAIMode = getGenAIMode()
-    console.log(`[API /generate] Initializing GenAI client (mode: ${genAIMode})...`)
+    genaiLogger.debug('Initializing GenAI client', { mode: genAIMode, userId: session.user.id })
     const ai = getGenAIClient()
-    console.log(`[API /generate] ✅ GenAI client initialized successfully (${genAIMode})`)
+    genaiLogger.info('GenAI client initialized successfully', { mode: genAIMode })
 
     // 2. 크레딧 잔액 확인 (4장 생성 = 40 크레딧)
     const hasEnough = await hasEnoughCredits(session.user.id, CREDIT_PRICES.GENERATION_4)
@@ -185,7 +187,7 @@ export async function POST(req: NextRequest) {
     let base64Images: string[] = []
     const imageModel = VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE
 
-    console.log(`[API /generate] Using model: ${imageModel} (mode: ${genAIMode})`)
+    genaiLogger.debug('Using model', { model: imageModel, mode: genAIMode })
 
     const generateWithGemini = async () => {
       const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = []
@@ -264,14 +266,16 @@ CRITICAL RULES:
     // Gemini 3 Pro Image 4장 병렬 생성
     // Google AI Studio 모드: 4장 병렬 생성 (60초 이내 완료)
     // Vertex AI 모드: 속도 느림 (preview 모델이라 115초+ 소요될 수 있음)
-    console.log(`[API /generate] Starting 4-image parallel generation (mode: ${genAIMode})...`)
+    const generationStartTime = Date.now()
+    genaiLogger.info('Starting 4-image parallel generation', { mode: genAIMode, userId: session.user.id })
     const results = await Promise.all([
       generateWithGemini(),
       generateWithGemini(),
       generateWithGemini(),
       generateWithGemini(),
     ])
-    console.log('[API /generate] Gemini 3 Pro Image generation completed')
+    const generationDuration = Date.now() - generationStartTime
+    genaiLogger.info('Image generation completed', { durationMs: generationDuration, imageCount: results.filter(r => r !== null).length })
     base64Images = results.filter((r): r is string => r !== null)
 
     if (base64Images.length === 0) {
@@ -303,7 +307,7 @@ CRITICAL RULES:
       creditType,
       { projectId: projectId || 'no-project-id', imageCount: 4, resolution: '2K' }
     )
-    console.log(`[API /generate] Credits deducted: ${CREDIT_PRICES.GENERATION_4}, type: ${deductResult.usedCreditType}, watermark: ${deductResult.applyWatermark}`)
+    genaiLogger.info('Credits deducted', { amount: CREDIT_PRICES.GENERATION_4, creditType: deductResult.usedCreditType, applyWatermark: deductResult.applyWatermark, userId: session.user.id })
 
     // 9. 사용량 기록 (API 호출 비용 추적)
     const totalCost = base64Images.length * COST_PER_IMAGE_USD
@@ -364,13 +368,13 @@ CRITICAL RULES:
     const applyWatermark = WATERMARK_ENABLED && !isSubscriberWatermarkFree && deductResult.applyWatermark
 
     if (applyWatermark) {
-      console.log('[API /generate] Applying watermark (free credits used)...')
-      const startTime = Date.now()
+      genaiLogger.debug('Applying watermark (free credits used)')
+      const watermarkStartTime = Date.now()
       finalImages = await addWatermarkBatch(base64Images)
-      console.log(`[API /generate] Watermark applied in ${Date.now() - startTime}ms`)
+      genaiLogger.debug('Watermark applied', { durationMs: Date.now() - watermarkStartTime })
     } else {
       const reason = isSubscriberWatermarkFree ? `${userTier} subscriber` : `${deductResult.usedCreditType} credits used`
-      console.log(`[API /generate] Watermark skipped (${reason})`)
+      genaiLogger.debug('Watermark skipped', { reason })
     }
 
     // 11. 동시 생성 슬롯 해제 (성공 시)
@@ -380,57 +384,14 @@ CRITICAL RULES:
     // 사용자가 원하는 이미지만 /api/images/save로 선택 저장 가능
     return NextResponse.json({ images: finalImages })
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    const errorStack = error instanceof Error ? error.stack : undefined
-
-    console.error('========================================')
-    console.error('Image generation error DETAILS:')
-    console.error('Message:', errorMessage)
-    console.error('Stack:', errorStack)
-    console.error('User ID:', session.user.id)
-    console.error('Error Type:', error?.constructor?.name)
-    console.error('Full Error Object:', JSON.stringify(error, null, 2))
-    console.error('========================================')
-
-    // Vercel 배포 디버깅용: 환경 변수 확인
-    console.error('[DEBUG] GENAI_MODE:', process.env.GENAI_MODE || 'google-ai-studio (default)')
-    console.error('[DEBUG] GOOGLE_API_KEY:', process.env.GOOGLE_API_KEY ? 'SET (length: ' + process.env.GOOGLE_API_KEY.length + ')' : 'NOT SET')
-    console.error('[DEBUG] GOOGLE_CLOUD_PROJECT:', process.env.GOOGLE_CLOUD_PROJECT || 'NOT SET')
-    console.error('[DEBUG] GOOGLE_CLOUD_LOCATION:', process.env.GOOGLE_CLOUD_LOCATION || 'NOT SET')
-
-    // 할당량 초과 에러 감지 및 친화적 메시지 생성
-    let userFriendlyMessage = '이미지 생성 중 오류가 발생했습니다.'
-    let statusCode = 500
-
-    if (errorMessage.includes('503') || errorMessage.includes('UNAVAILABLE') || errorMessage.includes('overloaded')) {
-      userFriendlyMessage = 'Google Gemini 서버가 일시적으로 과부하 상태입니다. 잠시 후 다시 시도해주세요. (보통 30초~1분 후 복구)'
-      statusCode = 503
-    } else if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('quota')) {
-      userFriendlyMessage = 'Google Gemini API 할당량이 초과되었습니다. 잠시 후 다시 시도해주세요. (무료 티어: 분당/일일 요청 제한)'
-      statusCode = 429
-
-      // 재시도 대기 시간 추출
-      const retryMatch = errorMessage.match(/retry in ([\d.]+)s/)
-      if (retryMatch) {
-        const retrySeconds = Math.ceil(parseFloat(retryMatch[1]))
-        userFriendlyMessage = `Google Gemini API 할당량이 초과되었습니다. ${retrySeconds}초 후에 다시 시도해주세요.`
-      }
-    } else if (errorMessage.includes('API key') || errorMessage.includes('authentication') || errorMessage.includes('UNAUTHENTICATED')) {
-      userFriendlyMessage = 'Google Cloud 인증 오류가 발생했습니다. 서버 관리자에게 문의하세요.'
-      statusCode = 500
-    } else if (errorMessage.includes('network') || errorMessage.includes('ENOTFOUND')) {
-      userFriendlyMessage = '네트워크 연결을 확인해주세요. Google AI 서비스에 접근할 수 없습니다.'
-      statusCode = 503
-    } else if (errorMessage.includes('413') || errorMessage.includes('Payload') || errorMessage.includes('too large')) {
-      userFriendlyMessage = '이미지 파일이 너무 큽니다. 4MB 이하의 이미지를 사용해주세요. (고화질 이미지는 자동으로 압축됩니다)'
-      statusCode = 413
-    } else if (errorMessage.includes('body size') || errorMessage.includes('entity too large')) {
-      userFriendlyMessage = '전송된 데이터가 너무 큽니다. 이미지 크기를 줄여주세요. (권장: 3MB 이하)'
-      statusCode = 413
+    // 동시 생성 슬롯 해제 (에러 시)
+    if (generationRequestId) {
+      releaseGenerationSlot(session.user.id, generationRequestId)
     }
 
     // 실패 이력 기록
     try {
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류'
       await prisma.generationHistory.create({
         data: {
           userId: session.user.id,
@@ -438,21 +399,22 @@ CRITICAL RULES:
           imageCount: 0,
           costUsd: 0,
           status: 'failed',
-          errorMessage: userFriendlyMessage,
+          errorMessage: errorMessage,
         },
       })
     } catch (historyError) {
-      console.error('Failed to record generation history:', historyError)
+      genaiLogger.error('Failed to record generation history', {}, historyError instanceof Error ? historyError : new Error(String(historyError)))
     }
 
-    // 동시 생성 슬롯 해제 (에러 시)
-    if (generationRequestId) {
-      releaseGenerationSlot(session.user.id, generationRequestId)
-    }
-
-    return NextResponse.json(
-      { error: userFriendlyMessage },
-      { status: statusCode }
-    )
+    // 표준화된 에러 응답 반환 (로깅 + 분류 + 응답 포함)
+    return apiErrorResponse(error, {
+      userId: session.user.id,
+      operation: 'image-generation',
+      metadata: {
+        genaiMode: getGenAIMode(),
+        hasApiKey: !!process.env.GOOGLE_API_KEY,
+        hasCloudProject: !!process.env.GOOGLE_CLOUD_PROJECT,
+      }
+    })
   }
 }

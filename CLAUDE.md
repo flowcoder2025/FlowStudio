@@ -57,7 +57,7 @@
   - 갤러리 4K 업스케일 버튼: `/api/images/list`에 `isUpscaled` 필드 추가
   - 만료 예정 크레딧 알림: `CreditBalance` 컴포넌트에 툴팁 UI
   - PortOne V2 정기 구독 결제: `/api/subscription/portone/webhook` 웹훅 추가
-  - 워터마크 기능: 임시 비활성화 (`WATERMARK_ENABLED = false`)
+  - 워터마크 기능: 활성화 상태 (`WATERMARK_ENABLED = true`, 무료 크레딧 사용 시 적용)
 - **성능 최적화 (Phase 9)** ⚡:
   - **스켈레톤 UI**: `ProfileSkeleton`, `CreatePageSkeleton` 컴포넌트 추가
   - **LazyImage 컴포넌트**: Intersection Observer 기반 지연 로딩
@@ -480,7 +480,7 @@ GOOGLE_CLOUD_LOCATION="global"  # gemini-3-pro-image-preview는 global만 지원
 3. ~~**Medium**: 구독 플랜 및 결제 시스템~~ ✅ 완료 (Phase 8)
 4. **Medium**: 속도 제한 및 쿼터 관리
 5. **Low**: 실시간 협업 기능
-6. **Low**: 워터마크 기능 재활성화 (현재 임시 OFF)
+6. ~~**Low**: 워터마크 기능 재활성화~~ ✅ 완료 (활성화됨)
 
 ### 추가 작업 필요 (Supabase Storage 설정)
 Phase 5 구현이 완료되었으나, Supabase Dashboard에서 수동 설정이 필요합니다:

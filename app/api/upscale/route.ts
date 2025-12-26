@@ -14,6 +14,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { genaiLogger } from '@/lib/logger'
+import { apiErrorResponse } from '@/lib/errors'
 import { uploadMultipleImages } from '@/lib/utils/imageStorage'
 import { ensureBase64, extractBase64Data } from '@/lib/utils/imageConverter'
 import { getGenAIClient, VERTEX_AI_MODELS } from '@/lib/vertexai'
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
 
   try {
     // 1. GenAI 클라이언트 초기화
-    console.log('[API /upscale] Initializing GenAI client...')
+    genaiLogger.debug('Initializing GenAI client for upscale', { userId: session.user.id })
     const ai = getGenAIClient()
 
     // 2. 크레딧 잔액 확인 (업스케일 1회 = 10 크레딧)
@@ -122,7 +124,7 @@ export async function POST(req: NextRequest) {
       }
     )
 
-    console.log(`[Upscale] Credits deducted: ${CREDIT_PRICES.UPSCALE_4K} credits`)
+    genaiLogger.info('Upscale credits deducted', { amount: CREDIT_PRICES.UPSCALE_4K, userId: session.user.id })
 
     // 9. 사용량 기록
     const today = new Date().toISOString().split('T')[0]
@@ -163,44 +165,9 @@ export async function POST(req: NextRequest) {
     // 11. Storage URL 반환
     return NextResponse.json({ image: storageUrls[0] })
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    const errorStack = error instanceof Error ? error.stack : undefined
-
-    console.error('========================================')
-    console.error('Upscale error DETAILS:')
-    console.error('Message:', errorMessage)
-    console.error('Stack:', errorStack)
-    console.error('User ID:', session.user.id)
-    console.error('========================================')
-
-    // 친화적 에러 메시지 생성
-    let userFriendlyMessage = '업스케일 중 오류가 발생했습니다.'
-    let statusCode = 500
-
-    if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('quota')) {
-      userFriendlyMessage = 'Google Gemini API 할당량이 초과되었습니다. 잠시 후 다시 시도해주세요.'
-      statusCode = 429
-
-      // 재시도 대기 시간 추출
-      const retryMatch = errorMessage.match(/retry in ([\d.]+)s/)
-      if (retryMatch) {
-        const retrySeconds = Math.ceil(parseFloat(retryMatch[1]))
-        userFriendlyMessage = `Google Gemini API 할당량이 초과되었습니다. ${retrySeconds}초 후에 다시 시도해주세요.`
-      }
-    } else if (errorMessage.includes('API key') || errorMessage.includes('API_KEY') || errorMessage.includes('authentication') || errorMessage.includes('UNAUTHENTICATED')) {
-      userFriendlyMessage = 'Google Cloud 인증 오류가 발생했습니다. 서버 관리자에게 문의하세요.'
-      statusCode = 500
-    } else if (errorMessage.includes('SAFETY') || errorMessage.includes('blocked')) {
-      userFriendlyMessage = '이미지가 안전 정책에 의해 차단되었습니다. 다른 이미지로 시도해주세요.'
-      statusCode = 400
-    } else if (errorMessage.includes('network') || errorMessage.includes('ENOTFOUND')) {
-      userFriendlyMessage = '네트워크 연결을 확인해주세요.'
-      statusCode = 503
-    }
-
-    return NextResponse.json(
-      { error: userFriendlyMessage },
-      { status: statusCode }
-    )
+    return apiErrorResponse(error, {
+      userId: session.user.id,
+      operation: 'image-upscale'
+    })
   }
 }

@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { paymentLogger } from '@/lib/logger'
 import { addCredits } from '@/lib/utils/creditManager'
 import { CREDIT_PACKAGES, type CreditPackageId } from '@/lib/constants'
 import {
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     // 1. 웹훅 시크릿 확인
     const webhookSecret = process.env.PORTONE_WEBHOOK_SECRET
     if (!webhookSecret) {
-      console.error('[Webhook] PORTONE_WEBHOOK_SECRET 환경 변수가 설정되지 않았습니다')
+      paymentLogger.error('PORTONE_WEBHOOK_SECRET 환경 변수가 설정되지 않았습니다')
       return NextResponse.json(
         { success: false, error: 'Webhook secret not configured' },
         { status: 500 }
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
     const isValid = verifyPortoneWebhookSignature(signature, rawBody, webhookSecret)
 
     if (!isValid) {
-      console.error('[Webhook] 서명 검증 실패')
+      paymentLogger.warn('웹훅 서명 검증 실패')
       return NextResponse.json(
         { success: false, error: 'Invalid signature' },
         { status: 401 }
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
     // 3. 페이로드 파싱
     const payload: PortoneWebhookPayload = JSON.parse(rawBody)
 
-    console.log('[Webhook] 수신:', {
+    paymentLogger.info('웹훅 수신', {
       type: payload.type,
       paymentId: payload.data.paymentId,
       status: payload.data.status
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     // 4. 결제 완료 이벤트만 처리
     if (payload.type !== 'Transaction.Paid' || payload.data.status !== 'PAID') {
-      console.log('[Webhook] 결제 완료 아님, 무시:', payload.type, payload.data.status)
+      paymentLogger.debug('결제 완료 아님, 무시', { type: payload.type, status: payload.data.status })
       return NextResponse.json({ success: true, message: 'Ignored non-paid event' })
     }
 
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
     const userId = customData?.userId
 
     if (!packageId || !userId) {
-      console.error('[Webhook] 커스텀 데이터 누락:', customData)
+      paymentLogger.error('커스텀 데이터 누락', { customData })
       return NextResponse.json(
         { success: false, error: 'Missing package or user ID' },
         { status: 400 }
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     const pkg = CREDIT_PACKAGES[packageId]
     if (!pkg) {
-      console.error('[Webhook] 유효하지 않은 패키지 ID:', packageId)
+      paymentLogger.error('유효하지 않은 패키지 ID', { packageId })
       return NextResponse.json(
         { success: false, error: 'Invalid package ID' },
         { status: 400 }
@@ -82,10 +83,7 @@ export async function POST(request: NextRequest) {
 
     // 6. 금액 검증
     if (payload.data.paidAmount !== pkg.price) {
-      console.error('[Webhook] 금액 불일치:', {
-        expected: pkg.price,
-        actual: payload.data.paidAmount
-      })
+      paymentLogger.error('금액 불일치', { expected: pkg.price, actual: payload.data.paidAmount })
       return NextResponse.json(
         { success: false, error: 'Amount mismatch' },
         { status: 400 }
@@ -104,7 +102,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingTransaction) {
-      console.log('[Webhook] 이미 처리된 결제:', payload.data.paymentId)
+      paymentLogger.info('이미 처리된 결제', { paymentId: payload.data.paymentId })
       return NextResponse.json({
         success: true,
         message: 'Already processed'
@@ -115,7 +113,7 @@ export async function POST(request: NextRequest) {
     const paymentInfo = await getPortonePayment(payload.data.paymentId)
 
     if (paymentInfo.status !== 'PAID') {
-      console.error('[Webhook] 포트원 API 결제 상태 불일치:', paymentInfo.status)
+      paymentLogger.error('포트원 API 결제 상태 불일치', { status: paymentInfo.status })
       return NextResponse.json(
         { success: false, error: 'Payment status mismatch' },
         { status: 400 }
@@ -140,10 +138,7 @@ export async function POST(request: NextRequest) {
       }
     )
 
-    console.log('[Webhook] 크레딧 지급 완료:', {
-      userId,
-      credits: pkg.credits
-    })
+    paymentLogger.info('크레딧 지급 완료', { userId, credits: pkg.credits })
 
     // 보안: 웹훅 응답에 민감한 정보(잔액) 포함하지 않음
     return NextResponse.json({
@@ -152,7 +147,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('[Webhook] 처리 오류:', error)
+    paymentLogger.error('웹훅 처리 오류', {}, error instanceof Error ? error : new Error(String(error)))
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

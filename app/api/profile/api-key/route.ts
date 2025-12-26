@@ -1,11 +1,16 @@
 /**
  * API Key Management Endpoint
- * Handles secure storage and retrieval of user's Gemini API keys
  *
- * Security:
- * - API keys are encrypted using AES-256-GCM before storage
- * - Keys are never returned in plaintext
- * - Requires authenticated session
+ * @deprecated Phase 6에서 Vertex AI 중앙 인증으로 전환됨
+ *
+ * 이 엔드포인트는 더 이상 사용되지 않습니다.
+ * 사용자는 이제 크레딧만 구매하면 이미지 생성 가능 (API 키 설정 불필요)
+ *
+ * 레거시 호환성:
+ * - 기존 모바일 앱 클라이언트 지원을 위해 유지
+ * - 새로운 클라이언트는 이 엔드포인트를 호출하지 않아야 함
+ *
+ * 관련 deprecated 모듈: /lib/utils/encryption.ts
  */
 
 import { NextRequest, NextResponse } from 'next/server'

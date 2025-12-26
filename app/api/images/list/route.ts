@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { apiErrorResponse } from '@/lib/errors'
 import { listAccessible } from '@/lib/permissions'
 
 export interface UserImage {
@@ -208,10 +209,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(response)
   } catch (error) {
-    console.error('Images list fetch error:', error)
-    return NextResponse.json(
-      { error: '이미지 목록을 불러오는데 실패했습니다.' },
-      { status: 500 }
-    )
+    return apiErrorResponse(error, { userId: session.user.id, operation: 'images-list' })
   }
 }

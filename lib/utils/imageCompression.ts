@@ -83,57 +83,6 @@ export async function compressImage(
 }
 
 /**
- * base64 문자열을 압축 (이미 base64인 경우)
- */
-export async function compressBase64Image(
-  base64String: string,
-  options: CompressionOptions = {}
-): Promise<string> {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
-
-  // 1. Base64 → Image 로드
-  const image = await loadImageFromBase64(base64String);
-
-  // 2. 리사이징이 필요한지 확인
-  const { width, height } = calculateResizedDimensions(
-    image.width,
-    image.height,
-    opts.maxWidthOrHeight
-  );
-
-  // 3. Canvas로 리사이징
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    throw new Error('Canvas context를 생성할 수 없습니다.');
-  }
-
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(image, 0, 0, width, height);
-
-  // 4. Progressive quality reduction
-  let quality = opts.initialQuality;
-  let compressed = canvas.toDataURL('image/jpeg', quality);
-  let iterations = 0;
-  const maxIterations = 10;
-
-  while (
-    getBase64SizeInMB(compressed) > opts.maxSizeMB &&
-    quality > opts.minQuality &&
-    iterations < maxIterations
-  ) {
-    quality -= 0.05;
-    compressed = canvas.toDataURL('image/jpeg', quality);
-    iterations++;
-  }
-
-  return compressed;
-}
-
-/**
  * File 객체에서 Image 엘리먼트 로드
  */
 function loadImageFromFile(file: File): Promise<HTMLImageElement> {
@@ -147,18 +96,6 @@ function loadImageFromFile(file: File): Promise<HTMLImageElement> {
     };
     reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'));
     reader.readAsDataURL(file);
-  });
-}
-
-/**
- * Base64 문자열에서 Image 엘리먼트 로드
- */
-function loadImageFromBase64(base64: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('이미지를 로드할 수 없습니다.'));
-    img.src = base64;
   });
 }
 
@@ -204,13 +141,6 @@ function getBase64SizeInMB(base64String: string): number {
 export function isFileTooLarge(file: File, maxSizeMB: number = 4): boolean {
   const fileSizeMB = file.size / (1024 * 1024);
   return fileSizeMB > maxSizeMB;
-}
-
-/**
- * Base64 문자열 크기가 제한을 초과하는지 확인
- */
-export function isBase64TooLarge(base64String: string, maxSizeMB: number = 4): boolean {
-  return getBase64SizeInMB(base64String) > maxSizeMB;
 }
 
 /**

@@ -1,5 +1,5 @@
 /**
- * 동시 생성 제한 유틸리티
+ * 분산 동시 생성 제한 유틸리티 (Supabase/Prisma 버전)
  *
  * 구독 플랜별 동시 생성 제한:
  * - FREE: 1건
@@ -7,21 +7,15 @@
  * - PRO: 5건
  * - BUSINESS: 10건
  *
- * Redis 없이 메모리 기반으로 구현 (Vercel serverless 환경 고려)
- * 주의: 여러 인스턴스에서는 완벽하게 작동하지 않을 수 있음
+ * PostgreSQL 트랜잭션을 사용하여 여러 Vercel 인스턴스에서도
+ * 정확한 동시성 제어를 보장합니다.
  */
 
+import { prisma } from '@/lib/prisma'
 import { getConcurrentLimit } from '@/lib/utils/subscriptionManager'
 
-// 메모리 기반 동시성 추적
-// Map<userId, Set<requestId>>
-const activeRequests = new Map<string, Set<string>>()
-
-// 요청 만료 시간 (5분 - 타임아웃 안전장치)
-const REQUEST_TIMEOUT_MS = 5 * 60 * 1000
-
-// 요청별 타이머 추적
-const requestTimers = new Map<string, NodeJS.Timeout>()
+// 슬롯 만료 시간 (5분 - 타임아웃 안전장치)
+const SLOT_TTL_MS = 5 * 60 * 1000
 
 /**
  * 동시 생성 슬롯 획득 시도
@@ -29,63 +23,121 @@ const requestTimers = new Map<string, NodeJS.Timeout>()
  */
 export async function acquireGenerationSlot(userId: string): Promise<string | null> {
   const limit = await getConcurrentLimit(userId)
+  const now = new Date()
 
-  // 사용자의 활성 요청 Set 가져오기
-  if (!activeRequests.has(userId)) {
-    activeRequests.set(userId, new Set())
+  try {
+    // Serializable 트랜잭션으로 원자적 처리 (race condition 방지)
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. 만료된 슬롯 정리 (자동 가비지 컬렉션)
+      await tx.concurrencySlot.deleteMany({
+        where: { expiresAt: { lt: now } }
+      })
+
+      // 2. 현재 활성 슬롯 수 확인
+      const activeCount = await tx.concurrencySlot.count({
+        where: {
+          userId,
+          expiresAt: { gt: now }
+        }
+      })
+
+      // 3. 제한 초과 확인
+      if (activeCount >= limit) {
+        console.log('[Concurrency] Limit exceeded:', { userId, active: activeCount, limit })
+        return null
+      }
+
+      // 4. 새 슬롯 생성
+      const requestId = `${userId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      await tx.concurrencySlot.create({
+        data: {
+          userId,
+          requestId,
+          expiresAt: new Date(now.getTime() + SLOT_TTL_MS)
+        }
+      })
+
+      console.log('[Concurrency] Slot acquired:', { userId, requestId, active: activeCount + 1, limit })
+      return requestId
+    }, {
+      isolationLevel: 'Serializable', // 동시성 안전 보장
+      timeout: 10000 // 10초 타임아웃
+    })
+
+    return result
+  } catch (error) {
+    // Serializable 트랜잭션 충돌 시 재시도 로직
+    if (error instanceof Error && error.message.includes('could not serialize')) {
+      console.log('[Concurrency] Transaction conflict, retrying...')
+      // 한 번 재시도
+      return acquireGenerationSlotRetry(userId, limit)
+    }
+    console.error('[Concurrency] Error acquiring slot:', error)
+    throw error
   }
-  const userRequests = activeRequests.get(userId)!
+}
 
-  // 제한 확인
-  if (userRequests.size >= limit) {
-    console.log('[Concurrency] Limit exceeded:', { userId, active: userRequests.size, limit })
+/**
+ * 재시도 로직 (트랜잭션 충돌 시)
+ */
+async function acquireGenerationSlotRetry(userId: string, limit: number): Promise<string | null> {
+  const now = new Date()
+
+  const activeCount = await prisma.concurrencySlot.count({
+    where: {
+      userId,
+      expiresAt: { gt: now }
+    }
+  })
+
+  if (activeCount >= limit) {
     return null
   }
 
-  // 새 요청 ID 생성
   const requestId = `${userId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-  userRequests.add(requestId)
 
-  // 타임아웃 설정 (안전장치 - 요청이 비정상 종료되어도 슬롯 해제)
-  const timer = setTimeout(() => {
-    releaseGenerationSlot(userId, requestId)
-    console.log('[Concurrency] Auto-released expired slot:', { userId, requestId })
-  }, REQUEST_TIMEOUT_MS)
-  requestTimers.set(requestId, timer)
-
-  console.log('[Concurrency] Slot acquired:', { userId, requestId, active: userRequests.size, limit })
-  return requestId
+  try {
+    await prisma.concurrencySlot.create({
+      data: {
+        userId,
+        requestId,
+        expiresAt: new Date(now.getTime() + SLOT_TTL_MS)
+      }
+    })
+    console.log('[Concurrency] Slot acquired (retry):', { userId, requestId })
+    return requestId
+  } catch {
+    // 유니크 충돌이면 null 반환
+    return null
+  }
 }
 
 /**
  * 동시 생성 슬롯 해제
  */
-export function releaseGenerationSlot(userId: string, requestId: string): void {
-  const userRequests = activeRequests.get(userId)
-  if (userRequests) {
-    userRequests.delete(requestId)
-
-    // 빈 Set 정리
-    if (userRequests.size === 0) {
-      activeRequests.delete(userId)
-    }
+export async function releaseGenerationSlot(userId: string, requestId: string): Promise<void> {
+  try {
+    await prisma.concurrencySlot.deleteMany({
+      where: { requestId }
+    })
+    console.log('[Concurrency] Slot released:', { userId, requestId })
+  } catch (error) {
+    // 이미 삭제된 경우 무시
+    console.warn('[Concurrency] Slot release warning:', error)
   }
-
-  // 타이머 정리
-  const timer = requestTimers.get(requestId)
-  if (timer) {
-    clearTimeout(timer)
-    requestTimers.delete(requestId)
-  }
-
-  console.log('[Concurrency] Slot released:', { userId, requestId })
 }
 
 /**
  * 사용자의 현재 활성 요청 수 조회
  */
-export function getActiveRequestCount(userId: string): number {
-  return activeRequests.get(userId)?.size ?? 0
+export async function getActiveRequestCount(userId: string): Promise<number> {
+  const now = new Date()
+  return await prisma.concurrencySlot.count({
+    where: {
+      userId,
+      expiresAt: { gt: now }
+    }
+  })
 }
 
 /**
@@ -93,7 +145,7 @@ export function getActiveRequestCount(userId: string): number {
  */
 export async function getRemainingSlots(userId: string): Promise<number> {
   const limit = await getConcurrentLimit(userId)
-  const active = getActiveRequestCount(userId)
+  const active = await getActiveRequestCount(userId)
   return Math.max(0, limit - active)
 }
 
@@ -107,7 +159,7 @@ export async function getConcurrencyStatus(userId: string): Promise<{
   canGenerate: boolean
 }> {
   const limit = await getConcurrentLimit(userId)
-  const active = getActiveRequestCount(userId)
+  const active = await getActiveRequestCount(userId)
   const remaining = Math.max(0, limit - active)
 
   return {
@@ -116,4 +168,20 @@ export async function getConcurrencyStatus(userId: string): Promise<{
     remaining,
     canGenerate: remaining > 0
   }
+}
+
+/**
+ * 만료된 슬롯 정리 (크론 작업용 또는 수동 호출)
+ */
+export async function cleanupExpiredSlots(): Promise<number> {
+  const now = new Date()
+  const result = await prisma.concurrencySlot.deleteMany({
+    where: { expiresAt: { lt: now } }
+  })
+
+  if (result.count > 0) {
+    console.log('[Concurrency] Cleaned up expired slots:', result.count)
+  }
+
+  return result.count
 }

@@ -7,6 +7,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { apiLogger } from '@/lib/logger'
+import { apiErrorResponse } from '@/lib/errors'
 import { grantImageProjectOwnership, listAccessible } from '@/lib/permissions'
 
 // POST /api/projects - 새 프로젝트 생성
@@ -39,10 +41,10 @@ export async function POST(req: NextRequest) {
     // 2. Owner 권한 자동 부여
     await grantImageProjectOwnership(project.id, session.user.id)
 
+    apiLogger.info('Project created', { projectId: project.id, userId: session.user.id })
     return NextResponse.json(project, { status: 201 })
   } catch (error) {
-    console.error('Project creation error:', error)
-    return NextResponse.json({ error: '프로젝트 생성에 실패했습니다.' }, { status: 500 })
+    return apiErrorResponse(error, { userId: session.user.id, operation: 'project-create' })
   }
 }
 
@@ -83,7 +85,6 @@ export async function GET() {
 
     return NextResponse.json(projects)
   } catch (error) {
-    console.error('Projects fetch error:', error)
-    return NextResponse.json({ error: '프로젝트 조회에 실패했습니다.' }, { status: 500 })
+    return apiErrorResponse(error, { userId: session.user.id, operation: 'project-list' })
   }
 }

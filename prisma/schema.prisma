@@ -336,6 +336,24 @@ model Subscription {
 }
 
 // ========================================
+// Concurrency Control (Distributed)
+// ========================================
+
+// ConcurrencySlot - Track active generation requests across serverless instances
+model ConcurrencySlot {
+  id        String   @id @default(cuid())
+  userId    String
+  requestId String   @unique
+  expiresAt DateTime // Auto-cleanup for stale slots
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([userId, expiresAt])
+}
+
+// ========================================
 // Referral System
 // ========================================
 
