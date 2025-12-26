@@ -461,7 +461,7 @@ function ProfilePageContent() {
                       <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">인증 완료</span>
                       {businessVerification.bonusClaimed && (
                         <span className="text-[10px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">
-                          +150 크레딧
+                          +100 크레딧
                         </span>
                       )}
                     </div>
@@ -472,7 +472,7 @@ function ProfilePageContent() {
                 ) : (
                   <div>
                     <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
-                      인증 완료 시 <strong className="text-indigo-600 dark:text-indigo-400">150 크레딧</strong> 즉시 지급
+                      인증 완료 시 <strong className="text-indigo-600 dark:text-indigo-400">100 크레딧</strong> 즉시 지급
                     </p>
                     <div className="flex gap-2 text-[10px] text-slate-400 dark:text-slate-500">
                       <span>• 국세청 진위확인</span>
@@ -504,18 +504,18 @@ function ProfilePageContent() {
 
                 {/* 콘텐츠 */}
                 <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
-                  친구 초대 + 사업자 인증 시 <strong className="text-purple-600 dark:text-purple-400">각각 150 크레딧</strong>
+                  친구 초대 + 사업자 인증 시 <strong className="text-purple-600 dark:text-purple-400">각각 50 크레딧</strong>
                 </p>
 
                 {/* 혜택 요약 */}
                 <div className="flex gap-2">
                   <div className="flex-1 bg-purple-50 dark:bg-purple-900/20 rounded-md px-2.5 py-2 text-center">
                     <p className="text-[10px] text-purple-500 dark:text-purple-400 mb-0.5">추천인</p>
-                    <p className="text-sm font-bold text-purple-600 dark:text-purple-300">+150</p>
+                    <p className="text-sm font-bold text-purple-600 dark:text-purple-300">+50</p>
                   </div>
                   <div className="flex-1 bg-pink-50 dark:bg-pink-900/20 rounded-md px-2.5 py-2 text-center">
                     <p className="text-[10px] text-pink-500 dark:text-pink-400 mb-0.5">피추천인</p>
-                    <p className="text-sm font-bold text-pink-600 dark:text-pink-300">+150</p>
+                    <p className="text-sm font-bold text-pink-600 dark:text-pink-300">+50</p>
                   </div>
                 </div>
               </div>

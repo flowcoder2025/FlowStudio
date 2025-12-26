@@ -3,14 +3,14 @@
  *
  * 추천 로직:
  * - 추천받은 가입자가 사업자 인증 완료 시
- * - 추천인과 가입자 각각 150 크레딧 지급
+ * - 추천인과 가입자 각각 50 크레딧 지급
  */
 
 import { prisma } from '@/lib/prisma'
 import { addCreditsWithTx } from '@/lib/utils/creditManager'
 
 // 레퍼럴 보너스 크레딧
-export const REFERRAL_BONUS_CREDITS = 150
+export const REFERRAL_BONUS_CREDITS = 50
 
 /**
  * 랜덤 추천 코드 생성 (8자리 영숫자)

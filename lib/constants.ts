@@ -63,8 +63,8 @@ export const CREDIT_USAGE = {
  */
 export const CREDIT_BONUS = {
   SIGNUP_GENERAL: 30,    // 일반 회원 가입 보너스
-  SIGNUP_BUSINESS: 150,  // 사업자 회원 가입 보너스
-  REFERRAL: 150,         // 추천인 보상 (양측 각각)
+  SIGNUP_BUSINESS: 100,  // 사업자 회원 가입 보너스
+  REFERRAL: 50,          // 추천인 보상 (양측 각각)
 } as const;
 
 // ========================================

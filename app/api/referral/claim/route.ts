@@ -62,7 +62,7 @@ export async function POST(_request: NextRequest) {
         success: true,
         data: {
           awarded: true,
-          message: '레퍼럴 크레딧이 지급되었습니다! (각 150 크레딧)'
+          message: '레퍼럴 크레딧이 지급되었습니다! (각 50 크레딧)'
         }
       })
     } else {

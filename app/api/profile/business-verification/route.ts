@@ -150,12 +150,12 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // 사업자 보너스 크레딧 지급 (150 크레딧)
+    // 사업자 보너스 크레딧 지급 (100 크레딧)
     // 최초 1회만 지급
     if (!existingUser?.businessBonusClaimed) {
       await addCredits(
         session.user.id,
-        150, // 사업자 보너스 크레딧
+        100, // 사업자 보너스 크레딧
         'BONUS',
         '사업자 인증 완료 보너스',
         {
@@ -170,15 +170,15 @@ export async function POST(request: NextRequest) {
         data: { businessBonusClaimed: true }
       })
 
-      console.log('[Business Verification] Bonus credited: 150 credits')
+      console.log('[Business Verification] Bonus credited: 100 credits')
     }
 
-    // 레퍼럴 크레딧 지급 (추천인과 가입자 각각 150 크레딧)
+    // 레퍼럴 크레딧 지급 (추천인과 가입자 각각 50 크레딧)
     // 레퍼럴 실패가 사업자 인증을 차단하지 않도록 try-catch로 감싸기
     try {
       const referralAwarded = await awardReferralCredits(session.user.id)
       if (referralAwarded) {
-        console.log('[Business Verification] Referral credits awarded: 150 credits each to referrer and referred')
+        console.log('[Business Verification] Referral credits awarded: 50 credits each to referrer and referred')
       }
     } catch (referralError) {
       // 레퍼럴 크레딧 지급 실패는 사업자 인증을 차단하지 않음
@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
       data: {
         verified: true,
         verifiedAt: updatedUser.businessVerifiedAt,
-        bonusCredits: existingUser?.businessBonusClaimed ? 0 : 150,
+        bonusCredits: existingUser?.businessBonusClaimed ? 0 : 100,
         businessStatus: verification.status,
         taxType: verification.taxType
       }

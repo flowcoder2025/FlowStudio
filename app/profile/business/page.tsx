@@ -183,7 +183,7 @@ export default function BusinessVerificationPage() {
             사업자 인증
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            사업자등록번호를 인증하고 <strong className="text-blue-600 dark:text-blue-400">150 크레딧</strong>을 받으세요
+            사업자등록번호를 인증하고 <strong className="text-blue-600 dark:text-blue-400">100 크레딧</strong>을 받으세요
           </p>
         </div>
 
@@ -237,7 +237,7 @@ export default function BusinessVerificationPage() {
               {verificationStatus.bonusClaimed && (
                 <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mt-6">
                   <p className="text-sm text-green-800 dark:text-green-200">
-                    ✅ 사업자 인증 보너스 150 크레딧이 지급되었습니다
+                    ✅ 사업자 인증 보너스 100 크레딧이 지급되었습니다
                   </p>
                 </div>
               )}
@@ -350,7 +350,7 @@ export default function BusinessVerificationPage() {
                     인증 중...
                   </>
                 ) : (
-                  '사업자 인증 및 150 크레딧 받기'
+                  '사업자 인증 및 100 크레딧 받기'
                 )}
               </button>
 
@@ -361,7 +361,7 @@ export default function BusinessVerificationPage() {
                 </h3>
                 <ul className="space-y-1 text-xs text-blue-800 dark:text-blue-300">
                   <li>• 국세청 공공데이터를 통해 실시간으로 사업자등록정보를 확인합니다</li>
-                  <li>• 인증 완료 시 150 크레딧이 즉시 지급됩니다 (1회 한정)</li>
+                  <li>• 인증 완료 시 100 크레딧이 즉시 지급됩니다 (1회 한정)</li>
                   <li>• 계속사업자 상태의 사업자만 인증 가능합니다 (휴업/폐업 제외)</li>
                   <li>• 이미 등록된 사업자등록번호는 재사용할 수 없습니다</li>
                 </ul>

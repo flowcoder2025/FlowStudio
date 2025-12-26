@@ -515,9 +515,9 @@ export async function grantSignupBonus(
   userId: string,
   signupType: 'general' | 'business'
 ): Promise<{ balance: number }> {
-  const amount = signupType === 'business' ? 150 : 30
+  const amount = signupType === 'business' ? 100 : 30
   const description = signupType === 'business'
-    ? '사업자 회원 가입 보너스 (150 크레딧)'
+    ? '사업자 회원 가입 보너스 (100 크레딧)'
     : '일반 회원 가입 보너스 (30 크레딧)'
 
   // 30일 후 만료

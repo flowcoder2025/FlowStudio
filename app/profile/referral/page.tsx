@@ -249,7 +249,7 @@ export default function ReferralPage() {
           </button>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">추천 프로그램</h1>
           <p className="text-gray-600">
-            친구를 초대하고 함께 크레딧을 받으세요! 추천받은 친구가 사업자 인증을 완료하면 각각 150 크레딧을 받습니다.
+            친구를 초대하고 함께 크레딧을 받으세요! 추천받은 친구가 사업자 인증을 완료하면 각각 50 크레딧을 받습니다.
           </p>
         </div>
 
@@ -308,7 +308,7 @@ export default function ReferralPage() {
               </button>
             </div>
             <p className="mt-4 text-sm text-purple-100">
-              이 코드를 친구에게 공유하세요. 친구가 가입 시 입력하고 사업자 인증을 완료하면 각각 150 크레딧을 받습니다.
+              이 코드를 친구에게 공유하세요. 친구가 가입 시 입력하고 사업자 인증을 완료하면 각각 50 크레딧을 받습니다.
             </p>
           </div>
         ) : (
@@ -319,7 +319,7 @@ export default function ReferralPage() {
               <h2 className="text-xl font-semibold text-gray-800">내 추천 코드</h2>
             </div>
             <p className="text-gray-600 mb-6">
-              추천 코드를 생성하고 친구에게 공유하세요. 친구가 가입하고 사업자 인증을 완료하면 각각 150 크레딧을 받습니다.
+              추천 코드를 생성하고 친구에게 공유하세요. 친구가 가입하고 사업자 인증을 완료하면 각각 50 크레딧을 받습니다.
             </p>
             <button
               onClick={generateMyCode}
@@ -346,7 +346,7 @@ export default function ReferralPage() {
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">추천 코드 입력</h3>
             <p className="text-sm text-gray-600 mb-4">
-              친구에게 받은 추천 코드가 있나요? 입력하고 사업자 인증을 완료하면 각각 150 크레딧을 받습니다.
+              친구에게 받은 추천 코드가 있나요? 입력하고 사업자 인증을 완료하면 각각 50 크레딧을 받습니다.
             </p>
             {!stats.myBusinessVerified && (
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 flex items-center gap-2">
@@ -636,7 +636,7 @@ export default function ReferralPage() {
             </li>
             <li className="flex items-start gap-2">
               <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <span>추천인과 가입자 모두 각각 150 크레딧을 받습니다 (총 300 크레딧).</span>
+              <span>추천인과 가입자 모두 각각 50 크레딧을 받습니다 (총 100 크레딧).</span>
             </li>
             <li className="flex items-start gap-2">
               <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
