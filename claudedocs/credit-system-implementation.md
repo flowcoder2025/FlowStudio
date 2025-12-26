@@ -68,7 +68,7 @@ await addCredits(userId, 100, 'PURCHASE', '스타터 패키지', {
 
 // 가입 보너스
 await grantSignupBonus(userId, 'general') // 30 크레딧
-await grantSignupBonus(userId, 'business') // 150 크레딧
+await grantSignupBonus(userId, 'business') // 100 크레딧
 
 // 레퍼럴 보상
 await grantReferralReward(referrerId, refereeId) // 각 40 크레딧
