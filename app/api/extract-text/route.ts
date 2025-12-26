@@ -1,9 +1,9 @@
 /**
- * Text Extraction API - OCR using Gemini 2.0 Flash
+ * Text Extraction API - OCR using Gemini 3 Flash
  * /api/extract-text
  *
  * 이미지에서 텍스트를 추출하는 OCR 기능을 제공합니다.
- * Gemini 2.0 Flash 모델을 사용하여 텍스트 생성 (OCR) 수행
+ * Gemini 3 Flash 모델을 사용하여 텍스트 생성 (OCR) 수행
  *
  * 비용: 1 크레딧
  */
@@ -14,8 +14,8 @@ import { authOptions } from '@/lib/auth'
 import { ensureBase64, extractBase64Data } from '@/lib/utils/imageConverter'
 import { getGenAIClient, getGenAIMode } from '@/lib/vertexai'
 
-// OCR용 모델 - Gemini 2.5 Flash (Google AI Studio에서 빠른 텍스트 모델)
-const OCR_MODEL = 'gemini-2.5-flash'
+// OCR용 모델 - Gemini 3 Flash Preview (빠른 텍스트 추출)
+const OCR_MODEL = 'gemini-3-flash-preview'
 
 export const maxDuration = 60 // 최대 실행 시간 60초
 
