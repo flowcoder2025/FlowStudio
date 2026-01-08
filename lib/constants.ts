@@ -35,16 +35,39 @@ export const EXCHANGE_RATE_KRW = 1400; // Approximate exchange rate
 // Credit System Constants
 // ========================================
 
-/**
- * 크레딧 패키지 정의 (PortOne 결제 연동)
- * - 1 크레딧 = ₩100
- * - 패키지별 할인율 적용
- */
 export const CREDIT_PACKAGES = {
-  starter: { credits: 100, price: 10000, name: '스타터', discount: 0 },
-  basic: { credits: 300, price: 28000, name: '베이직', discount: 7 },    // 2,000원 할인
-  pro: { credits: 1000, price: 90000, name: '프로', discount: 10 },      // 10,000원 할인
-  business: { credits: 3000, price: 250000, name: '비즈니스', discount: 17 }, // 50,000원 할인
+  starter: { 
+    credits: 100, 
+    priceKRW: 10000, 
+    priceUSD: 7,
+    name: { ko: '스타터', en: 'Starter' },
+    discount: 0,
+    description: { ko: '이미지 생성 5회 (20장)', en: '5 generations (20 images)' }
+  },
+  basic: { 
+    credits: 300, 
+    priceKRW: 28000, 
+    priceUSD: 20,
+    name: { ko: '베이직', en: 'Basic' },
+    discount: 7,
+    description: { ko: '이미지 생성 15회 (60장)', en: '15 generations (60 images)' }
+  },
+  pro: { 
+    credits: 1000, 
+    priceKRW: 90000, 
+    priceUSD: 64,
+    name: { ko: '프로', en: 'Pro' },
+    discount: 10,
+    description: { ko: '이미지 생성 50회 (200장)', en: '50 generations (200 images)' }
+  },
+  business: { 
+    credits: 3000, 
+    priceKRW: 250000, 
+    priceUSD: 179,
+    name: { ko: '비즈니스', en: 'Business' },
+    discount: 17,
+    description: { ko: '이미지 생성 150회 (600장)', en: '150 generations (600 images)' }
+  },
 } as const;
 
 export type CreditPackageId = keyof typeof CREDIT_PACKAGES;
@@ -62,9 +85,9 @@ export const CREDIT_USAGE = {
  * 보너스 크레딧
  */
 export const CREDIT_BONUS = {
-  SIGNUP_GENERAL: 30,    // 일반 회원 가입 보너스
-  SIGNUP_BUSINESS: 100,  // 사업자 회원 가입 보너스
-  REFERRAL: 50,          // 추천인 보상 (양측 각각)
+  SIGNUP_GENERAL: 10,    // 일반 회원 가입 보너스
+  SIGNUP_BUSINESS: 100,  // 사업자 회원 가입 보너스 (현재 비활성화)
+  REFERRAL: 50,          // 추천인 보상 (현재 비활성화)
 } as const;
 
 // ========================================
@@ -72,51 +95,63 @@ export const CREDIT_BONUS = {
 // ========================================
 
 export type SubscriptionTier = 'FREE' | 'PLUS' | 'PRO' | 'BUSINESS';
+export type BillingInterval = 'monthly' | 'yearly';
 
-/**
- * 구독 플랜 정의
- * - 크레딧은 별도 구매 (정기 구독과 분리)
- * - 구독은 스토리지, 기능, 처리 우선순위 제공
- */
 export const SUBSCRIPTION_TIERS = {
   FREE: {
-    name: '무료',
-    price: 0,
+    name: { ko: '무료', en: 'Free' },
+    priceKRW: { monthly: 0, yearly: 0 },
+    priceUSD: { monthly: 0, yearly: 0 },
     storageQuotaGB: 1,
     concurrentLimit: 1,
     watermarkFree: false,
     priorityQueue: false,
     historyDays: 7,
-    features: ['1GB 저장공간', '동시 1건 생성', '워터마크 포함', '7일 히스토리'],
+    features: {
+      ko: ['1GB 저장공간', '동시 1건 생성', '워터마크 포함', '7일 히스토리'],
+      en: ['1GB Storage', '1 Concurrent Generation', 'Watermark Included', '7-Day History'],
+    },
   },
   PLUS: {
-    name: 'Plus',
-    price: 9900,
+    name: { ko: 'Plus', en: 'Plus' },
+    priceKRW: { monthly: 9900, yearly: 99000 },
+    priceUSD: { monthly: 7, yearly: 70 },
     storageQuotaGB: 100,
     concurrentLimit: 3,
     watermarkFree: true,
     priorityQueue: true,
     historyDays: 30,
-    features: ['100GB 저장공간', '동시 3건 생성', '워터마크 제거', '우선 처리', '30일 히스토리'],
+    features: {
+      ko: ['100GB 저장공간', '동시 3건 생성', '워터마크 제거', '우선 처리', '30일 히스토리'],
+      en: ['100GB Storage', '3 Concurrent Generations', 'No Watermark', 'Priority Processing', '30-Day History'],
+    },
   },
   PRO: {
-    name: 'Pro',
-    price: 29900,
+    name: { ko: 'Pro', en: 'Pro' },
+    priceKRW: { monthly: 29900, yearly: 299000 },
+    priceUSD: { monthly: 21, yearly: 210 },
     storageQuotaGB: 500,
     concurrentLimit: 5,
     watermarkFree: true,
     priorityQueue: true,
     historyDays: 90,
-    features: ['500GB 저장공간', '동시 5건 생성', '워터마크 제거', '우선 처리', '90일 히스토리', 'API 접근'],
+    features: {
+      ko: ['500GB 저장공간', '동시 5건 생성', '워터마크 제거', '우선 처리', '90일 히스토리', 'API 접근'],
+      en: ['500GB Storage', '5 Concurrent Generations', 'No Watermark', 'Priority Processing', '90-Day History', 'API Access'],
+    },
   },
   BUSINESS: {
-    name: 'Business',
-    price: 99000,
-    storageQuotaGB: 1000, // 1TB, Fair Use Policy
+    name: { ko: 'Business', en: 'Business' },
+    priceKRW: { monthly: 99000, yearly: 990000 },
+    priceUSD: { monthly: 71, yearly: 710 },
+    storageQuotaGB: 1000,
     concurrentLimit: 10,
     watermarkFree: true,
     priorityQueue: true,
-    historyDays: -1, // 무제한
-    features: ['1TB 저장공간', '동시 10건 생성', '워터마크 제거', '최우선 처리', '무제한 히스토리', 'API 접근', '팀 협업 (5명)'],
+    historyDays: -1,
+    features: {
+      ko: ['1TB 저장공간', '동시 10건 생성', '워터마크 제거', '최우선 처리', '무제한 히스토리', 'API 접근', '팀 협업 (5명)'],
+      en: ['1TB Storage', '10 Concurrent Generations', 'No Watermark', 'Top Priority', 'Unlimited History', 'API Access', 'Team (5 members)'],
+    },
   },
 } as const;
