@@ -72,19 +72,6 @@ export async function POST(req: NextRequest) {
     const ai = getGenAIClient()
     genaiLogger.info('GenAI client initialized successfully', { mode: genAIMode })
 
-    // 2. 크레딧 잔액 확인 (4장 생성 = 40 크레딧)
-    const hasEnough = await hasEnoughCredits(session.user.id, CREDIT_PRICES.GENERATION_4)
-
-    if (!hasEnough) {
-      return NextResponse.json(
-        {
-          error: `크레딧이 부족합니다. 이미지 4장 생성에는 ${CREDIT_PRICES.GENERATION_4} 크레딧이 필요합니다.`,
-          required: CREDIT_PRICES.GENERATION_4
-        },
-        { status: 402 } // Payment Required
-      )
-    }
-
     // 3. 동시 생성 제한 확인
     const concurrencyStatus = await getConcurrencyStatus(session.user.id)
     generationRequestId = await acquireGenerationSlot(session.user.id)
@@ -108,21 +95,23 @@ export async function POST(req: NextRequest) {
       refImage,
       refImages,
       logoImage,
-      maskImage,  // DETAIL_EDIT mode: 편집 영역 마스크 이미지 (빨간 오버레이)
+      maskImage,
       category,
       style,
       aspectRatio,
       mode,
-      creditType = 'auto' as CreditType  // 크레딧 종류 선택 (free/purchased/auto)
+      imageCount: rawImageCount,
+      creditType = 'auto' as CreditType
     } = body
+
+    const imageCount = Math.min(Math.max(Number(rawImageCount) || 1, 1), 4)
 
     if (!prompt) {
       return NextResponse.json({ error: '프롬프트를 입력해주세요.' }, { status: 400 })
     }
 
-    // 4.1 크레딧 종류별 잔액 확인 (선택된 종류에 충분한 크레딧이 있는지)
     const balanceDetail = await getCreditBalanceDetail(session.user.id)
-    const requiredCredits = CREDIT_PRICES.GENERATION_4
+    const requiredCredits = CREDIT_PRICES.GENERATION_PER_IMAGE * imageCount
 
     if (creditType === 'free' && balanceDetail.free < requiredCredits) {
       return NextResponse.json(
@@ -137,6 +126,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error: `유료 크레딧이 부족합니다. (필요: ${requiredCredits}, 보유: ${balanceDetail.purchased})`,
+          required: requiredCredits,
+          balance: balanceDetail
+        },
+        { status: 402 }
+      )
+    } else if (creditType === 'auto' && balanceDetail.total < requiredCredits) {
+      return NextResponse.json(
+        {
+          error: `크레딧이 부족합니다. 이미지 ${imageCount}장 생성에는 ${requiredCredits} 크레딧이 필요합니다.`,
           required: requiredCredits,
           balance: balanceDetail
         },
@@ -263,17 +261,10 @@ CRITICAL RULES:
       return null
     }
 
-    // Gemini 3 Pro Image 4장 병렬 생성
-    // Google AI Studio 모드: 4장 병렬 생성 (60초 이내 완료)
-    // Vertex AI 모드: 속도 느림 (preview 모델이라 115초+ 소요될 수 있음)
     const generationStartTime = Date.now()
-    genaiLogger.info('Starting 4-image parallel generation', { mode: genAIMode, userId: session.user.id })
-    const results = await Promise.all([
-      generateWithGemini(),
-      generateWithGemini(),
-      generateWithGemini(),
-      generateWithGemini(),
-    ])
+    genaiLogger.info('Starting parallel generation', { mode: genAIMode, userId: session.user.id, imageCount })
+    const generationPromises = Array.from({ length: imageCount }, () => generateWithGemini())
+    const results = await Promise.all(generationPromises)
     const generationDuration = Date.now() - generationStartTime
     genaiLogger.info('Image generation completed', { durationMs: generationDuration, imageCount: results.filter(r => r !== null).length })
     base64Images = results.filter((r): r is string => r !== null)
@@ -298,16 +289,16 @@ CRITICAL RULES:
       return NextResponse.json({ error: '이미지 생성에 실패했습니다.' }, { status: 500 })
     }
 
-    // 8. 크레딧 차감 (2K 생성 1회 = 20 크레딧) - 선택한 크레딧 종류로 차감
+    const actualCredits = CREDIT_PRICES.GENERATION_PER_IMAGE * base64Images.length
     const deductResult = await deductCreditsWithType(
       session.user.id,
-      CREDIT_PRICES.GENERATION_4,
+      actualCredits,
       'GENERATION',
-      '이미지 생성 (4장)',
+      `이미지 생성 (${base64Images.length}장)`,
       creditType,
-      { projectId: projectId || 'no-project-id', imageCount: 4, resolution: '2K' }
+      { projectId: projectId || 'no-project-id', imageCount: base64Images.length, resolution: '2K' }
     )
-    genaiLogger.info('Credits deducted', { amount: CREDIT_PRICES.GENERATION_4, creditType: deductResult.usedCreditType, applyWatermark: deductResult.applyWatermark, userId: session.user.id })
+    genaiLogger.info('Credits deducted', { amount: actualCredits, creditType: deductResult.usedCreditType, applyWatermark: deductResult.applyWatermark, userId: session.user.id })
 
     // 9. 사용량 기록 (API 호출 비용 추적)
     const totalCost = base64Images.length * COST_PER_IMAGE_USD

@@ -63,12 +63,10 @@ export const generatePreview = async (
   }
 };
 
-/**
- * Generate multiple image variations (4 images)
- */
 export const generateImageVariations = async (
   request: GenerationRequest,
-  creditType: CreditType = 'auto'
+  creditType: CreditType = 'auto',
+  imageCount: number = 1
 ): Promise<string[]> => {
   try {
     const response = await fetch('/api/generate', {
@@ -80,13 +78,14 @@ export const generateImageVariations = async (
         prompt: buildPrompt(request),
         sourceImage: request.image,
         refImage: request.refImage,
-        refImages: request.refImages, // COMPOSITE mode: multi-image array
+        refImages: request.refImages,
         logoImage: request.logoImage,
-        maskImage: request.maskImage, // DETAIL_EDIT mode: mask overlay image
+        maskImage: request.maskImage,
         category: request.category?.label,
         style: request.style?.label,
         aspectRatio: request.aspectRatio || '1:1',
         mode: request.mode,
+        imageCount,
         creditType,
       }),
     });

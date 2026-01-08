@@ -12,6 +12,7 @@
 import { prisma } from '@/lib/prisma'
 import { ValidationError, InsufficientCreditsError } from '@/lib/errors'
 import { logger } from '@/lib/logger'
+import { CREDIT_BONUS } from '@/lib/constants'
 
 // Prisma 트랜잭션 클라이언트 타입
 type PrismaTransactionClient = Omit<
@@ -21,7 +22,8 @@ type PrismaTransactionClient = Omit<
 
 // 크레딧 가격 상수
 export const CREDIT_PRICES = {
-  GENERATION_4: 20,   // 2K 이미지 4장 생성 = 20 크레딧
+  GENERATION_PER_IMAGE: 5, // 이미지 1장당 5 크레딧
+  GENERATION_4: 20,   // 2K 이미지 4장 생성 = 20 크레딧 (하위 호환용)
   GENERATION_2: 10,   // 추가 2장 생성 = 10 크레딧
   UPSCALE_4K: 10,     // 4K 업스케일링 1회 (1장) = 10 크레딧
 } as const
@@ -516,10 +518,12 @@ export async function grantSignupBonus(
   userId: string,
   signupType: 'general' | 'business'
 ): Promise<{ balance: number }> {
-  const amount = signupType === 'business' ? 100 : 30
+  const amount = signupType === 'business' 
+    ? CREDIT_BONUS.SIGNUP_BUSINESS 
+    : CREDIT_BONUS.SIGNUP_GENERAL
   const description = signupType === 'business'
-    ? '사업자 회원 가입 보너스 (100 크레딧)'
-    : '일반 회원 가입 보너스 (30 크레딧)'
+    ? `사업자 회원 가입 보너스 (${CREDIT_BONUS.SIGNUP_BUSINESS} 크레딧)`
+    : `일반 회원 가입 보너스 (${CREDIT_BONUS.SIGNUP_GENERAL} 크레딧)`
 
   // 30일 후 만료
   const expiresAt = new Date()

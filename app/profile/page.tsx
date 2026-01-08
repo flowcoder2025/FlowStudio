@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect } from 'react';
 import { Settings, BarChart3, History, CheckCircle, Coins, Building2, CreditCard, TrendingUp, Calendar, Gift, Users, Crown, Zap, Sparkles, ChevronRight, Layers } from 'lucide-react';
 import { Header } from '@/components/Header';
@@ -421,14 +423,13 @@ function ProfilePageContent() {
               </div>
             </div>
 
-            {/* 3. 사업자 인증 카드 */}
+            {/* 3. 사업자 인증 카드 - 임시 비활성화 (비용 절감)
             <div className={`rounded-xl border shadow-sm overflow-hidden transition-colors ${
               businessVerification?.verified
                 ? 'bg-white dark:bg-slate-800 border-emerald-300 dark:border-emerald-700'
                 : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
             }`}>
               <div className="p-4">
-                {/* 헤더 */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
@@ -454,7 +455,6 @@ function ProfilePageContent() {
                   )}
                 </div>
 
-                {/* 콘텐츠 */}
                 {businessVerification?.verified ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
@@ -482,11 +482,11 @@ function ProfilePageContent() {
                 )}
               </div>
             </div>
+            */}
 
-            {/* 4. 추천 프로그램 카드 */}
+            {/* 4. 추천 프로그램 카드 - 임시 비활성화 (비용 절감)
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
               <div className="p-4">
-                {/* 헤더 */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
@@ -502,12 +502,10 @@ function ProfilePageContent() {
                   </button>
                 </div>
 
-                {/* 콘텐츠 */}
                 <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
                   친구 초대 + 사업자 인증 시 <strong className="text-purple-600 dark:text-purple-400">각각 50 크레딧</strong>
                 </p>
 
-                {/* 혜택 요약 */}
                 <div className="flex gap-2">
                   <div className="flex-1 bg-purple-50 dark:bg-purple-900/20 rounded-md px-2.5 py-2 text-center">
                     <p className="text-[10px] text-purple-500 dark:text-purple-400 mb-0.5">추천인</p>
@@ -520,6 +518,7 @@ function ProfilePageContent() {
                 </div>
               </div>
             </div>
+            */}
           </div>
 
           {/* 크레딧 사용 내역 카드 */}
@@ -594,8 +593,8 @@ function ProfilePageContent() {
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-300">
               <p><strong>버전:</strong> v1.0.0</p>
               <p><strong>모델:</strong> Gemini 3 Pro</p>
-              <p><strong>생성:</strong> 20 크레딧/4장</p>
-              <p><strong>업스케일:</strong> 10 크레딧/1장</p>
+              <p><strong>생성:</strong> 5 크레딧/장</p>
+              <p><strong>업스케일:</strong> 10 크레딧/장</p>
             </div>
           </div>
         </div>
