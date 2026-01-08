@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 const nextConfig: NextConfig = {
-  output: 'standalone', // Docker/Cloud Run 배포를 위한 standalone 모드
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
@@ -43,4 +46,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

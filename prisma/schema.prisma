@@ -46,6 +46,15 @@ model User {
   referralCode         String?   @unique // 추천 코드 (8자리 영숫자)
   referredBy           String?            // 추천인 ID (가입 시 입력된 추천 코드의 소유자)
 
+  // Paddle Payment Fields
+  paddleCustomerId     String?   @unique // Paddle customer ID
+  paddleSubscriptionId String?   @unique // Paddle subscription ID
+  subscriptionTier     String    @default("FREE") // Quick access to tier
+  subscriptionStatus   String    @default("ACTIVE") // Quick access to status
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
+  creditBalance        Int       @default(0) // Denormalized for quick access
+
   // Relations
   accounts              Account[]
   sessions              Session[]
@@ -288,6 +297,8 @@ model CreditTransaction {
   description     String?   @db.Text
   metadata        Json?     // 결제 정보, 이미지 생성 정보 등 (해상도, 생성 수량 등)
   expiresAt       DateTime? // 만료 시간 (무료 크레딧: 30일, 유료: null)
+  paymentProvider String?   // 'PADDLE', 'PORTONE', 'MANUAL'
+  paymentId       String?   // External payment transaction ID
 
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -297,6 +308,7 @@ model CreditTransaction {
   @@index([type])
   @@index([createdAt])
   @@index([expiresAt])
+  @@index([paymentId])
 }
 
 // ========================================

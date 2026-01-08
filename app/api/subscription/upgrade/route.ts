@@ -4,7 +4,7 @@
  *
  * POST: 구독 업그레이드 (결제 완료 후 호출)
  *
- * 참고: 실제 결제는 PortOne 웹훅에서 처리되어야 합니다.
+ * 참고: 실제 결제는 Paddle 웹훅에서 처리되어야 합니다.
  * 이 API는 테스트용 또는 관리자용으로 사용됩니다.
  */
 
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       session.user.id,
       tier,
       durationMonths,
-      paymentId ? 'PORTONE' : undefined,
+      paymentId ? 'PADDLE' : undefined,
       paymentId
     )
 

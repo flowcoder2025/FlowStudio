@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { Sparkles, Wand2, Layout, FilePenLine, LogIn, Megaphone, SlidersHorizontal, Layers, Gift, Menu, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import { AppMode } from '@/types';
 import { useNavigation } from '@/hooks/useNavigation';
 import { ProfileDropdown } from './ProfileDropdown';
 import { CreditBalance } from './CreditBalance';
+import { LocaleSwitcher } from './LocaleSwitcher';
 
 interface HeaderProps {
   currentMode: AppMode;
@@ -17,6 +19,8 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
   const { navigateToMode, navigateTo } = useNavigation();
   const { data: session, status } = useSession();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const t = useTranslations('navigation');
+  const tCommon = useTranslations('common');
 
   const colorMap: Record<string, { light: string; dark: string }> = {
     indigo: { light: '#4f46e5', dark: '#6366f1' },
@@ -29,13 +33,13 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
   };
 
   const navigationItems = [
-    { mode: AppMode.CREATE, icon: Sparkles, label: '생성', color: 'indigo' },
-    { mode: AppMode.EDIT, icon: Wand2, label: '편집', color: 'emerald' },
-    { mode: AppMode.COMPOSITE, icon: Layers, label: '연출', color: 'cyan' },
-    { mode: AppMode.DETAIL_PAGE, icon: Layout, label: '상세페이지', color: 'blue' },
-    { mode: AppMode.DETAIL_EDIT, icon: FilePenLine, label: '상세 편집', color: 'violet' },
-    { mode: AppMode.POSTER, icon: Megaphone, label: '포스터', color: 'rose' },
-    { mode: AppMode.COLOR_CORRECTION, icon: SlidersHorizontal, label: '색감', color: 'amber' },
+    { mode: AppMode.CREATE, icon: Sparkles, labelKey: 'create', color: 'indigo' },
+    { mode: AppMode.EDIT, icon: Wand2, labelKey: 'edit', color: 'emerald' },
+    { mode: AppMode.COMPOSITE, icon: Layers, labelKey: 'composite', color: 'cyan' },
+    { mode: AppMode.DETAIL_PAGE, icon: Layout, labelKey: 'detailPage', color: 'blue' },
+    { mode: AppMode.DETAIL_EDIT, icon: FilePenLine, labelKey: 'detailEdit', color: 'violet' },
+    { mode: AppMode.POSTER, icon: Megaphone, labelKey: 'poster', color: 'rose' },
+    { mode: AppMode.COLOR_CORRECTION, icon: SlidersHorizontal, labelKey: 'colorCorrection', color: 'amber' },
   ];
 
   const handleMobileNavClick = (mode: AppMode) => {
@@ -51,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
         <button
           onClick={() => setIsMobileMenuOpen(true)}
           className="lg:hidden p-2 min-w-[44px] min-h-[44px] rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
-          aria-label="메뉴 열기"
+          aria-label={t('openMenu')}
         >
           <Menu className="w-6 h-6 text-slate-700 dark:text-slate-200" />
         </button>
@@ -71,13 +75,13 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
           />
           <div className="hidden sm:block">
             <h1 className="font-bold text-lg leading-tight text-slate-800 dark:text-slate-100">FlowStudio</h1>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">AI 이미지 생성</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{t('aiImageGeneration')}</p>
           </div>
         </div>
 
         {/* Desktop Navigation (hidden on mobile) */}
         <nav className="hidden lg:flex gap-0.5 flex-1 justify-center">
-          {navigationItems.map(({ mode, icon: Icon, label, color }) => {
+          {navigationItems.map(({ mode, icon: Icon, labelKey, color }) => {
             const isActive = currentMode === mode;
             return (
               <button
@@ -93,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
                 } : undefined}
               >
                 <Icon className="w-3.5 h-3.5" />
-                <span>{label}</span>
+                <span>{t(labelKey)}</span>
               </button>
             );
           })}
@@ -101,6 +105,8 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
 
         {/* Right Side Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
+          <LocaleSwitcher />
+          
           {/* Authentication UI */}
           {status === 'loading' ? (
             <div className="px-2 py-1 text-xs text-slate-400 dark:text-slate-500">...</div>
@@ -108,26 +114,24 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
             // Logged in state - Credit Balance + Referral CTA + Profile Dropdown
             <div className="flex items-center gap-2">
               <CreditBalance />
-              {/* 레퍼럴 CTA 버튼 */}
+              {/* Referral CTA Button */}
               <button
                 onClick={() => navigateTo('/profile/referral')}
                 className="hidden sm:flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-medium shadow-sm hover:shadow-md transition-all"
-                title="친구 초대하고 크레딧 받기"
+                title={t('getCredits')}
               >
                 <Gift className="w-4 h-4" />
-                <span className="hidden lg:inline">크래딧 받기</span>
+                <span className="hidden lg:inline">{t('getCredits')}</span>
               </button>
               <ProfileDropdown />
             </div>
           ) : (
-            // Not logged in state - Login Button
             <button
               onClick={() => navigateTo('/login')}
               className="flex items-center gap-2 px-3 sm:px-4 py-2 min-h-[44px] rounded-full bg-indigo-600 dark:bg-indigo-500 text-white hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-all text-sm font-medium"
-              title="로그인"
             >
               <LogIn className="w-4 h-4" />
-              <span className="hidden sm:inline">로그인</span>
+              <span className="hidden sm:inline">{tCommon('login')}</span>
             </button>
           )}
         </div>
@@ -161,7 +165,7 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
             <button
               onClick={() => setIsMobileMenuOpen(false)}
               className="p-2 min-w-[40px] min-h-[40px] rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
-              aria-label="메뉴 닫기"
+              aria-label={t('closeMenu')}
             >
               <X className="w-5 h-5 text-slate-600 dark:text-slate-300" />
             </button>
@@ -170,9 +174,9 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
           {/* Navigation Items */}
           <nav className="p-3">
             <p className="px-3 py-2 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-              기능 메뉴
+              {t('features')}
             </p>
-            {navigationItems.map(({ mode, icon: Icon, label, color }) => {
+            {navigationItems.map(({ mode, icon: Icon, labelKey, color }) => {
               const isActive = currentMode === mode;
               return (
                 <button
@@ -188,7 +192,7 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
                   } : undefined}
                 >
                   <Icon className="w-5 h-5" />
-                  <span className="font-medium">{label}</span>
+                  <span className="font-medium">{t(labelKey)}</span>
                 </button>
               );
             })}
@@ -206,7 +210,7 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span className="font-medium">이미지 저장소</span>
+              <span className="font-medium">{t('gallery')}</span>
             </button>
           </div>
         </div>

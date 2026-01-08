@@ -29,7 +29,8 @@ export async function GET() {
         ...subscription,
         tierConfig: {
           name: tierConfig.name,
-          price: tierConfig.price,
+          priceKRW: tierConfig.priceKRW,
+          priceUSD: tierConfig.priceUSD,
           features: tierConfig.features,
           historyDays: tierConfig.historyDays,
         }

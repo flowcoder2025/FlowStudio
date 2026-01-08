@@ -1,10 +1,9 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { LazyImageGridItem } from '@/components/LazyImage';
 import { GalleryPageSkeleton } from '@/components/ImageGridSkeleton';
@@ -37,14 +36,14 @@ import type { UserImage } from '@/app/api/images/list/route';
 
 type FilterMode = 'ALL' | 'CREATE' | 'EDIT' | 'DETAIL_PAGE' | 'DETAIL_EDIT' | 'POSTER' | 'COLOR_CORRECTION';
 
-const MODE_LABELS: Record<FilterMode, { label: string; icon: React.ReactNode }> = {
-  ALL: { label: '전체', icon: <Images className="w-4 h-4" /> },
-  CREATE: { label: '이미지 생성', icon: <Sparkles className="w-4 h-4" /> },
-  EDIT: { label: '간편 편집', icon: <Wand2 className="w-4 h-4" /> },
-  DETAIL_PAGE: { label: '상세페이지', icon: <Layout className="w-4 h-4" /> },
-  DETAIL_EDIT: { label: '상세 편집', icon: <FilePenLine className="w-4 h-4" /> },
-  POSTER: { label: '포스터', icon: <Megaphone className="w-4 h-4" /> },
-  COLOR_CORRECTION: { label: '색감 보정', icon: <SlidersHorizontal className="w-4 h-4" /> },
+const MODE_ICONS: Record<FilterMode, React.ReactNode> = {
+  ALL: <Images className="w-4 h-4" />,
+  CREATE: <Sparkles className="w-4 h-4" />,
+  EDIT: <Wand2 className="w-4 h-4" />,
+  DETAIL_PAGE: <Layout className="w-4 h-4" />,
+  DETAIL_EDIT: <FilePenLine className="w-4 h-4" />,
+  POSTER: <Megaphone className="w-4 h-4" />,
+  COLOR_CORRECTION: <SlidersHorizontal className="w-4 h-4" />,
 };
 
 const ITEMS_PER_PAGE = 30;
@@ -60,8 +59,10 @@ interface StorageUsageData {
 export default function GalleryPage() {
   const { status } = useSession();
   const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
+  const t = useTranslations('gallery');
 
-  // Image data state
   const [images, setImages] = useState<UserImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -69,37 +70,31 @@ export default function GalleryPage() {
   const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
 
-  // Storage usage state
   const [storageUsage, setStorageUsage] = useState<StorageUsageData | null>(null);
   const [storageLoading, setStorageLoading] = useState(true);
 
-  // Filter state
   const [filterMode, setFilterMode] = useState<FilterMode>('ALL');
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
   const [selectedTag, setSelectedTag] = useState<string>('');
   const [availableTags, setAvailableTags] = useState<string[]>([]);
 
-  // UI state
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingTags, setEditingTags] = useState<{ projectId: string; imageIndex: number } | null>(null);
   const [tagInput, setTagInput] = useState('');
-  const [upscalingId, setUpscalingId] = useState<string | null>(null); // 업스케일 중인 이미지 ID
+  const [upscalingId, setUpscalingId] = useState<string | null>(null);
 
-  // Infinite scroll ref
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const currentOffsetRef = useRef(0);
 
-  // Authentication check
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login');
+      router.push(`/${locale}/login`);
     }
-  }, [status, router]);
+  }, [status, router, locale]);
 
-  // Fetch storage usage
   const fetchStorageUsage = useCallback(async () => {
     setStorageLoading(true);
     try {
@@ -117,14 +112,12 @@ export default function GalleryPage() {
     }
   }, []);
 
-  // Load storage usage on mount
   useEffect(() => {
     if (status === 'authenticated') {
       fetchStorageUsage();
     }
   }, [status, fetchStorageUsage]);
 
-  // Fetch images
   const fetchImages = useCallback(async (reset: boolean = false) => {
     if (reset) {
       setLoading(true);
@@ -135,26 +128,26 @@ export default function GalleryPage() {
     setError(null);
 
     try {
-      const params = new URLSearchParams();
+      const urlParams = new URLSearchParams();
       if (filterMode !== 'ALL') {
-        params.set('mode', filterMode);
+        urlParams.set('mode', filterMode);
       }
       if (dateFrom) {
-        params.set('dateFrom', dateFrom);
+        urlParams.set('dateFrom', dateFrom);
       }
       if (dateTo) {
-        params.set('dateTo', dateTo);
+        urlParams.set('dateTo', dateTo);
       }
       if (selectedTag) {
-        params.set('tag', selectedTag);
+        urlParams.set('tag', selectedTag);
       }
-      params.set('limit', String(ITEMS_PER_PAGE));
-      params.set('offset', String(currentOffsetRef.current));
+      urlParams.set('limit', String(ITEMS_PER_PAGE));
+      urlParams.set('offset', String(currentOffsetRef.current));
 
-      const response = await fetch(`/api/images/list?${params.toString()}`);
+      const response = await fetch(`/api/images/list?${urlParams.toString()}`);
 
       if (!response.ok) {
-        throw new Error('이미지 목록을 불러오는데 실패했습니다.');
+        throw new Error(t('fetchError'));
       }
 
       const data = await response.json();
@@ -162,7 +155,6 @@ export default function GalleryPage() {
 
       if (reset) {
         setImages(newImages);
-        // Extract available tags from all images (only on first load/reset)
         const tags = new Set<string>();
         newImages.forEach((img: UserImage) => {
           img.tags.forEach((tag: string) => tags.add(tag));
@@ -170,7 +162,6 @@ export default function GalleryPage() {
         setAvailableTags(Array.from(tags).sort());
       } else {
         setImages(prev => [...prev, ...newImages]);
-        // Add new tags to available tags
         const tags = new Set<string>(availableTags);
         newImages.forEach((img: UserImage) => {
           img.tags.forEach((tag: string) => tags.add(tag));
@@ -182,14 +173,13 @@ export default function GalleryPage() {
       setHasMore(newImages.length === ITEMS_PER_PAGE);
       currentOffsetRef.current += newImages.length;
     } catch (err) {
-      setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.');
+      setError(err instanceof Error ? err.message : t('unknownError'));
     } finally {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [filterMode, dateFrom, dateTo, selectedTag, availableTags]);
+  }, [filterMode, dateFrom, dateTo, selectedTag, availableTags, t]);
 
-  // Initial load and filter changes
   useEffect(() => {
     if (status === 'authenticated') {
       fetchImages(true);
@@ -197,7 +187,6 @@ export default function GalleryPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, filterMode, dateFrom, dateTo, selectedTag]);
 
-  // Infinite scroll observer + 프리페칭
   useEffect(() => {
     if (observerRef.current) {
       observerRef.current.disconnect();
@@ -223,47 +212,6 @@ export default function GalleryPage() {
     };
   }, [hasMore, loading, loadingMore, fetchImages]);
 
-  // [성능 최적화] 다음 페이지 프리페칭 및 이미지 프리로딩
-  useEffect(() => {
-    if (!hasMore || loading || loadingMore || images.length === 0) return;
-
-    // 다음 API 페이지 프리페칭
-    const nextOffset = currentOffsetRef.current;
-    const params = new URLSearchParams();
-    if (filterMode !== 'ALL') params.set('mode', filterMode);
-    if (dateFrom) params.set('dateFrom', dateFrom);
-    if (dateTo) params.set('dateTo', dateTo);
-    if (selectedTag) params.set('tag', selectedTag);
-    params.set('limit', String(ITEMS_PER_PAGE));
-    params.set('offset', String(nextOffset));
-
-    // 브라우저 Idle 시간에 프리페칭
-    if ('requestIdleCallback' in window) {
-      window.requestIdleCallback(() => {
-        fetch(`/api/images/list?${params.toString()}`, {
-          priority: 'low' as RequestPriority
-        }).catch(() => {/* 프리페칭 실패 무시 */});
-      });
-    }
-
-    // 현재 보이는 이미지의 처음 6개 프리로딩
-    const preloadImages = () => {
-      images.slice(0, 6).forEach(img => {
-        const link = document.createElement('link');
-        link.rel = 'preload';
-        link.as = 'image';
-        link.href = img.url;
-        // 이미 존재하는 프리로드 링크는 추가하지 않음
-        if (!document.querySelector(`link[href="${img.url}"]`)) {
-          document.head.appendChild(link);
-        }
-      });
-    };
-
-    preloadImages();
-  }, [images, hasMore, loading, loadingMore, filterMode, dateFrom, dateTo, selectedTag]);
-
-  // Download image
   const handleDownload = async (imageUrl: string, projectTitle: string, index: number) => {
     try {
       const response = await fetch(imageUrl);
@@ -277,13 +225,12 @@ export default function GalleryPage() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch {
-      alert('이미지 다운로드에 실패했습니다.');
+      alert(t('downloadFailed'));
     }
   };
 
-  // Delete project (all images in the project)
   const handleDelete = async (projectId: string) => {
-    if (!confirm('이 프로젝트의 모든 이미지를 삭제하시겠습니까?')) {
+    if (!confirm(t('confirmDelete'))) {
       return;
     }
 
@@ -294,31 +241,27 @@ export default function GalleryPage() {
       });
 
       if (!response.ok) {
-        throw new Error('삭제에 실패했습니다.');
+        throw new Error(t('deleteFailed'));
       }
 
-      // Remove all images from this project
       setImages(prev => prev.filter(img => img.projectId !== projectId));
-
-      // Refresh storage usage after deletion
       fetchStorageUsage();
     } catch (err) {
-      alert(err instanceof Error ? err.message : '삭제 중 오류가 발생했습니다.');
+      alert(err instanceof Error ? err.message : t('deleteError'));
     } finally {
       setDeletingId(null);
     }
   };
 
-  // Upscale image to 4K
   const handleUpscale = async (image: UserImage) => {
     if (image.isUpscaled) {
-      alert('이미 4K로 업스케일된 이미지입니다.');
+      alert(t('already4K'));
       return;
     }
 
     const imageKey = `${image.projectId}-${image.index}`;
 
-    if (!confirm('이 이미지를 4K로 업스케일하시겠습니까? (10 크레딧 소모)')) {
+    if (!confirm(t('confirmUpscale'))) {
       return;
     }
 
@@ -336,10 +279,9 @@ export default function GalleryPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || '업스케일에 실패했습니다.');
+        throw new Error(data.error || t('upscaleFailed'));
       }
 
-      // 업스케일된 이미지로 교체 (URL 업데이트 + isUpscaled 플래그)
       setImages(prev =>
         prev.map(img =>
           img.projectId === image.projectId && img.index === image.index
@@ -348,15 +290,14 @@ export default function GalleryPage() {
         )
       );
 
-      alert('4K 업스케일이 완료되었습니다!');
+      alert(t('upscaleComplete'));
     } catch (err) {
-      alert(err instanceof Error ? err.message : '업스케일 중 오류가 발생했습니다.');
+      alert(err instanceof Error ? err.message : t('upscaleError'));
     } finally {
       setUpscalingId(null);
     }
   };
 
-  // Tag editing
   const startEditingTags = (image: UserImage) => {
     setEditingTags({ projectId: image.projectId, imageIndex: image.index });
     setTagInput(image.tags.join(', '));
@@ -378,19 +319,17 @@ export default function GalleryPage() {
       });
 
       if (!response.ok) {
-        throw new Error('태그 저장에 실패했습니다.');
+        throw new Error(t('tagSaveFailed'));
       }
 
       const data = await response.json();
 
-      // Update local state
       setImages(prev =>
         prev.map(img =>
           img.projectId === projectId ? { ...img, tags: data.project.tags } : img
         )
       );
 
-      // Update available tags
       const newTags = new Set(availableTags);
       tags.forEach(tag => newTags.add(tag));
       setAvailableTags(Array.from(newTags).sort());
@@ -398,7 +337,7 @@ export default function GalleryPage() {
       setEditingTags(null);
       setTagInput('');
     } catch (err) {
-      alert(err instanceof Error ? err.message : '태그 저장 중 오류가 발생했습니다.');
+      alert(err instanceof Error ? err.message : t('tagSaveError'));
     }
   };
 
@@ -407,7 +346,6 @@ export default function GalleryPage() {
     setTagInput('');
   };
 
-  // Reset filters
   const resetFilters = () => {
     setFilterMode('ALL');
     setDateFrom('');
@@ -415,17 +353,15 @@ export default function GalleryPage() {
     setSelectedTag('');
   };
 
-  // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
+    return date.toLocaleDateString(locale === 'ko' ? 'ko-KR' : 'en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
     });
   };
 
-  // Get mode badge color
   const getModeBadgeClass = (mode: string) => {
     switch (mode) {
       case 'CREATE':
@@ -445,9 +381,16 @@ export default function GalleryPage() {
     }
   };
 
+  const getModeLabel = (mode: string) => {
+    try {
+      return t(`modeLabels.${mode}`);
+    } catch {
+      return mode;
+    }
+  };
+
   const hasActiveFilters = filterMode !== 'ALL' || dateFrom || dateTo || selectedTag;
 
-  // [성능 최적화] 세션 로딩 시 스켈레톤 UI 표시
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -462,19 +405,17 @@ export default function GalleryPage() {
       <Header currentMode={AppMode.HOME} />
 
       <main className="max-w-7xl mx-auto px-3 lg:px-4 py-4 lg:py-6">
-        {/* Header */}
         <div className="mb-4">
           <div className="flex items-start justify-between gap-4 mb-1">
             <div>
               <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <ImageIcon className="w-5 h-5 lg:w-6 lg:h-6 text-indigo-600 dark:text-indigo-400" />
-                이미지 저장소
+                {t('pageTitle')}
               </h1>
               <p className="text-xs lg:text-sm text-slate-600 dark:text-slate-400">
-                생성한 모든 이미지를 관리하고 다운로드할 수 있습니다.
+                {t('pageDescription')}
               </p>
             </div>
-            {/* Storage Usage (Compact) */}
             <div className="flex-shrink-0">
               {storageLoading ? (
                 <StorageUsageBarSkeleton variant="compact" />
@@ -492,11 +433,9 @@ export default function GalleryPage() {
           </div>
         </div>
 
-        {/* Filter Section */}
         <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 mb-4">
-          {/* Mode Filter Tabs */}
           <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto">
-            {(Object.keys(MODE_LABELS) as FilterMode[]).map((mode) => (
+            {(['ALL', 'CREATE', 'EDIT', 'DETAIL_PAGE', 'DETAIL_EDIT', 'POSTER', 'COLOR_CORRECTION'] as FilterMode[]).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setFilterMode(mode)}
@@ -506,15 +445,15 @@ export default function GalleryPage() {
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
-                {MODE_LABELS[mode].icon}
-                <span className="hidden sm:inline">{MODE_LABELS[mode].label}</span>
+                {MODE_ICONS[mode]}
+                <span className="hidden sm:inline">{getModeLabel(mode)}</span>
               </button>
             ))}
             <button
               onClick={() => fetchImages(true)}
               disabled={loading}
               className="ml-auto p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-              title="새로고침"
+              title="Refresh"
             >
               <RefreshCw
                 className={`w-3.5 h-3.5 text-slate-500 ${loading ? 'animate-spin' : ''}`}
@@ -522,9 +461,7 @@ export default function GalleryPage() {
             </button>
           </div>
 
-          {/* Date and Tag Filters */}
           <div className="px-3 py-2 flex flex-wrap items-center gap-2">
-            {/* Date Filter */}
             <div className="flex items-center gap-1">
               <Calendar className="w-3 h-3 text-slate-500" />
               <input
@@ -542,7 +479,6 @@ export default function GalleryPage() {
               />
             </div>
 
-            {/* Tag Filter */}
             <div className="flex items-center gap-1">
               <Tag className="w-3 h-3 text-slate-500" />
               <select
@@ -550,7 +486,7 @@ export default function GalleryPage() {
                 onChange={(e) => setSelectedTag(e.target.value)}
                 className="px-1.5 py-0.5 text-[10px] border border-slate-300 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               >
-                <option value="">전체</option>
+                <option value="">{t('allTags')}</option>
                 {availableTags.map((tag) => (
                   <option key={tag} value={tag}>
                     {tag}
@@ -559,55 +495,48 @@ export default function GalleryPage() {
               </select>
             </div>
 
-            {/* Reset Filters */}
             {hasActiveFilters && (
               <button
                 onClick={resetFilters}
                 className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
               >
                 <RotateCcw className="w-2.5 h-2.5" />
-                초기화
+                {t('resetFilters')}
               </button>
             )}
 
-            {/* Image count */}
             <div className="ml-auto text-[10px] text-slate-500 dark:text-slate-400">
-              <span className="font-semibold text-indigo-600 dark:text-indigo-400">{totalCount}</span>개
-              {images.length > 0 && ` (${images.length}개 표시)`}
+              <span className="font-semibold text-indigo-600 dark:text-indigo-400">{totalCount}</span>{t('images')}
+              {images.length > 0 && ` (${images.length}${t('showing')})`}
             </div>
           </div>
         </div>
 
-        {/* Error display */}
         {error && (
           <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-medium text-red-800 dark:text-red-200">오류 발생</p>
+              <p className="text-xs font-medium text-red-800 dark:text-red-200">{t('errorTitle')}</p>
               <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
             </div>
           </div>
         )}
 
-        {/* Loading state */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-10">
             <Loader2 className="w-8 h-8 text-indigo-600 dark:text-indigo-400 animate-spin mb-2" />
-            <p className="text-sm text-slate-600 dark:text-slate-400">이미지를 불러오는 중...</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">{t('loadingImages')}</p>
           </div>
         )}
 
-        {/* Empty state */}
         {!loading && images.length === 0 && (
           <div className="text-center py-10">
             <ImageIcon className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
             <h3 className="text-base font-medium text-slate-900 dark:text-slate-100 mb-1">
-              {hasActiveFilters ? '검색 결과가 없습니다' : '저장된 이미지가 없습니다'}
+              {hasActiveFilters ? t('noResultsTitle') : t('noImagesTitle')}
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              {hasActiveFilters
-                ? '다른 필터 조건을 사용해보세요.'
-                : '이미지를 생성하고 저장하면 여기에 표시됩니다.'}
+              {hasActiveFilters ? t('noResultsDescription') : t('noImagesDescription')}
             </p>
             {hasActiveFilters ? (
               <button
@@ -615,21 +544,20 @@ export default function GalleryPage() {
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
               >
                 <RotateCcw className="w-4 h-4" />
-                필터 초기화
+                {t('resetFilters')}
               </button>
             ) : (
               <button
-                onClick={() => router.push('/create')}
+                onClick={() => router.push(`/${locale}/create`)}
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
               >
                 <Sparkles className="w-4 h-4" />
-                이미지 생성하러 가기
+                {t('goToCreate')}
               </button>
             )}
           </div>
         )}
 
-        {/* Image Grid */}
         {!loading && images.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 lg:gap-3">
             {images.map((image, index) => (
@@ -637,7 +565,6 @@ export default function GalleryPage() {
                 key={`${image.projectId}-${image.index}-${index}`}
                 className="group relative bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-lg transition-all"
               >
-                {/* Image - [성능 최적화] LazyImageGridItem으로 지연 로딩 */}
                 <div
                   className="relative aspect-square bg-slate-100 dark:bg-slate-800 cursor-pointer"
                   onClick={() => setSelectedImage(image.url)}
@@ -651,10 +578,9 @@ export default function GalleryPage() {
                     sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                   />
 
-                  {/* Mode Badge + 4K Badge */}
                   <div className="absolute top-2 left-2 flex gap-1">
                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${getModeBadgeClass(image.mode)}`}>
-                      {MODE_LABELS[image.mode as FilterMode]?.label || image.mode}
+                      {getModeLabel(image.mode)}
                     </span>
                     {image.isUpscaled && (
                       <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm">
@@ -663,13 +589,11 @@ export default function GalleryPage() {
                     )}
                   </div>
 
-                  {/* Hover Overlay */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                     <ZoomIn className="w-8 h-8 text-white" />
                   </div>
                 </div>
 
-                {/* Info */}
                 <div className="p-2">
                   <p className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate mb-1">
                     {image.projectTitle}
@@ -679,14 +603,13 @@ export default function GalleryPage() {
                     {formatDate(image.createdAt)}
                   </p>
 
-                  {/* Tags */}
                   {editingTags?.projectId === image.projectId && editingTags?.imageIndex === image.index ? (
                     <div className="mt-2 space-y-1">
                       <input
                         type="text"
                         value={tagInput}
                         onChange={(e) => setTagInput(e.target.value)}
-                        placeholder="태그 (쉼표 구분)"
+                        placeholder={t('tagPlaceholder')}
                         className="w-full px-2 py-1 text-xs border border-slate-300 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       />
                       <div className="flex gap-1">
@@ -695,14 +618,14 @@ export default function GalleryPage() {
                           className="flex-1 flex items-center justify-center gap-0.5 px-2 py-1 text-[10px] bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
                         >
                           <Check className="w-3 h-3" />
-                          저장
+                          {t('save')}
                         </button>
                         <button
                           onClick={cancelEditingTags}
                           className="flex-1 flex items-center justify-center gap-0.5 px-2 py-1 text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
                         >
                           <X className="w-3 h-3" />
-                          취소
+                          {t('cancel')}
                         </button>
                       </div>
                     </div>
@@ -728,28 +651,26 @@ export default function GalleryPage() {
                       ) : (
                         <span className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
                           <Tag className="w-3 h-3" />
-                          태그 추가
+                          {t('addTag')}
                         </span>
                       )}
                     </button>
                   )}
 
-                  {/* Action Buttons */}
                   <div className="flex gap-1 mt-2">
                     <button
                       onClick={() => handleDownload(image.url, image.projectTitle, image.index)}
                       className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[10px] font-medium bg-indigo-600 dark:bg-indigo-500 text-white rounded hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
                     >
                       <Download className="w-3 h-3" />
-                      다운로드
+                      {t('download')}
                     </button>
-                    {/* 업스케일 버튼 - 4K가 아닌 경우만 표시 */}
                     {!image.isUpscaled && (
                       <button
                         onClick={() => handleUpscale(image)}
                         disabled={upscalingId === `${image.projectId}-${image.index}`}
                         className="px-2 py-1.5 text-[10px] font-medium bg-amber-500 dark:bg-amber-600 text-white rounded hover:bg-amber-600 dark:hover:bg-amber-700 transition-colors disabled:opacity-50"
-                        title="4K로 업스케일 (10 크레딧)"
+                        title={t('upscaleTooltip')}
                       >
                         {upscalingId === `${image.projectId}-${image.index}` ? (
                           <Loader2 className="w-3 h-3 animate-spin" />
@@ -776,21 +697,19 @@ export default function GalleryPage() {
           </div>
         )}
 
-        {/* Infinite scroll trigger */}
         <div ref={loadMoreRef} className="h-20 flex items-center justify-center">
           {loadingMore && (
             <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span className="text-sm">더 불러오는 중...</span>
+              <span className="text-sm">{t('loadingMore')}</span>
             </div>
           )}
           {!loading && !loadingMore && !hasMore && images.length > 0 && (
-            <p className="text-sm text-slate-400 dark:text-slate-500">모든 이미지를 불러왔습니다</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">{t('allLoaded')}</p>
           )}
         </div>
       </main>
 
-      {/* Image Preview Modal */}
       {selectedImage && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"

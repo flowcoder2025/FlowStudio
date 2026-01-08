@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { Megaphone, Sparkles, X, FolderOpen, Upload, Cloud, Loader2, Check, Download } from 'lucide-react';

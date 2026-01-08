@@ -1,8 +1,8 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   SlidersHorizontal,
   Download,
@@ -34,6 +34,10 @@ export default function ColorCorrectionPage() {
 }
 
 function ColorCorrectionPageContent() {
+  const params = useParams();
+  const locale = params.locale as string;
+  const t = useTranslations('colorCorrection');
+
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [isLoading, setIsLoading] = useState(false);
@@ -126,11 +130,11 @@ function ColorCorrectionPageContent() {
         // 고화질 이미지를 새로운 이미지로 설정
         setUploadedImage(upscaled);
         setFilters(DEFAULT_FILTERS); // 필터 초기화
-        alert('고화질 변환이 완료되었습니다!');
+        alert(t('alertUpscaleComplete'));
       }
     } catch (error) {
       console.error('Upscale error:', error);
-      alert(error instanceof Error ? error.message : '고화질 변환에 실패했습니다.');
+      alert(error instanceof Error ? error.message : t('alertUpscaleFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -160,13 +164,13 @@ function ColorCorrectionPageContent() {
       });
 
       if (!response.ok) {
-        throw new Error('이미지 저장소 저장에 실패했습니다.');
+        throw new Error(t('alertSaveFailed'));
       }
 
-      alert('이미지 저장소에 저장되었습니다!');
+      alert(t('alertSaved'));
     } catch (error) {
       console.error('Cloud save error:', error);
-      alert(error instanceof Error ? error.message : '이미지 저장소 저장에 실패했습니다.');
+      alert(error instanceof Error ? error.message : t('alertSaveFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -181,9 +185,9 @@ function ColorCorrectionPageContent() {
           <div>
             <h2 className="text-lg lg:text-xl font-bold mb-1 flex items-center gap-2 text-slate-900 dark:text-slate-100">
               <SlidersHorizontal className="w-5 h-5 text-amber-500 dark:text-amber-400" />
-              색감 보정 스튜디오
+              {t('pageTitle')}
             </h2>
-            <p className="text-slate-600 dark:text-slate-400 text-xs">AI 없이 즉시 색감을 조절합니다 (무료/무제한)</p>
+            <p className="text-slate-600 dark:text-slate-400 text-xs">{t('pageDescription')}</p>
           </div>
 
           {uploadedImage && (
@@ -194,7 +198,7 @@ function ColorCorrectionPageContent() {
               }}
               className="text-xs text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 flex items-center gap-1 transition-colors"
             >
-              <RefreshCw className="w-3 h-3" /> 다른 이미지 열기
+              <RefreshCw className="w-3 h-3" /> {t('openOther')}
             </button>
           )}
         </div>
@@ -209,8 +213,8 @@ function ColorCorrectionPageContent() {
                 onError={(msg) => alert(msg)}
                 colorTheme="amber"
                 icon={<ImageIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
-                placeholder="보정할 이미지를 끌어다 놓거나 클릭해서 업로드하세요"
-                subPlaceholder="PNG, JPG (최대 10MB)"
+                placeholder={t('uploadPlaceholder')}
+                subPlaceholder={t('uploadSubPlaceholder')}
                 imageAlt="To Correct"
                 compact
                 minHeight="min-h-[160px]"
@@ -220,7 +224,7 @@ function ColorCorrectionPageContent() {
               <div className="relative flex items-center my-4">
                 <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
                 <span className="flex-shrink-0 mx-3 text-xs font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 px-2">
-                  또는
+                  {t('or')}
                 </span>
                 <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
               </div>
@@ -230,7 +234,7 @@ function ColorCorrectionPageContent() {
                 className="flex items-center justify-center gap-2 py-2.5 px-4 min-h-[40px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium text-sm transition-colors w-full"
               >
                 <FolderOpen className="w-4 h-4" />
-                이미지 저장소에서 불러오기
+                {t('loadFromGallery')}
               </button>
             </div>
           </div>
@@ -251,7 +255,7 @@ function ColorCorrectionPageContent() {
                     ) : (
                       <Maximize2 className="w-3 h-3" />
                     )}
-                    AI 고화질 변환 (4K)
+                    {t('ai4KUpscale')}
                   </button>
                 </div>
               </div>
@@ -262,7 +266,7 @@ function ColorCorrectionPageContent() {
               {/* Presets */}
               <div className="mb-4">
                 <h3 className="font-semibold text-slate-800 dark:text-slate-100 mb-2 text-xs flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" /> 전문가 필터 프리셋
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" /> {t('presetsTitle')}
                 </h3>
                 <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pr-1">
                   {FILTER_PRESETS.map((preset) => (
@@ -280,14 +284,14 @@ function ColorCorrectionPageContent() {
               {/* Sliders */}
               <div className="space-y-3 flex-1">
                 <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-xs flex items-center gap-1.5 border-t border-slate-100 dark:border-slate-700 pt-3">
-                  <SlidersHorizontal className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" /> 세부 조절
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" /> {t('adjustmentsTitle')}
                 </h3>
 
                 {/* Brightness */}
                 <div>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                      <Sun className="w-3 h-3" /> 밝기
+                      <Sun className="w-3 h-3" /> {t('brightness')}
                     </span>
                     <span className="font-medium text-slate-700 dark:text-slate-300">{filters.brightness}%</span>
                   </div>
@@ -304,7 +308,7 @@ function ColorCorrectionPageContent() {
                 {/* Contrast */}
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-500 dark:text-slate-400">대비</span>
+                    <span className="text-slate-500 dark:text-slate-400">{t('contrast')}</span>
                     <span className="font-medium text-slate-700 dark:text-slate-300">{filters.contrast}%</span>
                   </div>
                   <input
@@ -321,7 +325,7 @@ function ColorCorrectionPageContent() {
                 <div>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                      <Droplets className="w-3 h-3" /> 채도
+                      <Droplets className="w-3 h-3" /> {t('saturation')}
                     </span>
                     <span className="font-medium text-slate-700 dark:text-slate-300">{filters.saturation}%</span>
                   </div>
@@ -338,7 +342,7 @@ function ColorCorrectionPageContent() {
                 {/* Sepia */}
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-500 dark:text-slate-400">따뜻함 (Sepia)</span>
+                    <span className="text-slate-500 dark:text-slate-400">{t('sepia')}</span>
                     <span className="font-medium text-slate-700 dark:text-slate-300">{filters.sepia}%</span>
                   </div>
                   <input
@@ -354,7 +358,7 @@ function ColorCorrectionPageContent() {
                 {/* Blur */}
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-500 dark:text-slate-400">흐림 (Blur)</span>
+                    <span className="text-slate-500 dark:text-slate-400">{t('blur')}</span>
                     <span className="font-medium text-slate-700 dark:text-slate-300">{filters.blur}px</span>
                   </div>
                   <input
@@ -371,7 +375,7 @@ function ColorCorrectionPageContent() {
                 {/* Grayscale */}
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-500 dark:text-slate-400">흑백 (Grayscale)</span>
+                    <span className="text-slate-500 dark:text-slate-400">{t('grayscale')}</span>
                     <span className="font-medium text-slate-700 dark:text-slate-300">{filters.grayscale}%</span>
                   </div>
                   <input
@@ -387,7 +391,7 @@ function ColorCorrectionPageContent() {
                 {/* Hue Rotate */}
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-500 dark:text-slate-400">색조 (Hue)</span>
+                    <span className="text-slate-500 dark:text-slate-400">{t('hue')}</span>
                     <span className="font-medium text-slate-700 dark:text-slate-300">{filters.hueRotate}°</span>
                   </div>
                   <input
@@ -408,13 +412,13 @@ function ColorCorrectionPageContent() {
                     onClick={() => setFilters(DEFAULT_FILTERS)}
                     className="flex-1 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors flex items-center justify-center gap-1"
                   >
-                    <RotateCcw className="w-3.5 h-3.5" /> 초기화
+                    <RotateCcw className="w-3.5 h-3.5" /> {t('reset')}
                   </button>
                   <button
                     onClick={handleDownload}
                     className="flex-[2] py-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-lg transition-colors flex items-center justify-center gap-1.5"
                   >
-                    <Download className="w-3.5 h-3.5" /> 다운로드
+                    <Download className="w-3.5 h-3.5" /> {t('download')}
                   </button>
                 </div>
                 <button
@@ -422,7 +426,7 @@ function ColorCorrectionPageContent() {
                   disabled={isLoading}
                   className="w-full py-2 text-xs font-bold text-white bg-amber-500 dark:bg-amber-600 hover:bg-amber-600 dark:hover:bg-amber-700 rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-lg shadow-amber-200 dark:shadow-amber-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Cloud className="w-3.5 h-3.5" /> 이미지 저장소에 저장
+                  <Cloud className="w-3.5 h-3.5" /> {t('saveToCloud')}
                 </button>
               </div>
             </div>
@@ -430,8 +434,8 @@ function ColorCorrectionPageContent() {
         )}
       </div>
 
-      <LoadingOverlay isVisible={isLoading} message="AI가 고화질로 변환하고 있습니다..." />
-      <LoadingOverlay isVisible={isCompressing} message="이미지를 최적화하고 있습니다..." />
+      <LoadingOverlay isVisible={isLoading} message={t('loadingMessage')} />
+      <LoadingOverlay isVisible={isCompressing} message={t('compressingMessage')} />
 
       <ImageGalleryModal isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} onSelect={handleGallerySelect} />
     </>

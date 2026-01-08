@@ -5,7 +5,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/Toast";
-import { CookieConsent } from "@/components/CookieConsent";
+import { DefaultIntlProvider } from "@/components/DefaultIntlProvider";
 
 const GA_TRACKING_ID = "G-Y1MWW5HX4Y";
 
@@ -125,10 +125,11 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
-            <ToastProvider>
-              {children}
-              <CookieConsent />
-            </ToastProvider>
+            <DefaultIntlProvider>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </DefaultIntlProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
