@@ -24,7 +24,23 @@
     "popular": "Popular",
     "current": "Current",
     "credits": "Credits",
-    "required": "Required"
+    "required": "Required",
+    "imageCount": "{count}",
+    "auto": "Auto",
+    "noWatermark": "No Watermark",
+    "hasWatermark": "Watermark",
+    "noWatermarkLong": "No Watermark",
+    "insufficientCredits": "Insufficient Credits",
+    "creditSelect": "Select Credits",
+    "required": "Required",
+    "paidCredits": "Paid Credits",
+    "freeCredits": "Free Credits",
+    "balance": "Balance",
+    "insufficient": "Insufficient",
+    "autoSelect": "Auto Select",
+    "paidFirst": "Paid First",
+    "paidFirstDesc": "Use paid first, then free if insufficient",
+    "buyPaidForNoWatermark": "Buy paid credits to use without watermark"
   },
   "cookie": {
     "title": "Cookie Notice",
@@ -234,7 +250,8 @@
     "creditBalance": {
       "title": "Credit Balance",
       "purchased": "Paid",
-      "free": "Free",
+    "free": "Free",
+    "paid": "Paid",
       "noWatermark": "No Watermark",
       "hasWatermark": "Has Watermark",
       "watermarkNote": "Watermarks are applied when using free credits. Upgrade your subscription or use paid credits for watermark-free images.",
@@ -348,16 +365,18 @@
     "toast4KSaved": "4K image has been saved to storage.",
     "toastSaveFailed": "Failed to save.",
     "toastSaveError": "An error occurred while saving.",
+    "generateImages": " images",
     "categories": {
-      "product": { "label": "Product Photo", "description": "Clean product images" },
-      "lifestyle": { "label": "Lifestyle", "description": "Products in daily life" },
-      "background": { "label": "Background", "description": "New background synthesis" },
-      "model": { "label": "Model Image", "description": "AI model synthesis" },
-      "banner": { "label": "Banner/Ad", "description": "Marketing banners" },
-      "sns": { "label": "SNS Content", "description": "For Instagram/YouTube" }
+      "product_shot": { "label": "Product Studio Shot", "description": "Clean product photography" },
+      "sns_post": { "label": "SNS Post", "description": "Instagram/Threads style" },
+      "menu_board": { "label": "Menu/Food Photo", "description": "Appetizing presentation" },
+      "thumbnail_banner": { "label": "Thumbnail/Banner", "description": "YouTube/Blog/E-commerce" },
+      "model_fit": { "label": "Virtual Try-on", "description": "AI model synthesis" }
     },
     "aspectRatios": {
       "1:1": { "label": "1:1", "description": "Square" },
+      "3:4": { "label": "3:4", "description": "Portrait poster" },
+      "4:3": { "label": "4:3", "description": "Landscape presentation" },
       "9:16": { "label": "9:16", "description": "Portrait (Story)" },
       "16:9": { "label": "16:9", "description": "Landscape (Banner)" }
     }
@@ -365,6 +384,7 @@
   "edit": {
     "pageTitle": "AI Image Editing",
     "pageDescription": "Edit existing images based on prompts",
+    "generateImages": " images",
     "step1Title": "1. Upload the image to edit",
     "step1Placeholder": "Drag and drop or click to upload an image to edit",
     "or": "or",
@@ -397,6 +417,8 @@
     "toastSaveError": "An error occurred while saving.",
     "aspectRatios": {
       "1:1": { "label": "1:1", "description": "Square" },
+      "3:4": { "label": "3:4", "description": "Portrait poster" },
+      "4:3": { "label": "4:3", "description": "Landscape presentation" },
       "9:16": { "label": "9:16", "description": "Portrait (Story)" },
       "16:9": { "label": "16:9", "description": "Landscape (Banner)" }
     }
@@ -634,6 +656,7 @@
   "composite": {
     "pageTitle": "Image Composite",
     "pageDescription": "Combine multiple images (products, props, backgrounds) into one natural composition",
+    "generateImages": " composites",
     "step1Title": "1. Upload Material Images (max {max})",
     "dropPlaceholder": "Drag and drop or click to upload images",
     "dropPlaceholderSub": "You can select multiple at once",
@@ -674,6 +697,7 @@
   "poster": {
     "pageTitle": "Promotional Poster",
     "pageDescription": "Create promotional/marketing posters using product photos",
+    "generatePosters": " posters",
     "step1Title": "1. Upload Product Photo (Required)",
     "step1Placeholder": "Drag and drop or click to upload product photo",
     "step1SubPlaceholder": "PNG, JPG (max 10MB)",

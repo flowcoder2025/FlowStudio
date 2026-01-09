@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 
 interface ImageCountSelectorProps {
   value: number;
@@ -11,6 +12,8 @@ interface ImageCountSelectorProps {
 const CREDITS_PER_IMAGE = 5;
 
 export function ImageCountSelector({ value, onChange, disabled = false }: ImageCountSelectorProps) {
+  const t = useTranslations('common');
+  
   return (
     <div className="flex items-center gap-1.5">
       {[1, 2, 3, 4].map(num => (
@@ -26,7 +29,7 @@ export function ImageCountSelector({ value, onChange, disabled = false }: ImageC
               : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
           }`}
         >
-          {num}장
+          {t('imageCount', { count: num })}
         </button>
       ))}
     </div>

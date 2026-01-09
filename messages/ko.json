@@ -24,7 +24,23 @@
     "popular": "인기",
     "current": "현재",
     "credits": "크레딧",
-    "required": "필수"
+    "required": "필수",
+    "imageCount": "{count}장",
+    "auto": "자동",
+    "noWatermark": "워터마크 X",
+    "hasWatermark": "워터마크 O",
+    "noWatermarkLong": "워터마크 없음",
+    "insufficientCredits": "크레딧 부족",
+    "creditSelect": "크레딧 선택",
+    "required": "필요",
+    "paidCredits": "유료 크레딧",
+    "freeCredits": "무료 크레딧",
+    "balance": "잔액",
+    "insufficient": "부족",
+    "autoSelect": "자동 선택",
+    "paidFirst": "유료 우선",
+    "paidFirstDesc": "유료 먼저 사용, 부족 시 무료",
+    "buyPaidForNoWatermark": "유료 크레딧 구매 시 워터마크 없이 사용 가능"
   },
   "cookie": {
     "title": "쿠키 사용 안내",
@@ -234,7 +250,8 @@
     "creditBalance": {
       "title": "보유 크레딧",
       "purchased": "유료",
-      "free": "무료",
+    "free": "무료",
+    "paid": "유료",
       "noWatermark": "워터마크 X",
       "hasWatermark": "워터마크 O",
       "watermarkNote": "무료 크레딧 사용 시 워터마크가 적용됩니다. 유료 크레딧을 사용하거나 구독을 업그레이드하면 워터마크 없이 이용할 수 있습니다.",
@@ -348,16 +365,18 @@
     "toast4KSaved": "4K 이미지가 저장소에 저장되었습니다.",
     "toastSaveFailed": "저장에 실패했습니다.",
     "toastSaveError": "저장 중 오류가 발생했습니다.",
+    "generateImages": "장 생성",
     "categories": {
-      "product": { "label": "제품 사진", "description": "깔끔한 제품 이미지" },
-      "lifestyle": { "label": "라이프스타일", "description": "일상 속 제품 연출" },
-      "background": { "label": "배경 생성", "description": "새로운 배경 합성" },
-      "model": { "label": "모델 이미지", "description": "AI 모델 합성" },
-      "banner": { "label": "배너/광고", "description": "마케팅용 배너" },
-      "sns": { "label": "SNS 콘텐츠", "description": "인스타/유튜브용" }
+      "product_shot": { "label": "제품 스튜디오 촬영", "description": "깔끔한 누끼/배경 사진" },
+      "sns_post": { "label": "SNS 포스팅", "description": "인스타/스레드 감성" },
+      "menu_board": { "label": "메뉴판/음식 사진", "description": "먹음직스러운 연출" },
+      "thumbnail_banner": { "label": "썸네일/배너", "description": "유튜브/블로그/쇼핑몰" },
+      "model_fit": { "label": "가상 착용/사용 컷", "description": "AI 모델 합성" }
     },
     "aspectRatios": {
       "1:1": { "label": "1:1", "description": "정사각형" },
+      "3:4": { "label": "3:4", "description": "세로형 포스터" },
+      "4:3": { "label": "4:3", "description": "가로형 프레젠테이션" },
       "9:16": { "label": "9:16", "description": "세로형 (스토리)" },
       "16:9": { "label": "16:9", "description": "가로형 (배너)" }
     }
@@ -365,6 +384,7 @@
   "edit": {
     "pageTitle": "AI 이미지 편집",
     "pageDescription": "기존 이미지를 프롬프트에 따라 수정합니다",
+    "generateImages": "장 생성",
     "step1Title": "1. 편집할 사진을 올려주세요",
     "step1Placeholder": "편집할 이미지를 끌어다 놓거나 클릭해서 업로드하세요",
     "or": "또는",
@@ -397,6 +417,8 @@
     "toastSaveError": "저장 중 오류가 발생했습니다.",
     "aspectRatios": {
       "1:1": { "label": "1:1", "description": "정사각형" },
+      "3:4": { "label": "3:4", "description": "세로형 포스터" },
+      "4:3": { "label": "4:3", "description": "가로형 프레젠테이션" },
       "9:16": { "label": "9:16", "description": "세로형 (스토리)" },
       "16:9": { "label": "16:9", "description": "가로형 (배너)" }
     }
@@ -634,6 +656,7 @@
   "composite": {
     "pageTitle": "이미지 연출/합성",
     "pageDescription": "여러 장의 이미지(제품, 소품, 배경 등)를 자연스럽게 하나로 합칩니다",
+    "generateImages": "장 합성",
     "step1Title": "1. 재료 이미지 업로드 (최대 {max}장)",
     "dropPlaceholder": "이미지를 끌어다 놓거나 클릭해서 업로드하세요",
     "dropPlaceholderSub": "여러 장을 한 번에 선택할 수 있습니다",
@@ -674,6 +697,7 @@
   "poster": {
     "pageTitle": "홍보 포스터 제작",
     "pageDescription": "제품 사진을 활용하여 홍보/마케팅용 포스터를 생성합니다",
+    "generatePosters": "장 생성",
     "step1Title": "1. 제품 사진 업로드 (필수)",
     "step1Placeholder": "제품 사진을 끌어다 놓거나 클릭해서 업로드하세요",
     "step1SubPlaceholder": "PNG, JPG (최대 10MB)",

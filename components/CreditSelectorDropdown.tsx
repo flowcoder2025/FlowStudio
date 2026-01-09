@@ -10,7 +10,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import useSWR from 'swr'
-import { ChevronDown, Check, Coins, Sparkles } from 'lucide-react'
+import { ChevronDown, Check, Coins } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 export type CreditType = 'free' | 'purchased' | 'auto'
 
@@ -55,6 +56,7 @@ export function CreditSelectorDropdown({
   const [isOpen, setIsOpen] = useState(false)
   const [localSelected, setLocalSelected] = useState<CreditType>(selectedType)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const t = useTranslations('common')
 
   // 크레딧 잔액 상세 조회
   const { data: balance, isLoading } = useSWR<CreditBalanceDetail>(
@@ -113,7 +115,7 @@ export function CreditSelectorDropdown({
       <div className={`flex items-center gap-1.5 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg ${className}`}>
         <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
         <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
-          워터마크 없음
+          {t('noWatermarkLong')}
         </span>
         <span className="text-[10px] text-blue-500 dark:text-blue-400">
           ({balance.total})
@@ -128,7 +130,7 @@ export function CreditSelectorDropdown({
       <div className={`flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-900/30 rounded-lg ${className}`}>
         <Coins className="w-3.5 h-3.5 text-red-500" />
         <span className="text-xs font-medium text-red-600 dark:text-red-400">
-          크레딧 부족
+          {t('insufficientCredits')}
         </span>
       </div>
     )
@@ -157,23 +159,23 @@ export function CreditSelectorDropdown({
     switch (localSelected) {
       case 'free':
         return {
-          label: '무료',
-          badge: '워터마크 O',
+          label: t('free'),
+          badge: t('hasWatermark'),
           badgeColor: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300',
           amount: balance.free,
         }
       case 'purchased':
         return {
-          label: '유료',
-          badge: '워터마크 X',
+          label: t('paid'),
+          badge: t('noWatermark'),
           badgeColor: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300',
           amount: balance.purchased,
         }
       case 'auto':
       default:
         return {
-          label: '자동',
-          badge: balance.purchased >= requiredCredits ? '워터마크 X' : '워터마크 O',
+          label: t('auto'),
+          badge: balance.purchased >= requiredCredits ? t('noWatermark') : t('hasWatermark'),
           badgeColor: balance.purchased >= requiredCredits
             ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
             : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300',
@@ -213,8 +215,8 @@ export function CreditSelectorDropdown({
           {/* 헤더 */}
           <div className="px-3 py-2 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-600">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">크레딧 선택</span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400">필요: {requiredCredits}</span>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{t('creditSelect')}</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">{t('required')}: {requiredCredits}</span>
             </div>
           </div>
 
@@ -239,17 +241,17 @@ export function CreditSelectorDropdown({
                 </div>
                 <div className="flex-1 text-left">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-slate-800 dark:text-slate-100">유료 크레딧</span>
+                    <span className="text-sm font-medium text-slate-800 dark:text-slate-100">{t('paidCredits')}</span>
                     <span className="text-[10px] px-1.5 py-0.5 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded">
-                      워터마크 X
+                      {t('noWatermark')}
                     </span>
                   </div>
                   <div className="flex items-center gap-1 mt-0.5">
                     <span className="text-xs text-slate-500 dark:text-slate-400">
-                      잔액: {balance.purchased}
+                      {t('balance')}: {balance.purchased}
                     </span>
                     {purchasedInsufficient && (
-                      <span className="text-[10px] text-red-500">(부족)</span>
+                      <span className="text-[10px] text-red-500">({t('insufficient')})</span>
                     )}
                   </div>
                 </div>
@@ -275,17 +277,17 @@ export function CreditSelectorDropdown({
                 </div>
                 <div className="flex-1 text-left">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-slate-800 dark:text-slate-100">무료 크레딧</span>
+                    <span className="text-sm font-medium text-slate-800 dark:text-slate-100">{t('freeCredits')}</span>
                     <span className="text-[10px] px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded">
-                      워터마크 O
+                      {t('hasWatermark')}
                     </span>
                   </div>
                   <div className="flex items-center gap-1 mt-0.5">
                     <span className="text-xs text-slate-500 dark:text-slate-400">
-                      잔액: {balance.free}
+                      {t('balance')}: {balance.free}
                     </span>
                     {freeInsufficient && (
-                      <span className="text-[10px] text-red-500">(부족)</span>
+                      <span className="text-[10px] text-red-500">({t('insufficient')})</span>
                     )}
                   </div>
                 </div>
@@ -308,13 +310,13 @@ export function CreditSelectorDropdown({
                 </div>
                 <div className="flex-1 text-left">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-slate-800 dark:text-slate-100">자동 선택</span>
+                    <span className="text-sm font-medium text-slate-800 dark:text-slate-100">{t('autoSelect')}</span>
                     <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded">
-                      유료 우선
+                      {t('paidFirst')}
                     </span>
                   </div>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                    유료 먼저 사용, 부족 시 무료
+                    {t('paidFirstDesc')}
                   </span>
                 </div>
               </button>
@@ -325,7 +327,7 @@ export function CreditSelectorDropdown({
           {balance.free > 0 && balance.purchased === 0 && (
             <div className="px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border-t border-slate-200 dark:border-slate-600">
               <p className="text-[10px] text-amber-700 dark:text-amber-300">
-                💡 유료 크레딧 구매 시 워터마크 없이 사용 가능
+                💡 {t('buyPaidForNoWatermark')}
               </p>
             </div>
           )}
