@@ -22,12 +22,12 @@ export default function PrivacyPolicyPage() {
             개인정보 처리방침
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mb-8">
-            시행일: 2025년 1월 1일 | 최종 업데이트: 2025년 1월 10일
+            시행일: 2026년 1월 1일 | 최종 업데이트: 2026년 1월 9일
           </p>
 
           <div className="prose prose-slate dark:prose-invert max-w-none">
             <p className="text-slate-600 dark:text-slate-300 mb-6">
-              주식회사 테크트리아이엔씨(이하 &quot;회사&quot;)는 FlowStudio 서비스(이하 &quot;서비스&quot;) 이용자의 개인정보를 중요시하며,
+              플로우코더(FlowCoder)(이하 &quot;회사&quot;)는 FlowStudio 서비스(이하 &quot;서비스&quot;) 이용자의 개인정보를 중요시하며,
               「개인정보 보호법」 및 관계 법령이 정한 바를 준수하여 개인정보를 보호하고 있습니다.
             </p>
 
@@ -128,8 +128,8 @@ export default function PrivacyPolicyPage() {
               <div className="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg mt-4">
                 <p><strong>개인정보 보호책임자</strong></p>
                 <ul className="mt-2 space-y-1">
-                  <li>성명: 박현일</li>
-                  <li>직위: 대표이사</li>
+                  <li>성명: 조용현, 박현일</li>
+                  <li>직위: 공동대표</li>
                   <li>이메일: flowcoder25@gmail.com</li>
                 </ul>
               </div>
@@ -159,7 +159,7 @@ export default function PrivacyPolicyPage() {
             <div className="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg mt-6">
               <p className="font-medium">부칙</p>
               <ol className="list-decimal pl-6 space-y-2 mt-2">
-                <li>본 개인정보 처리방침은 2025년 1월 1일부터 시행됩니다.</li>
+                <li>본 개인정보 처리방침은 2026년 1월 1일부터 시행됩니다.</li>
                 <li>제11조(AI 서비스 이용 시 데이터 처리)의 규정 중 「인공지능 발전과 신뢰 기반 조성 등에 관한 기본법」에 따른 사항은 해당 법률 시행일인 2026년 1월 22일부터 효력이 발생합니다.</li>
               </ol>
             </div>

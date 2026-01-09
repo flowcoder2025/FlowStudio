@@ -22,14 +22,14 @@ export default function TermsOfServicePage() {
             FlowStudio 서비스 이용약관
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mb-8">
-            시행일: 2025년 1월 1일
+            시행일: 2026년 1월 1일
           </p>
 
           <div className="prose prose-slate dark:prose-invert max-w-none">
             <Chapter title="제1장 총칙">
               <Section title="제1조 (목적)">
                 <p>
-                  이 약관은 주식회사 테크트리아이엔씨(이하 &quot;회사&quot;)가 제공하는 FlowStudio 서비스(이하 &quot;서비스&quot;)를
+                  이 약관은 플로우코더(FlowCoder)(이하 &quot;회사&quot;)가 제공하는 FlowStudio 서비스(이하 &quot;서비스&quot;)를
                   이용함에 있어 회사와 이용자의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
                 </p>
               </Section>
@@ -198,7 +198,7 @@ export default function TermsOfServicePage() {
 
               <Section title="제19조 (분쟁해결)">
                 <ol className="list-decimal pl-6 space-y-2">
-                  <li>회사와 이용자 간에 발생한 분쟁에 관한 소송은 대한민국 대구지방법원을 전속 관할법원으로 합니다.</li>
+                  <li>회사와 이용자 간에 발생한 분쟁에 관한 소송은 대한민국 의정부지방법원을 전속 관할법원으로 합니다.</li>
                   <li>회사와 이용자 간에 제기된 소송에는 대한민국 법을 적용합니다.</li>
                 </ol>
               </Section>
@@ -248,7 +248,7 @@ export default function TermsOfServicePage() {
             <div className="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg mt-8">
               <p className="font-medium">부칙</p>
               <ol className="list-decimal pl-6 space-y-2 mt-2">
-                <li>본 약관은 2025년 1월 1일부터 시행됩니다.</li>
+                <li>본 약관은 2026년 1월 1일부터 시행됩니다.</li>
                 <li>제9장(AI 생성물 및 법령 준수)의 규정 중 「인공지능 발전과 신뢰 기반 조성 등에 관한 기본법」에 따른 의무 조항은 해당 법률 시행일인 2026년 1월 22일부터 효력이 발생합니다.</li>
               </ol>
             </div>

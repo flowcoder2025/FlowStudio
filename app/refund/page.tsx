@@ -22,13 +22,13 @@ export default function RefundPolicyPage() {
             FlowStudio 환불 약관
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mb-8">
-            시행일: 2025년 1월 1일 | 최종 업데이트: 2025년 1월 10일
+            시행일: 2026년 1월 1일 | 최종 업데이트: 2026년 1월 9일
           </p>
 
           <div className="prose prose-slate dark:prose-invert max-w-none">
             <Section title="제1조 (목적)">
               <p>
-                본 약관은 주식회사 테크트리아이엔씨(이하 &quot;회사&quot;)가 제공하는 FlowStudio 서비스(이하 &quot;서비스&quot;)의
+                본 약관은 플로우코더(FlowCoder)(이하 &quot;회사&quot;)가 제공하는 FlowStudio 서비스(이하 &quot;서비스&quot;)의
                 크레딧 구매에 대한 청약철회, 환불 및 제반 절차와 기준을 규정함을 목적으로 합니다.
               </p>
             </Section>
@@ -128,7 +128,7 @@ export default function RefundPolicyPage() {
               <ol className="list-decimal pl-6 space-y-2">
                 <li>회사와 이용자 간에 발생한 환불 관련 분쟁은 상호 협의하여 원만하게 해결하는 것을 원칙으로 합니다.</li>
                 <li>분쟁이 해결되지 않을 경우 한국소비자원에 조정을 신청할 수 있습니다.</li>
-                <li>소송이 필요한 경우 대한민국 대구지방법원을 전속 관할법원으로 합니다.</li>
+                <li>소송이 필요한 경우 대한민국 의정부지방법원을 전속 관할법원으로 합니다.</li>
               </ol>
             </Section>
 
@@ -177,7 +177,7 @@ export default function RefundPolicyPage() {
             <div className="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg mt-6">
               <p className="font-medium">부칙</p>
               <ol className="list-decimal pl-6 space-y-2 mt-2">
-                <li>본 약관은 2025년 1월 1일부터 시행됩니다.</li>
+                <li>본 약관은 2026년 1월 1일부터 시행됩니다.</li>
                 <li>제14조(AI 생성물의 특성에 대한 이해)의 규정 중 「인공지능 발전과 신뢰 기반 조성 등에 관한 기본법」에 따른 사항은 해당 법률 시행일인 2026년 1월 22일부터 효력이 발생합니다.</li>
               </ol>
             </div>
