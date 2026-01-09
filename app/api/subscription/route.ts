@@ -28,10 +28,10 @@ export async function GET() {
       data: {
         ...subscription,
         tierConfig: {
-          name: tierConfig.name,
+          name: tierConfig.name.ko,
           priceKRW: tierConfig.priceKRW,
           priceUSD: tierConfig.priceUSD,
-          features: tierConfig.features,
+          features: tierConfig.features.ko,
           historyDays: tierConfig.historyDays,
         }
       }
