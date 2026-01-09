@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Settings, BarChart3, History, CheckCircle, Coins, Building2, CreditCard, TrendingUp, Calendar, Gift, Layers } from 'lucide-react';
+import { Settings, BarChart3, History, Coins, CreditCard, TrendingUp, Calendar, Layers } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { ProfileSkeleton } from '@/components/ProfileSkeleton';
@@ -18,14 +18,15 @@ interface CreditBalance {
   watermarkFree: boolean;
 }
 
-interface BusinessVerification {
-  verified: boolean;
-  verifiedAt: string | null;
-  bonusClaimed: boolean;
-  businessNumber: string | null;
-  ownerName: string | null;
-  phone: string | null;
-}
+// BusinessVerification 인터페이스 - 임시 비활성화
+// interface BusinessVerification {
+//   verified: boolean;
+//   verifiedAt: string | null;
+//   bonusClaimed: boolean;
+//   businessNumber: string | null;
+//   ownerName: string | null;
+//   phone: string | null;
+// }
 
 interface CreditTransaction {
   id: string;
@@ -74,7 +75,7 @@ function ProfilePageContent() {
   const t = useTranslations('profile');
 
   const [creditBalance, setCreditBalance] = useState<CreditBalance | null>(null);
-  const [businessVerification, setBusinessVerification] = useState<BusinessVerification | null>(null);
+  // const [businessVerification, setBusinessVerification] = useState<BusinessVerification | null>(null); // 임시 비활성화
   const [creditHistory, setCreditHistory] = useState<CreditTransaction[]>([]);
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
@@ -90,18 +91,22 @@ function ProfilePageContent() {
     setLoading(true);
     setStorageLoading(true);
     try {
+      // 핵심 데이터만 먼저 로딩 (빠른 API들)
       await Promise.all([
         fetchCreditBalance(),
-        fetchBusinessVerification(),
+        // fetchBusinessVerification(), // 임시 비활성화
         fetchCreditHistory(),
         fetchSubscription(),
-        fetchStorageUsage()
       ]);
     } catch (error) {
       console.error('Failed to fetch profile data:', error);
     } finally {
       setLoading(false);
     }
+
+    // Storage 사용량은 별도로 로딩 (느린 API - 프로젝트 폴더 순회)
+    // 메인 로딩 완료 후 백그라운드에서 처리
+    fetchStorageUsage();
   };
 
   const fetchCreditBalance = async () => {
@@ -116,17 +121,18 @@ function ProfilePageContent() {
     }
   };
 
-  const fetchBusinessVerification = async () => {
-    try {
-      const response = await fetch('/api/profile/business-verification');
-      if (response.ok) {
-        const data = await response.json();
-        setBusinessVerification(data.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch business verification:', error);
-    }
-  };
+  // fetchBusinessVerification - 임시 비활성화
+  // const fetchBusinessVerification = async () => {
+  //   try {
+  //     const response = await fetch('/api/profile/business-verification');
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       setBusinessVerification(data.data);
+  //     }
+  //   } catch (error) {
+  //     console.error('Failed to fetch business verification:', error);
+  //   }
+  // };
 
   const fetchCreditHistory = async () => {
     try {
@@ -403,98 +409,8 @@ function ProfilePageContent() {
               </div>
             </div>
 
-            <div className={`rounded-xl border shadow-sm overflow-hidden transition-colors ${
-              businessVerification?.verified
-                ? 'bg-white dark:bg-slate-800 border-emerald-300 dark:border-emerald-700'
-                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
-            }`}>
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      businessVerification?.verified
-                        ? 'bg-emerald-500'
-                        : 'bg-slate-200 dark:bg-slate-700'
-                    }`}>
-                      <Building2 className={`w-4 h-4 ${
-                        businessVerification?.verified ? 'text-white' : 'text-slate-500 dark:text-slate-400'
-                      }`} />
-                    </div>
-                    <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100">{t('businessVerification')}</h3>
-                  </div>
-                  {businessVerification?.verified ? (
-                    <CheckCircle className="w-5 h-5 text-emerald-500" />
-                  ) : (
-                    <button
-                      onClick={() => router.push(`/${locale}/profile/business`)}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-md font-medium transition-colors text-xs cursor-pointer"
-                    >
-                      {t('verify')}
-                    </button>
-                  )}
-                </div>
-
-                {businessVerification?.verified ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">{t('verified')}</span>
-                      {businessVerification.bonusClaimed && (
-                        <span className="text-[10px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">
-                          {t('bonusCredits')}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm font-mono text-slate-600 dark:text-slate-400">
-                      {businessVerification.businessNumber?.replace(/(\d{3})(\d{2})(\d{5})/, '$1-$2-$3')}
-                    </p>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
-                      {t('verifyDescription')} <strong className="text-indigo-600 dark:text-indigo-400">100 {t('credits')}</strong> {t('instantBonus')}
-                    </p>
-                    <div className="flex gap-2 text-[10px] text-slate-400 dark:text-slate-500">
-                      <span>• {t('taxVerification')}</span>
-                      <span>• {t('oneTimeOnly')}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                      <Gift className="w-4 h-4 text-white" />
-                    </div>
-                    <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100">{t('referralProgram')}</h3>
-                  </div>
-                  <button
-                    onClick={() => router.push(`/${locale}/profile/referral`)}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-md font-medium transition-colors text-xs cursor-pointer"
-                  >
-                    {t('getCredits')}
-                  </button>
-                </div>
-
-                <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
-                  {t('referralDescription')} <strong className="text-purple-600 dark:text-purple-400">{t('eachCredits')}</strong>
-                </p>
-
-                <div className="flex gap-2">
-                  <div className="flex-1 bg-purple-50 dark:bg-purple-900/20 rounded-md px-2.5 py-2 text-center">
-                    <p className="text-[10px] text-purple-500 dark:text-purple-400 mb-0.5">{t('referrer')}</p>
-                    <p className="text-sm font-bold text-purple-600 dark:text-purple-300">+50</p>
-                  </div>
-                  <div className="flex-1 bg-pink-50 dark:bg-pink-900/20 rounded-md px-2.5 py-2 text-center">
-                    <p className="text-[10px] text-pink-500 dark:text-pink-400 mb-0.5">{t('referee')}</p>
-                    <p className="text-sm font-bold text-pink-600 dark:text-pink-300">+50</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* 사업자 인증 카드 - 임시 비활성화 */}
+            {/* 추천 프로그램 카드 - 임시 비활성화 */}
           </div>
 
           <div className="bg-white dark:bg-slate-800 rounded-xl lg:rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
