@@ -65,7 +65,8 @@
     "closeMenu": "메뉴 닫기",
     "features": "기능 메뉴",
     "getCredits": "크레딧 받기",
-    "aiImageGeneration": "AI 이미지 생성"
+    "aiImageGeneration": "AI 이미지 생성",
+    "pricing": "가격 정책"
   },
   "home": {
     "tagline": "복잡한 포토샵 없이, 전문가급 제품 사진과 홍보물을 30초 만에 만들어보세요.",
@@ -170,7 +171,13 @@
       "privacyPolicy": "개인정보 처리방침",
       "termsOfService": "서비스 이용약관",
       "refundPolicy": "환불약관",
-      "customerService": "고객센터"
+      "customerService": "고객센터",
+      "pricing": "가격 정책"
+    },
+    "pricingCta": {
+      "title": "나에게 맞는 플랜 찾기",
+      "subtitle": "구독 플랜과 크레딧 패키지를 확인하고 비즈니스에 맞는 옵션을 선택하세요",
+      "button": "가격 정책 보기"
     }
   },
   "pricing": {

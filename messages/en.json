@@ -65,7 +65,8 @@
     "closeMenu": "Close menu",
     "features": "Features",
     "getCredits": "Get Credits",
-    "aiImageGeneration": "AI Image Generation"
+    "aiImageGeneration": "AI Image Generation",
+    "pricing": "Pricing"
   },
   "home": {
     "tagline": "Create professional product photos and marketing materials in 30 seconds—no Photoshop needed.",
@@ -170,7 +171,13 @@
       "privacyPolicy": "Privacy Policy",
       "termsOfService": "Terms of Service",
       "refundPolicy": "Refund Policy",
-      "customerService": "Customer Service"
+      "customerService": "Customer Service",
+      "pricing": "Pricing"
+    },
+    "pricingCta": {
+      "title": "Find the Right Plan for You",
+      "subtitle": "Explore subscription plans and credit packages to find the best option for your business",
+      "button": "View Pricing"
     }
   },
   "pricing": {

@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { setRequestLocale } from 'next-intl/server';
 import { Header } from '@/components/Header';
-import { ModeCardsGrid, FAQSection, HomeFooter } from '../components/HomeClientSection';
+import { ModeCardsGrid, PricingCTASection, FAQSection, HomeFooter } from '../components/HomeClientSection';
 import { AppMode } from '@/types';
 
 export default async function HomePage({
@@ -37,6 +37,7 @@ export default async function HomePage({
         <ModeCardsGrid />
       </div>
 
+      <PricingCTASection />
       <FAQSection />
       <HomeFooter />
     </>

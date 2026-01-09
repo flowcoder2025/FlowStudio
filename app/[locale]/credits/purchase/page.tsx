@@ -3,8 +3,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, CreditCard, Loader2, Check, Sparkles } from 'lucide-react';
+import { CreditCard, Loader2, Check, Sparkles } from 'lucide-react';
 import { PaddleProvider, openPaddleCheckout } from '@/components/PaddleProvider';
+import { Header } from '@/components/Header';
+import { AppMode } from '@/types';
 import { CREDIT_PACKAGES, type CreditPackageId } from '@/lib/constants';
 
 type Locale = 'ko' | 'en';
@@ -43,9 +45,8 @@ export default function CreditPurchasePage() {
   const currency = locale === 'ko' ? 'KRW' : 'USD';
 
   const t = {
-    backButton: locale === 'ko' ? '뒤로가기' : 'Go Back',
     title: locale === 'ko' ? '크레딧 충전' : 'Buy Credits',
-    subtitle: locale === 'ko' 
+    subtitle: locale === 'ko'
       ? 'AI 이미지 생성에 필요한 크레딧을 충전하세요'
       : 'Purchase credits for AI image generation',
     currentBalance: locale === 'ko' ? '현재 보유 크레딧' : 'Current Balance',
@@ -161,32 +162,29 @@ export default function CreditPurchasePage() {
 
   return (
     <>
+      <Header currentMode={AppMode.HOME} />
       <PaddleProvider onCheckoutComplete={handleCheckoutComplete} />
-      
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 py-4 lg:py-8">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <button
-            onClick={() => router.back()}
-            className="mb-4 flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors min-h-[44px]"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>{t.backButton}</span>
-          </button>
 
-          <div className="text-center mb-6 lg:mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 mb-3">
-              <CreditCard className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+        {/* Hero Section */}
+        <div className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
+          <div className="max-w-4xl mx-auto px-4 py-10 lg:py-12 text-center">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/20 mb-4">
+              <CreditCard className="w-7 h-7 text-white" />
             </div>
-            <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white mb-2">
+            <h1 className="text-2xl lg:text-3xl font-bold mb-2">
               {t.title}
             </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <p className="text-indigo-100 text-sm lg:text-base max-w-xl mx-auto">
               {t.subtitle}
             </p>
           </div>
+        </div>
+
+        <div className="max-w-4xl mx-auto px-4 py-6 lg:py-8">
 
           {creditBalance && (
-            <div className="mb-6 lg:mb-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 text-white">
+            <div className="mb-6 lg:mb-8 bg-gradient-to-r from-indigo-500 to-blue-600 rounded-xl p-4 text-white">
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
                   <p className="text-white/80 text-xs mb-1">{t.currentBalance}</p>

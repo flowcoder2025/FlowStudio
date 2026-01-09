@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Sparkles, Wand2, Layout, FilePenLine, LogIn, Megaphone, SlidersHorizontal, Layers, Gift, Menu, X } from 'lucide-react';
+import { Sparkles, Wand2, Layout, FilePenLine, LogIn, Megaphone, SlidersHorizontal, Layers, Gift, Menu, X, CreditCard } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { AppMode } from '@/types';
@@ -105,8 +105,17 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
 
         {/* Right Side Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Pricing Link (Desktop) */}
+          <button
+            onClick={() => navigateTo('/pricing')}
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-sm font-medium"
+          >
+            <CreditCard className="w-4 h-4" />
+            <span>{t('pricing') || 'Pricing'}</span>
+          </button>
+
           <LocaleSwitcher />
-          
+
           {/* Authentication UI */}
           {status === 'loading' ? (
             <div className="px-2 py-1 text-xs text-slate-400 dark:text-slate-500">...</div>
@@ -117,7 +126,7 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
               {/* Referral CTA Button */}
               <button
                 onClick={() => navigateTo('/profile/referral')}
-                className="hidden sm:flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-medium shadow-sm hover:shadow-md transition-all"
+                className="hidden sm:flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white text-sm font-medium shadow-sm hover:shadow-md transition-all"
                 title={t('getCredits')}
               >
                 <Gift className="w-4 h-4" />
@@ -199,7 +208,17 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
           </nav>
 
           {/* Bottom Section */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-700">
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-700 space-y-1">
+            <button
+              onClick={() => {
+                navigateTo('/pricing');
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full flex items-center gap-3 px-3 py-3 min-h-[48px] rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+            >
+              <CreditCard className="w-5 h-5" />
+              <span className="font-medium">{t('pricing') || 'Pricing'}</span>
+            </button>
             <button
               onClick={() => {
                 navigateTo('/gallery');

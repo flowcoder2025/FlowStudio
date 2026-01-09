@@ -25,6 +25,7 @@ import {
   SlidersHorizontal,
   ChevronDown,
   HelpCircle,
+  CreditCard,
 } from 'lucide-react'
 
 const ContactModal = dynamic(() => import('@/components/ContactModal').then(mod => mod.ContactModal))
@@ -411,6 +412,37 @@ function AccordionItem({
   )
 }
 
+export function PricingCTASection() {
+  const t = useTranslations('home.pricingCta')
+  const { ref, isVisible } = useIntersectionObserver()
+
+  return (
+    <section
+      ref={ref as React.RefObject<HTMLElement>}
+      className={`max-w-4xl mx-auto px-4 py-8 lg:py-10 animate-on-scroll ${isVisible ? 'is-visible' : ''}`}
+    >
+      <div className="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl p-6 lg:p-8 text-center text-white shadow-lg">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 mb-4">
+          <CreditCard className="w-6 h-6 text-white" />
+        </div>
+        <h2 className="text-xl lg:text-2xl font-bold mb-2">
+          {t('title')}
+        </h2>
+        <p className="text-indigo-100 text-sm lg:text-base mb-5 max-w-xl mx-auto">
+          {t('subtitle')}
+        </p>
+        <Link
+          href="/pricing"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-white text-indigo-600 font-semibold rounded-xl hover:bg-indigo-50 transition-all shadow-md hover:shadow-lg"
+        >
+          {t('button')}
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+    </section>
+  )
+}
+
 export function FAQSection() {
   const t = useTranslations('home.faq')
   const [openIndex, setOpenIndex] = useState<number | null>(null)
@@ -479,6 +511,10 @@ export function HomeFooter() {
               </a>
             </p>
             <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
+              <Link href="/pricing" className="hover:text-slate-700 dark:hover:text-slate-300 hover:underline">
+                {t('pricing')}
+              </Link>
+              <span>/</span>
               <Link href="/privacy" className="hover:text-slate-700 dark:hover:text-slate-300 hover:underline">
                 {t('privacyPolicy')}
               </Link>

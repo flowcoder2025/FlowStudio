@@ -3,8 +3,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
-import { Check, Crown, Zap, Building2, Sparkles, Loader2, ArrowLeft } from 'lucide-react';
+import { Check, Crown, Zap, Building2, Sparkles, Loader2 } from 'lucide-react';
 import { PaddleProvider, openPaddleCheckout } from '@/components/PaddleProvider';
+import { Header } from '@/components/Header';
+import { AppMode } from '@/types';
 import { SUBSCRIPTION_TIERS, type SubscriptionTier, type BillingInterval } from '@/lib/constants';
 
 type Locale = 'ko' | 'en';
@@ -28,9 +30,9 @@ const PLAN_COLORS = {
     icon: 'bg-blue-200 dark:bg-blue-800',
   },
   PRO: {
-    bg: 'bg-purple-50 dark:bg-purple-900/30',
-    border: 'border-purple-200 dark:border-purple-700',
-    icon: 'bg-purple-200 dark:bg-purple-800',
+    bg: 'bg-cyan-50 dark:bg-cyan-900/30',
+    border: 'border-cyan-200 dark:border-cyan-700',
+    icon: 'bg-cyan-200 dark:bg-cyan-800',
   },
   BUSINESS: {
     bg: 'bg-amber-50 dark:bg-amber-900/30',
@@ -96,11 +98,10 @@ export default function SubscriptionPage() {
   const currency = locale === 'ko' ? 'KRW' : 'USD';
 
   const t = {
-    backButton: locale === 'ko' ? '뒤로가기' : 'Go Back',
     title: locale === 'ko' ? '구독 플랜' : 'Subscription Plans',
-    subtitle: locale === 'ko' 
-      ? '더 많은 저장공간과 빠른 처리 속도를 원하시나요?\n구독 플랜을 업그레이드하고 모든 기능을 활용해보세요.'
-      : 'Need more storage and faster processing?\nUpgrade your plan and unlock all features.',
+    subtitle: locale === 'ko'
+      ? '더 많은 저장공간과 빠른 처리 속도를 원하시나요?'
+      : 'Need more storage and faster processing?',
     currentPlan: locale === 'ko' ? '현재 플랜' : 'Current Plan',
     until: locale === 'ko' ? '까지' : 'until',
     credits: locale === 'ko' ? '보유 크레딧' : 'Credits Balance',
@@ -237,41 +238,41 @@ export default function SubscriptionPage() {
 
   return (
     <>
+      <Header currentMode={AppMode.HOME} />
       <PaddleProvider onCheckoutComplete={handleCheckoutComplete} />
-      
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 py-4 lg:py-8 px-4">
-        <div className="max-w-6xl mx-auto">
-          <button
-            onClick={() => router.back()}
-            className="mb-4 flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors min-h-[44px]"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>{t.backButton}</span>
-          </button>
 
-          <div className="text-center mb-6 lg:mb-8">
-            <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white mb-2">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+        {/* Hero Section */}
+        <div className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
+          <div className="max-w-6xl mx-auto px-4 py-10 lg:py-12 text-center">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/20 mb-4">
+              <Crown className="w-7 h-7 text-white" />
+            </div>
+            <h1 className="text-2xl lg:text-3xl font-bold mb-2">
               {t.title}
             </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl mx-auto whitespace-pre-line">
+            <p className="text-indigo-100 text-sm lg:text-base max-w-xl mx-auto">
               {t.subtitle}
             </p>
             {currentSubscription && (
-              <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                <span className="text-xs text-blue-800 dark:text-blue-200">
+              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full">
+                <span className="text-sm text-white">
                   {t.currentPlan}: <strong>{currentSubscription.tierConfig.name[locale]}</strong>
                 </span>
                 {currentSubscription.endDate && (
-                  <span className="text-xs text-blue-600 dark:text-blue-300">
+                  <span className="text-sm text-indigo-200">
                     ({new Date(currentSubscription.endDate).toLocaleDateString(locale === 'ko' ? 'ko-KR' : 'en-US')} {t.until})
                   </span>
                 )}
               </div>
             )}
           </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8">
 
           {creditBalance && (
-            <div className="mb-6 lg:mb-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 text-white">
+            <div className="mb-6 lg:mb-8 bg-gradient-to-r from-indigo-500 to-blue-600 rounded-xl p-4 text-white">
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
                   <p className="text-white/80 text-xs mb-1">{t.credits}</p>
