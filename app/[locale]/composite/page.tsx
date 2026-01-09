@@ -2,13 +2,12 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Layers, Plus, X, FolderOpen, Cloud, Loader2, Check, Download, ImageIcon } from 'lucide-react';
 import { Header } from '@/components/Header';
-import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
-import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { CreditSelectorDropdown, CreditType } from '@/components/CreditSelectorDropdown';
 import { ImageCountSelector, getRequiredCredits } from '@/components/ImageCountSelector';
@@ -16,6 +15,9 @@ import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
 import { COMPOSITE_CATEGORIES, ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, upscaleImage } from '@/services/geminiService';
 import { compressImageWithStats, isFileTooLarge } from '@/lib/utils/imageCompression';
+
+const ResultGrid = dynamic(() => import('@/components/ResultGrid').then(mod => mod.ResultGrid));
+const ImageGalleryModal = dynamic(() => import('@/components/ImageGalleryModal').then(mod => mod.ImageGalleryModal));
 
 const MAX_IMAGES = 10;
 

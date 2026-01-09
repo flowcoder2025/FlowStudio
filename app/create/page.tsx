@@ -4,18 +4,20 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import nextDynamic from 'next/dynamic';
 import { Camera, Sparkles, X, FolderOpen, Cloud, Loader2, Check, Download } from 'lucide-react';
 import { FileDropzone } from '@/components/FileDropzone';
 import { Header } from '@/components/Header';
-import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
-import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { CreditSelectorDropdown, CreditType } from '@/components/CreditSelectorDropdown';
 import { useToast } from '@/components/Toast';
 import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
 import { CATEGORIES, ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, upscaleImage } from '@/services/geminiService';
+
+const ResultGrid = nextDynamic(() => import('@/components/ResultGrid').then(mod => mod.ResultGrid));
+const ImageGalleryModal = nextDynamic(() => import('@/components/ImageGalleryModal').then(mod => mod.ImageGalleryModal));
 
 export default function CreatePage() {
   return (

@@ -94,9 +94,9 @@ function ProfilePageContent() {
         fetchCreditBalance(),
         fetchBusinessVerification(),
         fetchCreditHistory(),
-        fetchSubscription()
+        fetchSubscription(),
+        fetchStorageUsage()
       ]);
-      fetchStorageUsage();
     } catch (error) {
       console.error('Failed to fetch profile data:', error);
     } finally {

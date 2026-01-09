@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -19,11 +20,12 @@ import {
 import { FileDropzone } from '@/components/FileDropzone';
 import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
-import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { AppMode, FilterState } from '@/types';
 import { DEFAULT_FILTERS, FILTER_PRESETS } from '@/lib/constants';
 import { upscaleImage } from '@/services/geminiService';
+
+const ImageGalleryModal = dynamic(() => import('@/components/ImageGalleryModal').then(mod => mod.ImageGalleryModal));
 
 export default function ColorCorrectionPage() {
   return (

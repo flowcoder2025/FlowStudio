@@ -2,20 +2,22 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Megaphone, Sparkles, X, FolderOpen, Upload, Cloud, Loader2, Check, Download } from 'lucide-react';
 import { FileDropzone } from '@/components/FileDropzone';
 import { Header } from '@/components/Header';
-import { ResultGrid } from '@/components/ResultGrid';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
-import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { CreditSelectorDropdown, CreditType } from '@/components/CreditSelectorDropdown';
 import { ImageCountSelector, getRequiredCredits } from '@/components/ImageCountSelector';
 import { AppMode, Category, StyleOption, GenerationRequest } from '@/types';
 import { POSTER_CATEGORIES, ASPECT_RATIOS } from '@/constants';
 import { generateImageVariations, upscaleImage } from '@/services/geminiService';
+
+const ResultGrid = dynamic(() => import('@/components/ResultGrid').then(mod => mod.ResultGrid));
+const ImageGalleryModal = dynamic(() => import('@/components/ImageGalleryModal').then(mod => mod.ImageGalleryModal));
 
 export default function PosterPage() {
   return (

@@ -2,19 +2,21 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import NextImage from 'next/image';
+import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { FilePenLine, Layout, RefreshCw, ZoomIn, ZoomOut, MousePointer2, Hand, Wand2, Type, ImagePlus, Check, FolderOpen, Download, Cloud, Loader2, FilePlus2, Undo2, Redo2 } from 'lucide-react';
 import { FileDropzone } from '@/components/FileDropzone';
 import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
-import { ImageGalleryModal } from '@/components/ImageGalleryModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { CreditSelectorDropdown, CreditType } from '@/components/CreditSelectorDropdown';
 import { useToast } from '@/components/Toast';
 import { AppMode, GenerationRequest } from '@/types';
 import { generatePreview, extractTextFromImage } from '@/services/geminiService';
 import { recordUsage } from '@/services/usageService';
+
+const ImageGalleryModal = dynamic(() => import('@/components/ImageGalleryModal').then(mod => mod.ImageGalleryModal));
 
 type EditModeSub = 'GENERAL' | 'TEXT' | 'REPLACE';
 type ActiveTool = 'SELECT' | 'PAN';

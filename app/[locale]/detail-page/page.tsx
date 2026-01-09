@@ -2,22 +2,25 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import NextImage from 'next/image';
+import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Layout, Camera, Eye, X, Plus, Trash2, Grid, Columns, Square, MoveDiagonal2, FolderOpen, Save, FileText, Clock, FilePlus2, History, RefreshCw } from 'lucide-react';
 import { FileDropzone } from '@/components/FileDropzone';
 import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
-import { ImageGalleryModal } from '@/components/ImageGalleryModal';
-import { ResultGrid } from '@/components/ResultGrid';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { CreditSelectorDropdown, CreditType } from '@/components/CreditSelectorDropdown';
 import { ImageCountSelector, getRequiredCredits } from '@/components/ImageCountSelector';
-import { ConfirmationDialog } from '@/components/ConfirmationDialog';
-import { SessionHistoryModal, HistorySession } from '@/components/SessionHistoryModal';
 import { AppMode, Category, StyleOption, LayoutOption, GenerationRequest } from '@/types';
 import { DETAIL_PAGE_CATEGORIES, LAYOUT_OPTIONS } from '@/constants';
 import { generateImageVariations } from '@/services/geminiService';
+import type { HistorySession } from '@/components/SessionHistoryModal';
+
+const ImageGalleryModal = dynamic(() => import('@/components/ImageGalleryModal').then(mod => mod.ImageGalleryModal));
+const ResultGrid = dynamic(() => import('@/components/ResultGrid').then(mod => mod.ResultGrid));
+const ConfirmationDialog = dynamic(() => import('@/components/ConfirmationDialog').then(mod => mod.ConfirmationDialog));
+const SessionHistoryModal = dynamic(() => import('@/components/SessionHistoryModal').then(mod => mod.SessionHistoryModal));
 
 // Draft type for the list
 interface DraftSummary {

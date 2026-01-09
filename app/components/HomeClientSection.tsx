@@ -12,6 +12,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import {
   Sparkles,
@@ -25,7 +26,8 @@ import {
   ChevronDown,
   HelpCircle,
 } from 'lucide-react'
-import { ContactModal } from '@/components/ContactModal'
+
+const ContactModal = dynamic(() => import('@/components/ContactModal').then(mod => mod.ContactModal))
 
 function FloatingOrbs() {
   return (
