@@ -91,18 +91,22 @@ function ProfilePageContent() {
     setLoading(true);
     setStorageLoading(true);
     try {
+      // 핵심 데이터만 먼저 로딩 (빠른 API들)
       await Promise.all([
         fetchCreditBalance(),
         // fetchBusinessVerification(), // 임시 비활성화
         fetchCreditHistory(),
         fetchSubscription(),
-        fetchStorageUsage()
       ]);
     } catch (error) {
       console.error('Failed to fetch profile data:', error);
     } finally {
       setLoading(false);
     }
+
+    // Storage 사용량은 별도로 로딩 (느린 API - 프로젝트 폴더 순회)
+    // 메인 로딩 완료 후 백그라운드에서 처리
+    fetchStorageUsage();
   };
 
   const fetchCreditBalance = async () => {
@@ -277,7 +281,7 @@ function ProfilePageContent() {
         </div>
 
         <div className="grid gap-3 lg:gap-4">
-          {/* 4개 카드 - 2x2 그리드 */}
+          {/* 2개 카드 - 2열 그리드 (사업자 인증, 추천 프로그램 비활성화됨) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* 1. 크레딧 잔액 카드 */}
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
