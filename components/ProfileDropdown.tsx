@@ -16,8 +16,7 @@ import {
   Layout,
   FilePenLine,
   Megaphone,
-  SlidersHorizontal,
-  Gift
+  SlidersHorizontal
 } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
@@ -140,8 +139,8 @@ export const ProfileDropdown: React.FC = () => {
 
           {/* 설정 섹션 */}
           <div className="py-2">
-            {/* 크레딧 받기 (레퍼럴) - 강조 스타일 */}
-            <button
+            {/* 크레딧 받기 (레퍼럴) - 임시 비활성화 */}
+            {/* <button
               onClick={() => {
                 navigateTo('/profile/referral');
                 setIsOpen(false);
@@ -151,7 +150,7 @@ export const ProfileDropdown: React.FC = () => {
               <Gift className="w-5 h-5" />
               <span className="flex-1 text-left">친구 초대로 크래딧 받기</span>
               <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full">+150</span>
-            </button>
+            </button> */}
 
             {/* 다크모드 토글 */}
             <button

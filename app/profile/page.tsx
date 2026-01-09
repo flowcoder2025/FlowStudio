@@ -3,11 +3,11 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
-import { Settings, BarChart3, History, CheckCircle, Coins, Building2, CreditCard, TrendingUp, Calendar, Gift, Users, Crown, Zap, Sparkles, ChevronRight, Layers } from 'lucide-react';
+import { Settings, BarChart3, History, Coins, CreditCard, TrendingUp, Calendar, Crown, Zap, Sparkles, Layers } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { ProfileSkeleton } from '@/components/ProfileSkeleton';
-import { StorageUsageBar, StorageUsageBarSkeleton } from '@/components/StorageUsageBar';
+// StorageUsageBar 사용 안함 - 인라인 구현으로 대체됨
 import { AppMode } from '@/types';
 import { useRouter } from 'next/navigation';
 

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Sparkles, Wand2, Layout, FilePenLine, LogIn, Megaphone, SlidersHorizontal, Layers, Gift, Menu, X, CreditCard } from 'lucide-react';
+import { Sparkles, Wand2, Layout, FilePenLine, LogIn, Megaphone, SlidersHorizontal, Layers, Menu, X, CreditCard } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { AppMode } from '@/types';
@@ -123,15 +123,15 @@ export const Header: React.FC<HeaderProps> = ({ currentMode }) => {
             // Logged in state - Credit Balance + Referral CTA + Profile Dropdown
             <div className="flex items-center gap-2">
               <CreditBalance />
-              {/* Referral CTA Button */}
-              <button
+              {/* Referral CTA Button - 임시 비활성화 */}
+              {/* <button
                 onClick={() => navigateTo('/profile/referral')}
                 className="hidden sm:flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white text-sm font-medium shadow-sm hover:shadow-md transition-all"
                 title={t('getCredits')}
               >
                 <Gift className="w-4 h-4" />
                 <span className="hidden lg:inline">{t('getCredits')}</span>
-              </button>
+              </button> */}
               <ProfileDropdown />
             </div>
           ) : (

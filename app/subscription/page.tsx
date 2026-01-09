@@ -11,6 +11,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Check, Crown, Zap, Building2, Sparkles, Loader2, ArrowLeft } from 'lucide-react'
 import * as PortOne from '@portone/browser-sdk/v2'
 
@@ -441,9 +442,9 @@ export default function SubscriptionPage() {
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
             크레딧은 구독과 별도로 충전하여 사용할 수 있습니다.{' '}
-            <a href="/credits/purchase" className="text-blue-600 hover:underline">
+            <Link href="/credits/purchase" className="text-blue-600 hover:underline">
               크레딧 충전하기 →
-            </a>
+            </Link>
           </p>
         </div>
       </div>
