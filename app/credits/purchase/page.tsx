@@ -55,8 +55,8 @@ const CREDIT_PACKAGES = [
 // 계좌 정보
 const BANK_INFO = {
   bank: '카카오뱅크',
-  account: '3333-01-3481868',
-  holder: '박현일'
+  account: '3333-36-1632501',
+  holder: '플로우코더(FlowCoder)'
 }
 
 // 내부 API 엔드포인트 (웹훅 프록시)
