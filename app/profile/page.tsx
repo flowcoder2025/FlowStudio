@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
-import { Settings, BarChart3, History, Coins, CreditCard, TrendingUp, Calendar, Crown, Zap, Sparkles, Layers } from 'lucide-react';
+import { Settings, BarChart3, History, Coins, CreditCard, TrendingUp, Calendar, Layers } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { ProfileSkeleton } from '@/components/ProfileSkeleton';
@@ -20,14 +20,15 @@ interface CreditBalance {
   watermarkFree: boolean;
 }
 
-interface BusinessVerification {
-  verified: boolean;
-  verifiedAt: string | null;
-  bonusClaimed: boolean;
-  businessNumber: string | null;
-  ownerName: string | null;
-  phone: string | null;
-}
+// BusinessVerification 인터페이스 - 임시 비활성화
+// interface BusinessVerification {
+//   verified: boolean;
+//   verifiedAt: string | null;
+//   bonusClaimed: boolean;
+//   businessNumber: string | null;
+//   ownerName: string | null;
+//   phone: string | null;
+// }
 
 interface CreditTransaction {
   id: string;
@@ -74,7 +75,7 @@ function ProfilePageContent() {
 
   // 상태 관리
   const [creditBalance, setCreditBalance] = useState<CreditBalance | null>(null);
-  const [businessVerification, setBusinessVerification] = useState<BusinessVerification | null>(null);
+  // const [businessVerification, setBusinessVerification] = useState<BusinessVerification | null>(null); // 임시 비활성화
   const [creditHistory, setCreditHistory] = useState<CreditTransaction[]>([]);
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
@@ -92,7 +93,7 @@ function ProfilePageContent() {
     try {
       await Promise.all([
         fetchCreditBalance(),
-        fetchBusinessVerification(),
+        // fetchBusinessVerification(), // 임시 비활성화
         fetchCreditHistory(),
         fetchSubscription(),
         fetchStorageUsage()
@@ -116,17 +117,18 @@ function ProfilePageContent() {
     }
   };
 
-  const fetchBusinessVerification = async () => {
-    try {
-      const response = await fetch('/api/profile/business-verification');
-      if (response.ok) {
-        const data = await response.json();
-        setBusinessVerification(data.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch business verification:', error);
-    }
-  };
+  // fetchBusinessVerification - 임시 비활성화
+  // const fetchBusinessVerification = async () => {
+  //   try {
+  //     const response = await fetch('/api/profile/business-verification');
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       setBusinessVerification(data.data);
+  //     }
+  //   } catch (error) {
+  //     console.error('Failed to fetch business verification:', error);
+  //   }
+  // };
 
   const fetchCreditHistory = async () => {
     try {
@@ -171,20 +173,20 @@ function ProfilePageContent() {
     }
   };
 
-  // 구독 티어 아이콘 선택
-  const getTierIcon = (tier: string, size: 'sm' | 'md' = 'sm') => {
-    const cls = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5';
-    switch (tier) {
-      case 'BUSINESS':
-        return <Crown className={`${cls} text-amber-500`} />;
-      case 'PRO':
-        return <Crown className={`${cls} text-purple-500`} />;
-      case 'PLUS':
-        return <Zap className={`${cls} text-blue-500`} />;
-      default:
-        return <Sparkles className={`${cls} text-slate-500`} />;
-    }
-  };
+  // 구독 티어 아이콘 선택 - 사용되지 않음, 주석처리
+  // const getTierIcon = (tier: string, size: 'sm' | 'md' = 'sm') => {
+  //   const cls = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5';
+  //   switch (tier) {
+  //     case 'BUSINESS':
+  //       return <Crown className={`${cls} text-amber-500`} />;
+  //     case 'PRO':
+  //       return <Crown className={`${cls} text-purple-500`} />;
+  //     case 'PLUS':
+  //       return <Zap className={`${cls} text-blue-500`} />;
+  //     default:
+  //       return <Sparkles className={`${cls} text-slate-500`} />;
+  //   }
+  // };
 
   // 구독 티어 배경색 선택
   const getTierBgColor = (tier: string) => {
@@ -270,7 +272,7 @@ function ProfilePageContent() {
           </div>
           <div>
             <h2 className="text-lg lg:text-xl font-bold text-slate-900 dark:text-slate-100">프로필 및 설정</h2>
-            <p className="text-xs lg:text-sm text-slate-500 dark:text-slate-400">크레딧, 구독, 사업자 인증 관리</p>
+            <p className="text-xs lg:text-sm text-slate-500 dark:text-slate-400">크레딧 및 구독 관리</p>
           </div>
         </div>
 
