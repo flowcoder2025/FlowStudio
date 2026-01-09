@@ -1,22 +1,24 @@
 /**
- * Image Generation API - Vertex AI Gemini 3 Pro Image (Base64 Return)
+ * Image Generation API - Multi-Provider Support (Base64 Return)
  * /api/generate
  *
  * Returns base64 images directly for preview.
  * Images are NOT auto-saved to storage - users must explicitly save via /api/images/save.
  * This reduces storage costs by only saving images the user actually wants.
  *
+ * 지원 프로바이더:
+ * 1. Google GenAI (Google AI Studio / Vertex AI)
+ * 2. OpenRouter (Gemini, FLUX, GPT-5 Image 등)
+ *
+ * 환경 변수: IMAGE_PROVIDER
+ * - 'google' (기본값): Google GenAI 사용
+ * - 'openrouter': OpenRouter API 사용 (분당 생성량 제한 우회)
+ *
  * 모델: Gemini 3 Pro Image (Nano Banana Pro)
  * - Google의 최신 최고 품질 이미지 생성 모델
  * - 모든 모드(CREATE, EDIT, DETAIL_EDIT)에서 통일 사용
- * - generateContent API로 1장 생성 (Vertex AI 타임아웃 방지)
  * - 2K 해상도 (2048x2048) 기본 출력
  * - JPEG 출력으로 파일 크기 최적화 (PNG 대비 50-70% 감소)
- *
- * 변경사항 (Vertex AI 전환):
- * - 사용자 개별 API 키 불필요 → 중앙화된 Vertex AI 인증
- * - Application Default Credentials (ADC) 사용
- * - 크레딧 시스템은 동일하게 유지
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -25,11 +27,14 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { genaiLogger } from '@/lib/logger'
 import { apiErrorResponse } from '@/lib/errors'
-import { ensureBase64, extractBase64Data } from '@/lib/utils/imageConverter'
-import { getGenAIClient, getGenAIMode, VERTEX_AI_MODELS } from '@/lib/vertexai'
+import { ensureBase64 } from '@/lib/utils/imageConverter'
 import {
-  hasEnoughCredits,
-  deductForGeneration,
+  generateImage,
+  getImageProvider,
+  getProviderMode,
+  getEstimatedCostPerImage,
+} from '@/lib/imageProvider'
+import {
   deductCreditsWithType,
   getCreditBalanceDetail,
   CREDIT_PRICES,
@@ -44,10 +49,7 @@ import { getUserTier } from '@/lib/utils/subscriptionManager'
 import { SUBSCRIPTION_TIERS } from '@/lib/constants'
 import { addWatermarkBatch } from '@/lib/utils/watermark'
 
-// 모델 선택: 모드에 따라 자동 선택
-// - Google AI Studio: gemini-2.0-flash-exp (빠름)
-// - Vertex AI: gemini-3-pro-image-preview (최고 품질)
-const COST_PER_IMAGE_USD = 0.14
+// 비용은 프로바이더별로 동적 계산 (getEstimatedCostPerImage() 사용)
 
 // Next.js 15+ App Router Configuration
 // Note: Body size is now handled by imageConverter.ts compression (target: <2MB)
@@ -66,11 +68,11 @@ export async function POST(req: NextRequest) {
   let generationRequestId: string | null = null
 
   try {
-    // 1. GenAI 클라이언트 초기화 (Google AI Studio 또는 Vertex AI)
-    const genAIMode = getGenAIMode()
-    genaiLogger.debug('Initializing GenAI client', { mode: genAIMode, userId: session.user.id })
-    const ai = getGenAIClient()
-    genaiLogger.info('GenAI client initialized successfully', { mode: genAIMode })
+    // 1. 이미지 프로바이더 확인 (Google GenAI 또는 OpenRouter)
+    const imageProvider = getImageProvider()
+    const providerMode = getProviderMode()
+    genaiLogger.debug('Image provider initialized', { provider: imageProvider, mode: providerMode, userId: session.user.id })
+    genaiLogger.info('Image provider ready', { provider: imageProvider, mode: providerMode })
 
     // 3. 동시 생성 제한 확인
     const concurrencyStatus = await getConcurrencyStatus(session.user.id)
@@ -180,90 +182,31 @@ export async function POST(req: NextRequest) {
       processedMaskImage = await ensureBase64(maskImage)
     }
 
-    // 6. Gemini 3 Pro Image 모델로 이미지 생성
-    // Google AI Studio / Vertex AI 모두 동일 모델 사용
+    // 6. 이미지 생성 (통합 프로바이더 사용)
+    // Google GenAI (Google AI Studio / Vertex AI) 또는 OpenRouter
     let base64Images: string[] = []
-    const imageModel = VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE
 
-    genaiLogger.debug('Using model', { model: imageModel, mode: genAIMode })
+    genaiLogger.debug('Starting image generation', { provider: imageProvider, mode: providerMode })
 
-    const generateWithGemini = async () => {
-      const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = []
-
-      // Source image 추가 (EDIT, DETAIL_EDIT, POSTER 모드)
-      if (processedSourceImage) {
-        const { mimeType, data } = extractBase64Data(processedSourceImage)
-        parts.push({ inlineData: { mimeType, data } })
-      }
-
-      // DETAIL_EDIT 모드: 마스크 이미지 추가 (편집 영역 시각화)
-      // 마스크 이미지는 원본과 동일 크기이며, 편집할 영역이 빨간색 반투명 오버레이로 표시됨
-      if (processedMaskImage && mode === 'DETAIL_EDIT') {
-        const { mimeType, data } = extractBase64Data(processedMaskImage)
-        parts.push({ inlineData: { mimeType, data } })
-      }
-
-      // COMPOSITE 모드: 다중 이미지 배열 추가
-      if (processedRefImages.length > 0) {
-        for (const img of processedRefImages) {
-          const { mimeType, data } = extractBase64Data(img)
-          parts.push({ inlineData: { mimeType, data } })
-        }
-      }
-
-      // Reference image 또는 Logo image 추가 (단일 이미지 모드)
-      const secondaryImage = processedRefImage || processedLogoImage
-      if (secondaryImage && processedRefImages.length === 0) {
-        const { mimeType, data } = extractBase64Data(secondaryImage)
-        parts.push({ inlineData: { mimeType, data } })
-      }
-
-      // DETAIL_EDIT 모드에서 마스크 사용 시 프롬프트 보강
-      let enhancedPrompt = finalPrompt
-      if (processedMaskImage && mode === 'DETAIL_EDIT') {
-        enhancedPrompt = `You are given two images:
-1. The ORIGINAL image (first image)
-2. The MASK image (second image) - shows a RED semi-transparent overlay on the area to be edited
-
-TASK: Edit ONLY the area marked with the RED overlay in the original image.
-
-User's edit instruction: ${finalPrompt}
-
-CRITICAL RULES:
-- ONLY modify the red-highlighted area
-- Keep ALL other areas EXACTLY the same as the original
-- Blend the edited area seamlessly with surroundings
-- Match lighting, colors, and style of the original
-- Output the complete edited image at the same size as the original`
-      }
-
-      // Text prompt 추가
-      parts.push({ text: enhancedPrompt })
-
-      // 공식 문서 기반 설정: https://ai.google.dev/gemini-api/docs/gemini-3
-      const response = await ai.models.generateContent({
-        model: imageModel,
-        contents: parts,
-        config: {
-          imageConfig: {
-            aspectRatio: aspectRatio || '1:1',
-            imageSize: '2K', // 2048px 해상도 (기본값 1K=1024px)
-          },
-        },
-      })
-
-      // Gemini 응답에서 이미지 추출
-      for (const part of response.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
-        }
-      }
-      return null
+    // 이미지 생성 옵션 구성
+    const generationOptions = {
+      aspectRatio: (aspectRatio || '1:1') as '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '21:9' | '9:21' | '3:2' | '2:3' | '5:4' | '4:5',
+      imageSize: '2K' as const,
+      sourceImage: processedSourceImage,
+      refImage: processedRefImage,
+      refImages: processedRefImages,
+      logoImage: processedLogoImage,
+      maskImage: processedMaskImage,
+      mode,
     }
 
     const generationStartTime = Date.now()
-    genaiLogger.info('Starting parallel generation', { mode: genAIMode, userId: session.user.id, imageCount })
-    const generationPromises = Array.from({ length: imageCount }, () => generateWithGemini())
+    genaiLogger.info('Starting parallel generation', { provider: imageProvider, mode: providerMode, userId: session.user.id, imageCount })
+
+    // 병렬로 이미지 생성
+    const generationPromises = Array.from({ length: imageCount }, () =>
+      generateImage(finalPrompt, generationOptions)
+    )
     const results = await Promise.all(generationPromises)
     const generationDuration = Date.now() - generationStartTime
     genaiLogger.info('Image generation completed', { durationMs: generationDuration, imageCount: results.filter(r => r !== null).length })
@@ -301,7 +244,8 @@ CRITICAL RULES:
     genaiLogger.info('Credits deducted', { amount: actualCredits, creditType: deductResult.usedCreditType, applyWatermark: deductResult.applyWatermark, userId: session.user.id })
 
     // 9. 사용량 기록 (API 호출 비용 추적)
-    const totalCost = base64Images.length * COST_PER_IMAGE_USD
+    const costPerImage = getEstimatedCostPerImage()
+    const totalCost = base64Images.length * costPerImage
     const today = new Date().toISOString().split('T')[0]
 
     await prisma.usageStats.upsert({
@@ -402,8 +346,10 @@ CRITICAL RULES:
       userId: session.user.id,
       operation: 'image-generation',
       metadata: {
-        genaiMode: getGenAIMode(),
-        hasApiKey: !!process.env.GOOGLE_API_KEY,
+        imageProvider: getImageProvider(),
+        providerMode: getProviderMode(),
+        hasGoogleApiKey: !!process.env.GOOGLE_API_KEY,
+        hasOpenRouterApiKey: !!process.env.OPENROUTER_API_KEY,
         hasCloudProject: !!process.env.GOOGLE_CLOUD_PROJECT,
       }
     })

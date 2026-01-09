@@ -66,6 +66,13 @@
     - Shimmer 애니메이션 placeholder
   - **프로필 페이지 최적화**: 크레딧 내역 5개만 조회 (10 → 5)
   - **크레딧 내역 전체 페이지**: `/credits/history` 신설 (페이지네이션, 필터)
+- **OpenRouter 통합 (Phase 10)** 🌐:
+  - **다중 프로바이더 지원**: Google GenAI와 OpenRouter 중 선택 가능
+  - `lib/openrouter.ts`: OpenRouter API 클라이언트 (이미지 생성용)
+  - `lib/imageProvider.ts`: 통합 이미지 생성 프로바이더 (Google/OpenRouter 추상화)
+  - **분당 생성량 제한 우회**: Google AI Studio의 rate limit 대안으로 OpenRouter 사용 가능
+  - **환경 변수**: `IMAGE_PROVIDER=openrouter` + `OPENROUTER_API_KEY` 설정
+  - **동일 모델 사용**: OpenRouter도 `google/gemini-3-pro-image-preview` 모델 사용 (동일 품질)
 
 ## 기술 스택
 
@@ -74,7 +81,7 @@
 - **파일 저장소**: Supabase Storage (@supabase/supabase-js)
 - **인증**: NextAuth.js 4.24.13 with Google OAuth + Kakao OAuth
 - **스타일링**: Tailwind CSS 4 with @tailwindcss/postcss
-- **AI 통합**: Google GenAI 듀얼 모드 - Gemini 3 Pro Image Preview (@google/genai)
+- **AI 통합**: 다중 프로바이더 - Google GenAI / OpenRouter (Gemini 3 Pro Image Preview)
 - **타입 안정성**: TypeScript 5 (strict mode)
 
 ## 개발 명령어
@@ -184,14 +191,15 @@ await requireImageProjectEditor(userId, projectId) // 권한 없으면 에러
 - 사용자 가입 시 자동으로 소유자 권한 생성 및 보너스 크레딧 지급
 
 **이미지 생성** (`/api/generate/route.ts`):
-- **Vertex AI 통합**: Google Cloud Vertex AI로 중앙화된 인증 (Phase 6)
+- **다중 프로바이더 지원**: Google GenAI 또는 OpenRouter 선택 가능 (Phase 10)
+- **통합 프로바이더**: `lib/imageProvider.ts`로 프로바이더 추상화
 - **병렬 생성**: 4장의 이미지를 `Promise.all`로 동시 생성
 - **응답 형식**: **base64 이미지 배열** (Storage 저장 없음)
   - 사용자가 원하는 이미지만 선택 저장 가능 (`/api/images/save`)
   - Storage 비용 절감 및 사용자 선택권 강화
-- **사용량 추적**: UsageStats와 GenerationHistory에 자동 기록 (이미지당 $0.14)
+- **사용량 추적**: UsageStats와 GenerationHistory에 자동 기록 (프로바이더별 비용 계산)
 - **크레딧 차감**: 4장 생성 = 20 크레딧 (생성 시점 차감)
-- **모델**: `gemini-3-pro-image-preview` (Gemini 3 Pro Image)
+- **모델**: `gemini-3-pro-image-preview` (Google/OpenRouter 동일)
 - **기능 지원**:
   - 텍스트 프롬프트 기반 생성
   - 소스 이미지 (EDIT, DETAIL_EDIT 모드)
@@ -285,7 +293,11 @@ KAKAO_CLIENT_SECRET="<Kakao Developers → 보안 → Client Secret>"
 # 콜백 URL: http://localhost:3000/api/auth/callback/kakao (로컬)
 #           https://your-domain.com/api/auth/callback/kakao (프로덕션)
 
-# Google GenAI (이미지 생성) - 듀얼 모드 지원
+# 이미지 생성 프로바이더 선택
+# IMAGE_PROVIDER: "google" (기본값) 또는 "openrouter" (분당 제한 우회)
+IMAGE_PROVIDER="google"
+
+# [옵션 1] Google GenAI - 듀얼 모드 지원
 # GOOGLE_GENAI_USE_VERTEXAI: true=Vertex AI, false=Google AI Studio (기본값)
 GOOGLE_GENAI_USE_VERTEXAI="false"
 
@@ -296,6 +308,10 @@ GOOGLE_API_KEY="<https://aistudio.google.com/apikey 에서 생성>"
 # GOOGLE_CLOUD_PROJECT="your-google-cloud-project-id"
 # GOOGLE_CLOUD_LOCATION="global"
 # Vercel 배포 시: GOOGLE_APPLICATION_CREDENTIALS='{"type":"service_account",...}'
+
+# [옵션 2] OpenRouter - Google AI Studio 분당 제한 우회
+# IMAGE_PROVIDER="openrouter" 설정 시 필요
+# OPENROUTER_API_KEY="<https://openrouter.ai/keys 에서 생성>"
 
 # PortOne V2 (결제 시스템)
 NEXT_PUBLIC_PORTONE_STORE_ID="..."      # 스토어 ID
