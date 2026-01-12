@@ -232,6 +232,11 @@ export async function generateImageWithOpenRouter(
   }
 
   try {
+    // 이미지 생성 타임아웃 설정 (90초)
+    // Vercel 120초 한도 내에서 후처리 시간 확보
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 90000)
+
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -241,7 +246,10 @@ export async function generateImageWithOpenRouter(
         'X-Title': 'FlowStudio',
       },
       body: JSON.stringify(requestBody),
+      signal: controller.signal,
     })
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -280,6 +288,11 @@ export async function generateImageWithOpenRouter(
     })}`)
     return null
   } catch (error) {
+    // 타임아웃 에러 처리
+    if (error instanceof Error && error.name === 'AbortError') {
+      logError('[OpenRouter] Generation timeout (90s)')
+      throw new Error('OpenRouter 이미지 생성 오류: 타임아웃 (90초)')
+    }
     logError(`[OpenRouter] Generation failed: ${error instanceof Error ? error.message : String(error)}`)
     throw error
   }

@@ -250,7 +250,7 @@ async function generateWithOpenRouter(
 ): Promise<string | null> {
   const {
     aspectRatio = '1:1',
-    imageSize = '2K',
+    imageSize: requestedSize = '2K',
     sourceImage,
     refImage,
     refImages,
@@ -259,8 +259,14 @@ async function generateWithOpenRouter(
     mode,
   } = options
 
+  // OpenRouter는 Vercel 타임아웃(120초) 문제로 1K 고정
+  // - 로컬: 2K도 ~10초로 빠름
+  // - Vercel: 2K는 ~100초, 1K는 ~42초
+  // - 후처리(워터마크, 크레딧) 시간 확보 필요
+  const imageSize = '1K' as const
+
   log('[ImageProvider/OpenRouter] Generating image')
-  genaiLogger.debug('OpenRouter generation options', { imageSize, aspectRatio, mode, hasSourceImage: !!sourceImage, hasRefImages: !!(refImages && refImages.length > 0) })
+  genaiLogger.info('OpenRouter generation', { requestedSize, actualSize: imageSize, aspectRatio, mode, reason: 'Vercel timeout constraint' })
 
   // DETAIL_EDIT 모드에서 마스크 사용 시 프롬프트 보강
   let enhancedPrompt = prompt
