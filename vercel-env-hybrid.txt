@@ -1,0 +1,6 @@
+# Vercel 환경변수 - 하이브리드 프로바이더 설정
+# Vercel Dashboard → Settings → Environment Variables 에서 추가
+
+IMAGE_PROVIDER=hybrid
+IMAGE_HYBRID_THRESHOLD=2
+IMAGE_FALLBACK_ENABLED=true

@@ -280,7 +280,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     ],
     contactPoint: {
       '@type': 'ContactPoint',
-      email: 'flowcoder25@gmail.com',
+      email: 'admin@flow-coder.com',
       contactType: 'Customer Service',
       availableLanguage: 'Korean'
     }
@@ -545,7 +545,7 @@ export default function RootLayout({
     logo: 'https://flowstudio.com/FlowStudio_icon-removebg.png',
     contactPoint: {
       '@type': 'ContactPoint',
-      email: 'flowcoder25@gmail.com',
+      email: 'admin@flow-coder.com',
       contactType: 'Customer Service',
       availableLanguage: 'Korean'
     }

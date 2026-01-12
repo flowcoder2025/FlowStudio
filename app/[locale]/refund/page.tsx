@@ -100,7 +100,7 @@ function KoreanContent() {
       <Section title="제6조 (환불 절차)">
         <div className="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg">
           <p className="font-medium mb-2">환불 신청 방법</p>
-          <p>이메일: flowcoder25@gmail.com</p>
+          <p>이메일: admin@flow-coder.com</p>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">운영시간: 평일 10:00 - 18:00 (주말 및 공휴일 제외)</p>
         </div>
         <p className="mt-4">환불 신청 시 다음 정보가 필요합니다:</p>
@@ -196,7 +196,7 @@ function KoreanContent() {
       <div className="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-lg border border-indigo-200 dark:border-indigo-700 mt-8">
         <p className="font-medium text-indigo-800 dark:text-indigo-200">문의처</p>
         <p className="mt-2 text-indigo-700 dark:text-indigo-300">
-          환불 관련 문의: <a href="mailto:flowcoder25@gmail.com" className="underline">flowcoder25@gmail.com</a>
+          환불 관련 문의: <a href="mailto:admin@flow-coder.com" className="underline">admin@flow-coder.com</a>
         </p>
         <p className="text-sm text-indigo-600 dark:text-indigo-400 mt-1">
           운영시간: 평일 10:00 - 18:00 (주말 및 공휴일 제외)
@@ -262,7 +262,7 @@ function EnglishContent() {
       <Section title="Article 6 (Refund Procedure)">
         <div className="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg">
           <p className="font-medium mb-2">How to Request a Refund</p>
-          <p>Email: flowcoder25@gmail.com</p>
+          <p>Email: admin@flow-coder.com</p>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Business Hours: Weekdays 10:00 - 18:00 KST (Excluding weekends and holidays)</p>
         </div>
         <p className="mt-4">The following information is required for refund requests:</p>
@@ -358,7 +358,7 @@ function EnglishContent() {
       <div className="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-lg border border-indigo-200 dark:border-indigo-700 mt-8">
         <p className="font-medium text-indigo-800 dark:text-indigo-200">Contact</p>
         <p className="mt-2 text-indigo-700 dark:text-indigo-300">
-          Refund inquiries: <a href="mailto:flowcoder25@gmail.com" className="underline">flowcoder25@gmail.com</a>
+          Refund inquiries: <a href="mailto:admin@flow-coder.com" className="underline">admin@flow-coder.com</a>
         </p>
         <p className="text-sm text-indigo-600 dark:text-indigo-400 mt-1">
           Business Hours: Weekdays 10:00 - 18:00 KST (Excluding weekends and holidays)

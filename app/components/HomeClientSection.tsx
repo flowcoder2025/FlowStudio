@@ -504,10 +504,10 @@ export function HomeFooter() {
             <p>
               {t('contact')}:{' '}
               <a
-                href="mailto:flowcoder25@gmail.com"
+                href="mailto:admin@flow-coder.com"
                 className="text-indigo-600 dark:text-indigo-400 hover:underline"
               >
-                flowcoder25@gmail.com
+                admin@flow-coder.com
               </a>
             </p>
             <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">

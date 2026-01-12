@@ -94,7 +94,7 @@ export default function RootLayout({
     logo: 'https://studio.flow-coder.com/FlowStudio_icon-removebg.png',
     contactPoint: {
       '@type': 'ContactPoint',
-      email: 'flowcoder25@gmail.com',
+      email: 'admin@flow-coder.com',
       contactType: 'Customer Service',
       availableLanguage: 'Korean'
     }

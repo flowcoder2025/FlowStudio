@@ -159,7 +159,7 @@ function KoreanContent() {
           <ul className="mt-2 space-y-1">
             <li>성명: 조용현, 박현일</li>
             <li>직위: 공동대표</li>
-            <li>이메일: flowcoder25@gmail.com</li>
+            <li>이메일: admin@flow-coder.com</li>
           </ul>
         </div>
       </Section>
@@ -302,7 +302,7 @@ function EnglishContent() {
           <ul className="mt-2 space-y-1">
             <li>Name: Yonghyun Cho, Hyunil Park</li>
             <li>Position: Co-CEOs</li>
-            <li>Email: flowcoder25@gmail.com</li>
+            <li>Email: admin@flow-coder.com</li>
           </ul>
         </div>
       </Section>
