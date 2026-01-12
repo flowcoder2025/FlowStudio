@@ -8,6 +8,11 @@
  * 환경 변수: IMAGE_PROVIDER
  * - 'google' (기본값): Google GenAI 사용 (GOOGLE_GENAI_USE_VERTEXAI로 세부 모드 선택)
  * - 'openrouter': OpenRouter API 사용 (OPENROUTER_API_KEY 필요)
+ * - 'hybrid': 하이브리드 전략 (배치 크기 기반 자동 선택 + fallback)
+ *
+ * 하이브리드 전략 환경 변수:
+ * - IMAGE_HYBRID_THRESHOLD: 이 값 이상 배치 시 OpenRouter 우선 (기본값: 2)
+ * - IMAGE_FALLBACK_ENABLED: 실패 시 다른 프로바이더로 재시도 (기본값: true)
  */
 
 import { getGenAIClient, getGenAIMode, VERTEX_AI_MODELS } from './vertexai'
@@ -31,6 +36,122 @@ const logError = (message: string) => console.error(message)
  * 이미지 프로바이더 타입
  */
 export type ImageProvider = 'google' | 'openrouter'
+
+/**
+ * 이미지 프로바이더 전략 타입
+ */
+export type ImageProviderStrategy = 'google' | 'openrouter' | 'hybrid'
+
+/**
+ * 배치 생성 결과 (프로바이더 메타데이터 포함)
+ */
+export interface BatchGenerationResult {
+  /** 생성된 이미지 배열 (base64 data URL) */
+  images: string[]
+  /** 실제 사용된 프로바이더 */
+  provider: ImageProvider
+  /** fallback 사용 여부 */
+  fallbackUsed: boolean
+}
+
+/**
+ * Google GenAI 설정 여부 확인
+ */
+export function isGoogleConfigured(): boolean {
+  const useVertexAI = process.env.GOOGLE_GENAI_USE_VERTEXAI === 'true'
+  if (useVertexAI) {
+    return !!process.env.GOOGLE_CLOUD_PROJECT
+  }
+  return !!process.env.GOOGLE_API_KEY
+}
+
+/**
+ * Rate limit 관련 에러인지 확인
+ */
+export function isRateLimitError(error: unknown): boolean {
+  if (error instanceof Error) {
+    const msg = error.message.toLowerCase()
+    return (
+      msg.includes('rate') ||
+      msg.includes('quota') ||
+      msg.includes('resource exhausted') ||
+      msg.includes('429') ||
+      msg.includes('too many requests') ||
+      msg.includes('limit exceeded')
+    )
+  }
+  return false
+}
+
+/**
+ * 현재 프로바이더 전략 확인
+ */
+export function getProviderStrategy(): ImageProviderStrategy {
+  const strategy = process.env.IMAGE_PROVIDER?.toLowerCase()
+  if (strategy === 'openrouter' || strategy === 'hybrid') {
+    return strategy
+  }
+  return 'google' // 기본값
+}
+
+/**
+ * 배치 크기 기반 프로바이더 선택 (Hybrid 전략)
+ *
+ * @param batchCount 생성할 이미지 수
+ * @returns 선택된 프로바이더
+ */
+export function selectProviderForBatch(batchCount: number = 1): ImageProvider {
+  const strategy = getProviderStrategy()
+
+  // 단일 프로바이더 모드
+  if (strategy === 'google') {
+    return isGoogleConfigured() ? 'google' : 'openrouter'
+  }
+  if (strategy === 'openrouter') {
+    return isOpenRouterConfigured() ? 'openrouter' : 'google'
+  }
+
+  // Hybrid 모드: 배치 크기 기반 선택
+  const threshold = parseInt(process.env.IMAGE_HYBRID_THRESHOLD || '2', 10)
+
+  // 배치 크기가 threshold 이상이면 OpenRouter 우선 (rate limit 방지)
+  if (batchCount >= threshold) {
+    if (isOpenRouterConfigured()) {
+      log(`[ImageProvider/Hybrid] Batch ${batchCount} >= threshold ${threshold} → OpenRouter`)
+      return 'openrouter'
+    }
+    log(`[ImageProvider/Hybrid] OpenRouter not configured, falling back to Google`)
+    return 'google'
+  }
+
+  // 단일/소량 요청은 Google 우선 (빠른 응답)
+  if (isGoogleConfigured()) {
+    log(`[ImageProvider/Hybrid] Batch ${batchCount} < threshold ${threshold} → Google`)
+    return 'google'
+  }
+  log(`[ImageProvider/Hybrid] Google not configured, falling back to OpenRouter`)
+  return 'openrouter'
+}
+
+/**
+ * Fallback 활성화 여부 확인
+ */
+function isFallbackEnabled(): boolean {
+  return process.env.IMAGE_FALLBACK_ENABLED !== 'false'
+}
+
+/**
+ * 대체 프로바이더 반환
+ */
+function getAlternativeProvider(current: ImageProvider): ImageProvider | null {
+  if (current === 'google' && isOpenRouterConfigured()) {
+    return 'openrouter'
+  }
+  if (current === 'openrouter' && isGoogleConfigured()) {
+    return 'google'
+  }
+  return null
+}
 
 /**
  * 현재 이미지 프로바이더 확인
@@ -86,6 +207,20 @@ export interface ImageGenerationOptions {
 }
 
 /**
+ * 특정 프로바이더로 이미지 생성 (내부용)
+ */
+async function generateWithProvider(
+  provider: ImageProvider,
+  prompt: string,
+  options: ImageGenerationOptions
+): Promise<string | null> {
+  if (provider === 'openrouter') {
+    return generateWithOpenRouter(prompt, options)
+  }
+  return generateWithGoogle(prompt, options)
+}
+
+/**
  * 통합 이미지 생성 함수
  *
  * 환경 변수에 따라 Google GenAI 또는 OpenRouter를 사용하여 이미지 생성
@@ -110,7 +245,39 @@ export async function generateImage(
 }
 
 /**
- * 배치 이미지 생성 (여러 장 동시 생성)
+ * Fallback을 포함한 단일 이미지 생성 (내부용)
+ *
+ * Rate limit 에러 발생 시 대체 프로바이더로 재시도
+ */
+async function generateImageWithFallback(
+  primaryProvider: ImageProvider,
+  prompt: string,
+  options: ImageGenerationOptions
+): Promise<{ image: string | null; provider: ImageProvider; fallbackUsed: boolean }> {
+  try {
+    const image = await generateWithProvider(primaryProvider, prompt, options)
+    return { image, provider: primaryProvider, fallbackUsed: false }
+  } catch (error) {
+    // Fallback이 활성화되어 있고, rate limit 에러인 경우에만 재시도
+    if (isFallbackEnabled() && isRateLimitError(error)) {
+      const alternativeProvider = getAlternativeProvider(primaryProvider)
+      if (alternativeProvider) {
+        log(`[ImageProvider/Fallback] ${primaryProvider} rate limited, trying ${alternativeProvider}`)
+        try {
+          const image = await generateWithProvider(alternativeProvider, prompt, options)
+          return { image, provider: alternativeProvider, fallbackUsed: true }
+        } catch (fallbackError) {
+          logError(`[ImageProvider/Fallback] ${alternativeProvider} also failed: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`)
+          throw fallbackError
+        }
+      }
+    }
+    throw error
+  }
+}
+
+/**
+ * 배치 이미지 생성 (여러 장 동시 생성) - 하이브리드 전략 지원
  *
  * @param prompt 이미지 생성 프롬프트
  * @param count 생성할 이미지 수 (1-4)
@@ -122,22 +289,62 @@ export async function generateImagesBatch(
   count: number = 4,
   options: ImageGenerationOptions = {}
 ): Promise<string[]> {
+  const result = await generateImagesBatchWithMeta(prompt, count, options)
+  return result.images
+}
+
+/**
+ * 배치 이미지 생성 (메타데이터 포함) - 하이브리드 전략 지원
+ *
+ * @param prompt 이미지 생성 프롬프트
+ * @param count 생성할 이미지 수 (1-4)
+ * @param options 생성 옵션
+ * @returns 생성 결과 (이미지 배열 + 프로바이더 정보)
+ */
+export async function generateImagesBatchWithMeta(
+  prompt: string,
+  count: number = 4,
+  options: ImageGenerationOptions = {}
+): Promise<BatchGenerationResult> {
   const imageCount = Math.min(Math.max(count, 1), 4)
-  const provider = getImageProvider()
 
-  log(`[ImageProvider] Batch generating ${imageCount} images with provider: ${provider}`)
+  // 하이브리드 전략: 배치 크기 기반 프로바이더 선택
+  const primaryProvider = selectProviderForBatch(imageCount)
 
-  // 병렬로 이미지 생성
+  log(`[ImageProvider] Batch generating ${imageCount} images with provider: ${primaryProvider} (strategy: ${getProviderStrategy()})`)
+
+  // 병렬로 이미지 생성 (각각 fallback 포함)
   const promises = Array.from({ length: imageCount }, () =>
-    generateImage(prompt, options)
+    generateImageWithFallback(primaryProvider, prompt, options)
   )
 
-  const results = await Promise.all(promises)
-  const validImages = results.filter((r): r is string => r !== null)
+  // Promise.allSettled로 개별 실패 허용
+  const settledResults = await Promise.allSettled(promises)
 
-  log(`[ImageProvider] Batch complete: ${validImages.length}/${imageCount} images`)
+  const validImages: string[] = []
+  let usedProvider: ImageProvider = primaryProvider
+  let fallbackUsed = false
 
-  return validImages
+  for (const result of settledResults) {
+    if (result.status === 'fulfilled' && result.value.image) {
+      validImages.push(result.value.image)
+      // 마지막으로 성공한 프로바이더 기록
+      usedProvider = result.value.provider
+      if (result.value.fallbackUsed) {
+        fallbackUsed = true
+      }
+    } else if (result.status === 'rejected') {
+      logError(`[ImageProvider] Individual generation failed: ${result.reason}`)
+    }
+  }
+
+  log(`[ImageProvider] Batch complete: ${validImages.length}/${imageCount} images (provider: ${usedProvider}, fallback: ${fallbackUsed})`)
+
+  return {
+    images: validImages,
+    provider: usedProvider,
+    fallbackUsed,
+  }
 }
 
 /**
@@ -314,10 +521,16 @@ CRITICAL RULES:
  */
 export function getProviderStatus(): {
   provider: ImageProvider
+  strategy: ImageProviderStrategy
   mode: string
   configured: boolean
+  hybridConfig: {
+    threshold: number
+    fallbackEnabled: boolean
+  }
   details: Record<string, boolean>
 } {
+  const strategy = getProviderStrategy()
   const provider = getImageProvider()
   const mode = getProviderMode()
 
@@ -327,8 +540,11 @@ export function getProviderStatus(): {
     openRouterApiKey: !!process.env.OPENROUTER_API_KEY,
   }
 
+  // Hybrid 모드에서는 둘 중 하나라도 설정되어 있으면 configured
   let configured = false
-  if (provider === 'openrouter') {
+  if (strategy === 'hybrid') {
+    configured = details.googleApiKey || details.googleCloudProject || details.openRouterApiKey
+  } else if (provider === 'openrouter') {
     configured = details.openRouterApiKey
   } else {
     // Google 프로바이더
@@ -339,7 +555,12 @@ export function getProviderStatus(): {
     }
   }
 
-  return { provider, mode, configured, details }
+  const hybridConfig = {
+    threshold: parseInt(process.env.IMAGE_HYBRID_THRESHOLD || '2', 10),
+    fallbackEnabled: isFallbackEnabled(),
+  }
+
+  return { provider, strategy, mode, configured, hybridConfig, details }
 }
 
 /**
