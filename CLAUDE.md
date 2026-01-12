@@ -73,6 +73,12 @@
   - **분당 생성량 제한 우회**: Google AI Studio의 rate limit 대안으로 OpenRouter 사용 가능
   - **환경 변수**: `IMAGE_PROVIDER=openrouter` + `OPENROUTER_API_KEY` 설정
   - **동일 모델 사용**: OpenRouter도 `google/gemini-3-pro-image-preview` 모델 사용 (동일 품질)
+- **하이브리드 프로바이더 전략 (Phase 10.1)** 🔀:
+  - **배치 크기 기반 자동 선택**: 소량은 Google (빠름), 대량은 OpenRouter (rate limit 우회)
+  - **Rate Limit 자동 감지**: 429, quota exceeded 등 에러 패턴 감지
+  - **Fallback 메커니즘**: rate limit 발생 시 대체 프로바이더로 자동 재시도
+  - **환경 변수**: `IMAGE_PROVIDER=hybrid`, `IMAGE_HYBRID_THRESHOLD=2`, `IMAGE_FALLBACK_ENABLED=true`
+  - **Promise.allSettled**: 배치 생성 시 개별 실패 허용 (전체 실패 방지)
 
 ## 기술 스택
 
@@ -300,14 +306,22 @@ KAKAO_CLIENT_SECRET="<Kakao Developers → 보안 → Client Secret>"
 # IMAGE_PROVIDER: 이미지 생성에 사용할 프로바이더 선택
 # - "google" (기본값): Google GenAI 사용
 # - "openrouter": OpenRouter API 사용 (Google AI Studio 분당 제한 우회)
+# - "hybrid": 배치 크기 기반 자동 선택 (권장)
 #
 # 프로바이더별 동작:
-# | 기능          | google        | openrouter    |
-# |--------------|---------------|---------------|
-# | 이미지 생성   | Google GenAI  | OpenRouter    |
-# | 4K 업스케일   | Google GenAI  | Google GenAI  | ← 항상 Google (OpenRouter 느림)
+# | 기능          | google        | openrouter    | hybrid                    |
+# |--------------|---------------|---------------|---------------------------|
+# | 이미지 생성   | Google GenAI  | OpenRouter    | 배치 크기 기반 자동 선택    |
+# | 4K 업스케일   | Google GenAI  | Google GenAI  | Google GenAI              |
+# | Rate Limit   | 분당 제한 있음 | 크레딧 기반    | 자동 Fallback             |
 #
 IMAGE_PROVIDER="google"
+
+# [하이브리드 모드 설정] - IMAGE_PROVIDER="hybrid" 시 활성화
+# IMAGE_HYBRID_THRESHOLD: 이 값 이상의 배치 생성 시 OpenRouter 사용 (기본값: 2)
+# IMAGE_FALLBACK_ENABLED: rate limit 시 대체 프로바이더 자동 재시도 (기본값: true)
+# IMAGE_HYBRID_THRESHOLD="2"
+# IMAGE_FALLBACK_ENABLED="true"
 
 # [Google GenAI 설정] - IMAGE_PROVIDER="google" 또는 업스케일 시 필수
 # GOOGLE_GENAI_USE_VERTEXAI: true=Vertex AI, false=Google AI Studio (기본값)
@@ -435,6 +449,64 @@ GOOGLE_CLOUD_LOCATION="global"  # gemini-3-pro-image-preview는 global만 지원
 - `lib/vertexai.ts`: GenAI 듀얼 모드 클라이언트
 - `/api/generate/route.ts`: 2K 이미지 생성 (4장)
 - `/api/upscale/route.ts`: 4K 업스케일링 (1장)
+
+## 하이브리드 프로바이더 전략
+
+**Phase 10.1**: Google AI Studio의 분당 생성 제한(rate limit) 문제를 해결하기 위한 지능형 프로바이더 선택 전략
+
+### 문제 상황
+- Google AI Studio: 빠르지만 분당 생성량 제한이 엄격함
+- OpenRouter: rate limit 없지만 Google 대비 느림
+
+### 해결 전략
+
+**하이브리드 모드** (`IMAGE_PROVIDER=hybrid`):
+| 배치 크기 | 선택 프로바이더 | 이유 |
+|----------|----------------|------|
+| 1장 | 🟢 Google | 빠른 응답, rate limit 여유 |
+| 2장+ | 🟠 OpenRouter | rate limit 우회 |
+
+### 환경 변수
+
+```bash
+# .env.local
+IMAGE_PROVIDER="hybrid"           # google | openrouter | hybrid
+IMAGE_HYBRID_THRESHOLD="2"        # 이 값 이상이면 OpenRouter 사용
+IMAGE_FALLBACK_ENABLED="true"     # rate limit 시 자동 fallback
+```
+
+### 주요 함수 (`lib/imageProvider.ts`)
+
+```typescript
+// 프로바이더 전략 확인
+getProviderStrategy(): 'google' | 'openrouter' | 'hybrid'
+
+// 배치 크기 기반 프로바이더 선택
+selectProviderForBatch(batchCount: number): 'google' | 'openrouter'
+
+// Rate limit 에러 감지
+isRateLimitError(error: unknown): boolean
+
+// 배치 생성 (메타데이터 포함)
+generateImagesBatchWithMeta(prompt, count, options): Promise<BatchGenerationResult>
+// → { images: string[], provider: 'google' | 'openrouter', fallbackUsed: boolean }
+```
+
+### Fallback 동작
+
+1. 선택된 프로바이더로 생성 시도
+2. Rate limit 에러 발생 시 (`429`, `quota`, `resource exhausted` 등)
+3. `IMAGE_FALLBACK_ENABLED=true`면 대체 프로바이더로 자동 재시도
+4. `Promise.allSettled`로 개별 실패 허용 (전체 배치 실패 방지)
+
+### 권장 설정
+
+| 환경 | IMAGE_PROVIDER | 이유 |
+|------|----------------|------|
+| 개발/테스트 | `google` | 빠른 피드백 |
+| 프로덕션 (저트래픽) | `google` | 비용 효율 |
+| 프로덕션 (고트래픽) | `hybrid` | rate limit 방지 |
+| 프로덕션 (안정성 우선) | `openrouter` | rate limit 없음 |
 
 ## 코드 컨벤션
 
