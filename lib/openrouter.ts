@@ -268,10 +268,16 @@ export async function generateImageWithOpenRouter(
     // 이미지가 없는 경우 텍스트 응답 확인
     const textContent = result.choices?.[0]?.message?.content
     if (textContent) {
-      log(`[OpenRouter] Text response received instead of image: ${textContent.substring(0, 100)}...`)
+      console.error(`[OpenRouter] Text response instead of image: ${textContent.substring(0, 200)}`)
     }
 
-    logError('[OpenRouter] No image in response')
+    // 응답 구조 디버깅 (프로덕션에서도 출력)
+    console.error(`[OpenRouter] No image in response. Response structure: ${JSON.stringify({
+      hasChoices: !!result.choices,
+      choicesLength: result.choices?.length,
+      messageKeys: result.choices?.[0]?.message ? Object.keys(result.choices[0].message) : [],
+      finishReason: result.choices?.[0]?.finish_reason,
+    })}`)
     return null
   } catch (error) {
     logError(`[OpenRouter] Generation failed: ${error instanceof Error ? error.message : String(error)}`)
