@@ -34,7 +34,8 @@ import {
 } from '@/lib/utils/creditManager'
 
 // Next.js App Router Configuration
-export const maxDuration = 120 // Maximum execution time in seconds (Vercel Pro)
+// maxDuration은 vercel.json에서 300초로 오버라이드됨 (Fluid Compute)
+export const maxDuration = 300 // Maximum execution time in seconds (Vercel Pro)
 export const dynamic = 'force-dynamic' // Force dynamic rendering (no caching)
 
 export async function POST(req: NextRequest) {

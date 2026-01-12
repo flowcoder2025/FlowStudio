@@ -259,14 +259,13 @@ async function generateWithOpenRouter(
     mode,
   } = options
 
-  // OpenRouter는 Vercel 타임아웃(120초) 문제로 1K 고정
-  // - 로컬: 2K도 ~10초로 빠름
-  // - Vercel: 2K는 ~100초, 1K는 ~42초
-  // - 후처리(워터마크, 크레딧) 시간 확보 필요
-  const imageSize = '1K' as const
+  // OpenRouter 해상도 설정
+  // - Fluid Compute (maxDuration: 300초) 적용으로 2K 사용 가능
+  // - 로컬: ~10초, Vercel: ~100초
+  const imageSize = requestedSize
 
   log('[ImageProvider/OpenRouter] Generating image')
-  genaiLogger.info('OpenRouter generation', { requestedSize, actualSize: imageSize, aspectRatio, mode, reason: 'Vercel timeout constraint' })
+  genaiLogger.info('OpenRouter generation', { imageSize, aspectRatio, mode })
 
   // DETAIL_EDIT 모드에서 마스크 사용 시 프롬프트 보강
   let enhancedPrompt = prompt

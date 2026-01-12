@@ -54,7 +54,8 @@ import { addWatermarkBatch } from '@/lib/utils/watermark'
 // Next.js 15+ App Router Configuration
 // Note: Body size is now handled by imageConverter.ts compression (target: <2MB)
 // All images are automatically compressed server-side with sharp before API calls
-export const maxDuration = 120 // Maximum execution time in seconds (Vercel Pro)
+// maxDuration은 vercel.json에서 300초로 오버라이드됨 (Fluid Compute)
+export const maxDuration = 300 // Maximum execution time in seconds (Vercel Pro)
 export const dynamic = 'force-dynamic' // Force dynamic rendering (no caching)
 
 export async function POST(req: NextRequest) {
