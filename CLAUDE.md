@@ -215,6 +215,7 @@ await requireImageProjectEditor(userId, projectId) // 권한 없으면 에러
 
 **업스케일링** (`/api/upscale/route.ts`):
 - **4K 고해상도**: 2K → 4K 업스케일링 (1장)
+- **항상 Google 사용**: IMAGE_PROVIDER 설정과 무관하게 Google GenAI 사용 (OpenRouter 업스케일은 느리고 품질 낮음)
 - **Storage 저장**: 업스케일된 이미지 자동으로 Supabase Storage에 저장
 - **크레딧**: 1회 = 10 크레딧
 - **응답**: Storage 공개 URL
@@ -293,11 +294,22 @@ KAKAO_CLIENT_SECRET="<Kakao Developers → 보안 → Client Secret>"
 # 콜백 URL: http://localhost:3000/api/auth/callback/kakao (로컬)
 #           https://your-domain.com/api/auth/callback/kakao (프로덕션)
 
-# 이미지 생성 프로바이더 선택
-# IMAGE_PROVIDER: "google" (기본값) 또는 "openrouter" (분당 제한 우회)
+# ========================================
+# 이미지 생성 프로바이더 설정
+# ========================================
+# IMAGE_PROVIDER: 이미지 생성에 사용할 프로바이더 선택
+# - "google" (기본값): Google GenAI 사용
+# - "openrouter": OpenRouter API 사용 (Google AI Studio 분당 제한 우회)
+#
+# 프로바이더별 동작:
+# | 기능          | google        | openrouter    |
+# |--------------|---------------|---------------|
+# | 이미지 생성   | Google GenAI  | OpenRouter    |
+# | 4K 업스케일   | Google GenAI  | Google GenAI  | ← 항상 Google (OpenRouter 느림)
+#
 IMAGE_PROVIDER="google"
 
-# [옵션 1] Google GenAI - 듀얼 모드 지원
+# [Google GenAI 설정] - IMAGE_PROVIDER="google" 또는 업스케일 시 필수
 # GOOGLE_GENAI_USE_VERTEXAI: true=Vertex AI, false=Google AI Studio (기본값)
 GOOGLE_GENAI_USE_VERTEXAI="false"
 
@@ -309,9 +321,12 @@ GOOGLE_API_KEY="<https://aistudio.google.com/apikey 에서 생성>"
 # GOOGLE_CLOUD_LOCATION="global"
 # Vercel 배포 시: GOOGLE_APPLICATION_CREDENTIALS='{"type":"service_account",...}'
 
-# [옵션 2] OpenRouter - Google AI Studio 분당 제한 우회
-# IMAGE_PROVIDER="openrouter" 설정 시 필요
-# OPENROUTER_API_KEY="<https://openrouter.ai/keys 에서 생성>"
+# [OpenRouter 설정] - IMAGE_PROVIDER="openrouter" 시 필수
+# Google AI Studio의 분당 생성량 제한(rate limit) 우회용
+# 동일한 Gemini 3 Pro Image 모델 사용 (google/gemini-3-pro-image-preview)
+# 비용: 요청당 ~$0.14
+# https://openrouter.ai/keys 에서 API 키 발급
+OPENROUTER_API_KEY="<OpenRouter API 키>"
 
 # PortOne V2 (결제 시스템)
 NEXT_PUBLIC_PORTONE_STORE_ID="..."      # 스토어 ID
