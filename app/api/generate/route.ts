@@ -201,7 +201,7 @@ export async function POST(req: NextRequest) {
     }
 
     const generationStartTime = Date.now()
-    genaiLogger.info('Starting parallel generation', { provider: imageProvider, mode: providerMode, userId: session.user.id, imageCount })
+    genaiLogger.info('Starting parallel generation', { provider: imageProvider, mode: providerMode, userId: session.user.id, imageCount, imageSize: generationOptions.imageSize, aspectRatio: generationOptions.aspectRatio })
 
     // 병렬로 이미지 생성
     const generationPromises = Array.from({ length: imageCount }, () =>

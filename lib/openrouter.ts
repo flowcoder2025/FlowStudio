@@ -156,7 +156,7 @@ export async function generateImageWithOpenRouter(
     maskImage,
   } = options
 
-  log(`[OpenRouter] Generating image with model: ${model}`)
+  log(`[OpenRouter] Generating image with model: ${model}, imageSize: ${imageSize}, aspectRatio: ${aspectRatio}`)
 
   // 메시지 컨텐츠 구성
   type MessageContent = string | Array<{ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } }>

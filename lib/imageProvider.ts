@@ -20,6 +20,7 @@ import {
   type AspectRatio,
 } from './openrouter'
 import { extractBase64Data } from './utils/imageConverter'
+import { genaiLogger } from './logger'
 
 // 프로덕션에서는 디버그 로그 비활성화
 const isDev = process.env.NODE_ENV === 'development'
@@ -259,6 +260,7 @@ async function generateWithOpenRouter(
   } = options
 
   log('[ImageProvider/OpenRouter] Generating image')
+  genaiLogger.debug('OpenRouter generation options', { imageSize, aspectRatio, mode, hasSourceImage: !!sourceImage, hasRefImages: !!(refImages && refImages.length > 0) })
 
   // DETAIL_EDIT 모드에서 마스크 사용 시 프롬프트 보강
   let enhancedPrompt = prompt
@@ -298,6 +300,7 @@ CRITICAL RULES:
     openRouterOptions.refImages = [logoImage]
   }
 
+  genaiLogger.info('Calling OpenRouter API', { model: openRouterOptions.model, imageSize: openRouterOptions.imageSize, aspectRatio: openRouterOptions.aspectRatio })
   return generateImageWithOpenRouter(enhancedPrompt, openRouterOptions)
 }
 
