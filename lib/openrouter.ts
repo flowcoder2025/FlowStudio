@@ -348,6 +348,10 @@ export async function upscaleImageWithOpenRouter(
   }
 
   try {
+    // 4K 업스케일은 시간이 오래 걸릴 수 있으므로 타임아웃 120초 설정
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 120000)
+
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -357,7 +361,10 @@ export async function upscaleImageWithOpenRouter(
         'X-Title': 'FlowStudio',
       },
       body: JSON.stringify(requestBody),
+      signal: controller.signal,
     })
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -365,7 +372,20 @@ export async function upscaleImageWithOpenRouter(
       throw new Error(`OpenRouter 업스케일 오류: ${response.status} - ${errorText}`)
     }
 
-    const result: OpenRouterResponse = await response.json()
+    // 응답 텍스트를 먼저 가져온 후 JSON 파싱 (디버깅 용이)
+    const responseText = await response.text()
+    if (!responseText || responseText.trim() === '') {
+      logError('[OpenRouter] Empty response received')
+      throw new Error('OpenRouter 업스케일 오류: 빈 응답')
+    }
+
+    let result: OpenRouterResponse
+    try {
+      result = JSON.parse(responseText)
+    } catch (parseError) {
+      logError(`[OpenRouter] JSON parse error: ${responseText.substring(0, 200)}...`)
+      throw new Error(`OpenRouter 업스케일 오류: 잘못된 응답 형식`)
+    }
 
     if (result.error) {
       logError(`[OpenRouter] Upscale error: ${result.error.message}`)
@@ -382,6 +402,10 @@ export async function upscaleImageWithOpenRouter(
     logError('[OpenRouter] No image in upscale response')
     return null
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      logError('[OpenRouter] Upscale timeout (120s)')
+      throw new Error('OpenRouter 업스케일 오류: 타임아웃 (120초)')
+    }
     logError(`[OpenRouter] Upscale failed: ${error instanceof Error ? error.message : String(error)}`)
     throw error
   }
