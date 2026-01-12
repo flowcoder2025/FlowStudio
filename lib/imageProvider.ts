@@ -13,6 +13,7 @@
 import { getGenAIClient, getGenAIMode, VERTEX_AI_MODELS } from './vertexai'
 import {
   generateImageWithOpenRouter,
+  upscaleImageWithOpenRouter,
   OPENROUTER_MODELS,
   isOpenRouterConfigured,
   type OpenRouterImageOptions,
@@ -346,4 +347,80 @@ export function getEstimatedCostPerImage(): number {
   }
 
   return 0.14 // Google GenAI 비용
+}
+
+/**
+ * 4K 업스케일
+ *
+ * 환경 변수에 따라 Google GenAI 또는 OpenRouter를 사용하여 이미지 업스케일
+ *
+ * @param imageBase64 업스케일할 이미지 (base64)
+ * @returns 4K 업스케일된 이미지 (base64 data URL)
+ */
+export async function upscaleImage(imageBase64: string): Promise<string | null> {
+  const provider = getImageProvider()
+
+  log(`[ImageProvider] Upscaling with provider: ${provider}`)
+
+  if (provider === 'openrouter') {
+    return upscaleWithOpenRouter(imageBase64)
+  }
+
+  return upscaleWithGoogle(imageBase64)
+}
+
+/**
+ * Google GenAI를 통한 4K 업스케일
+ */
+async function upscaleWithGoogle(imageBase64: string): Promise<string | null> {
+  const ai = getGenAIClient()
+  const imageModel = VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE
+
+  log(`[ImageProvider/Google] Upscaling with model: ${imageModel}`)
+
+  const { mimeType, data } = extractBase64Data(imageBase64)
+
+  const parts = [
+    {
+      inlineData: {
+        mimeType,
+        data,
+      }
+    },
+    {
+      text: 'Generate a high-resolution 4K version of this image. Improve texture details, lighting, and sharpness while maintaining the exact composition, content, and style of the original. Do not alter the subject.'
+    }
+  ]
+
+  try {
+    const response = await ai.models.generateContent({
+      model: imageModel,
+      contents: { parts },
+      config: {
+        imageConfig: {
+          imageSize: '4K',
+        },
+      }
+    })
+
+    for (const part of response.candidates?.[0]?.content?.parts || []) {
+      if (part.inlineData) {
+        return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
+      }
+    }
+
+    log('[ImageProvider/Google] No image in upscale response')
+    return null
+  } catch (error) {
+    logError(`[ImageProvider/Google] Upscale failed: ${error instanceof Error ? error.message : String(error)}`)
+    throw error
+  }
+}
+
+/**
+ * OpenRouter를 통한 4K 업스케일
+ */
+async function upscaleWithOpenRouter(imageBase64: string): Promise<string | null> {
+  log('[ImageProvider/OpenRouter] Upscaling image')
+  return upscaleImageWithOpenRouter(imageBase64)
 }

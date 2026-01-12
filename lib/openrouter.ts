@@ -310,6 +310,84 @@ export async function generateImagesBatchWithOpenRouter(
 }
 
 /**
+ * OpenRouter를 통한 4K 업스케일
+ *
+ * @param imageBase64 업스케일할 이미지 (base64)
+ * @returns 4K 업스케일된 이미지 (base64 data URL)
+ */
+export async function upscaleImageWithOpenRouter(
+  imageBase64: string
+): Promise<string | null> {
+  const { apiKey } = validateOpenRouterConfig()
+
+  log('[OpenRouter] Starting 4K upscale')
+
+  const { mimeType, data } = extractBase64Data(imageBase64)
+
+  const requestBody = {
+    model: OPENROUTER_MODELS.GEMINI_3_PRO_IMAGE,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image_url',
+            image_url: { url: `data:${mimeType};base64,${data}` }
+          },
+          {
+            type: 'text',
+            text: 'Generate a high-resolution 4K version of this image. Improve texture details, lighting, and sharpness while maintaining the exact composition, content, and style of the original. Do not alter the subject.'
+          }
+        ]
+      }
+    ],
+    modalities: ['image', 'text'],
+    image_config: {
+      image_size: '4K',
+    },
+  }
+
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': process.env.NEXTAUTH_URL || 'https://flowstudio.app',
+        'X-Title': 'FlowStudio',
+      },
+      body: JSON.stringify(requestBody),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      logError(`[OpenRouter] Upscale API error: ${response.status} - ${errorText}`)
+      throw new Error(`OpenRouter 업스케일 오류: ${response.status} - ${errorText}`)
+    }
+
+    const result: OpenRouterResponse = await response.json()
+
+    if (result.error) {
+      logError(`[OpenRouter] Upscale error: ${result.error.message}`)
+      throw new Error(`OpenRouter 업스케일 오류: ${result.error.message}`)
+    }
+
+    const images = result.choices?.[0]?.message?.images
+    if (images && images.length > 0) {
+      const imageUrl = images[0].image_url.url
+      log(`[OpenRouter] ✅ 4K upscale successful`)
+      return imageUrl
+    }
+
+    logError('[OpenRouter] No image in upscale response')
+    return null
+  } catch (error) {
+    logError(`[OpenRouter] Upscale failed: ${error instanceof Error ? error.message : String(error)}`)
+    throw error
+  }
+}
+
+/**
  * OpenRouter API 키 유효성 검사
  */
 export function isOpenRouterConfigured(): boolean {
