@@ -352,19 +352,16 @@ export function getEstimatedCostPerImage(): number {
 /**
  * 4K 업스케일
  *
- * 환경 변수에 따라 Google GenAI 또는 OpenRouter를 사용하여 이미지 업스케일
+ * 업스케일은 항상 Google GenAI를 사용 (OpenRouter는 느리고 품질이 낮음)
  *
  * @param imageBase64 업스케일할 이미지 (base64)
  * @returns 4K 업스케일된 이미지 (base64 data URL)
  */
 export async function upscaleImage(imageBase64: string): Promise<string | null> {
-  const provider = getImageProvider()
-
-  log(`[ImageProvider] Upscaling with provider: ${provider}`)
-
-  if (provider === 'openrouter') {
-    return upscaleWithOpenRouter(imageBase64)
-  }
+  // 업스케일은 Google이 빠르고 품질이 좋으므로 항상 Google 사용
+  // OpenRouter 업스케일: ~235초, 품질 낮음
+  // Google 업스케일: ~10초, 품질 좋음
+  log('[ImageProvider] Upscaling with Google (always)')
 
   return upscaleWithGoogle(imageBase64)
 }
