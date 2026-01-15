@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import React, { useState } from 'react';
 import Image from 'next/image';
 import nextDynamic from 'next/dynamic';
-import { Wand2, ImageIcon, X, FolderOpen, Cloud, Loader2, Check, Download } from 'lucide-react';
+import { Wand2, ImageIcon, X, FolderOpen, Cloud, Loader2, Check, Download, Eye } from 'lucide-react';
 import { FileDropzone } from '@/components/FileDropzone';
 import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
@@ -30,12 +30,13 @@ export default function EditPage() {
 function EditPageContent() {
   const [prompt, setPrompt] = useState('');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [refImage, setRefImage] = useState<string | null>(null);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAspectRatio, setSelectedAspectRatio] = useState('1:1');
   const [isUpscaling, setIsUpscaling] = useState(false);
   const [upscaledImage, setUpscaledImage] = useState<string | null>(null);
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryTarget, setGalleryTarget] = useState<'main' | 'ref' | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [isUpscaledSaving, setIsUpscaledSaving] = useState(false);
   const [isUpscaledSaved, setIsUpscaledSaved] = useState(false);
@@ -50,7 +51,12 @@ function EditPageContent() {
   };
 
   const handleGallerySelect = (imageUrl: string) => {
-    setUploadedImage(imageUrl);
+    if (galleryTarget === 'main') {
+      setUploadedImage(imageUrl);
+    } else if (galleryTarget === 'ref') {
+      setRefImage(imageUrl);
+    }
+    setGalleryTarget(null);
   };
 
   const handleGenerate = async () => {
@@ -73,6 +79,7 @@ function EditPageContent() {
         mode: AppMode.EDIT,
         prompt,
         image: uploadedImage,
+        refImage: refImage || undefined,
         aspectRatio: selectedAspectRatio
       };
 
@@ -108,6 +115,7 @@ function EditPageContent() {
         mode: AppMode.EDIT,
         prompt,
         image: uploadedImage,
+        refImage: refImage || undefined,
         aspectRatio: selectedAspectRatio
       };
 
@@ -242,7 +250,7 @@ function EditPageContent() {
 
           {/* Gallery Button */}
           <button
-            onClick={() => setIsGalleryOpen(true)}
+            onClick={() => setGalleryTarget('main')}
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 min-h-[40px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium text-sm transition-colors"
           >
             <FolderOpen className="w-4 h-4" />
@@ -250,9 +258,47 @@ function EditPageContent() {
           </button>
         </div>
 
-        {/* Step 2: Aspect Ratio Selection */}
+        {/* Step 2: Reference Image (Optional) - for color/style transfer */}
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
-          <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">2. 결과 이미지 비율</h3>
+          <h3 className="font-bold text-sm lg:text-base mb-2 text-slate-800 dark:text-slate-100">2. 참조 이미지 (선택)</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">색상이나 스타일을 가져올 이미지를 업로드하세요. 형태는 유지하고 색상/스타일만 변경됩니다.</p>
+          <FileDropzone
+            value={refImage}
+            onChange={setRefImage}
+            onCompressing={setIsCompressing}
+            onError={(msg) => alert(msg)}
+            colorTheme="purple"
+            icon={<Eye className="w-4 h-4 text-slate-400 dark:text-slate-500" />}
+            placeholder="색상/스타일 참조 이미지를 끌어다 놓거나 클릭"
+            subPlaceholder="예: 다른 색상의 같은 제품 사진"
+            imageAlt="Reference"
+            compact
+            minHeight="min-h-[80px]"
+            imageMaxHeight="h-14"
+          />
+
+          {/* Divider with "또는" */}
+          <div className="relative flex items-center my-3">
+            <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
+            <span className="flex-shrink-0 mx-3 text-xs font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 px-2">
+              또는
+            </span>
+            <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
+          </div>
+
+          {/* Gallery Button for Reference */}
+          <button
+            onClick={() => setGalleryTarget('ref')}
+            className="w-full flex items-center justify-center gap-2 py-2 px-4 min-h-[36px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium text-xs transition-colors"
+          >
+            <FolderOpen className="w-3.5 h-3.5" />
+            이미지 저장소에서 불러오기
+          </button>
+        </div>
+
+        {/* Step 3: Aspect Ratio Selection */}
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
+          <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">3. 결과 이미지 비율</h3>
           <div className="grid grid-cols-3 gap-2">
             {ASPECT_RATIOS.map(ratio => (
               <button
@@ -271,24 +317,66 @@ function EditPageContent() {
           </div>
         </div>
 
-        {/* Step 3: Instruction & Preview */}
+        {/* Step 4: Instruction & Preview */}
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
-          <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">3. 어떻게 바꿔드릴까요?</h3>
-          <div className="mb-3 flex flex-wrap gap-1.5">
-            {['레트로 필터 씌워줘', '배경에 있는 사람 지워줘', '배경을 사무실로 바꿔줘', '좀 더 화사하게 만들어줘'].map(suggestion => (
-              <button
-                key={suggestion}
-                onClick={() => setPrompt(suggestion)}
-                className="px-2.5 py-1 min-h-[28px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
+          <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">4. 어떻게 바꿔드릴까요?</h3>
+
+          {/* 참조 이미지 있을 때: 색상 변경 관련 태그 우선 표시 */}
+          {refImage ? (
+            <div className="mb-3">
+              <p className="text-xs text-purple-600 dark:text-purple-400 mb-2 font-medium">
+                💡 참조 이미지가 있어요! 색상/스타일 변경 예시:
+              </p>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {[
+                  '의상 색상만 참조 이미지처럼 변경해줘',
+                  '제품 색상을 참조 이미지와 동일하게',
+                  '참조 이미지의 색감으로 바꿔줘',
+                  '형태는 유지하고 색상만 참조 이미지처럼'
+                ].map(suggestion => (
+                  <button
+                    key={suggestion}
+                    onClick={() => setPrompt(suggestion)}
+                    className="px-2.5 py-1 min-h-[28px] bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors border border-purple-200 dark:border-purple-700"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">기타 편집:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {['배경 변경', '밝기 조절', '텍스트 제거'].map(suggestion => (
+                  <button
+                    key={suggestion}
+                    onClick={() => setPrompt(suggestion)}
+                    className="px-2.5 py-1 min-h-[28px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="mb-3 flex flex-wrap gap-1.5">
+              {['레트로 필터 씌워줘', '배경에 있는 사람 지워줘', '배경을 사무실로 바꿔줘', '좀 더 화사하게 만들어줘', '색상을 빨간색으로 변경해줘'].map(suggestion => (
+                <button
+                  key={suggestion}
+                  onClick={() => setPrompt(suggestion)}
+                  className="px-2.5 py-1 min-h-[28px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          )}
+
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="예: 배경을 깔끔한 흰색으로 바꿔줘, 텍스트를 제거해줘."
+            placeholder={refImage
+              ? "예: 현재 사진의 원피스 색상만 참조 이미지의 원피스 색상으로 변경해줘"
+              : "예: 배경을 깔끔한 흰색으로 바꿔줘, 텍스트를 제거해줘."
+            }
             className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 min-h-[80px] text-sm transition-colors"
           />
         </div>
@@ -409,10 +497,10 @@ function EditPageContent() {
 
       {/* Image Gallery Modal */}
       <ImageGalleryModal
-        isOpen={isGalleryOpen}
-        onClose={() => setIsGalleryOpen(false)}
+        isOpen={galleryTarget !== null}
+        onClose={() => setGalleryTarget(null)}
         onSelect={handleGallerySelect}
-        title="편집할 이미지 선택"
+        title={galleryTarget === 'ref' ? '참조 이미지 선택' : '편집할 이미지 선택'}
       />
     </>
   );

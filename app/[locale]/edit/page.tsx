@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { Wand2, ImageIcon, X, FolderOpen, Cloud, Loader2, Check, Download } from 'lucide-react';
+import { Wand2, ImageIcon, X, FolderOpen, Cloud, Loader2, Check, Download, Eye } from 'lucide-react';
 import { FileDropzone } from '@/components/FileDropzone';
 import { Header } from '@/components/Header';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
@@ -40,7 +40,8 @@ function EditPageContent() {
   const [selectedAspectRatio, setSelectedAspectRatio] = useState('1:1');
   const [isUpscaling, setIsUpscaling] = useState(false);
   const [upscaledImage, setUpscaledImage] = useState<string | null>(null);
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [refImage, setRefImage] = useState<string | null>(null);
+  const [galleryTarget, setGalleryTarget] = useState<'main' | 'ref' | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [isUpscaledSaving, setIsUpscaledSaving] = useState(false);
   const [isUpscaledSaved, setIsUpscaledSaved] = useState(false);
@@ -58,7 +59,12 @@ function EditPageContent() {
   };
 
   const handleGallerySelect = (imageUrl: string) => {
-    setUploadedImage(imageUrl);
+    if (galleryTarget === 'ref') {
+      setRefImage(imageUrl);
+    } else {
+      setUploadedImage(imageUrl);
+    }
+    setGalleryTarget(null);
   };
 
   const handleGenerate = async () => {
@@ -78,6 +84,7 @@ function EditPageContent() {
         mode: AppMode.EDIT,
         prompt,
         image: uploadedImage,
+        refImage: refImage || undefined,
         aspectRatio: selectedAspectRatio
       };
 
@@ -109,6 +116,7 @@ function EditPageContent() {
         mode: AppMode.EDIT,
         prompt,
         image: uploadedImage,
+        refImage: refImage || undefined,
         aspectRatio: selectedAspectRatio
       };
 
@@ -250,7 +258,9 @@ function EditPageContent() {
           </div>
 
           <button
-            onClick={() => setIsGalleryOpen(true)}
+            onClick={() => {
+              setGalleryTarget('main');
+            }}
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 min-h-[40px] bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium text-sm transition-colors"
           >
             <FolderOpen className="w-4 h-4" />
@@ -258,8 +268,48 @@ function EditPageContent() {
           </button>
         </div>
 
+        {/* Step 2: 참조 이미지 (색상/스타일 전송용) */}
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
-          <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">{t('step2Title')}</h3>
+          <h3 className="font-bold text-sm lg:text-base mb-1 text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <Eye className="w-4 h-4 text-purple-500" />
+            {t('refImageTitle') || '참조 이미지 (선택)'}
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+            {t('refImageDescription') || '색상이나 스타일을 전송할 참조 이미지를 업로드하세요. 원본 이미지의 형태는 유지됩니다.'}
+          </p>
+          <FileDropzone
+            value={refImage}
+            onChange={setRefImage}
+            onCompressing={setIsCompressing}
+            onError={(msg) => alert(msg)}
+            colorTheme="purple"
+            icon={<Eye className="w-5 h-5 text-slate-400 dark:text-slate-500" />}
+            placeholder={t('refImagePlaceholder') || '색상/스타일 참조 이미지'}
+            imageAlt="Reference"
+            compact
+          />
+
+          <div className="relative flex items-center my-4">
+            <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
+            <span className="flex-shrink-0 mx-3 text-xs font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 px-2">
+              {t('or')}
+            </span>
+            <div className="flex-grow border-t border-slate-300 dark:border-slate-600"></div>
+          </div>
+
+          <button
+            onClick={() => {
+              setGalleryTarget('ref');
+            }}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 min-h-[40px] bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg font-medium text-sm transition-colors border border-purple-200 dark:border-purple-800"
+          >
+            <FolderOpen className="w-4 h-4" />
+            {t('loadRefFromGallery') || '갤러리에서 참조 이미지 선택'}
+          </button>
+        </div>
+
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
+          <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">{t('step3Title') || t('step2Title')}</h3>
           <div className="grid grid-cols-3 gap-2">
             {ASPECT_RATIOS.map(ratio => {
               const localizedRatio = getAspectRatioLabel(ratio);
@@ -282,7 +332,33 @@ function EditPageContent() {
         </div>
 
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors">
-          <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">{t('step3Title')}</h3>
+          <h3 className="font-bold text-sm lg:text-base mb-3 text-slate-800 dark:text-slate-100">{t('step4Title') || t('step3Title')}</h3>
+
+          {/* 색상 변경 관련 예시 태그 (참조 이미지가 있을 때만 표시) */}
+          {refImage && (
+            <div className="mb-3">
+              <p className="text-xs text-purple-600 dark:text-purple-400 mb-2 font-medium">
+                {t('colorChangeExamples') || '🎨 색상/스타일 전송 예시:'}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  t('colorTag1') || '참조 이미지의 색상으로 변경해줘',
+                  t('colorTag2') || '색상만 참조 이미지처럼 바꿔줘',
+                  t('colorTag3') || '형태는 유지하고 색감만 전송해줘',
+                  t('colorTag4') || '원본 실루엣 유지, 컬러만 적용',
+                ].map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => setPrompt(tag)}
+                    className="px-2.5 py-1 min-h-[28px] bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors border border-purple-200 dark:border-purple-700"
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="mb-3 flex flex-wrap gap-1.5">
             {suggestions.map(suggestion => (
               <button
@@ -297,7 +373,10 @@ function EditPageContent() {
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder={t('promptPlaceholder')}
+            placeholder={refImage
+              ? (t('promptPlaceholderWithRef') || '예: 참조 이미지의 색상으로 변경해줘 (형태는 유지됩니다)')
+              : t('promptPlaceholder')
+            }
             className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 min-h-[80px] text-sm transition-colors"
           />
         </div>
@@ -418,10 +497,13 @@ function EditPageContent() {
       )}
 
       <ImageGalleryModal
-        isOpen={isGalleryOpen}
-        onClose={() => setIsGalleryOpen(false)}
+        isOpen={galleryTarget !== null}
+        onClose={() => setGalleryTarget(null)}
         onSelect={handleGallerySelect}
-        title={t('selectEditImage')}
+        title={galleryTarget === 'ref'
+          ? (t('selectRefImage') || '참조 이미지 선택')
+          : t('selectEditImage')
+        }
       />
     </>
   );

@@ -248,6 +248,35 @@ function buildPrompt(request: GenerationRequest): string {
   } else if (mode === AppMode.DETAIL_EDIT && request.refImage) {
     // Logic for Image Replacement
     finalPrompt = `Edit the provided target image. REPLACE the main subject or area in the center with the content of the reference image. Instruction: ${prompt}. Ensure the replaced object blends naturally with the lighting, shadows, and perspective of the original background. High quality composition.`;
+  } else if (mode === AppMode.EDIT && request.refImage) {
+    // Edit mode with Reference Image: Color/Style Transfer
+    // Key: PIXEL-PERFECT shape preservation, only transfer color/style from reference
+    finalPrompt = `[COLOR TRANSFER TASK - SHAPE MUST BE IDENTICAL]
+
+CRITICAL RULES - MUST FOLLOW:
+1. The OUTPUT image MUST have the EXACT SAME silhouette, outline, and shape as the INPUT image
+2. DO NOT modify ANY edges, contours, folds, wrinkles, or structural details
+3. DO NOT change the pose, angle, proportions, or positioning of ANY element
+4. ONLY change the COLOR and TEXTURE - nothing else
+
+TASK: ${prompt}
+
+REFERENCE IMAGE PURPOSE: Extract ONLY the color palette and surface texture from the reference image.
+
+PROCESS:
+- Keep every pixel's position exactly the same as the original
+- Replace only the color values while maintaining all structural information
+- The garment/product shape, draping, folds, and silhouette must be pixel-perfect identical
+- Shadows and highlights should follow the ORIGINAL image's lighting, just with new colors
+
+FORBIDDEN CHANGES:
+- NO changes to garment/product shape or cut
+- NO changes to how fabric drapes or folds
+- NO changes to collar, sleeves, hem, or any structural element
+- NO changes to model pose or body position
+- NO repositioning of any element
+
+The result should look like the EXACT same photo with a color filter applied, NOT a new photo.`;
   } else {
     // Edit mode & General Detail Edit Mode
     finalPrompt = `Edit the provided image section. Instruction: ${prompt}. Maintain the highest possible resolution and sharpness, especially for text and fine details. Ensure seamless blending with the surrounding edges.`;
