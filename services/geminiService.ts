@@ -250,33 +250,45 @@ function buildPrompt(request: GenerationRequest): string {
     finalPrompt = `Edit the provided target image. REPLACE the main subject or area in the center with the content of the reference image. Instruction: ${prompt}. Ensure the replaced object blends naturally with the lighting, shadows, and perspective of the original background. High quality composition.`;
   } else if (mode === AppMode.EDIT && request.refImage) {
     // Edit mode with Reference Image: Color/Style Transfer
-    // Key: PIXEL-PERFECT shape preservation, only transfer color/style from reference
-    finalPrompt = `[COLOR TRANSFER TASK - SHAPE MUST BE IDENTICAL]
+    // Key: PIXEL-PERFECT preservation of shape, wrinkles, and texture
+    finalPrompt = `[PRECISE COLOR TRANSFER - PRESERVE EVERY DETAIL]
 
-CRITICAL RULES - MUST FOLLOW:
-1. The OUTPUT image MUST have the EXACT SAME silhouette, outline, and shape as the INPUT image
-2. DO NOT modify ANY edges, contours, folds, wrinkles, or structural details
-3. DO NOT change the pose, angle, proportions, or positioning of ANY element
-4. ONLY change the COLOR and TEXTURE - nothing else
+=== ABSOLUTE REQUIREMENTS ===
+This is a COLOR-ONLY transformation. The output must be structurally IDENTICAL to the input.
 
 TASK: ${prompt}
 
-REFERENCE IMAGE PURPOSE: Extract ONLY the color palette and surface texture from the reference image.
+=== WHAT MUST BE PRESERVED (DO NOT CHANGE) ===
+1. SILHOUETTE & SHAPE: Every edge, outline, and contour must match exactly
+2. WRINKLES & FOLDS: Every crease, fold line, and wrinkle pattern must be in the exact same position
+3. FABRIC TEXTURE: The weave pattern, surface bumps, and material characteristics must remain identical
+4. SHADOWS & HIGHLIGHTS: Keep the exact same light/dark areas that define the 3D form
+5. MICRO-DETAILS: Stitching lines, seams, buttons, zippers - all in identical positions
 
-PROCESS:
-- Keep every pixel's position exactly the same as the original
-- Replace only the color values while maintaining all structural information
-- The garment/product shape, draping, folds, and silhouette must be pixel-perfect identical
-- Shadows and highlights should follow the ORIGINAL image's lighting, just with new colors
+=== WHAT TO CHANGE ===
+ONLY the HUE and SATURATION values. Think of it like applying a color filter in Photoshop.
+- Extract the color palette from the reference image
+- Apply those colors to the INPUT image
+- The luminosity/brightness pattern must stay the same
 
-FORBIDDEN CHANGES:
-- NO changes to garment/product shape or cut
-- NO changes to how fabric drapes or folds
-- NO changes to collar, sleeves, hem, or any structural element
-- NO changes to model pose or body position
-- NO repositioning of any element
+=== TECHNICAL APPROACH ===
+Imagine converting the original image to grayscale, then colorizing it with the reference colors.
+- The grayscale "skeleton" (all the wrinkles, folds, shadows) stays 100% unchanged
+- Only the color information is replaced
 
-The result should look like the EXACT same photo with a color filter applied, NOT a new photo.`;
+=== FORBIDDEN ===
+❌ Smoothing or altering any wrinkle
+❌ Changing the direction or depth of any fold
+❌ Modifying fabric draping or how cloth hangs
+❌ Adjusting any shadow or highlight position
+❌ Regenerating or "improving" any texture detail
+❌ Changing garment fit, shape, or proportions
+
+=== QUALITY CHECK ===
+If you overlay the output on the input, the only difference should be color.
+Every wrinkle, every fold, every shadow must align perfectly.
+
+The result should be indistinguishable from the original except for the color change.`;
   } else {
     // Edit mode & General Detail Edit Mode
     finalPrompt = `Edit the provided image section. Instruction: ${prompt}. Maintain the highest possible resolution and sharpness, especially for text and fine details. Ensure seamless blending with the surrounding edges.`;
