@@ -2,7 +2,8 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import useSWR from 'swr';
 import { Settings, BarChart3, History, Coins, CreditCard, TrendingUp, Calendar, Layers } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { AuthGuard } from '@/components/auth/AuthGuard';
@@ -10,6 +11,13 @@ import { ProfileSkeleton } from '@/components/ProfileSkeleton';
 // StorageUsageBar 사용 안함 - 인라인 구현으로 대체됨
 import { AppMode } from '@/types';
 import { useRouter } from 'next/navigation';
+
+// [최적화] SWR fetcher - Vercel Best Practice: client-swr-dedup
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Failed to fetch');
+  return res.json();
+};
 
 interface CreditBalance {
   balance: number;
@@ -73,109 +81,40 @@ export default function ProfilePage() {
 function ProfilePageContent() {
   const router = useRouter();
 
-  // 상태 관리
-  const [creditBalance, setCreditBalance] = useState<CreditBalance | null>(null);
-  // const [businessVerification, setBusinessVerification] = useState<BusinessVerification | null>(null); // 임시 비활성화
-  const [creditHistory, setCreditHistory] = useState<CreditTransaction[]>([]);
-  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
-  const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [storageLoading, setStorageLoading] = useState(true);
+  // [최적화] SWR로 데이터 페칭 - 자동 캐싱, 재검증, 중복 제거
+  // Vercel Best Practice: client-swr-dedup
+  const { data: creditBalance, isLoading: creditLoading } = useSWR<CreditBalance>(
+    '/api/credits/balance',
+    fetcher,
+    { revalidateOnFocus: false }
+  );
 
-  useEffect(() => {
-    fetchAllData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { data: creditHistoryData, isLoading: historyLoading } = useSWR<{ transactions: CreditTransaction[] }>(
+    '/api/credits/history?limit=5',
+    fetcher,
+    { revalidateOnFocus: false }
+  );
 
-  const fetchAllData = async () => {
-    setLoading(true);
-    setStorageLoading(true);
-    try {
-      // 핵심 데이터만 먼저 로딩 (빠른 API들)
-      await Promise.all([
-        fetchCreditBalance(),
-        // fetchBusinessVerification(), // 임시 비활성화
-        fetchCreditHistory(),
-        fetchSubscription(),
-      ]);
-    } catch (error) {
-      console.error('Failed to fetch profile data:', error);
-    } finally {
-      setLoading(false);
-    }
+  const { data: subscriptionData, isLoading: subLoading } = useSWR<{ success: boolean; data: SubscriptionInfo }>(
+    '/api/subscription',
+    fetcher,
+    { revalidateOnFocus: false }
+  );
 
-    // Storage 사용량은 별도로 로딩 (느린 API - 프로젝트 폴더 순회)
-    // 메인 로딩 완료 후 백그라운드에서 처리
-    fetchStorageUsage();
-  };
+  // Storage는 느린 API이므로 별도 SWR 옵션 적용
+  const { data: storageData, isLoading: storageLoading } = useSWR<{ success: boolean; data: StorageUsage }>(
+    '/api/storage/usage',
+    fetcher,
+    { revalidateOnFocus: false, dedupingInterval: 60000 } // 60초간 중복 요청 방지
+  );
 
-  const fetchCreditBalance = async () => {
-    try {
-      const response = await fetch('/api/credits/balance');
-      if (response.ok) {
-        const data = await response.json();
-        setCreditBalance(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch credit balance:', error);
-    }
-  };
+  // 데이터 추출
+  const creditHistory = creditHistoryData?.transactions || [];
+  const subscription = subscriptionData?.success ? subscriptionData.data : null;
+  const storageUsage = storageData?.success ? storageData.data : null;
 
-  // fetchBusinessVerification - 임시 비활성화
-  // const fetchBusinessVerification = async () => {
-  //   try {
-  //     const response = await fetch('/api/profile/business-verification');
-  //     if (response.ok) {
-  //       const data = await response.json();
-  //       setBusinessVerification(data.data);
-  //     }
-  //   } catch (error) {
-  //     console.error('Failed to fetch business verification:', error);
-  //   }
-  // };
-
-  const fetchCreditHistory = async () => {
-    try {
-      const response = await fetch('/api/credits/history?limit=5');
-      if (response.ok) {
-        const data = await response.json();
-        setCreditHistory(data.transactions || []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch credit history:', error);
-    }
-  };
-
-  const fetchSubscription = async () => {
-    try {
-      const response = await fetch('/api/subscription');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setSubscription(data.data);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch subscription:', error);
-    }
-  };
-
-  const fetchStorageUsage = async () => {
-    setStorageLoading(true);
-    try {
-      const response = await fetch('/api/storage/usage');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setStorageUsage(data.data);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch storage usage:', error);
-    } finally {
-      setStorageLoading(false);
-    }
-  };
+  // 핵심 데이터 로딩 상태 (Storage 제외)
+  const loading = creditLoading || historyLoading || subLoading;
 
   // 구독 티어 아이콘 선택 - 사용되지 않음, 주석처리
   // const getTierIcon = (tier: string, size: 'sm' | 'md' = 'sm') => {

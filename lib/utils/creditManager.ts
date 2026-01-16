@@ -13,6 +13,7 @@ import { prisma } from '@/lib/prisma'
 import { ValidationError, InsufficientCreditsError } from '@/lib/errors'
 import { logger } from '@/lib/logger'
 import { CREDIT_BONUS } from '@/lib/constants'
+import { creditBalanceCache, creditBalanceDetailCache, type CreditBalanceDetail as CachedCreditBalanceDetail } from '@/lib/utils/cache'
 
 // Prisma 트랜잭션 클라이언트 타입
 type PrismaTransactionClient = Omit<
@@ -70,14 +71,23 @@ interface CreditTransactionMetadata {
 
 /**
  * 사용자의 크레딧 잔액 조회
+ * [최적화] TTL 캐시 적용 (30초) - 동일 요청 내 중복 DB 조회 방지
  */
 export async function getCreditBalance(userId: string): Promise<number> {
+  // 캐시 확인
+  const cached = creditBalanceCache.get(userId)
+  if (cached !== undefined) return cached
+
   const credit = await prisma.credit.findUnique({
     where: { userId },
     select: { balance: true }
   })
 
-  return credit?.balance ?? 0
+  const balance = credit?.balance ?? 0
+
+  // 캐시 저장
+  creditBalanceCache.set(userId, balance)
+  return balance
 }
 
 /**
@@ -96,12 +106,17 @@ export interface CreditBalanceDetail {
 
 /**
  * 사용자의 크레딧 잔액 상세 조회 (무료/유료 구분)
+ * [최적화] TTL 캐시 적용 (30초) - 동일 요청 내 중복 DB 조회 방지
  *
  * 무료 크레딧: BONUS, REFERRAL (remainingAmount로 추적)
  * 유료 크레딧: 총 잔액 - 무료 크레딧
  */
 export async function getCreditBalanceDetail(userId: string): Promise<CreditBalanceDetail> {
-  // 1. 총 잔액 조회
+  // 캐시 확인
+  const cached = creditBalanceDetailCache.get(userId)
+  if (cached !== undefined) return cached
+
+  // 1. 총 잔액 조회 (캐시 바이패스 - 내부에서 캐싱됨)
   const total = await getCreditBalance(userId)
 
   // 2. 무료 크레딧(BONUS, REFERRAL)의 남은 양 합계
@@ -125,7 +140,19 @@ export async function getCreditBalanceDetail(userId: string): Promise<CreditBala
   // 4. 유료 크레딧 = 총 잔액 - 무료 크레딧
   const purchased = Math.max(0, total - free)
 
-  return { total, free, purchased }
+  const result = { total, free, purchased }
+
+  // 캐시 저장
+  creditBalanceDetailCache.set(userId, result)
+  return result
+}
+
+/**
+ * 크레딧 캐시 무효화 (크레딧 변경 시 호출)
+ */
+export function invalidateCreditCache(userId: string): void {
+  creditBalanceCache.invalidate(userId)
+  creditBalanceDetailCache.invalidate(userId)
 }
 
 /**

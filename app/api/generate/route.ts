@@ -21,7 +21,7 @@
  * - JPEG 출력으로 파일 크기 최적화 (PNG 대비 50-70% 감소)
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
@@ -157,31 +157,24 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. 이미지 URL → base64 변환 (갤러리에서 불러온 이미지 지원)
-    let processedSourceImage: string | null = null
-    let processedRefImage: string | null = null
-    let processedRefImages: string[] = []
-    let processedLogoImage: string | null = null
-    let processedMaskImage: string | null = null
-
-    if (sourceImage) {
-      processedSourceImage = await ensureBase64(sourceImage)
-    }
-    if (refImage) {
-      processedRefImage = await ensureBase64(refImage)
-    }
-    // COMPOSITE 모드: 다중 이미지 배열 처리
-    if (refImages && Array.isArray(refImages)) {
-      processedRefImages = await Promise.all(
-        refImages.map((img: string) => ensureBase64(img))
-      )
-    }
-    if (logoImage) {
-      processedLogoImage = await ensureBase64(logoImage)
-    }
-    // DETAIL_EDIT 모드: 마스크 이미지 처리
-    if (maskImage) {
-      processedMaskImage = await ensureBase64(maskImage)
-    }
+    // [최적화] Promise.all로 병렬 처리 - 순차 처리 대비 최대 5배 속도 향상
+    const [
+      processedSourceImage,
+      processedRefImage,
+      processedRefImages,
+      processedLogoImage,
+      processedMaskImage
+    ] = await Promise.all([
+      sourceImage ? ensureBase64(sourceImage) : Promise.resolve(null),
+      refImage ? ensureBase64(refImage) : Promise.resolve(null),
+      // COMPOSITE 모드: 다중 이미지 배열 처리
+      refImages && Array.isArray(refImages)
+        ? Promise.all(refImages.map((img: string) => ensureBase64(img)))
+        : Promise.resolve([] as string[]),
+      logoImage ? ensureBase64(logoImage) : Promise.resolve(null),
+      // DETAIL_EDIT 모드: 마스크 이미지 처리
+      maskImage ? ensureBase64(maskImage) : Promise.resolve(null)
+    ])
 
     // 6. 이미지 생성 (통합 프로바이더 사용)
     // Google GenAI (Google AI Studio / Vertex AI) 또는 OpenRouter
@@ -244,45 +237,64 @@ export async function POST(req: NextRequest) {
     )
     genaiLogger.info('Credits deducted', { amount: actualCredits, creditType: deductResult.usedCreditType, applyWatermark: deductResult.applyWatermark, userId: session.user.id })
 
-    // 9. 사용량 기록 (API 호출 비용 추적)
+    // 9-10. 사용량 기록 (API 호출 비용 추적) - after()로 비블로킹 처리
+    // [최적화] Vercel Best Practice: server-after-nonblocking
+    // 응답을 먼저 반환하고, 기록 작업은 백그라운드에서 수행
     const costPerImage = getEstimatedCostPerImage()
     const totalCost = base64Images.length * costPerImage
-    const today = new Date().toISOString().split('T')[0]
+    const imageCountForLog = base64Images.length
+    const userIdForLog = session.user.id
+    const projectIdForLog = projectId || null
+    const modeForLog = mode || 'CREATE'
+    const promptForLog = finalPrompt
+    const categoryForLog = category
+    const styleForLog = style
 
-    await prisma.usageStats.upsert({
-      where: { userId: session.user.id },
-      create: {
-        userId: session.user.id,
-        totalImages: base64Images.length,
-        totalCostUsd: totalCost,
-        todayUsage: base64Images.length,
-        lastUsageDate: new Date(),
-        history: [{ date: today, count: base64Images.length }],
-      },
-      update: {
-        totalImages: { increment: base64Images.length },
-        totalCostUsd: { increment: totalCost },
-        todayUsage: { increment: base64Images.length },
-        lastUsageDate: new Date(),
-        history: {
-          push: { date: today, count: base64Images.length },
-        },
-      },
-    })
+    after(async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0]
 
-    // 10. 생성 성공 이력 기록
-    await prisma.generationHistory.create({
-      data: {
-        userId: session.user.id,
-        projectId: projectId || null,
-        mode: mode || 'CREATE',
-        prompt: finalPrompt,
-        category,
-        style,
-        imageCount: base64Images.length,
-        costUsd: totalCost,
-        status: 'success',
-      },
+        // 사용량 기록
+        await prisma.usageStats.upsert({
+          where: { userId: userIdForLog },
+          create: {
+            userId: userIdForLog,
+            totalImages: imageCountForLog,
+            totalCostUsd: totalCost,
+            todayUsage: imageCountForLog,
+            lastUsageDate: new Date(),
+            history: [{ date: today, count: imageCountForLog }],
+          },
+          update: {
+            totalImages: { increment: imageCountForLog },
+            totalCostUsd: { increment: totalCost },
+            todayUsage: { increment: imageCountForLog },
+            lastUsageDate: new Date(),
+            history: {
+              push: { date: today, count: imageCountForLog },
+            },
+          },
+        })
+
+        // 생성 성공 이력 기록
+        await prisma.generationHistory.create({
+          data: {
+            userId: userIdForLog,
+            projectId: projectIdForLog,
+            mode: modeForLog,
+            prompt: promptForLog,
+            category: categoryForLog,
+            style: styleForLog,
+            imageCount: imageCountForLog,
+            costUsd: totalCost,
+            status: 'success',
+          },
+        })
+
+        genaiLogger.debug('Background logging completed', { imageCount: imageCountForLog })
+      } catch (logError) {
+        genaiLogger.error('Background logging failed', {}, logError instanceof Error ? logError : new Error(String(logError)))
+      }
     })
 
     // 10.5. 워터마크 적용 (크레딧 차감 결과 기반)

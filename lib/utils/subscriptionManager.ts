@@ -11,6 +11,7 @@
 import { prisma } from '@/lib/prisma'
 import { SUBSCRIPTION_TIERS, type SubscriptionTier } from '@/lib/constants'
 import { logger } from '@/lib/logger'
+import { subscriptionTierCache } from '@/lib/utils/cache'
 
 export interface UserSubscription {
   tier: SubscriptionTier
@@ -60,19 +61,36 @@ export async function getUserSubscription(userId: string): Promise<UserSubscript
 
 /**
  * 사용자의 구독 티어 조회 (간단 버전)
+ * [최적화] TTL 캐시 적용 (60초) - 동일 요청 내 중복 DB 조회 방지
  */
 export async function getUserTier(userId: string): Promise<SubscriptionTier> {
+  // 캐시 확인
+  const cached = subscriptionTierCache.get(userId)
+  if (cached !== undefined) return cached
+
   const subscription = await prisma.subscription.findUnique({
     where: { userId },
     select: { tier: true, status: true, endDate: true }
   })
 
   // 구독이 없거나 만료됨
-  if (!subscription) return 'FREE'
-  if (subscription.status !== 'ACTIVE') return 'FREE'
-  if (subscription.endDate && subscription.endDate < new Date()) return 'FREE'
+  let tier: SubscriptionTier = 'FREE'
+  if (subscription && subscription.status === 'ACTIVE') {
+    if (!subscription.endDate || subscription.endDate >= new Date()) {
+      tier = subscription.tier as SubscriptionTier
+    }
+  }
 
-  return subscription.tier as SubscriptionTier
+  // 캐시 저장
+  subscriptionTierCache.set(userId, tier)
+  return tier
+}
+
+/**
+ * 구독 티어 캐시 무효화 (구독 변경 시 호출)
+ */
+export function invalidateUserTierCache(userId: string): void {
+  subscriptionTierCache.invalidate(userId)
 }
 
 /**
