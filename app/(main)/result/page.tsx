@@ -1,7 +1,7 @@
 /**
- * Image Generation Result Page with SimilarWorkflows
+ * Image Generation Result Page with SimilarWorkflows & ImmersiveResult
  * Contract: INTEGRATION_DESIGN_WORKFLOW_RESULT
- * Evidence: Phase 10 Page Integration
+ * Evidence: Phase 10 Page Integration + Phase E Immersive Result
  */
 
 'use client';
@@ -10,7 +10,7 @@ import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Download, Share2, RefreshCw, ZoomIn, Heart, ArrowLeft, Sparkles } from 'lucide-react';
+import { Download, Share2, RefreshCw, ZoomIn, Heart, ArrowLeft, Sparkles, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -22,6 +22,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useWorkflowStore, GenerationResult } from '@/lib/workflow/store';
 import { SimilarWorkflows, CrossIndustryList } from '@/components/workflow/SimilarWorkflows';
+import { ImmersiveResult } from '@/components/workflow/ImmersiveResult';
 import { generateRecommendations, WorkflowRecommendation } from '@/lib/workflow/recommend';
 import { matchIntent } from '@/lib/workflow/intents';
 import type { ExpressionIntent } from '@/lib/workflow/intents';
@@ -74,6 +75,9 @@ function ResultContent() {
   const selectIntent = useWorkflowStore((state) => state.selectIntent);
   const setCurrentStep = useWorkflowStore((state) => state.setCurrentStep);
   const resetWorkflow = useWorkflowStore((state) => state.resetWorkflow);
+  const showImmersiveResult = useWorkflowStore((state) => state.showImmersiveResult);
+  const openImmersiveResult = useWorkflowStore((state) => state.openImmersiveResult);
+  const closeImmersiveResult = useWorkflowStore((state) => state.closeImmersiveResult);
 
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -115,6 +119,14 @@ function ResultContent() {
 
     loadResult();
   }, [sessionId, router, storeResult]);
+
+  // Auto-open immersive result when result is loaded
+  useEffect(() => {
+    if (result?.success && result.images.length > 0) {
+      // 결과가 로드되면 자동으로 몰입형 모드 열기
+      openImmersiveResult();
+    }
+  }, [result, openImmersiveResult]);
 
   // Load similar workflows based on current selection
   useEffect(() => {
@@ -257,6 +269,10 @@ function ResultContent() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={openImmersiveResult}>
+            <Maximize2 className="w-4 h-4 mr-2" />
+            몰입 모드
+          </Button>
           <Button variant="outline" onClick={handleCreateNew}>
             <Sparkles className="w-4 h-4 mr-2" />
             새로 만들기
@@ -415,6 +431,17 @@ function ResultContent() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Immersive Result Modal */}
+      {result && (
+        <ImmersiveResult
+          isOpen={showImmersiveResult}
+          onClose={closeImmersiveResult}
+          result={result}
+          onRegenerate={handleRegenerate}
+          onCreateNew={handleCreateNew}
+        />
+      )}
     </div>
   );
 }

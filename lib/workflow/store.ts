@@ -97,6 +97,7 @@ export interface WorkflowState {
   isImmersiveMode: boolean;
   immersiveStep: ImmersiveStep;
   showOnboarding: boolean;
+  showImmersiveResult: boolean;
 
   // History (recent workflows)
   recentWorkflows: Array<{
@@ -164,6 +165,8 @@ export interface WorkflowActions {
   exitImmersiveMode: () => void;
   setImmersiveStep: (step: ImmersiveStep) => void;
   dismissOnboarding: () => void;
+  openImmersiveResult: () => void;
+  closeImmersiveResult: () => void;
 }
 
 // ============================================================
@@ -188,6 +191,7 @@ const initialState: WorkflowState = {
   isImmersiveMode: true,
   immersiveStep: "recommend",
   showOnboarding: true,
+  showImmersiveResult: false,
   recentWorkflows: [],
 };
 
@@ -456,6 +460,14 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>()(
 
         dismissOnboarding: () => {
           set({ showOnboarding: false });
+        },
+
+        openImmersiveResult: () => {
+          set({ showImmersiveResult: true, immersiveStep: "result" });
+        },
+
+        closeImmersiveResult: () => {
+          set({ showImmersiveResult: false });
         },
       }),
       {
