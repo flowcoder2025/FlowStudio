@@ -8,7 +8,22 @@
 
 | ID | Type | Item | Detected | Status |
 |----|------|------|----------|--------|
-| - | - | (드리프트 없음) | - | - |
+| DRIFT-001 | MISSING_DOC | IMMERSIVE_DESIGN_INPUT_FORM | 2026-01-22 | 미구현 (Phase D) |
+| DRIFT-002 | MISSING_DOC | IMMERSIVE_DESIGN_RESULT | 2026-01-22 | 미구현 (Phase E) |
+
+### 상세
+
+#### DRIFT-001: IMMERSIVE_DESIGN_INPUT_FORM
+- **유형**: MISSING_DOC (코드 미구현, Contract 정의됨)
+- **예상 경로**: `components/workflow/ImmersiveInputForm.tsx`
+- **설명**: 각 입력 필드를 개별 스텝 카드로 변환하는 몰입형 입력 폼
+- **조치**: Phase D 구현 시 해결
+
+#### DRIFT-002: IMMERSIVE_DESIGN_RESULT
+- **유형**: MISSING_DOC (코드 미구현, Contract 정의됨)
+- **예상 경로**: `components/workflow/ImmersiveResult.tsx`
+- **설명**: 생성된 이미지 대형 표시 + 스와이프 결과 화면
+- **조치**: Phase E 구현 시 해결
 
 ---
 
@@ -26,4 +41,4 @@
 
 ---
 
-> **자동 생성**: 2026-01-21 14:57:25
+> **자동 생성**: 2026-01-22 (DocOps 업데이트)

@@ -51,7 +51,7 @@
 
 방법 A: 단일 통합 에이전트 (권장)
 Task 에이전트 1개 실행:
-  - subagent_type: "quality-engineer" 또는 "Bash"
+  - subagent_type: "quality-engineer" 
   - prompt: "Phase N 품질 체크 및 에러 수정 수행:
     1. npm run build, npx tsc --noEmit, npm run lint 실행
     2. 에러 발견 시 해당 파일 수정
