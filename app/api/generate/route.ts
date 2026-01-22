@@ -1,0 +1,225 @@
+/**
+ * Image Generation API
+ * Contract: IMAGE_FUNC_GENERATE
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+import {
+  generateImages,
+  type GenerationRequest,
+  type AspectRatio,
+  type ImageProvider,
+  type ImageModel,
+  ImageGenerationError,
+  ErrorCodes,
+} from '@/lib/imageProvider';
+import { uploadImageFromUrl } from '@/lib/storage';
+
+// =====================================================
+// Request Schema
+// =====================================================
+
+interface GenerateRequestBody {
+  prompt: string;
+  negativePrompt?: string;
+  aspectRatio?: AspectRatio;
+  count?: number;
+  style?: string;
+  provider?: ImageProvider;
+  model?: ImageModel;
+  workflowSessionId?: string;
+  saveToStorage?: boolean;
+}
+
+// =====================================================
+// POST /api/generate
+// =====================================================
+
+export async function POST(request: NextRequest) {
+  try {
+    // 1. Authenticate
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.user.id;
+
+    // 2. Parse request body
+    const body = await request.json() as GenerateRequestBody;
+
+    // 3. Validate
+    if (!body.prompt || typeof body.prompt !== 'string') {
+      return NextResponse.json(
+        { success: false, error: 'Prompt is required' },
+        { status: 400 }
+      );
+    }
+
+    if (body.prompt.length > 4000) {
+      return NextResponse.json(
+        { success: false, error: 'Prompt exceeds maximum length of 4000 characters' },
+        { status: 400 }
+      );
+    }
+
+    const count = body.count ?? 1;
+    if (count < 1 || count > 4) {
+      return NextResponse.json(
+        { success: false, error: 'Count must be between 1 and 4' },
+        { status: 400 }
+      );
+    }
+
+    // 4. Build generation request
+    const generationRequest: GenerationRequest = {
+      userId,
+      prompt: body.prompt,
+      negativePrompt: body.negativePrompt,
+      aspectRatio: body.aspectRatio,
+      count,
+      style: body.style,
+      provider: body.provider,
+      model: body.model,
+      workflowSessionId: body.workflowSessionId,
+    };
+
+    // 5. Generate images
+    const result = await generateImages(generationRequest);
+
+    // 6. Optionally upload to storage
+    if (body.saveToStorage !== false && result.success) {
+      const uploadedImages = await Promise.all(
+        result.images.map(async (image) => {
+          // Skip if already a storage URL
+          if (!image.url.startsWith('data:')) {
+            return image;
+          }
+
+          const uploadResult = await uploadImageFromUrl(userId, image.url);
+          if (uploadResult.success) {
+            return {
+              ...image,
+              url: uploadResult.url,
+              thumbnailUrl: uploadResult.thumbnailUrl,
+            };
+          }
+          return image;
+        })
+      );
+
+      return NextResponse.json({
+        success: true,
+        images: uploadedImages,
+        creditsUsed: result.creditsUsed,
+        provider: result.provider,
+        model: result.model,
+        duration: result.duration,
+      });
+    }
+
+    // 7. Return result
+    return NextResponse.json({
+      success: result.success,
+      images: result.images,
+      creditsUsed: result.creditsUsed,
+      provider: result.provider,
+      model: result.model,
+      duration: result.duration,
+      error: result.error,
+    });
+  } catch (error) {
+    console.error('Generate API error:', error);
+
+    // Handle specific error types
+    if (error instanceof ImageGenerationError) {
+      const statusCode = getStatusCode(error.code);
+      return NextResponse.json(
+        {
+          success: false,
+          error: error.message,
+          code: error.code,
+          provider: error.provider,
+          retryable: error.retryable,
+        },
+        { status: statusCode }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Generation failed',
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// =====================================================
+// Helper Functions
+// =====================================================
+
+function getStatusCode(errorCode: string): number {
+  switch (errorCode) {
+    case ErrorCodes.INSUFFICIENT_CREDITS:
+      return 402; // Payment Required
+    case ErrorCodes.RATE_LIMITED:
+      return 429; // Too Many Requests
+    case ErrorCodes.INVALID_PROMPT:
+    case ErrorCodes.INVALID_OPTIONS:
+      return 400; // Bad Request
+    case ErrorCodes.CONTENT_FILTERED:
+      return 422; // Unprocessable Entity
+    case ErrorCodes.PROVIDER_ERROR:
+      return 502; // Bad Gateway
+    case ErrorCodes.TIMEOUT:
+      return 504; // Gateway Timeout
+    default:
+      return 500; // Internal Server Error
+  }
+}
+
+// =====================================================
+// GET /api/generate (Get provider status)
+// =====================================================
+
+export async function GET() {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Import provider status
+    const { getProviderStatus, getAllProviderConfigs } = await import('@/lib/imageProvider');
+
+    const status = getProviderStatus();
+    const configs = getAllProviderConfigs();
+
+    return NextResponse.json({
+      success: true,
+      providers: status,
+      configs: configs.map((c) => ({
+        provider: c.provider,
+        model: c.model,
+        costPerImage: c.costPerImage,
+        maxBatchSize: c.maxBatchSize,
+        supportedAspectRatios: c.supportedAspectRatios,
+      })),
+    });
+  } catch (error) {
+    console.error('Get provider status error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to get provider status' },
+      { status: 500 }
+    );
+  }
+}

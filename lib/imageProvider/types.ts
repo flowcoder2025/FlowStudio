@@ -1,0 +1,220 @@
+/**
+ * Image Provider Types
+ * Contract: IMAGE_FUNC_GENERATE, IMAGE_FUNC_PROVIDER, IMAGE_FUNC_UPSCALE
+ */
+
+// =====================================================
+// Provider Types
+// =====================================================
+
+export type ImageProvider = 'google' | 'openrouter';
+
+export type ImageModel =
+  // Google Models
+  | 'gemini-2.0-flash-exp-image-generation'
+  | 'imagen-3.0-generate-001'
+  // OpenRouter Models
+  | 'flux-1.1-pro'
+  | 'flux-1.1-pro-ultra'
+  | 'sdxl';
+
+export interface ProviderConfig {
+  provider: ImageProvider;
+  model: ImageModel;
+  maxBatchSize: number;
+  rateLimit: {
+    requestsPerMinute: number;
+    tokensPerMinute?: number;
+  };
+  costPerImage: number; // in credits
+  supportedAspectRatios: AspectRatio[];
+  maxResolution: {
+    width: number;
+    height: number;
+  };
+}
+
+// =====================================================
+// Generation Options
+// =====================================================
+
+export type AspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '3:2' | '2:3';
+
+export interface GenerationOptions {
+  prompt: string;
+  negativePrompt?: string;
+  aspectRatio?: AspectRatio;
+  width?: number;
+  height?: number;
+  count?: number; // 1-4
+  seed?: number;
+  guidanceScale?: number;
+  safetyFilterLevel?: 'block_none' | 'block_few' | 'block_some' | 'block_most';
+  style?: string;
+  provider?: ImageProvider;
+  model?: ImageModel;
+}
+
+export interface GenerationRequest extends GenerationOptions {
+  userId: string;
+  workflowSessionId?: string;
+}
+
+// =====================================================
+// Generation Result
+// =====================================================
+
+export interface GeneratedImage {
+  id: string;
+  url: string;
+  thumbnailUrl?: string;
+  width: number;
+  height: number;
+  prompt: string;
+  negativePrompt?: string;
+  provider: ImageProvider;
+  model: ImageModel;
+  seed?: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface GenerationResult {
+  success: boolean;
+  images: GeneratedImage[];
+  creditsUsed: number;
+  provider: ImageProvider;
+  model: ImageModel;
+  error?: string;
+  duration?: number; // in ms
+}
+
+// =====================================================
+// Upscale Types
+// =====================================================
+
+export type UpscaleMode = '2x' | '4x' | 'enhance';
+
+export interface UpscaleOptions {
+  imageUrl: string;
+  mode: UpscaleMode;
+  enhanceFaces?: boolean;
+  denoiseStrength?: number;
+}
+
+export interface UpscaleResult {
+  success: boolean;
+  url: string;
+  originalWidth: number;
+  originalHeight: number;
+  upscaledWidth: number;
+  upscaledHeight: number;
+  creditsUsed: number;
+  error?: string;
+}
+
+// =====================================================
+// Provider Selection
+// =====================================================
+
+export interface ProviderSelectionCriteria {
+  batchSize: number;
+  preferredProvider?: ImageProvider;
+  requireHighQuality?: boolean;
+  budgetCredits?: number;
+  aspectRatio?: AspectRatio;
+}
+
+export interface SelectedProvider {
+  provider: ImageProvider;
+  model: ImageModel;
+  config: ProviderConfig;
+  estimatedCredits: number;
+  reason: string;
+}
+
+// =====================================================
+// Rate Limiting
+// =====================================================
+
+export interface RateLimitStatus {
+  provider: ImageProvider;
+  remaining: number;
+  resetAt: Date;
+  isAvailable: boolean;
+}
+
+// =====================================================
+// Progress Tracking
+// =====================================================
+
+export type GenerationStatus =
+  | 'pending'
+  | 'queued'
+  | 'processing'
+  | 'completed'
+  | 'failed';
+
+export interface GenerationProgress {
+  status: GenerationStatus;
+  progress: number; // 0-100
+  currentStep?: string;
+  estimatedTimeRemaining?: number; // in seconds
+  imagesCompleted?: number;
+  totalImages?: number;
+}
+
+// =====================================================
+// Error Types
+// =====================================================
+
+export class ImageGenerationError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+    public provider?: ImageProvider,
+    public retryable: boolean = false
+  ) {
+    super(message);
+    this.name = 'ImageGenerationError';
+  }
+}
+
+export const ErrorCodes = {
+  RATE_LIMITED: 'RATE_LIMITED',
+  INVALID_PROMPT: 'INVALID_PROMPT',
+  CONTENT_FILTERED: 'CONTENT_FILTERED',
+  PROVIDER_ERROR: 'PROVIDER_ERROR',
+  INSUFFICIENT_CREDITS: 'INSUFFICIENT_CREDITS',
+  INVALID_OPTIONS: 'INVALID_OPTIONS',
+  TIMEOUT: 'TIMEOUT',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+export type ErrorCode = typeof ErrorCodes[keyof typeof ErrorCodes];
+
+// =====================================================
+// Storage Types
+// =====================================================
+
+export interface ImageUploadResult {
+  success: boolean;
+  url: string;
+  thumbnailUrl?: string;
+  path: string;
+  size: number;
+  error?: string;
+}
+
+export interface ImageMetadata {
+  id: string;
+  userId: string;
+  prompt: string;
+  negativePrompt?: string;
+  provider: ImageProvider;
+  model: ImageModel;
+  width: number;
+  height: number;
+  creditUsed: number;
+  isUpscaled: boolean;
+  createdAt: Date;
+}
