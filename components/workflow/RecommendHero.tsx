@@ -173,9 +173,9 @@ export function RecommendHero({
             transition={{ duration: 0.3, delay: 0.25 }}
             className="flex flex-wrap justify-center gap-2 mb-6"
           >
-            {recommendation.tags.slice(0, 4).map((tag) => (
+            {recommendation.tags.slice(0, 4).map((tag, index) => (
               <span
-                key={tag}
+                key={`${tag}-${index}`}
                 className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm"
               >
                 #{tag}

@@ -12,6 +12,7 @@ import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { WorkflowRecommendation } from "@/lib/workflow/recommend";
 import { RecommendHero } from "./RecommendHero";
+import { ImmersiveNavigation } from "@/components/immersive/ImmersiveNavigation";
 
 // ============================================================
 // 타입 정의
@@ -206,12 +207,24 @@ export function ImmersiveRecommend({
 
           {/* 카드 컨테이너 */}
           <motion.div
-            className="relative w-full max-w-lg mx-4 h-[600px] md:h-[650px]"
+            className="relative w-full max-w-lg mx-4 md:mx-20 h-[600px] md:h-[650px]"
             variants={cardContainerVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
           >
+            {/* 좌우 네비게이션 버튼 - 카드 외부 */}
+            <ImmersiveNavigation
+              currentIndex={currentIndex}
+              total={recommendations.length}
+              onPrevious={handlePrev}
+              onNext={handleNext}
+              onGoTo={(index) => setPage([index, index > currentIndex ? 1 : -1])}
+              variant="dark"
+              size="lg"
+              showOnboardingHint={recommendations.length > 1}
+            />
+
             <AnimatePresence initial={false} custom={direction} mode="wait">
               <motion.div
                 key={currentIndex}

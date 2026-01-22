@@ -1,8 +1,8 @@
 # FlowStudio 구현 태스크
 
-> **총 101 Contracts** (Phase 1-12)
-> **완료**: Phase 1-12 (101 Contracts) ✅ 🎉
-> **상태**: 전체 프로젝트 완료!
+> **총 111 Contracts** (Phase 1-12 + Immersive UX)
+> **완료**: Phase 1-12 (101 Contracts) ✅ + Immersive Phase A-C, F ✅
+> **진행 중**: Immersive Phase D, E (미구현)
 
 ---
 
@@ -42,6 +42,7 @@
 | Phase 10 | ✅ 완료 | 6/6 | HANDOFF_2026-01-22_P10.md |
 | Phase 11 | ✅ 완료 | 6/6 | HANDOFF_2026-01-22_P11.md |
 | Phase 12 | ✅ 완료 | 6/6 | HANDOFF_2026-01-22_P12_FINAL.md |
+| **Immersive** | 🔄 진행중 | 9/10 | HANDOFF_2026-01-22_IMMERSIVE_UX.md |
 
 ---
 
@@ -496,27 +497,6 @@ npm install -D vitest @testing-library/react playwright @playwright/test
 
 ---
 
-## 전체 Phase 요약
-
-| Phase | 내용 | Contracts | 상태 |
-|-------|------|-----------|------|
-| Phase 1 | Auth + Permission | 14 | ✅ 완료 |
-| Phase 2 | User & Credit Core | 10 | ✅ 완료 |
-| Phase 3 | Workflow System | 7 | ✅ 완료 |
-| Phase 4 | Image Generation | 10 | ✅ 완료 |
-| Phase 5 | Hybrid Processing | 10 | ✅ 완료 |
-| Phase 6 | API Routes Integration | 7 | ✅ 완료 |
-| Phase 7 | Workflow Guide System | 12 | ✅ 완료 |
-| Phase 8 | UI Components | 5 | ✅ 완료 |
-| Phase 9 | Payment (LemonSqueezy) | 8 | ✅ 완료 |
-| Phase 10 | Page Integration | 6 | ✅ 완료 |
-| Phase 11 | Testing | 6 | ✅ 완료 |
-| **Phase 12** | **Polish & Optimization** | **6** | ✅ 완료 |
-
-**총 Contracts**: 101개 (완료 101) 🎉
-
----
-
 ## 빠른 참조
 
 ### 실행 명령어
@@ -540,4 +520,82 @@ lib/workflow/index.ts          - 워크플로우
 
 ---
 
-> **마지막 업데이트**: 2026-01-22 Phase 12 완료 (전체 프로젝트 완료 🎉)
+---
+
+## Phase 13: Immersive UX 🔄
+
+> 몰입형 UX 개선 - 풀스크린 오버레이 및 스와이프 인터랙션
+
+### Contracts (10개)
+
+#### Phase A: 스와이프 안내 개선 ✅
+- [x] IMMERSIVE_HOOK_ONBOARDING → `components/immersive/hooks/useOnboarding.ts`
+- [x] IMMERSIVE_COMP_NAVIGATION → `components/immersive/ImmersiveNavigation.tsx`
+
+#### Phase B: 공통 인프라 구축 ✅
+- [x] IMMERSIVE_HOOK_SWIPE → `components/immersive/hooks/useSwipeNavigation.ts`
+- [x] IMMERSIVE_HOOK_KEYBOARD → `components/immersive/hooks/useImmersiveKeyboard.ts`
+- [x] IMMERSIVE_COMP_CONTAINER → `components/immersive/ImmersiveContainer.tsx`
+- [x] IMMERSIVE_COMP_CARD → `components/immersive/ImmersiveCard.tsx`
+
+#### Phase C: 액션 선택 몰입형 전환 ✅
+- [x] IMMERSIVE_DESIGN_ACTION_SELECT → `components/workflow/ImmersiveActionSelect.tsx`
+- [x] IMMERSIVE_DESIGN_RECOMMEND → `components/workflow/ImmersiveRecommend.tsx`
+
+#### Phase D: 입력 폼 몰입형 전환 ✅
+- [x] IMMERSIVE_DESIGN_INPUT_FORM → `components/workflow/ImmersiveInputForm.tsx`
+
+#### Phase E: 결과 화면 몰입형 (미구현)
+- [ ] IMMERSIVE_DESIGN_RESULT → `components/workflow/ImmersiveResult.tsx`
+
+#### Phase F: 상태 관리 확장 ✅
+- [x] Zustand 스토어 확장 → `lib/workflow/store.ts` (ImmersiveStep, 몰입 모드 상태/액션)
+
+### 생성된 파일
+```
+components/immersive/
+├── hooks/
+│   ├── useOnboarding.ts         # 온보딩 상태 관리
+│   ├── useSwipeNavigation.ts    # 스와이프 네비게이션
+│   └── useImmersiveKeyboard.ts  # 키보드 네비게이션
+├── ImmersiveContainer.tsx       # 풀스크린 오버레이 래퍼
+├── ImmersiveCard.tsx            # 재사용 대형 카드
+├── ImmersiveNavigation.tsx      # 네비게이션 (버튼+도트+힌트)
+└── index.ts                     # 배럴 내보내기
+
+components/workflow/
+├── ImmersiveRecommend.tsx       # 몰입형 검색 추천
+├── ImmersiveActionSelect.tsx    # 몰입형 액션 선택
+└── ImmersiveInputForm.tsx       # 몰입형 입력 폼 (Phase D)
+```
+
+### 완료일: 2026-01-22 (Phase A-D, F)
+
+### 다음 작업
+- Phase E: `ImmersiveResult.tsx` - 생성된 이미지 대형 표시 + 스와이프
+
+---
+
+## 전체 Phase 요약
+
+| Phase | 내용 | Contracts | 상태 |
+|-------|------|-----------|------|
+| Phase 1 | Auth + Permission | 14 | ✅ 완료 |
+| Phase 2 | User & Credit Core | 10 | ✅ 완료 |
+| Phase 3 | Workflow System | 7 | ✅ 완료 |
+| Phase 4 | Image Generation | 10 | ✅ 완료 |
+| Phase 5 | Hybrid Processing | 10 | ✅ 완료 |
+| Phase 6 | API Routes Integration | 7 | ✅ 완료 |
+| Phase 7 | Workflow Guide System | 12 | ✅ 완료 |
+| Phase 8 | UI Components | 5 | ✅ 완료 |
+| Phase 9 | Payment (LemonSqueezy) | 8 | ✅ 완료 |
+| Phase 10 | Page Integration | 6 | ✅ 완료 |
+| Phase 11 | Testing | 6 | ✅ 완료 |
+| Phase 12 | Polish & Optimization | 6 | ✅ 완료 |
+| **Phase 13** | **Immersive UX** | **9/10** | 🔄 진행중 |
+
+**총 Contracts**: 111개 (완료 110, 미완료 1)
+
+---
+
+> **마지막 업데이트**: 2026-01-22 Immersive UX Phase A-D, F 완료

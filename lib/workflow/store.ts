@@ -57,6 +57,13 @@ export type WorkflowStep =
   | "generating"
   | "result";
 
+export type ImmersiveStep =
+  | "recommend"
+  | "action"
+  | "input"
+  | "generating"
+  | "result";
+
 export interface WorkflowState {
   // Current workflow state
   currentStep: WorkflowStep;
@@ -85,6 +92,11 @@ export interface WorkflowState {
   // UI state
   isLoading: boolean;
   error: string | null;
+
+  // Immersive mode state
+  isImmersiveMode: boolean;
+  immersiveStep: ImmersiveStep;
+  showOnboarding: boolean;
 
   // History (recent workflows)
   recentWorkflows: Array<{
@@ -146,6 +158,12 @@ export interface WorkflowActions {
   // History
   addToHistory: (workflow: { industry: Industry; action: string; intent?: ExpressionIntent }) => void;
   clearHistory: () => void;
+
+  // Immersive mode
+  enterImmersiveMode: () => void;
+  exitImmersiveMode: () => void;
+  setImmersiveStep: (step: ImmersiveStep) => void;
+  dismissOnboarding: () => void;
 }
 
 // ============================================================
@@ -167,6 +185,9 @@ const initialState: WorkflowState = {
   session: null,
   isLoading: false,
   error: null,
+  isImmersiveMode: true,
+  immersiveStep: "recommend",
+  showOnboarding: true,
   recentWorkflows: [],
 };
 
@@ -400,6 +421,7 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>()(
             generationResult: null,
             session: null,
             error: null,
+            immersiveStep: "recommend",
           });
         },
 
@@ -418,6 +440,23 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>()(
         },
 
         clearHistory: () => set({ recentWorkflows: [] }),
+
+        // Immersive mode
+        enterImmersiveMode: () => {
+          set({ isImmersiveMode: true });
+        },
+
+        exitImmersiveMode: () => {
+          set({ isImmersiveMode: false });
+        },
+
+        setImmersiveStep: (step) => {
+          set({ immersiveStep: step });
+        },
+
+        dismissOnboarding: () => {
+          set({ showOnboarding: false });
+        },
       }),
       {
         name: "flowstudio-workflow",

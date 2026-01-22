@@ -21,8 +21,9 @@ import {
 } from "@/lib/workflow/recommend";
 import { RecommendCard, RecommendList } from "@/components/workflow/RecommendCard";
 import { ImmersiveRecommend } from "@/components/workflow/ImmersiveRecommend";
-import { Button } from "@/components/ui/button";
+import { ImmersiveInputForm } from "@/components/workflow/ImmersiveInputForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { ExpressionIntent } from "@/lib/workflow/intents";
 
 export default function HomePage() {
   const router = useRouter();
@@ -38,6 +39,10 @@ export default function HomePage() {
   // Immersive Recommend State
   const [isImmersiveOpen, setIsImmersiveOpen] = useState(false);
   const [immersiveRecommendations, setImmersiveRecommendations] = useState<WorkflowRecommendation[]>([]);
+
+  // Immersive Input Form State (추천 선택 후 바로 입력 폼으로)
+  const [isInputFormOpen, setIsInputFormOpen] = useState(false);
+  const [selectedRecommendation, setSelectedRecommendation] = useState<WorkflowRecommendation | null>(null);
 
   // Zustand store
   const selectIndustry = useWorkflowStore((state) => state.selectIndustry);
@@ -57,7 +62,6 @@ export default function HomePage() {
       allRecommendations.push(...recs.slice(0, 2));
     });
     setPopularRecommendations(allRecommendations.slice(0, 6));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Search handler
@@ -118,7 +122,7 @@ export default function HomePage() {
     [status, router, selectIndustry, setCurrentStep]
   );
 
-  // Handle recommendation selection
+  // Handle recommendation selection - 스타일 선택 스킵하고 바로 입력 폼으로
   const handleRecommendationSelect = useCallback(
     (recommendation: WorkflowRecommendation) => {
       if (status !== "authenticated") {
@@ -126,13 +130,31 @@ export default function HomePage() {
         return;
       }
 
+      // 추천 모달 닫고 바로 입력 폼 열기
+      setIsImmersiveOpen(false);
       selectIndustry(recommendation.industry);
       selectIntent(recommendation.intent);
-      setCurrentStep("guide");
-      router.push(`/workflow/${recommendation.industry}?intent=${recommendation.intent}`);
+      setSelectedRecommendation(recommendation);
+      setIsInputFormOpen(true);
     },
-    [status, router, selectIndustry, selectIntent, setCurrentStep]
+    [status, router, selectIndustry, selectIntent]
   );
+
+  // 입력 폼에서 생성 완료 시
+  const handleInputFormGenerate = useCallback(
+    (sessionId: string) => {
+      setIsInputFormOpen(false);
+      setSelectedRecommendation(null);
+      router.push(`/result?sessionId=${sessionId}`);
+    },
+    [router]
+  );
+
+  // 입력 폼 닫기
+  const handleInputFormClose = useCallback(() => {
+    setIsInputFormOpen(false);
+    setSelectedRecommendation(null);
+  }, []);
 
   // Handle recent workflow click
   const handleRecentClick = useCallback(
@@ -156,6 +178,17 @@ export default function HomePage() {
         recommendations={immersiveRecommendations}
         onSelect={handleRecommendationSelect}
       />
+
+      {/* Immersive Input Form - 추천 선택 후 바로 입력 폼 */}
+      {selectedRecommendation && (
+        <ImmersiveInputForm
+          isOpen={isInputFormOpen}
+          onClose={handleInputFormClose}
+          industry={selectedRecommendation.industry}
+          intent={selectedRecommendation.intent as ExpressionIntent}
+          onGenerate={handleInputFormGenerate}
+        />
+      )}
 
       <div className="max-w-6xl mx-auto px-4 py-12">
         {/* Hero Section */}
