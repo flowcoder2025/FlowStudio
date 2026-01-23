@@ -2,6 +2,11 @@
  * Payment History Service
  * Contract: PAYMENT_FUNC_HISTORY
  * Evidence: IMPLEMENTATION_PLAN.md Phase 9
+ *
+ * DB Schema Notes:
+ * - Payment model does NOT exist in schema
+ * - Using CreditTransaction to track payment history
+ * - Subscription model has different fields
  */
 
 import { prisma } from "@/lib/db";
@@ -25,51 +30,50 @@ export interface PaymentHistoryResult {
 
 /**
  * Get payment history for a user
+ * Uses CreditTransaction with type="purchase" as payment records
  */
 export async function getPaymentHistory(
   userId: string,
   options: PaymentHistoryOptions = {}
 ): Promise<PaymentHistoryResult> {
-  const { limit = 20, offset = 0, status } = options;
+  const { limit = 20, offset = 0 } = options;
 
   const where = {
     userId,
-    ...(status && { status }),
+    type: "purchase",
   };
 
-  const [payments, total] = await Promise.all([
-    prisma.payment.findMany({
+  const [transactions, total] = await Promise.all([
+    prisma.creditTransaction.findMany({
       where,
       orderBy: { createdAt: "desc" },
       take: limit,
       skip: offset,
       select: {
         id: true,
-        lemonSqueezyOrderId: true,
-        productName: true,
+        paymentId: true,
+        paymentProvider: true,
         amount: true,
-        currency: true,
-        status: true,
-        creditsGranted: true,
+        description: true,
         createdAt: true,
       },
     }),
-    prisma.payment.count({ where }),
+    prisma.creditTransaction.count({ where }),
   ]);
 
   return {
-    payments: payments.map((p) => ({
-      id: p.id,
-      orderId: p.lemonSqueezyOrderId,
-      productName: p.productName,
-      amount: p.amount,
-      currency: p.currency,
-      status: p.status,
-      creditsGranted: p.creditsGranted,
-      createdAt: p.createdAt,
+    payments: transactions.map((t) => ({
+      id: t.id,
+      orderId: t.paymentId ?? t.id,
+      productName: t.description ?? "Credit Purchase",
+      amount: 0, // Price not stored in transaction
+      currency: "KRW",
+      status: "completed",
+      creditsGranted: t.amount,
+      createdAt: t.createdAt,
     })),
     total,
-    hasMore: offset + payments.length < total,
+    hasMore: offset + transactions.length < total,
   };
 }
 
@@ -80,72 +84,70 @@ export async function getPaymentById(
   paymentId: string,
   userId: string
 ): Promise<PaymentHistoryItem | null> {
-  const payment = await prisma.payment.findFirst({
+  const transaction = await prisma.creditTransaction.findFirst({
     where: {
       id: paymentId,
       userId,
+      type: "purchase",
     },
     select: {
       id: true,
-      lemonSqueezyOrderId: true,
-      productName: true,
+      paymentId: true,
       amount: true,
-      currency: true,
-      status: true,
-      creditsGranted: true,
+      description: true,
       createdAt: true,
     },
   });
 
-  if (!payment) {
+  if (!transaction) {
     return null;
   }
 
   return {
-    id: payment.id,
-    orderId: payment.lemonSqueezyOrderId,
-    productName: payment.productName,
-    amount: payment.amount,
-    currency: payment.currency,
-    status: payment.status,
-    creditsGranted: payment.creditsGranted,
-    createdAt: payment.createdAt,
+    id: transaction.id,
+    orderId: transaction.paymentId ?? transaction.id,
+    productName: transaction.description ?? "Credit Purchase",
+    amount: 0,
+    currency: "KRW",
+    status: "completed",
+    creditsGranted: transaction.amount,
+    createdAt: transaction.createdAt,
   };
 }
 
 /**
- * Get payment by LemonSqueezy order ID
+ * Get payment by order ID (paymentId in transaction)
  */
 export async function getPaymentByOrderId(
   orderId: string
 ): Promise<PaymentHistoryItem | null> {
-  const payment = await prisma.payment.findUnique({
-    where: { lemonSqueezyOrderId: orderId },
+  const transaction = await prisma.creditTransaction.findFirst({
+    where: {
+      paymentId: orderId,
+      type: "purchase",
+    },
     select: {
       id: true,
-      lemonSqueezyOrderId: true,
-      productName: true,
+      paymentId: true,
       amount: true,
-      currency: true,
-      status: true,
-      creditsGranted: true,
+      description: true,
       createdAt: true,
     },
   });
 
-  if (!payment) {
+  if (!transaction) {
     return null;
   }
 
   return {
-    id: payment.id,
-    orderId: payment.lemonSqueezyOrderId,
-    productName: payment.productName,
-    amount: payment.amount,
-    currency: payment.currency,
-    status: payment.status,
-    creditsGranted: payment.creditsGranted,
-    createdAt: payment.createdAt,
+    id: transaction.id,
+    orderId: transaction.paymentId ?? transaction.id,
+    productName: transaction.description ?? "Credit Purchase",
+    amount: 0,
+    currency: "KRW",
+    status: "completed",
+    creditsGranted: transaction.amount,
+    createdAt: transaction.createdAt,
   };
 }
 
@@ -165,22 +167,21 @@ export interface BillingSummary {
  * Get billing summary for a user
  */
 export async function getBillingSummary(userId: string): Promise<BillingSummary> {
-  const [aggregates, lastPayment, subscription] = await Promise.all([
-    prisma.payment.aggregate({
+  const [aggregates, lastTransaction, subscription] = await Promise.all([
+    prisma.creditTransaction.aggregate({
       where: {
         userId,
-        status: "paid",
+        type: "purchase",
       },
       _sum: {
         amount: true,
-        creditsGranted: true,
       },
       _count: true,
     }),
-    prisma.payment.findFirst({
+    prisma.creditTransaction.findFirst({
       where: {
         userId,
-        status: "paid",
+        type: "purchase",
       },
       orderBy: { createdAt: "desc" },
       select: { createdAt: true },
@@ -188,25 +189,25 @@ export async function getBillingSummary(userId: string): Promise<BillingSummary>
     prisma.subscription.findFirst({
       where: {
         userId,
-        status: { in: ["active", "on_trial", "past_due", "paused"] },
+        status: { in: ["ACTIVE", "active", "on_trial", "past_due", "paused"] },
       },
       orderBy: { createdAt: "desc" },
     }),
   ]);
 
   return {
-    totalSpent: aggregates._sum.amount || 0,
-    totalCreditsGranted: aggregates._sum.creditsGranted || 0,
+    totalSpent: 0, // Price not tracked
+    totalCreditsGranted: aggregates._sum.amount || 0,
     paymentCount: aggregates._count,
-    lastPaymentDate: lastPayment?.createdAt || null,
+    lastPaymentDate: lastTransaction?.createdAt || null,
     currentSubscription: subscription
       ? {
           id: subscription.id,
-          planName: subscription.planName,
+          planName: subscription.tier,
           status: subscription.status,
-          renewsAt: subscription.renewsAt,
-          endsAt: subscription.endsAt,
-          isPaused: subscription.isPaused,
+          renewsAt: subscription.endDate,
+          endsAt: subscription.endDate,
+          isPaused: subscription.status === "paused",
         }
       : null,
   };
@@ -237,10 +238,11 @@ export async function getInvoiceData(
   paymentId: string,
   userId: string
 ): Promise<InvoiceData | null> {
-  const payment = await prisma.payment.findFirst({
+  const transaction = await prisma.creditTransaction.findFirst({
     where: {
       id: paymentId,
       userId,
+      type: "purchase",
     },
     include: {
       user: {
@@ -252,21 +254,21 @@ export async function getInvoiceData(
     },
   });
 
-  if (!payment) {
+  if (!transaction) {
     return null;
   }
 
   return {
-    orderId: payment.lemonSqueezyOrderId,
-    productName: payment.productName,
-    amount: payment.amount,
-    currency: payment.currency,
-    status: payment.status,
-    creditsGranted: payment.creditsGranted,
-    createdAt: payment.createdAt,
+    orderId: transaction.paymentId ?? transaction.id,
+    productName: transaction.description,
+    amount: 0,
+    currency: "KRW",
+    status: "completed",
+    creditsGranted: transaction.amount,
+    createdAt: transaction.createdAt,
     user: {
-      name: payment.user.name,
-      email: payment.user.email,
+      name: transaction.user.name,
+      email: transaction.user.email ?? "",
     },
   };
 }
@@ -301,19 +303,19 @@ export async function getPaymentStats(userId: string): Promise<PaymentStats> {
   const thisYearStart = new Date(now.getFullYear(), 0, 1);
 
   const [thisMonth, lastMonth, thisYear] = await Promise.all([
-    prisma.payment.aggregate({
+    prisma.creditTransaction.aggregate({
       where: {
         userId,
-        status: "paid",
+        type: "purchase",
         createdAt: { gte: thisMonthStart },
       },
       _sum: { amount: true },
       _count: true,
     }),
-    prisma.payment.aggregate({
+    prisma.creditTransaction.aggregate({
       where: {
         userId,
-        status: "paid",
+        type: "purchase",
         createdAt: {
           gte: lastMonthStart,
           lte: lastMonthEnd,
@@ -322,10 +324,10 @@ export async function getPaymentStats(userId: string): Promise<PaymentStats> {
       _sum: { amount: true },
       _count: true,
     }),
-    prisma.payment.aggregate({
+    prisma.creditTransaction.aggregate({
       where: {
         userId,
-        status: "paid",
+        type: "purchase",
         createdAt: { gte: thisYearStart },
       },
       _sum: { amount: true },

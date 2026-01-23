@@ -262,11 +262,18 @@ async function performUpscale(
 
 async function updateImageProject(projectId: string, newUrl: string): Promise<void> {
   try {
+    // DB Schema: ImageProject uses resultImages array, not imageUrl/isUpscaled
+    const project = await prisma.imageProject.findUnique({
+      where: { id: projectId },
+      select: { resultImages: true },
+    });
+
+    const updatedImages = project?.resultImages ? [...project.resultImages, newUrl] : [newUrl];
+
     await prisma.imageProject.update({
       where: { id: projectId },
       data: {
-        imageUrl: newUrl,
-        isUpscaled: true,
+        resultImages: updatedImages,
         updatedAt: new Date(),
       },
     });

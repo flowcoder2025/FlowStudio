@@ -56,6 +56,7 @@ export async function applyReferralCode(
   }
 
   // Apply referral in a transaction
+  // DB Schema: Credit has only balance (no amount/source), use upsert for 1:1 relation
   await prisma.$transaction(async (tx) => {
     // Update referee with referrer info
     await tx.user.update({
@@ -66,12 +67,17 @@ export async function applyReferralCode(
       },
     });
 
-    // Add credit record for referee
-    await tx.credit.create({
-      data: {
+    // Update or create Credit record for referee
+    await tx.credit.upsert({
+      where: { userId },
+      update: {
+        balance: { increment: REFERRAL_BONUS_CREDITS },
+        updatedAt: new Date(),
+      },
+      create: {
         userId,
-        amount: REFERRAL_BONUS_CREDITS,
-        source: "referral",
+        balance: REFERRAL_BONUS_CREDITS,
+        updatedAt: new Date(),
       },
     });
 
@@ -83,16 +89,21 @@ export async function applyReferralCode(
       },
     });
 
-    // Add credit record for referrer
-    await tx.credit.create({
-      data: {
+    // Update or create Credit record for referrer
+    await tx.credit.upsert({
+      where: { userId: referrer.id },
+      update: {
+        balance: { increment: REFERRAL_BONUS_CREDITS },
+        updatedAt: new Date(),
+      },
+      create: {
         userId: referrer.id,
-        amount: REFERRAL_BONUS_CREDITS,
-        source: "referral",
+        balance: REFERRAL_BONUS_CREDITS,
+        updatedAt: new Date(),
       },
     });
 
-    // Record transactions
+    // Record transactions (no status field)
     await tx.creditTransaction.createMany({
       data: [
         {

@@ -4,10 +4,14 @@
  * Evidence: IMPLEMENTATION_PLAN.md Phase 2
  *
  * Confirms a credit hold and actually deducts the credits
+ *
+ * DB Schema Notes:
+ * - CreditTransaction: no status/holdId fields
+ * - CreditLedger: uses requestId, holdAmount, capturedAmount, status
  */
 
 import { prisma } from "@/lib/db";
-import { getHold } from "./hold";
+import { getLedgerHold } from "./hold";
 
 export interface CaptureResult {
   success: boolean;
@@ -17,33 +21,39 @@ export interface CaptureResult {
 /**
  * Capture (confirm) a credit hold
  * This actually deducts the credits from the user's balance
+ * Uses CreditLedger for hold management
  */
 export async function captureCredits(
-  holdId: string,
+  requestId: string,
   description?: string
 ): Promise<CaptureResult> {
-  // Get the hold
-  const hold = await getHold(holdId);
+  // Get the hold from CreditLedger
+  const hold = await getLedgerHold(requestId);
 
   if (!hold) {
     return { success: false, error: "홀드를 찾을 수 없습니다" };
   }
 
-  if (hold.status !== "pending") {
+  if (hold.status !== "HELD") {
     return {
       success: false,
       error: `이미 처리된 홀드입니다. 상태: ${hold.status}`,
     };
   }
 
-  const amount = Math.abs(hold.amount);
+  const amount = hold.holdAmount;
 
   // Execute capture in transaction
   await prisma.$transaction(async (tx) => {
-    // Update hold status
-    await tx.creditTransaction.update({
-      where: { id: holdId },
-      data: { status: "completed" },
+    // Update ledger status to CAPTURED
+    await tx.creditLedger.update({
+      where: { requestId },
+      data: {
+        status: "CAPTURED",
+        capturedAmount: amount,
+        capturedAt: new Date(),
+        description: description || "크레딧 사용 확정",
+      },
     });
 
     // Deduct from user balance
@@ -54,31 +64,22 @@ export async function captureCredits(
       },
     });
 
-    // Create capture transaction record
+    // Also update Credit balance if exists
+    await tx.credit.updateMany({
+      where: { userId: hold.userId },
+      data: {
+        balance: { decrement: amount },
+      },
+    });
+
+    // Create capture transaction record (no status field)
     await tx.creditTransaction.create({
       data: {
         userId: hold.userId,
         amount: -amount,
         type: "capture",
         description: description || "크레딧 사용 확정",
-        holdId,
-        status: "completed",
-      },
-    });
-
-    // Create ledger entry
-    const user = await tx.user.findUnique({
-      where: { id: hold.userId },
-      select: { creditBalance: true },
-    });
-
-    await tx.creditLedger.create({
-      data: {
-        userId: hold.userId,
-        creditId: holdId, // Using holdId as reference
-        change: -amount,
-        balanceAfter: user?.creditBalance ?? 0,
-        reason: description || "크레딧 사용",
+        metadata: { requestId },
       },
     });
   });
@@ -90,24 +91,24 @@ export async function captureCredits(
  * Partial capture - capture only part of the held amount
  */
 export async function partialCapture(
-  holdId: string,
+  requestId: string,
   captureAmount: number,
   description?: string
 ): Promise<CaptureResult> {
-  const hold = await getHold(holdId);
+  const hold = await getLedgerHold(requestId);
 
   if (!hold) {
     return { success: false, error: "홀드를 찾을 수 없습니다" };
   }
 
-  if (hold.status !== "pending") {
+  if (hold.status !== "HELD") {
     return {
       success: false,
       error: `이미 처리된 홀드입니다. 상태: ${hold.status}`,
     };
   }
 
-  const holdAmount = Math.abs(hold.amount);
+  const holdAmount = hold.holdAmount;
 
   if (captureAmount > holdAmount) {
     return {
@@ -119,10 +120,17 @@ export async function partialCapture(
   const refundAmount = holdAmount - captureAmount;
 
   await prisma.$transaction(async (tx) => {
-    // Update hold status
-    await tx.creditTransaction.update({
-      where: { id: holdId },
-      data: { status: "completed" },
+    // Update ledger with partial capture
+    await tx.creditLedger.update({
+      where: { requestId },
+      data: {
+        status: refundAmount > 0 ? "PARTIAL_CAPTURED" : "CAPTURED",
+        capturedAmount: captureAmount,
+        refundedAmount: refundAmount > 0 ? refundAmount : undefined,
+        capturedAt: new Date(),
+        refundedAt: refundAmount > 0 ? new Date() : undefined,
+        description: description || `크레딧 부분 사용 (${captureAmount}/${holdAmount})`,
+      },
     });
 
     // Deduct captured amount from balance
@@ -133,6 +141,14 @@ export async function partialCapture(
       },
     });
 
+    // Also update Credit balance if exists
+    await tx.credit.updateMany({
+      where: { userId: hold.userId },
+      data: {
+        balance: { decrement: captureAmount },
+      },
+    });
+
     // Create capture transaction
     await tx.creditTransaction.create({
       data: {
@@ -140,8 +156,7 @@ export async function partialCapture(
         amount: -captureAmount,
         type: "capture",
         description: description || `크레딧 부분 사용 (${captureAmount}/${holdAmount})`,
-        holdId,
-        status: "completed",
+        metadata: { requestId },
       },
     });
 
@@ -153,8 +168,7 @@ export async function partialCapture(
           amount: refundAmount,
           type: "refund",
           description: `부분 캡처 환불 (${refundAmount})`,
-          holdId,
-          status: "completed",
+          metadata: { requestId },
         },
       });
     }

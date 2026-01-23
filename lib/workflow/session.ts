@@ -2,11 +2,17 @@
  * Workflow Session Service
  * Contract: WORKFLOW_FUNC_SESSION
  * Evidence: IMPLEMENTATION_PLAN.md Phase 3
+ *
+ * 기존 DB 스키마 호환:
+ * - industryId (not industry)
+ * - actionId (not action)
+ * - stepData (not inputs)
+ * - workflowId (required)
  */
 
 import { prisma } from "@/lib/db";
 import { Industry, isValidIndustry } from "./industries";
-import { getAction, Action } from "./actions";
+import { getAction } from "./actions";
 import { grantOwnership } from "@/lib/permissions";
 
 export interface WorkflowSessionData {
@@ -16,7 +22,7 @@ export interface WorkflowSessionData {
   action: string;
   inputs: Record<string, unknown>;
   prompt: string | null;
-  status: "draft" | "generating" | "completed" | "failed";
+  status: "draft" | "generating" | "completed" | "failed" | "IN_PROGRESS";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,6 +31,44 @@ export interface CreateSessionInput {
   industry: string;
   action: string;
   inputs?: Record<string, unknown>;
+}
+
+// DB 스키마의 status를 우리 status로 변환
+function mapDbStatus(dbStatus: string): WorkflowSessionData["status"] {
+  const statusMap: Record<string, WorkflowSessionData["status"]> = {
+    IN_PROGRESS: "generating",
+    COMPLETED: "completed",
+    FAILED: "failed",
+    draft: "draft",
+    generating: "generating",
+    completed: "completed",
+    failed: "failed",
+  };
+  return statusMap[dbStatus] || "draft";
+}
+
+// DB 레코드를 WorkflowSessionData로 변환
+function mapDbToSession(dbSession: {
+  id: string;
+  userId: string;
+  industryId: string;
+  actionId: string;
+  stepData: unknown;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+}): WorkflowSessionData {
+  return {
+    id: dbSession.id,
+    userId: dbSession.userId,
+    industry: dbSession.industryId as Industry,
+    action: dbSession.actionId,
+    inputs: (dbSession.stepData as Record<string, unknown>) || {},
+    prompt: null, // DB에 prompt 필드 없음
+    status: mapDbStatus(dbSession.status),
+    createdAt: dbSession.createdAt,
+    updatedAt: dbSession.updatedAt,
+  };
 }
 
 /**
@@ -43,20 +87,24 @@ export async function createSession(
     throw new Error(`Invalid action: ${input.action}`);
   }
 
+  // 기존 DB 스키마에 맞게 데이터 생성
   const session = await prisma.workflowSession.create({
     data: {
       userId,
-      industry: input.industry,
-      action: input.action,
-      inputs: (input.inputs || {}) as object,
-      status: "draft",
+      workflowId: `${input.industry}_${input.action}`,
+      industryId: input.industry,
+      actionId: input.action,
+      schemaVersion: "1.0.0",
+      totalSteps: 1,
+      stepData: (input.inputs || {}) as object,
+      status: "IN_PROGRESS",
     },
   });
 
   // Grant ownership permission
   await grantOwnership("workflow_session", session.id, userId);
 
-  return session as WorkflowSessionData;
+  return mapDbToSession(session);
 }
 
 /**
@@ -68,10 +116,10 @@ export async function updateSessionInputs(
 ): Promise<WorkflowSessionData> {
   const session = await prisma.workflowSession.update({
     where: { id: sessionId },
-    data: { inputs: inputs as object },
+    data: { stepData: inputs as object },
   });
 
-  return session as WorkflowSessionData;
+  return mapDbToSession(session);
 }
 
 /**
@@ -86,13 +134,13 @@ export async function generatePrompt(sessionId: string): Promise<string> {
     throw new Error("Session not found");
   }
 
-  const action = getAction(session.action);
+  const action = getAction(session.actionId);
   if (!action) {
-    throw new Error(`Action not found: ${session.action}`);
+    throw new Error(`Action not found: ${session.actionId}`);
   }
 
   // Replace template variables with input values
-  const inputs = session.inputs as Record<string, unknown>;
+  const inputs = session.stepData as Record<string, unknown>;
   let prompt = action.promptTemplate;
 
   for (const [key, value] of Object.entries(inputs)) {
@@ -100,10 +148,12 @@ export async function generatePrompt(sessionId: string): Promise<string> {
     prompt = prompt.replace(new RegExp(placeholder, "g"), String(value));
   }
 
-  // Update session with generated prompt
+  // DB에 prompt 필드가 없으므로 stepData에 저장
   await prisma.workflowSession.update({
     where: { id: sessionId },
-    data: { prompt },
+    data: {
+      stepData: { ...inputs, _generatedPrompt: prompt } as object
+    },
   });
 
   return prompt;
@@ -116,9 +166,18 @@ export async function updateSessionStatus(
   sessionId: string,
   status: WorkflowSessionData["status"]
 ): Promise<void> {
+  // 우리 status를 DB status로 변환
+  const dbStatusMap: Record<string, string> = {
+    draft: "draft",
+    generating: "IN_PROGRESS",
+    completed: "COMPLETED",
+    failed: "FAILED",
+    IN_PROGRESS: "IN_PROGRESS",
+  };
+
   await prisma.workflowSession.update({
     where: { id: sessionId },
-    data: { status },
+    data: { status: dbStatusMap[status] || status },
   });
 }
 
@@ -130,7 +189,8 @@ export async function getSession(sessionId: string): Promise<WorkflowSessionData
     where: { id: sessionId },
   });
 
-  return session as WorkflowSessionData | null;
+  if (!session) return null;
+  return mapDbToSession(session);
 }
 
 /**
@@ -158,7 +218,7 @@ export async function getUserSessions(
   ]);
 
   return {
-    sessions: sessions as WorkflowSessionData[],
+    sessions: sessions.map(mapDbToSession),
     total,
   };
 }

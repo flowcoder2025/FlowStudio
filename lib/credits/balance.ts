@@ -14,27 +14,30 @@ export interface CreditBalance {
 
 /**
  * Get user's credit balance
+ * 기존 DB 스키마: Credit.balance 사용 (User.creditBalance가 아님)
+ * CreditLedger로 hold 관리
  */
 export async function getCreditBalance(userId: string): Promise<CreditBalance> {
-  const [user, pendingHolds] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { creditBalance: true },
+  const [credit, pendingHolds] = await Promise.all([
+    // Credit 테이블에서 balance 조회 (1:1 관계)
+    prisma.credit.findUnique({
+      where: { userId },
+      select: { balance: true },
     }),
-    prisma.creditTransaction.aggregate({
+    // CreditLedger에서 HELD 상태인 것들의 holdAmount 합계
+    prisma.creditLedger.aggregate({
       where: {
         userId,
-        type: "hold",
-        status: "pending",
+        status: "HELD",
       },
       _sum: {
-        amount: true,
+        holdAmount: true,
       },
     }),
   ]);
 
-  const balance = user?.creditBalance ?? 0;
-  const holds = Math.abs(pendingHolds._sum.amount ?? 0);
+  const balance = credit?.balance ?? 0;
+  const holds = Math.abs(pendingHolds._sum.holdAmount ?? 0);
 
   return {
     balance,
@@ -66,7 +69,6 @@ export async function getCreditHistory(
     amount: number;
     type: string;
     description: string | null;
-    status: string;
     createdAt: Date;
   }>;
   total: number;
@@ -84,7 +86,6 @@ export async function getCreditHistory(
         amount: true,
         type: true,
         description: true,
-        status: true,
         createdAt: true,
       },
     }),

@@ -2,11 +2,22 @@
  * LemonSqueezy Webhook Handler
  * Contract: PAYMENT_FUNC_WEBHOOK
  * Evidence: IMPLEMENTATION_PLAN.md Phase 9
+ *
+ * DB Schema Notes:
+ * - WebhookEvent model does NOT exist in schema
+ * - Payment model does NOT exist in schema
+ * - Subscription uses: tier, status, endDate, externalId (not lemonSqueezyId, variantId, etc.)
+ * - Credit uses: balance only (not amount, source)
+ * - CreditTransaction: no status field
  */
 
 import crypto from "node:crypto";
 import { prisma } from "@/lib/db";
-import { LEMONSQUEEZY_CONFIG, getCreditsForPackage, getPlanByVariantId } from "./config";
+import {
+  LEMONSQUEEZY_CONFIG,
+  getCreditsForPackage,
+  getPlanByVariantId,
+} from "./config";
 import type {
   WebhookPayload,
   WebhookEventName,
@@ -52,6 +63,7 @@ export interface WebhookResult {
 
 /**
  * Handle incoming webhook event
+ * Note: WebhookEvent model not in schema, so we just process directly
  */
 export async function handleWebhook(
   rawBody: string,
@@ -75,46 +87,19 @@ export async function handleWebhook(
     return { success: false, message: "Missing event name" };
   }
 
-  // Store webhook event
-  const webhookEvent = await prisma.webhookEvent.create({
-    data: {
-      eventName,
-      payload: payload as object,
-      processed: false,
-    },
-  });
-
-  // Process event
+  // Process event directly (no WebhookEvent model)
   try {
     await processWebhookEvent(eventName, payload);
-
-    // Mark as processed
-    await prisma.webhookEvent.update({
-      where: { id: webhookEvent.id },
-      data: {
-        processed: true,
-        processedAt: new Date(),
-      },
-    });
 
     return {
       success: true,
       message: `Event ${eventName} processed successfully`,
-      eventId: webhookEvent.id,
     };
   } catch (error) {
-    // Log error
-    await prisma.webhookEvent.update({
-      where: { id: webhookEvent.id },
-      data: {
-        error: error instanceof Error ? error.message : "Unknown error",
-      },
-    });
-
+    console.error("Webhook processing error:", error);
     return {
       success: false,
       message: error instanceof Error ? error.message : "Processing failed",
-      eventId: webhookEvent.id,
     };
   }
 }
@@ -134,7 +119,7 @@ async function processWebhookEvent(
       break;
 
     case "order_refunded":
-      await handleOrderRefunded(payload);
+      await handleOrderRefunded(payload, userId);
       break;
 
     case "subscription_created":
@@ -187,19 +172,15 @@ async function handleOrderCreated(
   const variantId = attributes.first_order_item?.variant_id?.toString();
   const credits = variantId ? getCreditsForPackage(variantId) : 0;
 
-  // Create payment record
-  await prisma.payment.create({
+  // Record purchase via CreditTransaction (no Payment model)
+  await prisma.creditTransaction.create({
     data: {
       userId,
-      lemonSqueezyOrderId: orderId,
-      lemonSqueezyCustomerId: attributes.customer_id?.toString(),
-      productId: attributes.first_order_item?.product_id?.toString(),
-      variantId,
-      status: attributes.status,
-      amount: attributes.total,
-      currency: attributes.currency,
-      productName: attributes.first_order_item?.product_name,
-      creditsGranted: credits,
+      amount: credits,
+      type: "purchase",
+      description: `Purchase: ${attributes.first_order_item?.product_name ?? orderId}`,
+      paymentId: orderId,
+      paymentProvider: "lemonsqueezy",
     },
   });
 
@@ -209,25 +190,26 @@ async function handleOrderCreated(
   }
 }
 
-async function handleOrderRefunded(payload: WebhookPayload): Promise<void> {
+async function handleOrderRefunded(
+  payload: WebhookPayload,
+  userId?: string
+): Promise<void> {
   const orderId = payload.data.id;
 
-  const payment = await prisma.payment.findUnique({
-    where: { lemonSqueezyOrderId: orderId },
+  // Find the original purchase transaction
+  const purchaseTx = await prisma.creditTransaction.findFirst({
+    where: {
+      paymentId: orderId,
+      type: "purchase",
+    },
   });
 
-  if (payment) {
-    // Update payment status
-    await prisma.payment.update({
-      where: { id: payment.id },
-      data: { status: "refunded" },
-    });
-
+  if (purchaseTx) {
     // Revoke credits if any were granted
-    if (payment.creditsGranted > 0) {
+    if (purchaseTx.amount > 0) {
       await revokeCredits(
-        payment.userId,
-        payment.creditsGranted,
+        purchaseTx.userId,
+        purchaseTx.amount,
         `Refund: ${orderId}`
       );
     }
@@ -254,23 +236,16 @@ async function handleSubscriptionCreated(
   const variantId = attributes.variant_id?.toString();
   const plan = variantId ? getPlanByVariantId(variantId) : null;
 
-  // Create subscription record
+  // Create subscription record with available fields
   await prisma.subscription.create({
     data: {
       userId,
-      lemonSqueezyId: subscriptionId,
-      lemonSqueezyCustomerId: attributes.customer_id?.toString(),
-      orderId: attributes.order_id?.toString(),
-      productId: attributes.product_id?.toString(),
-      variantId,
+      externalId: subscriptionId,
+      tier: plan?.id?.toUpperCase() || "PRO",
       status: attributes.status,
-      planName: plan?.name || attributes.variant_name,
-      renewsAt: attributes.renews_at ? new Date(attributes.renews_at) : null,
-      endsAt: attributes.ends_at ? new Date(attributes.ends_at) : null,
-      trialEndsAt: attributes.trial_ends_at
-        ? new Date(attributes.trial_ends_at)
-        : null,
-      isPaused: !!attributes.pause,
+      startDate: new Date(),
+      endDate: attributes.ends_at ? new Date(attributes.ends_at) : null,
+      paymentProvider: "lemonsqueezy",
     },
   });
 
@@ -291,12 +266,10 @@ async function handleSubscriptionUpdated(
   const subscriptionId = payload.data.id;
 
   await prisma.subscription.updateMany({
-    where: { lemonSqueezyId: subscriptionId },
+    where: { externalId: subscriptionId },
     data: {
       status: attributes.status,
-      renewsAt: attributes.renews_at ? new Date(attributes.renews_at) : null,
-      endsAt: attributes.ends_at ? new Date(attributes.ends_at) : null,
-      isPaused: !!attributes.pause,
+      endDate: attributes.ends_at ? new Date(attributes.ends_at) : null,
     },
   });
 }
@@ -306,10 +279,11 @@ async function handleSubscriptionEnded(payload: WebhookPayload): Promise<void> {
   const subscriptionId = payload.data.id;
 
   await prisma.subscription.updateMany({
-    where: { lemonSqueezyId: subscriptionId },
+    where: { externalId: subscriptionId },
     data: {
       status: attributes.status,
-      endsAt: new Date(),
+      endDate: new Date(),
+      cancelledAt: new Date(),
     },
   });
 }
@@ -321,14 +295,12 @@ async function handleSubscriptionPaymentSuccess(
   const subscriptionId = payload.data.id;
 
   const subscription = await prisma.subscription.findFirst({
-    where: { lemonSqueezyId: subscriptionId },
+    where: { externalId: subscriptionId },
   });
 
   if (subscription) {
-    // Get plan info
-    const plan = subscription.variantId
-      ? getPlanByVariantId(subscription.variantId)
-      : null;
+    // Get plan info from tier
+    const plan = getPlanByVariantId(subscription.tier.toLowerCase());
 
     // Grant monthly credits
     if (plan) {
@@ -344,7 +316,7 @@ async function handleSubscriptionPaymentSuccess(
       where: { id: subscription.id },
       data: {
         status: attributes.status,
-        renewsAt: attributes.renews_at ? new Date(attributes.renews_at) : null,
+        endDate: attributes.ends_at ? new Date(attributes.ends_at) : null,
       },
     });
   }
@@ -358,7 +330,7 @@ async function handleSubscriptionPaymentStatus(
   const subscriptionId = payload.data.id;
 
   await prisma.subscription.updateMany({
-    where: { lemonSqueezyId: subscriptionId },
+    where: { externalId: subscriptionId },
     data: {
       status: attributes.status,
     },
@@ -367,11 +339,11 @@ async function handleSubscriptionPaymentStatus(
   // If payment recovered, grant credits
   if (eventName === "subscription_payment_recovered") {
     const subscription = await prisma.subscription.findFirst({
-      where: { lemonSqueezyId: subscriptionId },
+      where: { externalId: subscriptionId },
     });
 
-    if (subscription?.variantId) {
-      const plan = getPlanByVariantId(subscription.variantId);
+    if (subscription) {
+      const plan = getPlanByVariantId(subscription.tier.toLowerCase());
       if (plan) {
         await grantCredits(
           subscription.userId,
@@ -400,22 +372,26 @@ async function grantCredits(
         creditBalance: { increment: amount },
       },
     }),
-    // Create credit record
-    prisma.credit.create({
-      data: {
+    // Update Credit balance (if exists) or create
+    prisma.credit.upsert({
+      where: { userId },
+      update: {
+        balance: { increment: amount },
+        updatedAt: new Date(),
+      },
+      create: {
         userId,
-        amount,
-        source: "purchase",
+        balance: amount,
+        updatedAt: new Date(),
       },
     }),
-    // Create transaction record
+    // Create transaction record (no status field)
     prisma.creditTransaction.create({
       data: {
         userId,
         amount,
         type: "bonus",
         description,
-        status: "completed",
       },
     }),
   ]);
@@ -434,14 +410,21 @@ async function revokeCredits(
         creditBalance: { decrement: amount },
       },
     }),
-    // Create transaction record
+    // Update Credit balance
+    prisma.credit.updateMany({
+      where: { userId },
+      data: {
+        balance: { decrement: amount },
+        updatedAt: new Date(),
+      },
+    }),
+    // Create transaction record (no status field)
     prisma.creditTransaction.create({
       data: {
         userId,
         amount: -amount,
         type: "refund",
         description,
-        status: "completed",
       },
     }),
   ]);

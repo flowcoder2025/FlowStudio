@@ -21,7 +21,13 @@ import {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
+    let session;
+    try {
+      session = await auth();
+    } catch (authError) {
+      console.error("Auth error:", authError);
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -57,7 +63,13 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
+    let session;
+    try {
+      session = await auth();
+    } catch (authError) {
+      console.error("Auth error:", authError);
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -103,7 +115,13 @@ export async function GET(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   try {
-    const session = await auth();
+    let session;
+    try {
+      session = await auth();
+    } catch (authError) {
+      console.error("Auth error:", authError);
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -160,7 +178,13 @@ export async function PUT(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await auth();
+    let session;
+    try {
+      session = await auth();
+    } catch (authError) {
+      console.error("Auth error:", authError);
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

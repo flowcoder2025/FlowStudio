@@ -8,14 +8,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import crypto from 'node:crypto';
 
 // Mock the prisma client and config
+// DB Schema Notes:
+// - No Payment model - using CreditTransaction for payment tracking
+// - No WebhookEvent model - processing directly
+// - Credit has balance only (no amount/source)
 vi.mock('@/lib/db', () => ({
   prisma: {
     user: {
-      update: vi.fn(),
-    },
-    payment: {
-      create: vi.fn(),
-      findUnique: vi.fn(),
       update: vi.fn(),
     },
     subscription: {
@@ -24,15 +23,13 @@ vi.mock('@/lib/db', () => ({
       findFirst: vi.fn(),
       update: vi.fn(),
     },
-    webhookEvent: {
-      create: vi.fn(),
-      update: vi.fn(),
-    },
     credit: {
-      create: vi.fn(),
+      upsert: vi.fn(),
+      updateMany: vi.fn(),
     },
     creditTransaction: {
       create: vi.fn(),
+      findFirst: vi.fn(),
     },
     $transaction: vi.fn((ops) => Promise.all(ops)),
   },
@@ -152,27 +149,16 @@ describe('Webhook', () => {
       const rawBody = JSON.stringify(payload);
       const signature = createValidSignature(rawBody);
 
-      vi.mocked(prisma.webhookEvent.create).mockResolvedValue({
-        id: 'event-1',
-        eventName: 'order_created',
-        payload,
-        processed: false,
-      } as never);
-
-      vi.mocked(prisma.webhookEvent.update).mockResolvedValue({
-        id: 'event-1',
-        processed: true,
-      } as never);
-
-      vi.mocked(prisma.payment.create).mockResolvedValue({
-        id: 'payment-1',
+      // DB Schema: No webhookEvent or payment models
+      // Using creditTransaction instead
+      vi.mocked(prisma.creditTransaction.create).mockResolvedValue({
+        id: 'tx-1',
       } as never);
 
       const result = await handleWebhook(rawBody, signature);
 
       expect(result.success).toBe(true);
-      expect(result.eventId).toBe('event-1');
-      expect(prisma.payment.create).toHaveBeenCalled();
+      expect(prisma.creditTransaction.create).toHaveBeenCalled();
     });
 
     it('잘못된 서명으로 실패해야 한다', async () => {
@@ -240,18 +226,7 @@ describe('Webhook', () => {
       const rawBody = JSON.stringify(payload);
       const signature = createValidSignature(rawBody);
 
-      vi.mocked(prisma.webhookEvent.create).mockResolvedValue({
-        id: 'event-2',
-        eventName: 'subscription_created',
-        payload,
-        processed: false,
-      } as never);
-
-      vi.mocked(prisma.webhookEvent.update).mockResolvedValue({
-        id: 'event-2',
-        processed: true,
-      } as never);
-
+      // DB Schema: No webhookEvent model
       vi.mocked(prisma.subscription.create).mockResolvedValue({
         id: 'subscription-1',
       } as never);
@@ -278,32 +253,17 @@ describe('Webhook', () => {
       const rawBody = JSON.stringify(payload);
       const signature = createValidSignature(rawBody);
 
-      vi.mocked(prisma.webhookEvent.create).mockResolvedValue({
-        id: 'event-3',
-        eventName: 'order_refunded',
-        payload,
-        processed: false,
-      } as never);
-
-      vi.mocked(prisma.webhookEvent.update).mockResolvedValue({
-        id: 'event-3',
-        processed: true,
-      } as never);
-
-      vi.mocked(prisma.payment.findUnique).mockResolvedValue({
-        id: 'payment-1',
+      // DB Schema: No payment model, using creditTransaction.findFirst
+      vi.mocked(prisma.creditTransaction.findFirst).mockResolvedValue({
+        id: 'tx-1',
         userId: 'test-user-id',
-        creditsGranted: 100,
-      } as never);
-
-      vi.mocked(prisma.payment.update).mockResolvedValue({
-        id: 'payment-1',
+        amount: 100,
       } as never);
 
       const result = await handleWebhook(rawBody, signature);
 
       expect(result.success).toBe(true);
-      expect(prisma.payment.findUnique).toHaveBeenCalled();
+      expect(prisma.creditTransaction.findFirst).toHaveBeenCalled();
     });
   });
 });

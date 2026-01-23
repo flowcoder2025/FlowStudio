@@ -1,6 +1,12 @@
 /**
  * Image Gallery List
  * Contract: IMAGE_FUNC_LIST
+ *
+ * DB Schema Notes:
+ * - ImageProject uses: resultImages[], mode, category, style, aspectRatio
+ * - Not: imageUrl, thumbnailUrl, negativePrompt, provider, model, creditUsed, isUpscaled
+ * - WorkflowSession uses: industryId, actionId, stepData, workflowId
+ * - Not: industry, action, inputs
  */
 
 import { prisma } from '@/lib/db';
@@ -22,13 +28,12 @@ export interface ImageListOptions {
 export interface ImageListItem {
   id: string;
   title: string | null;
-  prompt: string;
-  imageUrl: string;
-  thumbnailUrl: string | null;
-  provider: string | null;
-  model: string | null;
-  creditUsed: number;
-  isUpscaled: boolean;
+  prompt: string | null;
+  imageUrl: string | null; // Derived from resultImages[0]
+  thumbnailUrl: string | null; // Derived from resultImages[0]
+  mode: string;
+  category: string | null;
+  style: string | null;
   createdAt: Date;
   updatedAt: Date;
   workflowSessionId: string | null;
@@ -45,13 +50,15 @@ export interface ImageListResult {
 }
 
 export interface ImageDetail extends ImageListItem {
-  negativePrompt: string | null;
-  metadata: Record<string, unknown> | null;
+  description: string | null;
+  aspectRatio: string | null;
+  sourceImage: string | null;
+  resultImages: string[];
   workflowSession?: {
     id: string;
-    industry: string;
-    action: string;
-    inputs: Record<string, unknown>;
+    industryId: string;
+    actionId: string;
+    stepData: Record<string, unknown>;
   } | null;
 }
 
@@ -86,12 +93,10 @@ export async function listImages(options: ImageListOptions): Promise<ImageListRe
         id: true,
         title: true,
         prompt: true,
-        imageUrl: true,
-        thumbnailUrl: true,
-        provider: true,
-        model: true,
-        creditUsed: true,
-        isUpscaled: true,
+        mode: true,
+        category: true,
+        style: true,
+        resultImages: true,
         createdAt: true,
         updatedAt: true,
         workflowSessionId: true,
@@ -101,9 +106,24 @@ export async function listImages(options: ImageListOptions): Promise<ImageListRe
       take: limit,
     });
 
+    // Map to ImageListItem format
+    const mappedImages: ImageListItem[] = images.map((img) => ({
+      id: img.id,
+      title: img.title,
+      prompt: img.prompt,
+      imageUrl: img.resultImages?.[0] ?? null,
+      thumbnailUrl: img.resultImages?.[0] ?? null,
+      mode: img.mode,
+      category: img.category,
+      style: img.style,
+      createdAt: img.createdAt,
+      updatedAt: img.updatedAt,
+      workflowSessionId: img.workflowSessionId,
+    }));
+
     return {
       success: true,
-      images,
+      images: mappedImages,
       total,
       page,
       limit,
@@ -138,9 +158,9 @@ export async function getImage(
         workflowSession: {
           select: {
             id: true,
-            industry: true,
-            action: true,
-            inputs: true,
+            industryId: true,
+            actionId: true,
+            stepData: true,
           },
         },
       },
@@ -177,23 +197,24 @@ export async function getImage(
         id: image.id,
         title: image.title,
         prompt: image.prompt,
-        negativePrompt: image.negativePrompt,
-        imageUrl: image.imageUrl,
-        thumbnailUrl: image.thumbnailUrl,
-        provider: image.provider,
-        model: image.model,
-        metadata: image.metadata as Record<string, unknown> | null,
-        creditUsed: image.creditUsed,
-        isUpscaled: image.isUpscaled,
+        description: image.description,
+        imageUrl: image.resultImages?.[0] ?? null,
+        thumbnailUrl: image.resultImages?.[0] ?? null,
+        mode: image.mode,
+        category: image.category,
+        style: image.style,
+        aspectRatio: image.aspectRatio,
+        sourceImage: image.sourceImage,
+        resultImages: image.resultImages,
         createdAt: image.createdAt,
         updatedAt: image.updatedAt,
         workflowSessionId: image.workflowSessionId,
         workflowSession: image.workflowSession
           ? {
               id: image.workflowSession.id,
-              industry: image.workflowSession.industry,
-              action: image.workflowSession.action,
-              inputs: image.workflowSession.inputs as Record<string, unknown>,
+              industryId: image.workflowSession.industryId,
+              actionId: image.workflowSession.actionId,
+              stepData: image.workflowSession.stepData as Record<string, unknown>,
             }
           : null,
       },
@@ -213,7 +234,8 @@ export async function getImage(
 
 export interface SearchOptions extends ImageListOptions {
   query?: string;
-  provider?: string;
+  mode?: string;
+  category?: string;
   dateFrom?: Date;
   dateTo?: Date;
 }
@@ -222,7 +244,8 @@ export async function searchImages(options: SearchOptions): Promise<ImageListRes
   const {
     userId,
     query,
-    provider,
+    mode,
+    category,
     dateFrom,
     dateTo,
     page = 1,
@@ -237,8 +260,12 @@ export async function searchImages(options: SearchOptions): Promise<ImageListRes
     interface WhereClause {
       userId: string;
       deletedAt?: null;
-      OR?: Array<{ prompt?: { contains: string; mode: 'insensitive' }; title?: { contains: string; mode: 'insensitive' } }>;
-      provider?: string;
+      OR?: Array<{
+        prompt?: { contains: string; mode: 'insensitive' };
+        title?: { contains: string; mode: 'insensitive' };
+      }>;
+      mode?: string;
+      category?: string;
       createdAt?: { gte?: Date; lte?: Date };
     }
 
@@ -255,9 +282,14 @@ export async function searchImages(options: SearchOptions): Promise<ImageListRes
       ];
     }
 
-    // Provider filter
-    if (provider) {
-      where.provider = provider;
+    // Mode filter
+    if (mode) {
+      where.mode = mode;
+    }
+
+    // Category filter
+    if (category) {
+      where.category = category;
     }
 
     // Date range
@@ -281,12 +313,10 @@ export async function searchImages(options: SearchOptions): Promise<ImageListRes
         id: true,
         title: true,
         prompt: true,
-        imageUrl: true,
-        thumbnailUrl: true,
-        provider: true,
-        model: true,
-        creditUsed: true,
-        isUpscaled: true,
+        mode: true,
+        category: true,
+        style: true,
+        resultImages: true,
         createdAt: true,
         updatedAt: true,
         workflowSessionId: true,
@@ -296,9 +326,24 @@ export async function searchImages(options: SearchOptions): Promise<ImageListRes
       take: limit,
     });
 
+    // Map to ImageListItem format
+    const mappedImages: ImageListItem[] = images.map((img) => ({
+      id: img.id,
+      title: img.title,
+      prompt: img.prompt,
+      imageUrl: img.resultImages?.[0] ?? null,
+      thumbnailUrl: img.resultImages?.[0] ?? null,
+      mode: img.mode,
+      category: img.category,
+      style: img.style,
+      createdAt: img.createdAt,
+      updatedAt: img.updatedAt,
+      workflowSessionId: img.workflowSessionId,
+    }));
+
     return {
       success: true,
-      images,
+      images: mappedImages,
       total,
       page,
       limit,
@@ -324,8 +369,8 @@ export async function searchImages(options: SearchOptions): Promise<ImageListRes
 
 export interface ImageStats {
   totalImages: number;
-  totalCreditsUsed: number;
-  imagesByProvider: Record<string, number>;
+  imagesByMode: Record<string, number>;
+  imagesByCategory: Record<string, number>;
   imagesByMonth: Array<{ month: string; count: number }>;
 }
 
@@ -336,23 +381,31 @@ export async function getImageStats(userId: string): Promise<ImageStats> {
       where: { userId, deletedAt: null },
     });
 
-    // Get total credits used
-    const creditSum = await prisma.imageProject.aggregate({
-      where: { userId, deletedAt: null },
-      _sum: { creditUsed: true },
-    });
-
-    // Get images by provider
-    const byProvider = await prisma.imageProject.groupBy({
-      by: ['provider'],
+    // Get images by mode
+    const byMode = await prisma.imageProject.groupBy({
+      by: ['mode'],
       where: { userId, deletedAt: null },
       _count: true,
     });
 
-    const imagesByProvider: Record<string, number> = {};
-    byProvider.forEach((item) => {
-      if (item.provider) {
-        imagesByProvider[item.provider] = item._count;
+    const imagesByMode: Record<string, number> = {};
+    byMode.forEach((item) => {
+      if (item.mode) {
+        imagesByMode[item.mode] = item._count;
+      }
+    });
+
+    // Get images by category
+    const byCategory = await prisma.imageProject.groupBy({
+      by: ['category'],
+      where: { userId, deletedAt: null },
+      _count: true,
+    });
+
+    const imagesByCategory: Record<string, number> = {};
+    byCategory.forEach((item) => {
+      if (item.category) {
+        imagesByCategory[item.category] = item._count;
       }
     });
 
@@ -381,16 +434,16 @@ export async function getImageStats(userId: string): Promise<ImageStats> {
 
     return {
       totalImages,
-      totalCreditsUsed: creditSum._sum.creditUsed ?? 0,
-      imagesByProvider,
+      imagesByMode,
+      imagesByCategory,
       imagesByMonth,
     };
   } catch (error) {
     console.error('Get image stats error:', error);
     return {
       totalImages: 0,
-      totalCreditsUsed: 0,
-      imagesByProvider: {},
+      imagesByMode: {},
+      imagesByCategory: {},
       imagesByMonth: [],
     };
   }

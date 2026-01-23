@@ -2,6 +2,10 @@
  * Subscription Management Service
  * Contract: PAYMENT_FUNC_SUBSCRIPTION
  * Evidence: IMPLEMENTATION_PLAN.md Phase 9
+ *
+ * DB Schema Notes:
+ * - Subscription model uses: tier, status, endDate, startDate, cancelledAt, externalId
+ * - NOT: planName, renewsAt, endsAt, isPaused, lemonSqueezyId, variantId
  */
 
 import { prisma } from "@/lib/db";
@@ -65,7 +69,7 @@ export async function getUserSubscription(
   const subscription = await prisma.subscription.findFirst({
     where: {
       userId,
-      status: { in: ["active", "on_trial", "past_due", "paused"] },
+      status: { in: ["ACTIVE", "active", "on_trial", "past_due", "paused"] },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -76,11 +80,11 @@ export async function getUserSubscription(
 
   return {
     id: subscription.id,
-    planName: subscription.planName,
+    planName: subscription.tier,
     status: subscription.status,
-    renewsAt: subscription.renewsAt,
-    endsAt: subscription.endsAt,
-    isPaused: subscription.isPaused,
+    renewsAt: subscription.endDate,
+    endsAt: subscription.endDate,
+    isPaused: subscription.status === "paused",
   };
 }
 
@@ -95,9 +99,11 @@ export async function getUserPlan(userId: string): Promise<SubscriptionPlan> {
     return SUBSCRIPTION_PLANS.find((p) => p.id === "free")!;
   }
 
-  // Find matching plan by name
+  // Find matching plan by tier
   const plan = SUBSCRIPTION_PLANS.find(
-    (p) => p.name === subscription.planName || p.id === subscription.planName?.toLowerCase()
+    (p) =>
+      p.name === subscription.planName ||
+      p.id === subscription.planName?.toLowerCase()
   );
 
   return plan || SUBSCRIPTION_PLANS.find((p) => p.id === "free")!;
@@ -115,26 +121,28 @@ export async function pauseSubscription(subscriptionId: string): Promise<void> {
     throw new Error("Subscription not found");
   }
 
-  // Call LemonSqueezy API to pause
-  await lemonSqueezyFetch(`/subscriptions/${subscription.lemonSqueezyId}`, {
-    method: "PATCH",
-    body: JSON.stringify({
-      data: {
-        type: "subscriptions",
-        id: subscription.lemonSqueezyId,
-        attributes: {
-          pause: {
-            mode: "void", // Don't bill during pause
+  // Call LemonSqueezy API to pause if externalId exists
+  if (subscription.externalId) {
+    await lemonSqueezyFetch(`/subscriptions/${subscription.externalId}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        data: {
+          type: "subscriptions",
+          id: subscription.externalId,
+          attributes: {
+            pause: {
+              mode: "void",
+            },
           },
         },
-      },
-    }),
-  });
+      }),
+    });
+  }
 
   // Update local record
   await prisma.subscription.update({
     where: { id: subscriptionId },
-    data: { isPaused: true },
+    data: { status: "paused" },
   });
 }
 
@@ -150,24 +158,26 @@ export async function resumeSubscription(subscriptionId: string): Promise<void> 
     throw new Error("Subscription not found");
   }
 
-  // Call LemonSqueezy API to unpause
-  await lemonSqueezyFetch(`/subscriptions/${subscription.lemonSqueezyId}`, {
-    method: "PATCH",
-    body: JSON.stringify({
-      data: {
-        type: "subscriptions",
-        id: subscription.lemonSqueezyId,
-        attributes: {
-          pause: null,
+  // Call LemonSqueezy API to unpause if externalId exists
+  if (subscription.externalId) {
+    await lemonSqueezyFetch(`/subscriptions/${subscription.externalId}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        data: {
+          type: "subscriptions",
+          id: subscription.externalId,
+          attributes: {
+            pause: null,
+          },
         },
-      },
-    }),
-  });
+      }),
+    });
+  }
 
   // Update local record
   await prisma.subscription.update({
     where: { id: subscriptionId },
-    data: { isPaused: false },
+    data: { status: "ACTIVE" },
   });
 }
 
@@ -183,17 +193,20 @@ export async function cancelSubscription(subscriptionId: string): Promise<void> 
     throw new Error("Subscription not found");
   }
 
-  // Call LemonSqueezy API to cancel
-  await lemonSqueezyFetch(`/subscriptions/${subscription.lemonSqueezyId}`, {
-    method: "DELETE",
-  });
+  // Call LemonSqueezy API to cancel if externalId exists
+  if (subscription.externalId) {
+    await lemonSqueezyFetch(`/subscriptions/${subscription.externalId}`, {
+      method: "DELETE",
+    });
+  }
 
   // Update local record
   await prisma.subscription.update({
     where: { id: subscriptionId },
     data: {
       status: "cancelled",
-      endsAt: new Date(),
+      cancelledAt: new Date(),
+      endDate: new Date(),
     },
   });
 }
@@ -218,28 +231,28 @@ export async function changeSubscriptionPlan(
     throw new Error("Invalid plan");
   }
 
-  // Call LemonSqueezy API to change plan
-  await lemonSqueezyFetch(`/subscriptions/${subscription.lemonSqueezyId}`, {
-    method: "PATCH",
-    body: JSON.stringify({
-      data: {
-        type: "subscriptions",
-        id: subscription.lemonSqueezyId,
-        attributes: {
-          variant_id: parseInt(newPlan.variantId, 10),
-          // Prorate by default
-          invoice_immediately: true,
+  // Call LemonSqueezy API to change plan if externalId exists
+  if (subscription.externalId) {
+    await lemonSqueezyFetch(`/subscriptions/${subscription.externalId}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        data: {
+          type: "subscriptions",
+          id: subscription.externalId,
+          attributes: {
+            variant_id: parseInt(newPlan.variantId, 10),
+            invoice_immediately: true,
+          },
         },
-      },
-    }),
-  });
+      }),
+    });
+  }
 
   // Update local record
   await prisma.subscription.update({
     where: { id: subscriptionId },
     data: {
-      variantId: newPlan.variantId,
-      planName: newPlan.name,
+      tier: newPlan.id.toUpperCase(),
     },
   });
 }
@@ -258,8 +271,12 @@ export async function getCustomerPortalUrl(
     throw new Error("Subscription not found");
   }
 
+  if (!subscription.externalId) {
+    throw new Error("No external subscription ID found");
+  }
+
   const response = await lemonSqueezyFetch<LemonSqueezySubscription>(
-    `/subscriptions/${subscription.lemonSqueezyId}`
+    `/subscriptions/${subscription.externalId}`
   );
 
   return response.data.attributes.urls.customer_portal;
@@ -279,8 +296,12 @@ export async function getUpdatePaymentMethodUrl(
     throw new Error("Subscription not found");
   }
 
+  if (!subscription.externalId) {
+    throw new Error("No external subscription ID found");
+  }
+
   const response = await lemonSqueezyFetch<LemonSqueezySubscription>(
-    `/subscriptions/${subscription.lemonSqueezyId}`
+    `/subscriptions/${subscription.externalId}`
   );
 
   return response.data.attributes.urls.update_payment_method;
@@ -293,7 +314,7 @@ export async function hasActiveSubscription(userId: string): Promise<boolean> {
   const subscription = await prisma.subscription.findFirst({
     where: {
       userId,
-      status: { in: ["active", "on_trial"] },
+      status: { in: ["ACTIVE", "active", "on_trial"] },
     },
   });
 
@@ -313,10 +334,10 @@ export async function getSubscriptionHistory(
 
   return subscriptions.map((sub) => ({
     id: sub.id,
-    planName: sub.planName,
+    planName: sub.tier,
     status: sub.status,
-    renewsAt: sub.renewsAt,
-    endsAt: sub.endsAt,
-    isPaused: sub.isPaused,
+    renewsAt: sub.endDate,
+    endsAt: sub.endDate,
+    isPaused: sub.status === "paused",
   }));
 }

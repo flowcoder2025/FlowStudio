@@ -4,6 +4,11 @@
  * Evidence: IMPLEMENTATION_PLAN.md Phase 2
  *
  * Handles credit expiration logic
+ *
+ * DB Schema Notes:
+ * - Credit model: only has balance, no amount/expiresAt
+ * - CreditTransaction: has expiresAt, remainingAmount
+ * - CreditLedger: has expiresAt for hold expiration
  */
 
 import { prisma } from "@/lib/db";
@@ -15,7 +20,7 @@ export interface ExpiryResult {
 }
 
 /**
- * Process expired credits
+ * Process expired credit transactions
  * Should be run periodically (e.g., daily cron job)
  */
 export async function processExpiredCredits(): Promise<ExpiryResult> {
@@ -24,43 +29,49 @@ export async function processExpiredCredits(): Promise<ExpiryResult> {
   let expiredCredits = 0;
   let errors = 0;
 
-  // Find all expired credits that haven't been processed
-  const expiredCreditRecords = await prisma.credit.findMany({
+  // Find all expired credit transactions with remaining amount
+  const expiredTransactions = await prisma.creditTransaction.findMany({
     where: {
       expiresAt: {
         lte: now,
       },
-      amount: {
+      remainingAmount: {
         gt: 0,
+      },
+      type: {
+        in: ["purchase", "bonus", "referral"], // Only positive credit types
       },
     },
   });
 
   // Group by user
-  const creditsByUser = expiredCreditRecords.reduce(
-    (acc, credit) => {
-      if (!acc[credit.userId]) {
-        acc[credit.userId] = [];
+  const txByUser = expiredTransactions.reduce(
+    (acc, tx) => {
+      if (!acc[tx.userId]) {
+        acc[tx.userId] = [];
       }
-      acc[credit.userId].push(credit);
+      acc[tx.userId].push(tx);
       return acc;
     },
-    {} as Record<string, typeof expiredCreditRecords>
+    {} as Record<string, typeof expiredTransactions>
   );
 
   // Process each user's expired credits
-  for (const [userId, credits] of Object.entries(creditsByUser)) {
+  for (const [userId, transactions] of Object.entries(txByUser)) {
     try {
-      const totalExpired = credits.reduce((sum, c) => sum + c.amount, 0);
+      const totalExpired = transactions.reduce(
+        (sum, tx) => sum + (tx.remainingAmount ?? 0),
+        0
+      );
 
       await prisma.$transaction(async (tx) => {
-        // Zero out expired credits
-        await tx.credit.updateMany({
+        // Zero out remaining amounts on expired transactions
+        await tx.creditTransaction.updateMany({
           where: {
-            id: { in: credits.map((c) => c.id) },
+            id: { in: transactions.map((t) => t.id) },
           },
           data: {
-            amount: 0,
+            remainingAmount: 0,
           },
         });
 
@@ -72,30 +83,21 @@ export async function processExpiredCredits(): Promise<ExpiryResult> {
           },
         });
 
-        // Record transaction
+        // Also update Credit balance if exists
+        await tx.credit.updateMany({
+          where: { userId },
+          data: {
+            balance: { decrement: totalExpired },
+          },
+        });
+
+        // Record expiry transaction
         await tx.creditTransaction.create({
           data: {
             userId,
             amount: -totalExpired,
             type: "expire",
-            description: `${credits.length}건 크레딧 만료`,
-            status: "completed",
-          },
-        });
-
-        // Record in ledger
-        const user = await tx.user.findUnique({
-          where: { id: userId },
-          select: { creditBalance: true },
-        });
-
-        await tx.creditLedger.create({
-          data: {
-            userId,
-            creditId: "expiry",
-            change: -totalExpired,
-            balanceAfter: user?.creditBalance ?? 0,
-            reason: "크레딧 만료",
+            description: `${transactions.length}건 크레딧 만료`,
           },
         });
       });
@@ -103,7 +105,10 @@ export async function processExpiredCredits(): Promise<ExpiryResult> {
       processedUsers++;
       expiredCredits += totalExpired;
     } catch (error) {
-      console.error(`Failed to process expired credits for user ${userId}:`, error);
+      console.error(
+        `Failed to process expired credits for user ${userId}:`,
+        error
+      );
       errors++;
     }
   }
@@ -113,6 +118,7 @@ export async function processExpiredCredits(): Promise<ExpiryResult> {
 
 /**
  * Get credits that will expire soon for a user
+ * Based on CreditTransaction.expiresAt
  */
 export async function getExpiringCredits(
   userId: string,
@@ -128,13 +134,16 @@ export async function getExpiringCredits(
   const futureDate = new Date();
   futureDate.setDate(futureDate.getDate() + withinDays);
 
-  const credits = await prisma.credit.findMany({
+  const transactions = await prisma.creditTransaction.findMany({
     where: {
       userId,
-      amount: { gt: 0 },
+      remainingAmount: { gt: 0 },
       expiresAt: {
         lte: futureDate,
         gt: new Date(),
+      },
+      type: {
+        in: ["purchase", "bonus", "referral"],
       },
     },
     orderBy: { expiresAt: "asc" },
@@ -142,29 +151,33 @@ export async function getExpiringCredits(
 
   const now = new Date();
 
-  return credits.map((c) => ({
-    id: c.id,
-    amount: c.amount,
-    expiresAt: c.expiresAt,
-    daysUntilExpiry: c.expiresAt
-      ? Math.ceil((c.expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  return transactions.map((t) => ({
+    id: t.id,
+    amount: t.remainingAmount ?? t.amount,
+    expiresAt: t.expiresAt,
+    daysUntilExpiry: t.expiresAt
+      ? Math.ceil(
+          (t.expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+        )
       : 0,
   }));
 }
 
 /**
  * Cancel old pending holds (cleanup)
- * Holds older than the specified hours should be cancelled
+ * Uses CreditLedger for hold management
  */
-export async function cancelStaleHolds(maxAgeHours: number = 24): Promise<number> {
+export async function cancelStaleHolds(
+  maxAgeHours: number = 24
+): Promise<number> {
   const cutoff = new Date();
   cutoff.setHours(cutoff.getHours() - maxAgeHours);
 
-  const staleHolds = await prisma.creditTransaction.findMany({
+  // Find stale holds in CreditLedger
+  const staleHolds = await prisma.creditLedger.findMany({
     where: {
-      type: "hold",
-      status: "pending",
-      createdAt: { lt: cutoff },
+      status: "HELD",
+      OR: [{ expiresAt: { lt: new Date() } }, { createdAt: { lt: cutoff } }],
     },
   });
 
@@ -172,9 +185,12 @@ export async function cancelStaleHolds(maxAgeHours: number = 24): Promise<number
 
   for (const hold of staleHolds) {
     try {
-      await prisma.creditTransaction.update({
+      await prisma.creditLedger.update({
         where: { id: hold.id },
-        data: { status: "cancelled" },
+        data: {
+          status: "EXPIRED",
+          refundedAt: new Date(),
+        },
       });
       cancelled++;
     } catch (error) {

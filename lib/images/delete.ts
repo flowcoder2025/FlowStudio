@@ -43,13 +43,13 @@ export async function deleteImageById(options: DeleteOptions): Promise<DeleteRes
 
   try {
     // Get image
+    // DB Schema: ImageProject uses resultImages array, not imageUrl/thumbnailUrl
     const image = await prisma.imageProject.findUnique({
       where: { id: imageId },
       select: {
         id: true,
         userId: true,
-        imageUrl: true,
-        thumbnailUrl: true,
+        resultImages: true,
         deletedAt: true,
       },
     });
@@ -120,16 +120,17 @@ async function softDelete(imageId: string): Promise<DeleteResult> {
 
 interface ImageToDelete {
   id: string;
-  imageUrl: string;
-  thumbnailUrl: string | null;
+  resultImages: string[];
 }
 
 async function permanentDelete(image: ImageToDelete): Promise<DeleteResult> {
   try {
-    // Delete from storage first
-    const imagePath = getPathFromUrl(image.imageUrl);
-    if (imagePath) {
-      await deleteFromStorage(imagePath);
+    // Delete from storage first - delete all result images
+    for (const imageUrl of image.resultImages) {
+      const imagePath = getPathFromUrl(imageUrl);
+      if (imagePath) {
+        await deleteFromStorage(imagePath);
+      }
     }
 
     // Delete from database
@@ -266,6 +267,7 @@ export async function cleanupDeletedImages(options: CleanupOptions = {}): Promis
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
     // Find old soft-deleted images
+    // DB Schema: ImageProject uses resultImages array
     const images = await prisma.imageProject.findMany({
       where: {
         deletedAt: {
@@ -275,8 +277,7 @@ export async function cleanupDeletedImages(options: CleanupOptions = {}): Promis
       },
       select: {
         id: true,
-        imageUrl: true,
-        thumbnailUrl: true,
+        resultImages: true,
       },
     });
 
@@ -347,12 +348,13 @@ export async function listDeletedImages(options: TrashListOptions): Promise<Tras
 
     const total = await prisma.imageProject.count({ where });
 
+    // DB Schema: ImageProject uses resultImages array, not thumbnailUrl
     const images = await prisma.imageProject.findMany({
       where,
       select: {
         id: true,
         title: true,
-        thumbnailUrl: true,
+        resultImages: true,
         deletedAt: true,
       },
       orderBy: { deletedAt: 'desc' },
@@ -365,7 +367,7 @@ export async function listDeletedImages(options: TrashListOptions): Promise<Tras
       images: images.map((img) => ({
         id: img.id,
         title: img.title,
-        thumbnailUrl: img.thumbnailUrl,
+        thumbnailUrl: img.resultImages?.[0] ?? null, // Use first image as thumbnail
         deletedAt: img.deletedAt!,
       })),
       total,

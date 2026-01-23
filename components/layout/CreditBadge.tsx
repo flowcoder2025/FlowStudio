@@ -7,6 +7,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Coins } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
 
@@ -16,12 +17,18 @@ interface CreditData {
 }
 
 export function CreditBadge() {
+  const { data: session, status } = useSession();
   const [credit, setCredit] = useState<CreditData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchCreditBalance();
-  }, []);
+    // 로그인한 경우에만 크레딧 조회
+    if (status === "authenticated" && session?.user) {
+      fetchCreditBalance();
+    } else if (status === "unauthenticated") {
+      setIsLoading(false);
+    }
+  }, [status, session]);
 
   const fetchCreditBalance = async () => {
     try {
@@ -36,6 +43,11 @@ export function CreditBadge() {
       setIsLoading(false);
     }
   };
+
+  // 로그인하지 않은 경우 표시하지 않음
+  if (status === "unauthenticated") {
+    return null;
+  }
 
   if (isLoading) {
     return (

@@ -200,18 +200,17 @@ async function saveImageProjects(
 
   for (const image of images) {
     try {
+      // DB Schema: ImageProject uses resultImages array, mode, category, style
+      // Not: imageUrl, thumbnailUrl, negativePrompt, provider, model, creditUsed, isUpscaled
       const project = await prisma.imageProject.create({
         data: {
           userId,
           workflowSessionId,
+          title: image.prompt?.substring(0, 100) || 'Generated Image',
           prompt: image.prompt,
-          negativePrompt: image.negativePrompt,
-          imageUrl: image.url,
-          thumbnailUrl: image.thumbnailUrl,
-          provider: image.provider,
-          model: image.model,
-          metadata: (image.metadata as Prisma.InputJsonValue) ?? undefined,
-          creditUsed: 0, // Will be updated by credit capture
+          mode: 'generate', // Default mode
+          resultImages: image.url ? [image.url] : [],
+          status: 'completed',
         },
       });
 

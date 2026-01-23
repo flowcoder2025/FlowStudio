@@ -16,12 +16,12 @@ export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
 export interface UserProfile {
   id: string;
-  email: string;
+  email: string | null;
   name: string | null;
   image: string | null;
   creditBalance: number;
   businessVerified: boolean;
-  referralCode: string;
+  referralCode: string | null;
   createdAt: Date;
 }
 

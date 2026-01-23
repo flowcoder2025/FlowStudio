@@ -80,18 +80,16 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Create database record
+    // DB Schema: ImageProject uses resultImages array, mode, not imageUrl/thumbnailUrl/negativePrompt/provider/model
     const imageProject = await prisma.imageProject.create({
       data: {
         userId,
-        title: body.title,
+        title: body.title ?? 'Uploaded Image',
         prompt: body.prompt ?? 'Manually uploaded image',
-        negativePrompt: body.negativePrompt,
-        imageUrl: uploadResult.url,
-        thumbnailUrl: uploadResult.thumbnailUrl,
-        provider: body.provider,
-        model: body.model,
+        mode: 'upload', // Manual upload mode
+        resultImages: uploadResult.url ? [uploadResult.url] : [],
         workflowSessionId: body.workflowSessionId,
-        metadata: (body.metadata as Prisma.InputJsonValue) ?? undefined,
+        status: 'completed',
       },
     });
 
@@ -100,8 +98,8 @@ export async function POST(request: NextRequest) {
       success: true,
       image: {
         id: imageProject.id,
-        url: imageProject.imageUrl,
-        thumbnailUrl: imageProject.thumbnailUrl,
+        url: imageProject.resultImages?.[0] ?? null,
+        thumbnailUrl: imageProject.resultImages?.[0] ?? null,
         title: imageProject.title,
         prompt: imageProject.prompt,
         createdAt: imageProject.createdAt,

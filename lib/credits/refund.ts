@@ -4,10 +4,14 @@
  * Evidence: IMPLEMENTATION_PLAN.md Phase 2
  *
  * Releases a credit hold (used when operation fails)
+ *
+ * DB Schema Notes:
+ * - Uses CreditLedger for hold management
+ * - CreditTransaction: no status/holdId fields
  */
 
 import { prisma } from "@/lib/db";
-import { getHold } from "./hold";
+import { getLedgerHold } from "./hold";
 
 export interface RefundResult {
   success: boolean;
@@ -20,40 +24,44 @@ export interface RefundResult {
  * Used when an operation fails and the held credits should be released
  */
 export async function refundCredits(
-  holdId: string,
+  requestId: string,
   reason?: string
 ): Promise<RefundResult> {
-  const hold = await getHold(holdId);
+  const hold = await getLedgerHold(requestId);
 
   if (!hold) {
     return { success: false, error: "홀드를 찾을 수 없습니다" };
   }
 
-  if (hold.status !== "pending") {
+  if (hold.status !== "HELD") {
     return {
       success: false,
       error: `이미 처리된 홀드입니다. 상태: ${hold.status}`,
     };
   }
 
-  const amount = Math.abs(hold.amount);
+  const amount = hold.holdAmount;
 
   await prisma.$transaction(async (tx) => {
-    // Update hold status to cancelled
-    await tx.creditTransaction.update({
-      where: { id: holdId },
-      data: { status: "cancelled" },
+    // Update ledger status to REFUNDED
+    await tx.creditLedger.update({
+      where: { requestId },
+      data: {
+        status: "REFUNDED",
+        refundedAmount: amount,
+        refundedAt: new Date(),
+        description: reason || "크레딧 홀드 해제",
+      },
     });
 
-    // Create refund transaction record
+    // Create refund transaction record (no status/holdId fields)
     await tx.creditTransaction.create({
       data: {
         userId: hold.userId,
-        amount: amount, // Positive for refund
+        amount: amount, // Positive for refund (releasing hold)
         type: "refund",
         description: reason || "크레딧 홀드 해제",
-        holdId,
-        status: "completed",
+        metadata: { requestId },
       },
     });
   });
@@ -72,11 +80,11 @@ export async function refundAllPendingHolds(
   userId: string,
   reason?: string
 ): Promise<{ refunded: number; totalAmount: number }> {
-  const pendingHolds = await prisma.creditTransaction.findMany({
+  // Find all HELD status in CreditLedger
+  const pendingHolds = await prisma.creditLedger.findMany({
     where: {
       userId,
-      type: "hold",
-      status: "pending",
+      status: "HELD",
     },
   });
 
@@ -84,7 +92,7 @@ export async function refundAllPendingHolds(
   let totalAmount = 0;
 
   for (const hold of pendingHolds) {
-    const result = await refundCredits(hold.id, reason);
+    const result = await refundCredits(hold.requestId, reason);
     if (result.success) {
       refunded++;
       totalAmount += result.refundedAmount ?? 0;
@@ -116,6 +124,14 @@ export async function refundCapturedCredits(
       },
     });
 
+    // Also update Credit balance if exists
+    await tx.credit.updateMany({
+      where: { userId },
+      data: {
+        balance: { increment: amount },
+      },
+    });
+
     // Create refund transaction
     await tx.creditTransaction.create({
       data: {
@@ -123,23 +139,7 @@ export async function refundCapturedCredits(
         amount: amount,
         type: "refund",
         description: reason,
-        status: "completed",
-      },
-    });
-
-    // Create ledger entry
-    const user = await tx.user.findUnique({
-      where: { id: userId },
-      select: { creditBalance: true },
-    });
-
-    await tx.creditLedger.create({
-      data: {
-        userId,
-        creditId: "manual_refund",
-        change: amount,
-        balanceAfter: user?.creditBalance ?? 0,
-        reason,
+        metadata: { type: "manual_refund" },
       },
     });
   });

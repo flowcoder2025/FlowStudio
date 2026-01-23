@@ -39,12 +39,14 @@ export async function grantAdmin(
   }
 
   try {
+    // DB Schema: RelationTuple requires subjectType field
     await prisma.relationTuple.upsert({
       where: {
-        namespace_objectId_relation_subjectId: {
+        namespace_objectId_relation_subjectType_subjectId: {
           namespace: "system",
           objectId: "global",
           relation: "admin",
+          subjectType: "user",
           subjectId: userId,
         },
       },
@@ -53,6 +55,7 @@ export async function grantAdmin(
         namespace: "system",
         objectId: "global",
         relation: "admin",
+        subjectType: "user",
         subjectId: userId,
       },
     });

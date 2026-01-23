@@ -70,17 +70,29 @@ export const authOptions: NextAuthConfig = {
   events: {
     async createUser({ user }: { user: User }) {
       // Grant initial bonus credits to new users
+      // DB Schema: Credit has only balance (1:1 with User), requires updatedAt
       if (user.id) {
+        // Create Credit record with initial balance
         await prisma.credit.create({
           data: {
             userId: user.id,
-            amount: 10, // Welcome bonus: 10 credits
-            source: "bonus",
+            balance: 10, // Welcome bonus: 10 credits
+            updatedAt: new Date(),
           },
         });
+        // Update user's creditBalance
         await prisma.user.update({
           where: { id: user.id },
           data: { creditBalance: 10 },
+        });
+        // Record bonus transaction
+        await prisma.creditTransaction.create({
+          data: {
+            userId: user.id,
+            amount: 10,
+            type: "bonus",
+            description: "Welcome bonus credits",
+          },
         });
       }
     },

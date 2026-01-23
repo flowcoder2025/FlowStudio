@@ -25,9 +25,11 @@ export async function GET(request: NextRequest) {
     const userId = session.user.id;
 
     // 2. Parse query params
+    // DB Schema: ImageProject uses mode/category instead of provider
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('query') ?? undefined;
-    const provider = searchParams.get('provider') ?? undefined;
+    const mode = searchParams.get('mode') ?? undefined;
+    const category = searchParams.get('category') ?? undefined;
     const dateFrom = searchParams.get('dateFrom');
     const dateTo = searchParams.get('dateTo');
     const page = parseInt(searchParams.get('page') ?? '1', 10);
@@ -39,7 +41,8 @@ export async function GET(request: NextRequest) {
     const options: SearchOptions = {
       userId,
       query,
-      provider,
+      mode,
+      category,
       dateFrom: dateFrom ? new Date(dateFrom) : undefined,
       dateTo: dateTo ? new Date(dateTo) : undefined,
       page,

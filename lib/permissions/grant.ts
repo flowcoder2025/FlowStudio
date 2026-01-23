@@ -52,12 +52,14 @@ export async function grantPermission({
   }
 
   try {
+    // DB Schema: RelationTuple requires subjectType field
     await prisma.relationTuple.upsert({
       where: {
-        namespace_objectId_relation_subjectId: {
+        namespace_objectId_relation_subjectType_subjectId: {
           namespace,
           objectId,
           relation,
+          subjectType: "user",
           subjectId,
         },
       },
@@ -68,6 +70,7 @@ export async function grantPermission({
         namespace,
         objectId,
         relation,
+        subjectType: "user",
         subjectId,
       },
     });
@@ -86,11 +89,13 @@ export async function grantOwnership(
   objectId: string,
   userId: string
 ): Promise<void> {
+  // DB Schema: RelationTuple requires subjectType field
   await prisma.relationTuple.create({
     data: {
       namespace,
       objectId,
       relation: "owner",
+      subjectType: "user",
       subjectId: userId,
     },
   });
