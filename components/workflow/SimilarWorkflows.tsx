@@ -63,17 +63,17 @@ function WorkflowCard({
       onClick={onSelect}
       className={cn(
         "flex-shrink-0 w-64 p-4 rounded-xl border cursor-pointer transition-all",
-        "hover:shadow-md hover:border-primary-300",
+        "hover:shadow-md hover:border-primary-300 dark:hover:border-primary-600",
         isCurrentIndustry
-          ? "bg-gray-50 border-gray-200"
-          : "bg-gradient-to-br from-primary-50 to-white border-primary-100"
+          ? "bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
+          : "bg-gradient-to-br from-primary-50 to-white dark:from-primary-900/20 dark:to-zinc-900 border-primary-100 dark:border-primary-800"
       )}
     >
       {/* 업종 배지 */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-lg">{industryInfo?.icon}</span>
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-zinc-600 dark:text-zinc-400">
             {industryInfo?.nameKo || recommendation.industry}
           </span>
         </div>
@@ -85,13 +85,13 @@ function WorkflowCard({
       </div>
 
       {/* 의도 */}
-      <h4 className="font-medium text-gray-900 mb-2 line-clamp-1">
+      <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-2 line-clamp-1">
         {intentInfo?.nameKo || recommendation.intent}
       </h4>
 
       {/* 추천 이유 */}
       {showReason && (
-        <p className="text-xs text-gray-500 line-clamp-2 mb-3">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-3">
           {recommendation.reason}
         </p>
       )}
@@ -101,7 +101,7 @@ function WorkflowCard({
         {recommendation.tags.slice(0, 2).map((tag) => (
           <span
             key={tag}
-            className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-xs"
+            className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 rounded text-xs"
           >
             #{tag}
           </span>
@@ -110,11 +110,11 @@ function WorkflowCard({
 
       {/* 매칭 스코어 */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 text-xs text-gray-500">
+        <div className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
           <TrendingUp className="w-3 h-3" />
           <span>{Math.round(recommendation.score * 100)}% 유사</span>
         </div>
-        <ArrowRight className="w-4 h-4 text-gray-400" />
+        <ArrowRight className="w-4 h-4 text-zinc-400" />
       </div>
     </div>
   );
@@ -126,6 +126,7 @@ function WorkflowCard({
 
 export function SimilarWorkflows({
   currentIndustry,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   currentIntent,
   recommendations,
   onSelect,
@@ -268,7 +269,7 @@ export function CrossIndustryList({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+      <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
         <Shuffle className="w-4 h-4 text-primary-500" />
         <span>다른 업종에서 영감 얻기</span>
       </div>
@@ -284,20 +285,20 @@ export function CrossIndustryList({
               onClick={() => onSelect?.(rec)}
               className={cn(
                 "w-full flex items-center gap-3 p-2.5 rounded-lg text-left",
-                "border border-transparent hover:border-primary-200 hover:bg-primary-50",
+                "border border-transparent hover:border-primary-200 dark:hover:border-primary-700 hover:bg-primary-50 dark:hover:bg-primary-900/20",
                 "transition-all"
               )}
             >
               <span className="text-lg">{industryInfo?.icon}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
                   {intentInfo?.nameKo || rec.intent}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   {industryInfo?.nameKo} • {Math.round(rec.score * 100)}% 유사
                 </p>
               </div>
-              <ExternalLink className="w-4 h-4 text-gray-400" />
+              <ExternalLink className="w-4 h-4 text-zinc-400" />
             </button>
           );
         })}
@@ -338,7 +339,7 @@ export function IndustryNavigation({
               "border text-sm",
               isActive
                 ? "bg-primary-500 text-white border-primary-500"
-                : "bg-white text-gray-700 border-gray-200 hover:border-primary-300 hover:bg-primary-50"
+                : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20"
             )}
           >
             <span>{info?.icon}</span>

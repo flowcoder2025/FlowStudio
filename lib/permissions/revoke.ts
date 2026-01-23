@@ -69,7 +69,7 @@ export async function revokePermission({
     }
 
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Failed to revoke permission" };
   }
 }

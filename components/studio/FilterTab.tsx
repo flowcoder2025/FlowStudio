@@ -187,7 +187,7 @@ export function FilterTab({
           className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
             !showCustom
               ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-              : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+              : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
           }`}
         >
           프리셋
@@ -197,7 +197,7 @@ export function FilterTab({
           className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
             showCustom
               ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-              : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+              : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
           }`}
         >
           <Sliders className="w-4 h-4 inline-block mr-1" />
@@ -216,8 +216,8 @@ export function FilterTab({
                 onClick={() => setActiveCategory(cat.id as FilterCategory)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                   activeCategory === cat.id
-                    ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400'
+                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
+                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
                 }`}
               >
                 {cat.nameKo}
@@ -237,13 +237,13 @@ export function FilterTab({
                   relative aspect-square rounded-lg overflow-hidden border-2 transition-all
                   ${selectedPreset === preset.id
                     ? 'border-blue-500 ring-2 ring-blue-500/20'
-                    : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                    : 'border-transparent hover:border-zinc-300 dark:hover:border-zinc-600'
                   }
                   ${disabled || isApplying ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 `}
               >
                 {/* Preview Image */}
-                <div className="absolute inset-0 bg-gray-100 dark:bg-gray-700">
+                <div className="absolute inset-0 bg-zinc-100 dark:bg-zinc-800">
                   {previewUrls[preset.id] ? (
                     <img
                       src={previewUrls[preset.id]}
@@ -282,8 +282,8 @@ export function FilterTab({
           {/* Brightness */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">밝기</span>
-              <span className="text-gray-900 dark:text-white font-medium">
+              <span className="text-zinc-600 dark:text-zinc-400">밝기</span>
+              <span className="text-zinc-900 dark:text-white font-medium">
                 {customFilters.brightness}%
               </span>
             </div>
@@ -305,8 +305,8 @@ export function FilterTab({
           {/* Contrast */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">대비</span>
-              <span className="text-gray-900 dark:text-white font-medium">
+              <span className="text-zinc-600 dark:text-zinc-400">대비</span>
+              <span className="text-zinc-900 dark:text-white font-medium">
                 {customFilters.contrast}%
               </span>
             </div>
@@ -328,8 +328,8 @@ export function FilterTab({
           {/* Saturation */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">채도</span>
-              <span className="text-gray-900 dark:text-white font-medium">
+              <span className="text-zinc-600 dark:text-zinc-400">채도</span>
+              <span className="text-zinc-900 dark:text-white font-medium">
                 {customFilters.saturation}%
               </span>
             </div>
@@ -351,8 +351,8 @@ export function FilterTab({
           {/* Hue Rotate */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">색조 회전</span>
-              <span className="text-gray-900 dark:text-white font-medium">
+              <span className="text-zinc-600 dark:text-zinc-400">색조 회전</span>
+              <span className="text-zinc-900 dark:text-white font-medium">
                 {customFilters.hueRotate}°
               </span>
             </div>
@@ -374,8 +374,8 @@ export function FilterTab({
           {/* Blur */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">블러</span>
-              <span className="text-gray-900 dark:text-white font-medium">
+              <span className="text-zinc-600 dark:text-zinc-400">블러</span>
+              <span className="text-zinc-900 dark:text-white font-medium">
                 {customFilters.blur}px
               </span>
             </div>
@@ -399,7 +399,7 @@ export function FilterTab({
           <div className="flex gap-2 pt-2">
             <button
               onClick={handleResetCustom}
-              className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
             >
               <RotateCcw className="w-4 h-4" />
               초기화

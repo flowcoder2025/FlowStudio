@@ -551,7 +551,7 @@ const INTENT_STEP_MAPPINGS: Partial<Record<ExpressionIntent, IntentStepConfig>> 
 // 옵션 생성 함수
 // ============================================================
 
-function generateSubjectOptions(_industry: Industry): StepOption[] {
+function generateSubjectOptions(): StepOption[] {
   return [
     {
       id: "model-full",
@@ -730,7 +730,7 @@ export function generateDynamicGuide(
 
     switch (stepType) {
       case "subject-selection":
-        options = generateSubjectOptions(industry);
+        options = generateSubjectOptions();
         break;
       case "model-details":
         options = generateModelOptions();

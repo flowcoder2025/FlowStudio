@@ -65,10 +65,10 @@ export default function IndustryPage({ params }: Props) {
   if (!isValid || !industryInfo) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-        <p className="text-gray-500">존재하지 않는 업종입니다.</p>
+        <p className="text-zinc-500 dark:text-zinc-400">존재하지 않는 업종입니다.</p>
         <button
           onClick={() => router.push("/")}
-          className="mt-4 text-primary-600 hover:underline"
+          className="mt-4 text-primary-600 dark:text-primary-400 hover:underline"
         >
           홈으로 돌아가기
         </button>
@@ -94,7 +94,7 @@ export default function IndustryPage({ params }: Props) {
           <div className="flex items-center justify-between mb-8">
             <button
               onClick={() => router.push("/")}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+              className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>업종 선택으로 돌아가기</span>
@@ -115,13 +115,13 @@ export default function IndustryPage({ params }: Props) {
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
               <span className="text-3xl">{industryInfo.icon}</span>
-              <h1 className="text-2xl font-bold text-gray-900">{industryInfo.nameKo}</h1>
+              <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{industryInfo.nameKo}</h1>
             </div>
-            <p className="text-gray-600">{industryInfo.description}</p>
+            <p className="text-zinc-600 dark:text-zinc-400">{industryInfo.description}</p>
           </div>
 
           {/* 액션 선택 */}
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
             어떤 스타일의 이미지를 만드시겠어요?
           </h2>
 
@@ -133,26 +133,26 @@ export default function IndustryPage({ params }: Props) {
                   handleActionSelect(action);
                   router.push(`/workflow/${industry}/${action.id}`);
                 }}
-                className="group flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all text-left"
+                className="group flex items-center justify-between p-4 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-md dark:hover:shadow-zinc-900/50 transition-all text-left active:scale-[0.98]"
               >
                 <div>
-                  <h3 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
+                  <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                     {action.nameKo}
                   </h3>
-                  <p className="text-sm text-gray-500 mt-1">{action.description}</p>
-                  <div className="mt-2 flex items-center gap-4 text-xs text-gray-400">
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{action.description}</p>
+                  <div className="mt-2 flex items-center gap-4 text-xs text-zinc-400 dark:text-zinc-500">
                     <span>{action.creditCost} 크레딧</span>
                     <span>{action.inputs.length}개 입력 항목</span>
                   </div>
                 </div>
-                <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-primary-600 transition-colors" />
+                <ArrowRight className="w-5 h-5 text-zinc-400 dark:text-zinc-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors" />
               </button>
             ))}
           </div>
 
           {/* 몰입 모드 안내 */}
-          <div className="mt-8 p-4 bg-gray-50 rounded-xl text-center">
-            <p className="text-sm text-gray-600 mb-3">
+          <div className="mt-8 p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl text-center">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-3">
               더 몰입감 있는 경험을 원하시나요?
             </p>
             <Button

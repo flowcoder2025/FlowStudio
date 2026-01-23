@@ -14,7 +14,6 @@ import {
   ChevronRight,
   SkipForward,
   Lock,
-  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -40,7 +39,7 @@ export interface StepFlowProps {
 
 interface StepItemProps {
   step: GuideStep;
-  index: number;
+  index?: number;
   status: StepStatus;
   isLast: boolean;
   isCollapsed?: boolean;
@@ -87,11 +86,9 @@ function getStepStatus(
 
 function StepItem({
   step,
-  index,
   status,
   isLast,
   isCollapsed = false,
-  skipBehavior,
   onClick,
   onSkip,
   orientation,
@@ -119,18 +116,18 @@ function StepItem({
   // 색상
   const statusColors = {
     completed: "bg-green-500 text-white border-green-500",
-    current: "bg-primary-500 text-white border-primary-500 ring-4 ring-primary-100",
-    skipped: "bg-gray-300 text-white border-gray-300",
-    locked: "bg-gray-100 text-gray-400 border-gray-200",
-    upcoming: "bg-white text-gray-400 border-gray-300",
+    current: "bg-primary-500 text-white border-primary-500 ring-4 ring-primary-100 dark:ring-primary-900",
+    skipped: "bg-zinc-300 dark:bg-zinc-600 text-white border-zinc-300 dark:border-zinc-600",
+    locked: "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 border-zinc-200 dark:border-zinc-700",
+    upcoming: "bg-white dark:bg-zinc-900 text-zinc-400 dark:text-zinc-500 border-zinc-300 dark:border-zinc-600",
   };
 
   const textColors = {
-    completed: "text-gray-700",
-    current: "text-gray-900 font-medium",
-    skipped: "text-gray-400 line-through",
-    locked: "text-gray-400",
-    upcoming: "text-gray-500",
+    completed: "text-zinc-700 dark:text-zinc-300",
+    current: "text-zinc-900 dark:text-zinc-100 font-medium",
+    skipped: "text-zinc-400 dark:text-zinc-500 line-through",
+    locked: "text-zinc-400 dark:text-zinc-500",
+    upcoming: "text-zinc-500 dark:text-zinc-400",
   };
 
   // Horizontal layout
@@ -157,7 +154,7 @@ function StepItem({
           <div
             className={cn(
               "w-12 h-0.5 mx-1",
-              status === "completed" ? "bg-green-500" : "bg-gray-200"
+              status === "completed" ? "bg-green-500" : "bg-zinc-200 dark:bg-zinc-700"
             )}
           />
         )}
@@ -186,7 +183,7 @@ function StepItem({
           <div
             className={cn(
               "w-0.5 flex-1 my-2 min-h-[24px]",
-              status === "completed" ? "bg-green-500" : "bg-gray-200"
+              status === "completed" ? "bg-green-500" : "bg-zinc-200 dark:bg-zinc-700"
             )}
           />
         )}
@@ -203,13 +200,13 @@ function StepItem({
             )}
           >
             {expanded ? (
-              <ChevronDown className="w-4 h-4 text-gray-400" />
+              <ChevronDown className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
             ) : (
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronRight className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
             )}
             <span className="text-sm">{step.titleKo}</span>
             {!step.required && (
-              <span className="text-xs text-gray-400">(선택)</span>
+              <span className="text-xs text-zinc-400 dark:text-zinc-500">(선택)</span>
             )}
           </button>
 
@@ -218,7 +215,7 @@ function StepItem({
               variant="ghost"
               size="sm"
               onClick={onSkip}
-              className="text-xs text-gray-500 h-7"
+              className="text-xs text-zinc-500 dark:text-zinc-400 h-7"
             >
               <SkipForward className="w-3 h-3 mr-1" />
               건너뛰기
@@ -228,9 +225,9 @@ function StepItem({
 
         {expanded && (
           <div className="mt-2 ml-6">
-            <p className="text-xs text-gray-500">{step.description}</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">{step.description}</p>
             {step.helperText && (
-              <p className="text-xs text-primary-600 mt-1">
+              <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">
                 💡 {step.helperText}
               </p>
             )}
@@ -266,8 +263,8 @@ export function StepFlow({
       {showProgress && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">진행 상황</span>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">진행 상황</span>
+            <span className="text-sm text-zinc-500 dark:text-zinc-400">
               {guide.completedSteps.length} / {guide.steps.filter((s) => s.required).length} 완료
             </span>
           </div>
@@ -329,13 +326,13 @@ export function StepFlow({
 
       {/* 완료 상태 */}
       {progress === 100 && (
-        <div className="mt-4 p-4 bg-green-50 rounded-lg flex items-center gap-3">
+        <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/30 rounded-lg flex items-center gap-3">
           <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
             <Check className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="font-medium text-green-800">모든 단계 완료!</p>
-            <p className="text-sm text-green-600">
+            <p className="font-medium text-green-800 dark:text-green-200">모든 단계 완료!</p>
+            <p className="text-sm text-green-600 dark:text-green-400">
               이제 이미지를 생성할 수 있습니다.
             </p>
           </div>
@@ -371,7 +368,7 @@ export function MiniStepIndicator({
               ? "w-3 bg-green-500"
               : index === currentStep
               ? "w-6 bg-primary-500"
-              : "w-3 bg-gray-200"
+              : "w-3 bg-zinc-200 dark:bg-zinc-700"
           )}
         />
       ))}

@@ -242,7 +242,7 @@ export function getPopularityScore(
  * 사용자 이력 기반 점수 (추후 확장)
  */
 export function calculateUserHistoryScore(
-  intent: ExpressionIntent,
+  _intent: ExpressionIntent,
   _userId: string,
   _recentIntents: ExpressionIntent[]
 ): number {

@@ -159,11 +159,11 @@ export function BackgroundRemovalTab({
   if (!isAvailable) {
     return (
       <div className="text-center py-8">
-        <Eraser className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-        <p className="text-gray-600 dark:text-gray-400">
+        <Eraser className="w-12 h-12 mx-auto text-zinc-400 mb-4" />
+        <p className="text-zinc-600 dark:text-zinc-400">
           이 브라우저에서는 배경 제거 기능을 사용할 수 없습니다.
         </p>
-        <p className="text-sm text-gray-500 mt-2">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2">
           최신 Chrome, Firefox, Edge 브라우저를 사용해주세요.
         </p>
       </div>
@@ -174,7 +174,7 @@ export function BackgroundRemovalTab({
     <div className="space-y-4">
       {/* Output Mode */}
       <div>
-        <label className="text-sm text-gray-600 dark:text-gray-400 block mb-2">
+        <label className="text-sm text-zinc-600 dark:text-zinc-400 block mb-2">
           출력 유형
         </label>
         <div className="grid grid-cols-3 gap-2">
@@ -184,12 +184,12 @@ export function BackgroundRemovalTab({
               flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-colors
               ${outputMode === 'foreground'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
               }
             `}
           >
-            <ImageIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <span className="text-xs text-gray-700 dark:text-gray-300">전경</span>
+            <ImageIcon className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            <span className="text-xs text-zinc-700 dark:text-zinc-300">전경</span>
           </button>
           <button
             onClick={() => setOutputMode('mask')}
@@ -197,12 +197,12 @@ export function BackgroundRemovalTab({
               flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-colors
               ${outputMode === 'mask'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
               }
             `}
           >
-            <Square className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <span className="text-xs text-gray-700 dark:text-gray-300">마스크</span>
+            <Square className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            <span className="text-xs text-zinc-700 dark:text-zinc-300">마스크</span>
           </button>
           <button
             onClick={() => setOutputMode('background')}
@@ -210,12 +210,12 @@ export function BackgroundRemovalTab({
               flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-colors
               ${outputMode === 'background'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
               }
             `}
           >
-            <Eraser className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <span className="text-xs text-gray-700 dark:text-gray-300">배경만</span>
+            <Eraser className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            <span className="text-xs text-zinc-700 dark:text-zinc-300">배경만</span>
           </button>
         </div>
       </div>
@@ -223,7 +223,7 @@ export function BackgroundRemovalTab({
       {/* Background Color (only for foreground mode) */}
       {outputMode === 'foreground' && (
         <div>
-          <label className="text-sm text-gray-600 dark:text-gray-400 block mb-2">
+          <label className="text-sm text-zinc-600 dark:text-zinc-400 block mb-2">
             대체 배경
           </label>
           <div className="flex flex-wrap gap-2">
@@ -235,7 +235,7 @@ export function BackgroundRemovalTab({
                   w-8 h-8 rounded-lg border-2 transition-all
                   ${backgroundColor === bg.color
                     ? 'border-blue-500 ring-2 ring-blue-500/20'
-                    : 'border-gray-300 dark:border-gray-600'
+                    : 'border-zinc-300 dark:border-zinc-600'
                   }
                   ${bg.color === 'transparent'
                     ? 'bg-[url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%3E%3Crect%20width%3D%228%22%20height%3D%228%22%20fill%3D%22%23ccc%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%228%22%20width%3D%228%22%20height%3D%228%22%20fill%3D%22%23ccc%22%2F%3E%3C%2Fsvg%3E")]'
@@ -255,13 +255,13 @@ export function BackgroundRemovalTab({
 
       {/* Model Selection */}
       <div>
-        <label className="text-sm text-gray-600 dark:text-gray-400 block mb-1">
+        <label className="text-sm text-zinc-600 dark:text-zinc-400 block mb-1">
           처리 모델
         </label>
         <select
           value={model}
           onChange={(e) => setModel(e.target.value as BackgroundRemovalModel)}
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+          className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm"
         >
           <option value="isnet_fp16">표준 (권장)</option>
           <option value="isnet">고품질 (느림)</option>
@@ -270,7 +270,7 @@ export function BackgroundRemovalTab({
       </div>
 
       {/* Processing Info */}
-      <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-sm text-gray-600 dark:text-gray-400">
+      <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-3 text-sm text-zinc-600 dark:text-zinc-400">
         <p>
           ⓘ 배경 제거는 브라우저에서 직접 처리됩니다. 첫 실행 시 모델을 다운로드하므로
           시간이 걸릴 수 있습니다.
@@ -298,12 +298,12 @@ export function BackgroundRemovalTab({
 
       {/* Quick Actions */}
       {(maskUrl || foregroundUrl) && (
-        <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
           {maskUrl && (
             <a
               href={maskUrl}
               download="mask.png"
-              className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-sm transition-colors"
             >
               <Download className="w-4 h-4" />
               마스크 저장
@@ -313,7 +313,7 @@ export function BackgroundRemovalTab({
             <a
               href={foregroundUrl}
               download="foreground.png"
-              className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-sm transition-colors"
             >
               <Download className="w-4 h-4" />
               전경 저장

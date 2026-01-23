@@ -61,7 +61,7 @@ export async function grantAdmin(
     });
 
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Failed to grant admin privileges" };
   }
 }
@@ -95,7 +95,7 @@ export async function revokeAdmin(
     });
 
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Failed to revoke admin privileges" };
   }
 }

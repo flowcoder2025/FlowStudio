@@ -160,7 +160,7 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">설정</h1>
+      <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-8">설정</h1>
 
       <div className="flex flex-col md:flex-row gap-8">
         {/* Tabs */}
@@ -171,8 +171,8 @@ export default function SettingsPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-left transition-colors ${
                 activeTab === tab.id
-                  ? "bg-primary-100 text-primary-700"
-                  : "text-gray-600 hover:bg-gray-100"
+                  ? "bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300"
+                  : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
               }`}
             >
               <tab.icon className="w-5 h-5" />
@@ -182,11 +182,11 @@ export default function SettingsPage() {
         </nav>
 
         {/* Content */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex-1 bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
           {/* Profile Tab */}
           {activeTab === "profile" && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">프로필 정보</h2>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">프로필 정보</h2>
 
               <div className="flex items-center gap-4">
                 {profile?.image ? (
@@ -196,25 +196,25 @@ export default function SettingsPage() {
                     className="w-16 h-16 rounded-full"
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
-                    <User className="w-8 h-8 text-gray-400" />
+                  <div className="w-16 h-16 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+                    <User className="w-8 h-8 text-zinc-400 dark:text-zinc-500" />
                   </div>
                 )}
                 <div>
-                  <p className="font-medium text-gray-900">{profile?.name || "이름 없음"}</p>
-                  <p className="text-sm text-gray-500">{profile?.email}</p>
+                  <p className="font-medium text-zinc-900 dark:text-zinc-100">{profile?.name || "이름 없음"}</p>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">{profile?.email}</p>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                   이름
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
                 />
               </div>
 
@@ -236,16 +236,16 @@ export default function SettingsPage() {
           {/* Credits Tab */}
           {activeTab === "credits" && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">크레딧</h2>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">크레딧</h2>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
-                <p className="text-sm text-amber-600 mb-1">보유 크레딧</p>
-                <p className="text-3xl font-bold text-amber-700">
+              <div className="bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-lg p-6">
+                <p className="text-sm text-amber-600 dark:text-amber-400 mb-1">보유 크레딧</p>
+                <p className="text-3xl font-bold text-amber-700 dark:text-amber-300">
                   {formatNumber(profile?.creditBalance ?? 0)}
                 </p>
               </div>
 
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 크레딧은 이미지 생성에 사용됩니다. 1장당 5 크레딧이 필요합니다.
               </p>
             </div>
@@ -254,26 +254,26 @@ export default function SettingsPage() {
           {/* Business Tab */}
           {activeTab === "business" && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">사업자 인증</h2>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">사업자 인증</h2>
 
               {profile?.businessVerified ? (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 text-green-700">
+                <div className="bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
                     <Check className="w-5 h-5" />
                     <span className="font-medium">인증 완료</span>
                   </div>
-                  <p className="text-sm text-green-600 mt-1">
+                  <p className="text-sm text-green-600 dark:text-green-400 mt-1">
                     사업자 인증이 완료되었습니다.
                   </p>
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
                     사업자 인증을 완료하면 추가 혜택을 받을 수 있습니다.
                   </p>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                       사업자등록번호
                     </label>
                     <input
@@ -282,10 +282,10 @@ export default function SettingsPage() {
                       onChange={(e) => setBusinessNumber(e.target.value.replace(/\D/g, ""))}
                       placeholder="숫자 10자리"
                       maxLength={10}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
                     />
                     {verifyError && (
-                      <p className="text-sm text-red-600 mt-1">{verifyError}</p>
+                      <p className="text-sm text-red-600 dark:text-red-400 mt-1">{verifyError}</p>
                     )}
                   </div>
 
@@ -305,30 +305,30 @@ export default function SettingsPage() {
           {/* Referral Tab */}
           {activeTab === "referral" && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">추천인 시스템</h2>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">추천인 시스템</h2>
 
               {/* My Referral Code */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <p className="text-sm text-gray-600 mb-2">내 추천 코드</p>
+              <div className="bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">내 추천 코드</p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded font-mono text-sm">
+                  <code className="flex-1 px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-600 rounded font-mono text-sm text-zinc-900 dark:text-zinc-100">
                     {profile?.referralCode}
                   </code>
                   <button
                     onClick={copyReferralCode}
-                    className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition-colors text-sm"
+                    className="px-3 py-2 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded transition-colors text-sm text-zinc-700 dark:text-zinc-300"
                   >
                     복사
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
                   친구에게 추천 코드를 공유하면 양쪽 모두 5 크레딧을 받습니다.
                 </p>
               </div>
 
               {/* Apply Referral Code */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                   추천 코드 입력
                 </label>
                 <div className="flex gap-2">
@@ -337,7 +337,7 @@ export default function SettingsPage() {
                     value={referralInput}
                     onChange={(e) => setReferralInput(e.target.value)}
                     placeholder="추천 코드를 입력하세요"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="flex-1 px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
                   />
                   <button
                     onClick={handleApplyReferral}
@@ -352,7 +352,7 @@ export default function SettingsPage() {
                   </button>
                 </div>
                 {referralError && (
-                  <p className="text-sm text-red-600 mt-1">{referralError}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400 mt-1">{referralError}</p>
                 )}
               </div>
             </div>

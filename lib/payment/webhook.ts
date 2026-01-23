@@ -119,7 +119,7 @@ async function processWebhookEvent(
       break;
 
     case "order_refunded":
-      await handleOrderRefunded(payload, userId);
+      await handleOrderRefunded(payload);
       break;
 
     case "subscription_created":
@@ -191,8 +191,7 @@ async function handleOrderCreated(
 }
 
 async function handleOrderRefunded(
-  payload: WebhookPayload,
-  userId?: string
+  payload: WebhookPayload
 ): Promise<void> {
   const orderId = payload.data.id;
 

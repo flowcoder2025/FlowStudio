@@ -257,13 +257,13 @@ export function GuideChat({
   return (
     <Card className={cn("flex flex-col h-[600px]", className)}>
       {/* 헤더 */}
-      <div className="flex items-center justify-between px-4 py-3 border-b">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center gap-2">
-          <Bot className="w-5 h-5 text-primary-500" />
-          <span className="font-medium text-sm">촬영 가이드</span>
+          <Bot className="w-5 h-5 text-primary-500 dark:text-primary-400" />
+          <span className="font-medium text-sm text-zinc-900 dark:text-zinc-100">촬영 가이드</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
             {guide.currentStep + 1} / {guide.totalSteps}
           </span>
           {onReset && (
@@ -298,8 +298,8 @@ export function GuideChat({
               className={cn(
                 "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
                 message.role === "assistant"
-                  ? "bg-primary-100 text-primary-600"
-                  : "bg-gray-100 text-gray-600"
+                  ? "bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
               )}
             >
               {message.role === "assistant" ? (
@@ -314,7 +314,7 @@ export function GuideChat({
               className={cn(
                 "max-w-[80%] rounded-xl px-4 py-3",
                 message.role === "assistant"
-                  ? "bg-gray-100 text-gray-800"
+                  ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200"
                   : "bg-primary-500 text-white"
               )}
             >
@@ -330,7 +330,7 @@ export function GuideChat({
                       size="sm"
                       onClick={() => handleOptionSelect(option)}
                       disabled={isLoading}
-                      className="bg-white hover:bg-gray-50"
+                      className="bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800"
                     >
                       {option.icon && <span className="mr-1">{option.icon}</span>}
                       {option.label}
@@ -345,11 +345,11 @@ export function GuideChat({
         {/* 로딩 인디케이터 */}
         {isLoading && (
           <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 flex items-center justify-center">
               <Bot className="w-4 h-4" />
             </div>
-            <div className="bg-gray-100 rounded-xl px-4 py-3">
-              <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+            <div className="bg-zinc-100 dark:bg-zinc-800 rounded-xl px-4 py-3">
+              <Loader2 className="w-4 h-4 animate-spin text-zinc-400 dark:text-zinc-500" />
             </div>
           </div>
         )}
@@ -371,7 +371,7 @@ export function GuideChat({
 
       {/* 입력 영역 */}
       {!isComplete && currentStep && (currentStep.type === "text" || currentStep.type === "textarea") && (
-        <div className="p-4 border-t">
+        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -399,8 +399,8 @@ export function GuideChat({
 
       {/* 완료 상태 */}
       {isComplete && (
-        <div className="p-4 border-t bg-green-50">
-          <p className="text-sm text-green-700 text-center">
+        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-green-50 dark:bg-green-900/30">
+          <p className="text-sm text-green-700 dark:text-green-300 text-center">
             ✅ 가이드가 완료되었습니다
           </p>
         </div>

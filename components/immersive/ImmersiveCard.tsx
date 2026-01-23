@@ -82,15 +82,15 @@ function ProgressBar({ value, max, label = "진행률" }: ProgressBarProps) {
       ? "bg-green-500"
       : percentage >= 60
       ? "bg-yellow-500"
-      : "bg-gray-400";
+      : "bg-zinc-400 dark:bg-zinc-500";
 
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-sm text-gray-500">{label}</span>
-        <span className="text-sm font-semibold text-gray-700">{percentage}%</span>
+        <span className="text-sm text-zinc-500 dark:text-zinc-400">{label}</span>
+        <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{percentage}%</span>
       </div>
-      <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+      <div className="w-full h-2.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
         <motion.div
           className={cn("h-full rounded-full", colorClass)}
           initial={{ width: 0 }}
@@ -159,7 +159,7 @@ export function ImmersiveCard({
     <div
       className={cn(
         "flex flex-col w-full mx-auto",
-        "bg-white rounded-2xl shadow-2xl overflow-hidden",
+        "bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl dark:shadow-zinc-900/50 overflow-hidden border border-zinc-200 dark:border-zinc-800",
         config.card,
         config.height,
         className
@@ -167,15 +167,15 @@ export function ImmersiveCard({
     >
       {/* 상단 헤더 */}
       {(headerLabel || headerRight) && (
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
           {headerLabel && (
-            <div className="flex items-center gap-2 text-primary-600">
+            <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400">
               {headerIcon}
               <span className="text-sm font-medium">{headerLabel}</span>
             </div>
           )}
           {headerRight && (
-            <div className="text-sm text-gray-500 font-medium">{headerRight}</div>
+            <div className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">{headerRight}</div>
           )}
         </div>
       )}
@@ -209,7 +209,7 @@ export function ImmersiveCard({
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.1 }}
-            className="text-sm text-gray-500 mb-2"
+            className="text-sm text-zinc-500 dark:text-zinc-400 mb-2"
           >
             {subtitle}
           </motion.div>
@@ -220,7 +220,7 @@ export function ImmersiveCard({
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.15 }}
-          className={cn("font-bold text-gray-900 mb-3", config.title)}
+          className={cn("font-bold text-zinc-900 dark:text-zinc-100 mb-3", config.title)}
         >
           {title}
         </motion.h2>
@@ -231,7 +231,7 @@ export function ImmersiveCard({
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.2 }}
-            className="text-gray-600 mb-6 max-w-sm leading-relaxed"
+            className="text-zinc-600 dark:text-zinc-400 mb-6 max-w-sm leading-relaxed"
           >
             {description}
           </motion.p>
@@ -248,13 +248,13 @@ export function ImmersiveCard({
             {tags.slice(0, maxTags).map((tag) => (
               <span
                 key={tag}
-                className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm"
+                className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-full text-sm"
               >
                 #{tag}
               </span>
             ))}
             {tags.length > maxTags && (
-              <span className="px-3 py-1 text-gray-400 text-sm">
+              <span className="px-3 py-1 text-zinc-400 dark:text-zinc-500 text-sm">
                 +{tags.length - maxTags}
               </span>
             )}
@@ -283,7 +283,7 @@ export function ImmersiveCard({
 
       {/* 하단 버튼 영역 */}
       {(primaryAction || secondaryAction || footer) && (
-        <div className="p-5 md:p-6 bg-gray-50 space-y-3">
+        <div className="p-5 md:p-6 bg-zinc-50 dark:bg-zinc-800/50 space-y-3">
           {primaryAction && (
             <Button
               onClick={primaryAction.onClick}
@@ -300,7 +300,7 @@ export function ImmersiveCard({
             <Button
               onClick={secondaryAction.onClick}
               variant="ghost"
-              className="w-full h-10 text-gray-600 hover:text-gray-900"
+              className="w-full h-10 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
             >
               {secondaryAction.label}
               {secondaryAction.icon || <ArrowRight className="w-4 h-4 ml-1" />}
@@ -338,25 +338,25 @@ export function CompactCard({
       onClick={onClick}
       className={cn(
         "flex items-center gap-4 p-4 w-full",
-        "bg-white rounded-xl border border-gray-200",
-        "hover:border-primary-300 hover:shadow-md",
-        "transition-all text-left",
+        "bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800",
+        "hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-md dark:hover:shadow-zinc-900/50",
+        "transition-all text-left active:scale-[0.98]",
         onClick && "cursor-pointer",
         className
       )}
     >
       {icon && (
-        <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-2xl flex-shrink-0">
+        <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-2xl flex-shrink-0">
           {icon}
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-gray-900 truncate">{title}</h3>
+        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">{title}</h3>
         {description && (
-          <p className="text-sm text-gray-500 mt-1 line-clamp-2">{description}</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">{description}</p>
         )}
       </div>
-      {onClick && <ArrowRight className="w-5 h-5 text-gray-400 flex-shrink-0" />}
+      {onClick && <ArrowRight className="w-5 h-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />}
     </button>
   );
 }

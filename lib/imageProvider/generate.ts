@@ -4,7 +4,6 @@
  */
 
 import { prisma } from '@/lib/db';
-import type { Prisma } from '@prisma/client';
 import { holdCredits } from '@/lib/credits/hold';
 import { captureCredits } from '@/lib/credits/capture';
 import { refundCredits } from '@/lib/credits/refund';

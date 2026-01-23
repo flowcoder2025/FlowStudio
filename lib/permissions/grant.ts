@@ -76,7 +76,7 @@ export async function grantPermission({
     });
 
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Failed to grant permission" };
   }
 }

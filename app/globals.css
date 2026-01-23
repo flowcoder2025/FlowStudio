@@ -1,78 +1,413 @@
+/* Pretendard 폰트 (CDN) - @import must come first */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ===== CSS Variables - Zinc Palette ===== */
+:root {
+  /* Background (Zinc) */
+  --bg-base: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-muted: #f4f4f5;
+  --bg-subtle: #fafafa;
+
+  /* Foreground / Text (Zinc) */
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-muted: #71717a;
+  --text-subtle: #a1a1aa;
+
+  /* Border (Zinc) */
+  --border-default: #e4e4e7;
+  --border-subtle: #f4f4f5;
+
+  /* Accent */
+  --accent-primary: #3b82f6;
+  --accent-primary-hover: #2563eb;
+
+  /* Semantic */
+  --ring: #18181b;
+  --destructive: #ef4444;
+
+  /* ShadCN Compatible Variables (HSL) */
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  --primary: 240 5.9% 10%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive-hsl: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring-hsl: 240 5.9% 10%;
+  --chart-1: 12 76% 61%;
+  --chart-2: 173 58% 39%;
+  --chart-3: 197 37% 24%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
+  --radius: 0.5rem;
+}
+
+.dark {
+  /* Background (Zinc Dark) */
+  --bg-base: #09090b;
+  --bg-elevated: #18181b;
+  --bg-muted: #27272a;
+  --bg-subtle: #1f1f23;
+
+  /* Foreground / Text (Zinc Dark) */
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --text-subtle: #52525b;
+
+  /* Border (Zinc Dark) */
+  --border-default: #27272a;
+  --border-subtle: #1f1f23;
+
+  /* Semantic */
+  --ring: #d4d4d8;
+
+  /* ShadCN Compatible Variables (HSL) */
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 240 5.9% 10%;
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive-hsl: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --ring-hsl: 240 4.9% 83.9%;
+  --chart-1: 220 70% 50%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
+}
+
+/* ===== Base Styles ===== */
+@layer base {
+  * {
+    @apply border-border;
+    border-color: var(--border-default);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+      system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo',
+      'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji',
+      'Segoe UI Symbol', sans-serif;
+    color: var(--text-primary);
+    background: var(--bg-base);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* ===== Component Styles ===== */
+@layer components {
+  /* Button Styles */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2
+      px-5 py-2.5 sm:px-6 sm:py-3
+      bg-zinc-900 text-white text-sm font-medium rounded-full
+      hover:bg-zinc-800 active:scale-[0.98]
+      transition-all duration-200;
+  }
+
+  .dark .btn-primary {
+    @apply bg-zinc-100 text-zinc-900 hover:bg-zinc-200;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2
+      px-5 py-2.5 sm:px-6 sm:py-3
+      bg-zinc-100 text-zinc-900 text-sm font-medium rounded-full
+      hover:bg-zinc-200 transition-all duration-200;
+  }
+
+  .dark .btn-secondary {
+    @apply bg-zinc-800 text-zinc-100 hover:bg-zinc-700;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2
+      px-3 py-2 sm:px-4 sm:py-2
+      text-zinc-600 text-sm font-medium rounded-lg
+      hover:bg-zinc-100 hover:text-zinc-900 transition-all duration-200;
+  }
+
+  .dark .btn-ghost {
+    @apply text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100;
+  }
+
+  /* Card Styles */
+  .card-custom {
+    @apply bg-white border border-zinc-200 rounded-2xl
+      p-4 sm:p-6
+      shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+
+  .dark .card-custom {
+    @apply bg-zinc-900 border-zinc-800;
+  }
+
+  /* Input Styles */
+  .input-custom {
+    @apply w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl
+      text-zinc-900 placeholder:text-zinc-400
+      focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent
+      transition-all duration-200;
+  }
+
+  .dark .input-custom {
+    @apply bg-zinc-800 border-zinc-700 text-zinc-100
+      placeholder:text-zinc-500 focus:ring-zinc-100;
+  }
+
+  /* Chip/Tag Styles */
+  .chip {
+    @apply inline-flex items-center
+      px-3 py-1.5 sm:px-4 sm:py-2
+      bg-zinc-100 text-zinc-700
+      text-sm font-medium rounded-full
+      hover:bg-zinc-200
+      transition-colors duration-200 cursor-pointer;
+  }
+
+  .dark .chip {
+    @apply bg-zinc-800 text-zinc-300 hover:bg-zinc-700;
+  }
+
+  /* Glass Navigation */
+  .glass-nav {
+    @apply bg-white/80 backdrop-blur-md border-b border-zinc-200/50;
+  }
+
+  .dark .glass-nav {
+    @apply bg-zinc-900/80 border-zinc-800/50;
+  }
+}
+
+/* ===== Utility Classes ===== */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
-}
 
-
-
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+  /* Touch Target - iOS Human Interface Guidelines: 44x44px minimum */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
   }
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+
+  /* Touch Feedback */
+  .touch-feedback {
+    @apply active:scale-95 active:opacity-80 transition-all duration-100;
+  }
+
+  /* Safe Area - iOS notch/home indicator 대응 */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-pl {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-area-pr {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .safe-area-all {
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+  }
+
+  /* Container */
+  .container-mobile {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Section Spacing */
+  .section-padding {
+    @apply py-6 sm:py-8 lg:py-12;
+  }
+
+  .content-spacing {
+    @apply space-y-4 sm:space-y-6;
+  }
+
+  /* Mobile Tap Highlight - 브라우저 기본 탭 하이라이트 제거 */
+  .no-tap-highlight {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
 
+::-webkit-scrollbar-track {
+  background: transparent;
+}
 
-@layer base {
+::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}
+
+/* ===== Animations ===== */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out forwards;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.animate-delay-100 { animation-delay: 100ms; }
+.animate-delay-200 { animation-delay: 200ms; }
+.animate-delay-300 { animation-delay: 300ms; }
+
+/* ===== Selection & Focus ===== */
+::selection {
+  background: var(--accent-primary);
+  color: white;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ===== Mobile Optimization ===== */
+@media (max-width: 640px) {
+  html {
+    font-size: 15px;
+  }
+
+  /* Minimum touch target */
+  button:not(.inline-icon),
+  a:not(.inline-link),
+  [role="button"] {
+    min-height: 44px;
+  }
+
+  /* Better line height */
+  p, li {
+    line-height: 1.7;
+  }
+
+  /* Remove tap highlight on mobile */
   * {
-    @apply border-border;
+    -webkit-tap-highlight-color: transparent;
   }
+
+  /* Improve text readability */
   body {
-    @apply bg-background text-foreground;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
   }
+}
+
+/* ===== iOS Safe Area Support ===== */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-area-bottom-spacing {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+
+  .safe-area-top-spacing {
+    padding-top: calc(1rem + env(safe-area-inset-top));
+  }
+}
+
+/* ===== Dark Mode Link Styles ===== */
+.dark a:not([class]) {
+  @apply text-blue-400 hover:text-blue-300;
+}
+
+.dark ::placeholder {
+  @apply text-zinc-500;
 }

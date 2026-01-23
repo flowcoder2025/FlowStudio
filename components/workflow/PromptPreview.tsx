@@ -59,35 +59,35 @@ export function PromptPreview({ template, inputs, action }: PromptPreviewProps) 
 
   return (
     <div className="sticky top-24">
-      <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
         {/* Header */}
-        <div className="px-4 py-3 border-b border-gray-200 bg-white">
+        <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-gray-700">
+            <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300">
               <Eye className="w-4 h-4" />
               <span className="font-medium text-sm">프롬프트 미리보기</span>
             </div>
             <button
               onClick={handleCopy}
-              className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+              className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
               title="프롬프트 복사"
             >
               {copied ? (
                 <Check className="w-4 h-4 text-green-600" />
               ) : (
-                <Copy className="w-4 h-4 text-gray-400" />
+                <Copy className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
               )}
             </button>
           </div>
         </div>
 
         {/* Progress */}
-        <div className="px-4 py-2 bg-white border-b border-gray-200">
-          <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+        <div className="px-4 py-2 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700">
+          <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 mb-1">
             <span>입력 완성도</span>
             <span>{completionPercentage}%</span>
           </div>
-          <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
             <div
               className="h-full bg-primary-500 transition-all duration-300"
               style={{ width: `${completionPercentage}%` }}
@@ -97,14 +97,14 @@ export function PromptPreview({ template, inputs, action }: PromptPreviewProps) 
 
         {/* Prompt Content */}
         <div className="p-4">
-          <p className="text-sm text-gray-700 leading-relaxed font-mono whitespace-pre-wrap break-words">
+          <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed font-mono whitespace-pre-wrap break-words">
             {generatedPrompt}
           </p>
         </div>
 
         {/* Info */}
-        <div className="px-4 py-3 bg-white border-t border-gray-200">
-          <div className="flex items-center gap-4 text-xs text-gray-500">
+        <div className="px-4 py-3 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700">
+          <div className="flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400">
             <span>크레딧: {action.creditCost}</span>
             <span>모델: AI 자동 선택</span>
           </div>

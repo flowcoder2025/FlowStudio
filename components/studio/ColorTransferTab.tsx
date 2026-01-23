@@ -194,10 +194,10 @@ export function ColorTransferTab({
     <div className="space-y-4">
       {/* Reference Image Section */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
           참조 이미지
         </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
           색감을 가져올 이미지를 선택하세요
         </p>
 
@@ -208,7 +208,7 @@ export function ColorTransferTab({
             relative border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors
             ${referenceImage
               ? 'border-blue-300 dark:border-blue-700'
-              : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
+              : 'border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 dark:hover:border-zinc-500'
             }
           `}
         >
@@ -220,7 +220,7 @@ export function ColorTransferTab({
                 className="w-16 h-16 object-cover rounded"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                <p className="text-sm text-zinc-700 dark:text-zinc-300 truncate">
                   참조 이미지 선택됨
                 </p>
                 <button
@@ -237,8 +237,8 @@ export function ColorTransferTab({
             </div>
           ) : (
             <div className="text-center">
-              <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-              <p className="text-sm text-gray-500">이미지 업로드</p>
+              <Upload className="w-8 h-8 mx-auto text-zinc-400 mb-2" />
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">이미지 업로드</p>
             </div>
           )}
           <input
@@ -252,7 +252,7 @@ export function ColorTransferTab({
 
         {/* Sample References */}
         <div className="mt-3">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
             또는 샘플 선택:
           </p>
           <div className="grid grid-cols-3 gap-2">
@@ -265,7 +265,7 @@ export function ColorTransferTab({
                   ring-2 ring-offset-1 transition-all
                   ${referenceImage === sample.url
                     ? 'ring-blue-500'
-                    : 'ring-transparent hover:ring-gray-300'
+                    : 'ring-transparent hover:ring-zinc-300 dark:hover:ring-zinc-600'
                   }
                 `}
                 title={sample.name}
@@ -281,7 +281,7 @@ export function ColorTransferTab({
           {/* Target Palette */}
           {targetPalette && (
             <div className="flex-1">
-              <p className="text-xs text-gray-500 mb-1">원본 색상</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">원본 색상</p>
               <div className="flex gap-1">
                 {targetPalette.colors.slice(0, 5).map((color, i) => (
                   <div
@@ -296,12 +296,12 @@ export function ColorTransferTab({
           )}
 
           {/* Arrow */}
-          <ArrowRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+          <ArrowRight className="w-5 h-5 text-zinc-400 flex-shrink-0" />
 
           {/* Reference Palette */}
           {referencePalette && (
             <div className="flex-1">
-              <p className="text-xs text-gray-500 mb-1">참조 색상</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">참조 색상</p>
               <div className="flex gap-1">
                 {referencePalette.colors.slice(0, 5).map((color, i) => (
                   <div
@@ -318,16 +318,16 @@ export function ColorTransferTab({
       )}
 
       {/* Options */}
-      <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+      <div className="space-y-3 pt-2 border-t border-zinc-200 dark:border-zinc-700">
         {/* Method */}
         <div>
-          <label className="text-sm text-gray-600 dark:text-gray-400 block mb-1">
+          <label className="text-sm text-zinc-600 dark:text-zinc-400 block mb-1">
             전이 방식
           </label>
           <select
             value={method}
             onChange={(e) => setMethod(e.target.value as ColorTransferMethod)}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+            className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm"
           >
             <option value="reinhard">Reinhard (자연스러운)</option>
             <option value="pdf-transfer">PDF Transfer (선명한)</option>
@@ -337,8 +337,8 @@ export function ColorTransferTab({
         {/* Strength */}
         <div>
           <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-600 dark:text-gray-400">강도</span>
-            <span className="text-gray-900 dark:text-white font-medium">
+            <span className="text-zinc-600 dark:text-zinc-400">강도</span>
+            <span className="text-zinc-900 dark:text-white font-medium">
               {strength}%
             </span>
           </div>
@@ -358,9 +358,9 @@ export function ColorTransferTab({
             type="checkbox"
             checked={preserveLuminance}
             onChange={(e) => setPreserveLuminance(e.target.checked)}
-            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500"
           />
-          <span className="text-sm text-gray-700 dark:text-gray-300">
+          <span className="text-sm text-zinc-700 dark:text-zinc-300">
             밝기 유지
           </span>
         </label>

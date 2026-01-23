@@ -69,7 +69,7 @@ export function MobileBottomNav() {
     : [...visibleItems, { label: "로그인", href: "/login", icon: LogIn }];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-pb">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 z-50 safe-area-pb">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
@@ -80,11 +80,11 @@ export function MobileBottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center w-full h-full gap-1",
-                "transition-colors",
+                "flex flex-col items-center justify-center w-full h-full gap-1 touch-target",
+                "transition-colors active:scale-95",
                 isActive
-                  ? "text-primary-600"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "text-primary-600 dark:text-primary-400"
+                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
               )}
             >
               <Icon className="w-5 h-5" />
@@ -144,7 +144,7 @@ export function MobileMenu() {
       {/* Overlay */}
       {isOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/50 z-50"
+          className="md:hidden fixed inset-0 bg-black/50 dark:bg-black/70 z-50"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -152,14 +152,14 @@ export function MobileMenu() {
       {/* Slide-out Menu */}
       <div
         className={cn(
-          "md:hidden fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-white z-50",
+          "md:hidden fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-white dark:bg-zinc-900 z-50",
           "transform transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <Link href="/" className="font-bold text-lg text-primary-600">
+        <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800">
+          <Link href="/" className="font-bold text-lg text-primary-600 dark:text-primary-400">
             FlowStudio
           </Link>
           <Button
@@ -176,25 +176,25 @@ export function MobileMenu() {
         <div className="overflow-y-auto h-[calc(100vh-64px)] pb-safe">
           {/* User Section */}
           {status === "loading" ? (
-            <div className="p-4 border-b">
-              <div className="h-10 bg-gray-100 animate-pulse rounded" />
+            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
+              <div className="h-10 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded" />
             </div>
           ) : session ? (
-            <div className="p-4 border-b">
+            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-                  <User className="w-5 h-5 text-primary-600" />
+                <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                  <User className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 </div>
                 <div>
-                  <p className="font-medium text-sm">{session.user?.name}</p>
-                  <p className="text-xs text-gray-500">{session.user?.email}</p>
+                  <p className="font-medium text-sm text-zinc-900 dark:text-zinc-100">{session.user?.name}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">{session.user?.email}</p>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="p-4 border-b">
+            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
               <Link href="/login">
-                <Button className="w-full">
+                <Button className="w-full touch-target">
                   <LogIn className="w-4 h-4 mr-2" />
                   로그인
                 </Button>
@@ -203,8 +203,8 @@ export function MobileMenu() {
           )}
 
           {/* Quick Start Section */}
-          <div className="p-4 border-b">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase mb-3">
+          <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
+            <h3 className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase mb-3">
               빠른 시작
             </h3>
             <div className="grid grid-cols-2 gap-2">
@@ -216,10 +216,10 @@ export function MobileMenu() {
                     selectIndustry(industry.id as Industry);
                     setIsOpen(false);
                   }}
-                  className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-2 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors active:scale-95 touch-target"
                 >
                   <span className="text-lg">{industry.icon}</span>
-                  <span className="text-sm font-medium truncate">
+                  <span className="text-sm font-medium truncate text-zinc-900 dark:text-zinc-100">
                     {industry.nameKo}
                   </span>
                 </Link>
@@ -227,7 +227,7 @@ export function MobileMenu() {
             </div>
             <Link
               href="/"
-              className="flex items-center justify-center gap-1 mt-3 text-sm text-primary-600 hover:text-primary-700"
+              className="flex items-center justify-center gap-1 mt-3 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 touch-target"
             >
               <Sparkles className="w-4 h-4" />
               <span>모든 업종 보기</span>
@@ -237,8 +237,8 @@ export function MobileMenu() {
 
           {/* Recent Workflows */}
           {recentWorkflows.length > 0 && (
-            <div className="p-4 border-b">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase mb-3">
+            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase mb-3">
                 최근 작업
               </h3>
               <div className="space-y-2">
@@ -250,13 +250,13 @@ export function MobileMenu() {
                     <Link
                       key={index}
                       href={`/workflow/${workflow.industry}/${workflow.action}`}
-                      className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg transition-colors"
+                      className="flex items-center gap-2 p-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-lg transition-colors active:scale-95 touch-target"
                     >
                       <span>{industryInfo?.icon}</span>
-                      <span className="text-sm flex-1 truncate">
+                      <span className="text-sm flex-1 truncate text-zinc-700 dark:text-zinc-300">
                         {industryInfo?.nameKo} - {workflow.action}
                       </span>
-                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                      <ChevronRight className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
                     </Link>
                   );
                 })}
@@ -266,7 +266,7 @@ export function MobileMenu() {
 
           {/* Main Navigation */}
           <div className="p-4">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase mb-3">
+            <h3 className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase mb-3">
               메뉴
             </h3>
             <nav className="space-y-1">
@@ -281,16 +281,16 @@ export function MobileMenu() {
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors active:scale-95 touch-target",
                       isActive
-                        ? "bg-primary-50 text-primary-600"
-                        : "text-gray-700 hover:bg-gray-50"
+                        ? "bg-primary-50 dark:bg-primary-950 text-primary-600 dark:text-primary-400"
+                        : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
                     )}
                   >
                     <Icon className="w-5 h-5" />
                     <span className="font-medium">{item.label}</span>
                     {item.badge && (
-                      <span className="ml-auto px-2 py-0.5 bg-primary-100 text-primary-600 text-xs rounded-full">
+                      <span className="ml-auto px-2 py-0.5 bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 text-xs rounded-full">
                         {item.badge}
                       </span>
                     )}

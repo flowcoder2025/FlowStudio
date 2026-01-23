@@ -123,16 +123,16 @@ function ActionCard({
     <div
       className={cn(
         "flex flex-col h-full w-full max-w-lg mx-auto",
-        "bg-white rounded-2xl shadow-2xl overflow-hidden"
+        "bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl dark:shadow-zinc-900/50 overflow-hidden border border-zinc-200 dark:border-zinc-800"
       )}
     >
       {/* 상단 헤더 */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <div className="flex items-center gap-2 text-primary-600">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400">
           <span className="text-xl">{industryInfo.icon}</span>
           <span className="text-sm font-medium">{industryInfo.nameKo}</span>
         </div>
-        <div className="text-sm text-gray-500 font-medium">
+        <div className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
           {currentIndex + 1} / {total}
         </div>
       </div>
@@ -154,7 +154,7 @@ function ActionCard({
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.15 }}
-          className="text-2xl md:text-3xl font-bold text-gray-900 mb-3"
+          className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-3"
         >
           {action.nameKo}
         </motion.h2>
@@ -164,7 +164,7 @@ function ActionCard({
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.2 }}
-          className="text-gray-600 mb-6 max-w-sm leading-relaxed"
+          className="text-zinc-600 dark:text-zinc-400 mb-6 max-w-sm leading-relaxed"
         >
           {action.description}
         </motion.p>
@@ -179,7 +179,7 @@ function ActionCard({
           {actionMeta.features.map((feature, index) => (
             <span
               key={`${feature}-${index}`}
-              className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm"
+              className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-full text-sm"
             >
               {feature}
             </span>
@@ -191,17 +191,17 @@ function ActionCard({
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.3 }}
-          className="flex items-center gap-2 text-sm text-gray-500"
+          className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400"
         >
           <Sparkles className="w-4 h-4 text-yellow-500" />
           <span>{action.creditCost} 크레딧</span>
-          <span className="text-gray-300">•</span>
+          <span className="text-zinc-300 dark:text-zinc-600">•</span>
           <span>{action.inputs.length}개 입력 항목</span>
         </motion.div>
       </div>
 
       {/* 하단 버튼 영역 */}
-      <div className="p-5 md:p-6 bg-gray-50 space-y-3">
+      <div className="p-5 md:p-6 bg-zinc-50 dark:bg-zinc-800/50 space-y-3">
         <Button
           onClick={onSelect}
           className="w-full h-12 text-base font-semibold"
@@ -215,7 +215,7 @@ function ActionCard({
           <Button
             onClick={onNext}
             variant="ghost"
-            className="w-full h-10 text-gray-600 hover:text-gray-900"
+            className="w-full h-10 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
           >
             다른 스타일 보기
             <ArrowRight className="w-4 h-4 ml-1" />
@@ -247,13 +247,13 @@ function DotIndicator({ current, total }: { current: number; total: number }) {
           className={cn(
             "w-2 h-2 rounded-full transition-all duration-200",
             index === current % showDots
-              ? "bg-primary-600 scale-125"
-              : "bg-gray-300"
+              ? "bg-primary-600 dark:bg-primary-400 scale-125"
+              : "bg-zinc-300 dark:bg-zinc-600"
           )}
         />
       ))}
       {total > maxDots && (
-        <span className="text-xs text-gray-400 ml-1">+{total - maxDots}</span>
+        <span className="text-xs text-zinc-400 dark:text-zinc-500 ml-1">+{total - maxDots}</span>
       )}
     </div>
   );

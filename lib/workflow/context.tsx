@@ -16,7 +16,6 @@ import {
 import { useWorkflowStore } from "./store";
 import {
   generateDynamicGuide,
-  updateGuideSteps,
   processUserSelection,
   canSkipStep,
   skipStep,
@@ -202,7 +201,7 @@ export function GuideProvider({ children }: GuideProviderProps) {
 
   // Load recommendations
   const loadRecommendations = useCallback(
-    (query?: string, _userHistory?: Array<{ industry: Industry; intent: ExpressionIntent }>) => {
+    (query?: string) => {
       // Build search string from query and selected industry
       const searchString = [query, selectedIndustry].filter(Boolean).join(" ");
       const intentResult = matchIntent(searchString || "");

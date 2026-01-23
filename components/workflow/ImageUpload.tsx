@@ -97,7 +97,7 @@ function ImagePreview({ image, onRemove, disabled }: ImagePreviewProps) {
 
   return (
     <div className="relative group">
-      <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+      <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
         {/* 이미지 */}
         <img
           src={image.previewUrl}
@@ -130,10 +130,10 @@ function ImagePreview({ image, onRemove, disabled }: ImagePreviewProps) {
           <Dialog open={showFullPreview} onOpenChange={setShowFullPreview}>
             <DialogTrigger asChild>
               <button
-                className="w-7 h-7 bg-white rounded-full flex items-center justify-center hover:bg-gray-100"
+                className="w-7 h-7 bg-white dark:bg-zinc-800 rounded-full flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-700"
                 title="확대 보기"
               >
-                <ZoomIn className="w-4 h-4 text-gray-700" />
+                <ZoomIn className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
               </button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl p-0 bg-transparent border-0">
@@ -148,7 +148,7 @@ function ImagePreview({ image, onRemove, disabled }: ImagePreviewProps) {
           {!disabled && (
             <button
               onClick={onRemove}
-              className="w-7 h-7 bg-white rounded-full flex items-center justify-center hover:bg-red-50"
+              className="w-7 h-7 bg-white dark:bg-zinc-800 rounded-full flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-900/30"
               title="삭제"
             >
               <X className="w-4 h-4 text-red-500" />
@@ -333,10 +333,10 @@ export function ImageUpload({
         onDrop={handleDrop}
         className={cn(
           "border-2 border-dashed rounded-xl p-6 text-center transition-all",
-          isDragging && "border-primary-500 bg-primary-50",
+          isDragging && "border-primary-500 bg-primary-50 dark:bg-primary-900/20",
           disabled
-            ? "bg-gray-50 cursor-not-allowed"
-            : "cursor-pointer hover:border-gray-400 hover:bg-gray-50",
+            ? "bg-zinc-50 dark:bg-zinc-800 cursor-not-allowed"
+            : "cursor-pointer hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
           !canAddMore && "opacity-50"
         )}
         onClick={() => !disabled && canAddMore && fileInputRef.current?.click()}
@@ -355,22 +355,22 @@ export function ImageUpload({
           <div
             className={cn(
               "w-12 h-12 rounded-full flex items-center justify-center",
-              isDragging ? "bg-primary-100" : "bg-gray-100"
+              isDragging ? "bg-primary-100 dark:bg-primary-900/30" : "bg-zinc-100 dark:bg-zinc-800"
             )}
           >
             <Upload
               className={cn(
                 "w-6 h-6",
-                isDragging ? "text-primary-500" : "text-gray-400"
+                isDragging ? "text-primary-500" : "text-zinc-400"
               )}
             />
           </div>
 
           <div>
-            <p className="text-sm font-medium text-gray-700">
+            <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               {isDragging ? "여기에 놓으세요" : "클릭하거나 드래그하여 업로드"}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
               {acceptedFormats.map((f) => f.split("/")[1].toUpperCase()).join(", ")} • 최대{" "}
               {formatFileSize(maxFileSize)}
             </p>
@@ -400,7 +400,7 @@ export function ImageUpload({
 
       {/* 업로드 카운터 */}
       {images.length > 0 && (
-        <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
           <span>
             {images.filter((i) => i.status === "success").length}개 업로드됨
           </span>
@@ -433,7 +433,7 @@ export function ImageThumbnailList({
 
   if (images.length === 0) {
     return (
-      <div className={cn("flex items-center gap-2 text-gray-400", className)}>
+      <div className={cn("flex items-center gap-2 text-zinc-400 dark:text-zinc-500", className)}>
         <ImageIcon className="w-4 h-4" />
         <span className="text-sm">이미지 없음</span>
       </div>
@@ -445,14 +445,14 @@ export function ImageThumbnailList({
       {visibleImages.map((url, index) => (
         <div
           key={index}
-          className="w-8 h-8 rounded overflow-hidden bg-gray-100"
+          className="w-8 h-8 rounded overflow-hidden bg-zinc-100 dark:bg-zinc-800"
         >
           <img src={url} alt="" className="w-full h-full object-cover" />
         </div>
       ))}
       {remainingCount > 0 && (
-        <div className="w-8 h-8 rounded bg-gray-200 flex items-center justify-center">
-          <span className="text-xs text-gray-600">+{remainingCount}</span>
+        <div className="w-8 h-8 rounded bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+          <span className="text-xs text-zinc-600 dark:text-zinc-400">+{remainingCount}</span>
         </div>
       )}
     </div>

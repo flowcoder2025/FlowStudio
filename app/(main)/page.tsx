@@ -197,10 +197,10 @@ export default function HomePage() {
       <div className="max-w-6xl mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
             AI로 상품 이미지를 생성하세요
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">
             업종에 맞는 전문적인 상품 이미지를 AI가 만들어드립니다.
             원하는 업종을 선택하고 간단한 정보만 입력하면 완성!
           </p>
@@ -215,7 +215,7 @@ export default function HomePage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               placeholder="어떤 이미지를 만들고 싶으신가요? (예: 티셔츠 모델 착용샷)"
-              className="w-full px-5 py-4 pr-12 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg"
+              className="w-full px-5 py-4 pr-12 border border-zinc-300 dark:border-zinc-700 rounded-xl shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
             />
             <button
               onClick={handleSearch}
@@ -227,8 +227,8 @@ export default function HomePage() {
 
           {/* Search Suggestions */}
           {suggestions && (
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-2">{suggestions.message}</p>
+            <div className="mt-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800">
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">{suggestions.message}</p>
               {suggestions.industry && (
                 <button
                   onClick={() => handleIndustryClick(suggestions.industry!.id)}
@@ -256,11 +256,11 @@ export default function HomePage() {
 
         {/* Recent Workflows (if user has history) */}
         {recentWorkflows.length > 0 && (
-          <Card className="mb-12">
+          <Card className="mb-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-gray-400" />
-                <CardTitle className="text-base">최근 작업</CardTitle>
+                <Clock className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
+                <CardTitle className="text-base text-zinc-900 dark:text-zinc-100">최근 작업</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
@@ -271,10 +271,10 @@ export default function HomePage() {
                     <button
                       key={index}
                       onClick={() => handleRecentClick(workflow)}
-                      className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                      className="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors"
                     >
                       <span>{industryInfo?.icon}</span>
-                      <span className="text-sm text-gray-700">
+                      <span className="text-sm text-zinc-700 dark:text-zinc-300">
                         {industryInfo?.nameKo} - {workflow.action}
                       </span>
                     </button>
@@ -290,7 +290,7 @@ export default function HomePage() {
           <div className="mb-12">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="w-5 h-5 text-primary-500" />
-              <h2 className="text-lg font-semibold text-gray-900">인기 워크플로우</h2>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">인기 워크플로우</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {popularRecommendations.map((rec, index) => (
@@ -310,14 +310,14 @@ export default function HomePage() {
         <div className="mb-12">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-5 h-5 text-primary-500" />
-            <h2 className="text-lg font-semibold text-gray-900">업종별 시작하기</h2>
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">업종별 시작하기</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {industries.map((industry) => (
               <button
                 key={industry.id}
                 onClick={() => handleIndustryClick(industry.id)}
-                className="group p-6 bg-white rounded-xl border border-gray-200 hover:border-primary-300 hover:shadow-lg transition-all text-left"
+                className="group p-6 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-lg dark:hover:shadow-zinc-900/50 transition-all text-left"
               >
                 <div
                   className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl mb-4"
@@ -325,11 +325,11 @@ export default function HomePage() {
                 >
                   {industry.icon}
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                   {industry.nameKo}
                 </h3>
-                <p className="text-sm text-gray-500">{industry.description}</p>
-                <div className="mt-4 flex items-center text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">{industry.description}</p>
+                <div className="mt-4 flex items-center text-primary-600 dark:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   <span className="text-sm">시작하기</span>
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </div>
@@ -340,7 +340,7 @@ export default function HomePage() {
 
         {/* Footer Info */}
         <div className="text-center">
-          <div className="inline-flex items-center gap-8 text-sm text-gray-500">
+          <div className="inline-flex items-center gap-8 text-sm text-zinc-500 dark:text-zinc-400">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 bg-green-500 rounded-full" />
               <span>이미지 1장당 5크레딧</span>

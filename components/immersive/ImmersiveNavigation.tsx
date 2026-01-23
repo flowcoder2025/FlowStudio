@@ -66,11 +66,11 @@ const sizeConfig = {
 
 const variantConfig = {
   light: {
-    button: "bg-white/80 hover:bg-white text-gray-700",
-    buttonDisabled: "bg-white/40 text-gray-300",
-    dotActive: "bg-primary-600",
-    dotInactive: "bg-gray-300",
-    hint: "bg-white/90 text-gray-600",
+    button: "bg-white/80 dark:bg-zinc-800/80 hover:bg-white dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300",
+    buttonDisabled: "bg-white/40 dark:bg-zinc-800/40 text-zinc-300 dark:text-zinc-600",
+    dotActive: "bg-primary-600 dark:bg-primary-400",
+    dotInactive: "bg-zinc-300 dark:bg-zinc-600",
+    hint: "bg-white/90 dark:bg-zinc-800/90 text-zinc-600 dark:text-zinc-300",
   },
   dark: {
     button: "bg-black/40 hover:bg-black/60 text-white",
@@ -179,7 +179,7 @@ function DotIndicator({ current, total, variant, size, onGoTo }: DotIndicatorPro
         );
       })}
       {total > maxDots && (
-        <span className={cn("text-xs ml-1", variant === "dark" ? "text-white/60" : "text-gray-400")}>
+        <span className={cn("text-xs ml-1", variant === "dark" ? "text-white/60" : "text-zinc-400 dark:text-zinc-500")}>
           +{total - maxDots}
         </span>
       )}
@@ -381,10 +381,10 @@ export function InlineNavigation({
     <div className={cn("flex items-center justify-center gap-4", className)}>
       <button
         onClick={onPrevious}
-        className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+        className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors touch-target"
         aria-label="이전"
       >
-        <ChevronLeft className="w-5 h-5 text-gray-600" />
+        <ChevronLeft className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
       </button>
 
       <DotIndicator
@@ -396,10 +396,10 @@ export function InlineNavigation({
 
       <button
         onClick={onNext}
-        className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+        className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors touch-target"
         aria-label="다음"
       >
-        <ChevronRight className="w-5 h-5 text-gray-600" />
+        <ChevronRight className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
       </button>
     </div>
   );

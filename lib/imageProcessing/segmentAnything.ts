@@ -13,7 +13,7 @@ import type {
   BoundingBox,
   ImageSource,
 } from './types';
-import { ProcessingErrorCodes } from './types';
+// ProcessingErrorCodes imported for future error handling
 
 // =====================================================
 // Types

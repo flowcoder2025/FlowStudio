@@ -8,7 +8,6 @@ import { Industry, INDUSTRIES, INDUSTRY_INFO } from "../industries";
 import {
   PurposeIntent,
   PURPOSE_INTENTS,
-  PURPOSE_INTENT_INFO,
   ExpressionIntent,
   EXPRESSION_INTENTS,
   EXPRESSION_INTENT_INFO,
@@ -466,7 +465,7 @@ function generateClarificationQuestions(
 
   if (industry && !expression) {
     const categoryOptions = Object.entries(EXPRESSION_CATEGORY_INFO)
-      .map(([_, info]) => `${info.icon} ${info.nameKo}`)
+      .map(([, info]) => `${info.icon} ${info.nameKo}`)
       .join(", ");
     questions.push(`촬영 스타일을 선택해주세요: ${categoryOptions}`);
   }

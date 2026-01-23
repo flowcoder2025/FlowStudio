@@ -599,4 +599,70 @@ components/workflow/
 
 ---
 
-> **마지막 업데이트**: 2026-01-22 Immersive UX Phase A-F 전체 완료 🎉
+> **마지막 업데이트**: 2026-01-23 UI 스타일 마이그레이션 전체 완료 🎉
+
+---
+
+## UI Style Migration (2026-01-23~)
+
+> Zinc 팔레트, 다크모드, Glassmorphism 헤더, 모바일 최적화
+
+### Phase 진행 현황
+
+| Phase | 내용 | 상태 | 핸드오프 |
+|-------|------|------|----------|
+| Phase 1 | Foundation (CSS 변수, ThemeProvider) | ✅ 완료 | HANDOFF_2026-01-23_UI_MIGRATION_P1.md |
+| Phase 2 | Layout (Header, 레이아웃 다크모드) | ✅ 완료 | HANDOFF_2026-01-23_UI_MIGRATION_P2.md |
+| Phase 3 | Components (주요 페이지 다크모드) | ✅ 완료 | HANDOFF_2026-01-23_UI_MIGRATION_P3.md |
+| Phase 4 | Mobile (터치 타겟, safe-area) | ✅ 완료 | HANDOFF_2026-01-23_UI_MIGRATION_P4.md |
+| Phase 5 | Polish (검증, 다크모드 완성) | ✅ 완료 | HANDOFF_2026-01-23_UI_MIGRATION_P5.md |
+
+### Phase 1: Foundation ✅
+
+- [x] next-themes 패키지 설치
+- [x] globals.css - Zinc 팔레트 CSS 변수 추가
+- [x] globals.css - @layer components (btn, card, input, chip, glass)
+- [x] tailwind.config.ts - 애니메이션 추가
+- [x] ThemeProvider.tsx - next-themes 기반 Provider
+- [x] Providers.tsx - ThemeProvider 통합
+- [x] theme-toggle.tsx - 다크모드 토글 버튼
+- [x] layout.tsx - suppressHydrationWarning 추가
+
+### Phase 2: Layout ✅
+
+- [x] Header.tsx - Glassmorphism + ThemeToggle
+- [x] (main)/layout.tsx - 다크모드 대응
+- [x] (auth)/layout.tsx - 다크모드 대응 (변경 불필요)
+- [x] (auth)/login/page.tsx - 다크모드 대응
+
+### Phase 3: Components ✅
+
+**Part 1 완료 (4/11):**
+- [x] (main)/page.tsx - 홈페이지
+- [x] (main)/settings/page.tsx
+- [x] RecommendCard.tsx
+- [x] CreditBadge.tsx
+
+**Part 2 완료 (7/11):**
+- [x] (main)/result/page.tsx - 결과 페이지 (변경 불필요 - shadcn 토큰 사용)
+- [x] (main)/gallery/page.tsx - 갤러리 (변경 불필요 - shadcn 토큰 사용)
+- [x] (main)/pricing/page.tsx (변경 불필요 - shadcn 토큰 사용)
+- [x] ImmersiveInputForm.tsx - 다크모드 대응
+- [x] ImmersiveRecommend.tsx (변경 불필요 - gray-* 없음)
+- [x] StepFlow.tsx - 다크모드 대응
+- [x] GuideChat.tsx - 다크모드 대응
+
+### Phase 4: Mobile ✅
+
+- [x] Header 터치 타겟 최적화
+- [x] MobileNav 다크모드 + 터치 타겟
+- [x] ThemeToggle 터치 타겟 강화
+- [x] globals.css 터치 피드백 스타일 강화
+- [x] Safe-area 유틸리티 적용 (layout)
+
+### Phase 5: Polish ✅
+
+- [x] 빌드 검증
+- [x] 다크모드 미적용 파일 검색 (gray-*)
+- [x] 12개 파일 다크모드 수정 완료
+- [x] 품질 체크 통과

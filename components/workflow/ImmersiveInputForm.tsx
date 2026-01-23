@@ -172,17 +172,17 @@ function InputCard({
         ? "bg-green-500"
         : percentage >= 60
         ? "bg-yellow-500"
-        : "bg-gray-400";
+        : "bg-zinc-400 dark:bg-zinc-600";
 
     return (
-      <div className="flex flex-col h-full w-full max-w-lg mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="flex flex-col h-full w-full max-w-lg mx-auto bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden">
         {/* 헤더 */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <div className="flex items-center gap-2 text-primary-600">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400">
             <Sparkles className="w-4 h-4" />
             <span className="text-sm font-medium">AI 추천</span>
           </div>
-          <div className="text-sm text-gray-500 font-medium">
+          <div className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
             {currentRecommendationIndex + 1} / {recommendations.length}
           </div>
         </div>
@@ -204,7 +204,7 @@ function InputCard({
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.1 }}
-            className="text-sm text-gray-500 mb-2"
+            className="text-sm text-zinc-500 dark:text-zinc-400 mb-2"
           >
             {recIndustryInfo?.nameKo || currentRec.industry}
           </motion.div>
@@ -214,7 +214,7 @@ function InputCard({
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.15 }}
-            className="text-2xl md:text-3xl font-bold text-gray-900 mb-3"
+            className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-3"
           >
             {recIntentInfo?.nameKo || currentRec.intent}
           </motion.h2>
@@ -224,7 +224,7 @@ function InputCard({
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.2 }}
-            className="text-gray-600 mb-6 max-w-sm leading-relaxed"
+            className="text-zinc-600 dark:text-zinc-400 mb-6 max-w-sm leading-relaxed"
           >
             {recIntentInfo?.description || currentRec.reason}
           </motion.p>
@@ -237,10 +237,10 @@ function InputCard({
             className="w-full max-w-xs"
           >
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-sm text-gray-500">매칭률</span>
-              <span className="text-sm font-semibold text-gray-700">{percentage}%</span>
+              <span className="text-sm text-zinc-500 dark:text-zinc-400">매칭률</span>
+              <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{percentage}%</span>
             </div>
-            <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+            <div className="w-full h-2.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
               <motion.div
                 className={cn("h-full rounded-full", colorClass)}
                 initial={{ width: 0 }}
@@ -266,19 +266,19 @@ function InputCard({
                     "w-2 h-2 rounded-full transition-all",
                     index === currentRecommendationIndex
                       ? "bg-primary-600 scale-125"
-                      : "bg-gray-300 hover:bg-gray-400"
+                      : "bg-zinc-300 dark:bg-zinc-600 hover:bg-zinc-400 dark:hover:bg-zinc-500"
                   )}
                 />
               ))}
               {recommendations.length > 7 && (
-                <span className="text-xs text-gray-400">+{recommendations.length - 7}</span>
+                <span className="text-xs text-zinc-400 dark:text-zinc-500">+{recommendations.length - 7}</span>
               )}
             </motion.div>
           )}
         </div>
 
         {/* 하단 버튼 */}
-        <div className="p-5 md:p-6 bg-gray-50 space-y-3">
+        <div className="p-5 md:p-6 bg-zinc-50 dark:bg-zinc-800/50 space-y-3">
           <Button
             onClick={onRecommendationAccept}
             className="w-full h-12 text-base font-semibold"
@@ -298,7 +298,7 @@ function InputCard({
                 )}
                 variant="ghost"
                 size="sm"
-                className="text-gray-600"
+                className="text-zinc-600 dark:text-zinc-400"
               >
                 ← 이전 추천
               </Button>
@@ -310,14 +310,14 @@ function InputCard({
                 )}
                 variant="ghost"
                 size="sm"
-                className="text-gray-600"
+                className="text-zinc-600 dark:text-zinc-400"
               >
                 다음 추천 →
               </Button>
             </div>
           )}
 
-          <p className="text-xs text-gray-400 text-center">
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 text-center">
             → 스와이프하여 바로 입력 시작
           </p>
         </div>
@@ -329,16 +329,16 @@ function InputCard({
   if (step.type === "input") {
     const input = step.input;
     return (
-      <div className="flex flex-col h-full w-full max-w-lg mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="flex flex-col h-full w-full max-w-lg mx-auto bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden">
         {/* 헤더 */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
           <div className="flex items-center gap-2">
             <span className="text-2xl">{industryInfo?.icon}</span>
-            <span className="text-sm font-medium text-gray-600">
+            <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
               {intentInfo?.nameKo}
             </span>
           </div>
-          <div className="text-sm text-gray-500 font-medium">
+          <div className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
             {stepIndex + 1} / {totalSteps}
           </div>
         </div>
@@ -350,7 +350,7 @@ function InputCard({
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
-            <label className="block text-lg font-semibold text-gray-900 mb-2">
+            <label className="block text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
               {input.label}
               {input.required && <span className="text-red-500 ml-1">*</span>}
             </label>
@@ -361,7 +361,7 @@ function InputCard({
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={input.placeholder || `${input.label}을(를) 입력해주세요`}
                 rows={5}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none text-base"
+                className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none text-base"
                 autoFocus
               />
             ) : input.type === "select" ? (
@@ -373,8 +373,8 @@ function InputCard({
                     className={cn(
                       "p-4 rounded-xl border-2 text-left transition-all",
                       value === opt.value
-                        ? "border-primary-500 bg-primary-50 text-primary-700"
-                        : "border-gray-200 hover:border-gray-300"
+                        ? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
+                        : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 text-zinc-900 dark:text-zinc-100"
                     )}
                   >
                     <span className="font-medium">{opt.label}</span>
@@ -387,7 +387,7 @@ function InputCard({
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={input.placeholder || `${input.label}을(를) 입력해주세요`}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-base"
+                className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-base"
                 autoFocus
               />
             )}
@@ -396,7 +396,7 @@ function InputCard({
 
         {/* 하단 힌트 */}
         <div className="px-6 pb-6 text-center">
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-zinc-400 dark:text-zinc-500">
             ← 스와이프하여 이동 →
           </p>
         </div>
@@ -407,14 +407,14 @@ function InputCard({
   // 이미지 업로드 카드
   if (step.type === "image") {
     return (
-      <div className="flex flex-col h-full w-full max-w-lg mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="flex flex-col h-full w-full max-w-lg mx-auto bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden">
         {/* 헤더 */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
           <div className="flex items-center gap-2">
-            <Upload className="w-5 h-5 text-gray-500" />
-            <span className="text-sm font-medium text-gray-600">참조 이미지</span>
+            <Upload className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
+            <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">참조 이미지</span>
           </div>
-          <div className="text-sm text-gray-500 font-medium">
+          <div className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
             {stepIndex + 1} / {totalSteps}
           </div>
         </div>
@@ -426,10 +426,10 @@ function InputCard({
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
               참조 이미지 (선택)
             </h3>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
               비슷한 스타일의 이미지를 업로드하면 더 정확한 결과를 얻을 수 있습니다.
             </p>
 
@@ -445,7 +445,7 @@ function InputCard({
 
         {/* 하단 힌트 */}
         <div className="px-6 pb-6 text-center">
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-zinc-400 dark:text-zinc-500">
             스킵하려면 다음으로 스와이프 →
           </p>
         </div>
@@ -460,14 +460,14 @@ function InputCard({
     const isValid = filledInputs.length === requiredInputs.length;
 
     return (
-      <div className="flex flex-col h-full w-full max-w-lg mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="flex flex-col h-full w-full max-w-lg mx-auto bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden">
         {/* 헤더 */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <div className="flex items-center gap-2 text-primary-600">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400">
             <Sparkles className="w-4 h-4" />
             <span className="text-sm font-medium">이미지 생성</span>
           </div>
-          <div className="text-sm text-gray-500 font-medium">
+          <div className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
             {stepIndex + 1} / {totalSteps}
           </div>
         </div>
@@ -487,7 +487,7 @@ function InputCard({
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.1 }}
-            className="text-2xl font-bold text-gray-900 mb-3"
+            className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-3"
           >
             {isValid ? "준비 완료!" : "입력을 완료해주세요"}
           </motion.h2>
@@ -496,7 +496,7 @@ function InputCard({
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.15 }}
-            className="text-gray-600 mb-6"
+            className="text-zinc-600 dark:text-zinc-400 mb-6"
           >
             {isValid
               ? "아래 버튼을 눌러 이미지를 생성하세요"
@@ -518,13 +518,13 @@ function InputCard({
                   key={input.id}
                   className={cn(
                     "flex items-center gap-2 p-2 rounded-lg text-sm",
-                    isFilled ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-500"
+                    isFilled ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
                   )}
                 >
                   {isFilled ? (
                     <Check className="w-4 h-4 text-green-500" />
                   ) : (
-                    <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
+                    <div className="w-4 h-4 rounded-full border-2 border-zinc-300 dark:border-zinc-600" />
                   )}
                   <span>{input.label}</span>
                 </div>
@@ -534,7 +534,7 @@ function InputCard({
         </div>
 
         {/* 하단 버튼 */}
-        <div className="p-5 md:p-6 bg-gray-50">
+        <div className="p-5 md:p-6 bg-zinc-50 dark:bg-zinc-800/50">
           <Button
             onClick={onGenerate}
             disabled={!isValid || isGenerating}

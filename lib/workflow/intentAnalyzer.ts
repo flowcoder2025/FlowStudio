@@ -133,8 +133,8 @@ export function analyzeIntent(userInput: string): IntentAnalysisResult {
  * (Placeholder for future ML-based recommendations)
  */
 export function getPersonalizedRecommendations(
-  userId: string,
-  recentActions: string[]
+  _userId: string,
+  _recentActions: string[]
 ): Action[] {
   // TODO: Implement ML-based recommendations based on user history
   // For now, return most popular actions

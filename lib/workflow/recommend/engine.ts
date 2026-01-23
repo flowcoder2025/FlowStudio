@@ -7,7 +7,6 @@
 import { Industry, INDUSTRIES, INDUSTRY_INFO } from "../industries";
 import {
   ExpressionIntent,
-  EXPRESSION_INTENTS,
   EXPRESSION_INTENT_INFO,
   ExpressionCategory,
   EXPRESSION_CATEGORY_INFO,
@@ -19,7 +18,6 @@ import {
 } from "../intents";
 import {
   calculateTotalScore,
-  getScoreBreakdown,
   DEFAULT_WEIGHTS,
   type ScoringWeights,
 } from "./scoring";
@@ -122,7 +120,7 @@ export function generateRecommendations(
   }
 
   // 후보 생성 및 스코어링
-  const candidates = generateCandidates(industry, sourceIntent, cfg);
+  const candidates = generateCandidates(industry, sourceIntent);
   const scoredCandidates = scoreCandidates(candidates, {
     industry,
     sourceIntent: sourceIntent || undefined,
@@ -254,8 +252,7 @@ function createEmptyResponse(startTime: number): RecommendationResponse {
  */
 function generateCandidates(
   industry: Industry,
-  sourceIntent: ExpressionIntent | null,
-  _cfg: RecommendationConfig
+  sourceIntent: ExpressionIntent | null
 ): ExpressionIntent[] {
   const candidates = new Set<ExpressionIntent>();
 

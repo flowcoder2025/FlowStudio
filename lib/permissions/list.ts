@@ -29,7 +29,7 @@ export async function listAccessible({
   // If specific relation is required, also include higher relations
   if (relation) {
     const allowedRelations = Object.entries(RELATION_HIERARCHY)
-      .filter(([_, includes]) => includes.includes(relation))
+      .filter(([, includes]) => includes.includes(relation))
       .map(([rel]) => rel);
     whereClause.relation = { in: allowedRelations };
   }
