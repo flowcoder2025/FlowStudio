@@ -20,7 +20,6 @@ import {
   WorkflowRecommendation,
 } from "@/lib/workflow/recommend";
 import { RecommendCard, RecommendList } from "@/components/workflow/RecommendCard";
-import { ImmersiveRecommend } from "@/components/workflow/ImmersiveRecommend";
 import { ImmersiveInputForm } from "@/components/workflow/ImmersiveInputForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ExpressionIntent } from "@/lib/workflow/intents";
@@ -36,13 +35,11 @@ export default function HomePage() {
   const [searchRecommendations, setSearchRecommendations] = useState<WorkflowRecommendation[]>([]);
   const [popularRecommendations, setPopularRecommendations] = useState<WorkflowRecommendation[]>([]);
 
-  // Immersive Recommend State
+  // 통합 몰입형 상태 (AI 추천 + 입력 폼)
   const [isImmersiveOpen, setIsImmersiveOpen] = useState(false);
   const [immersiveRecommendations, setImmersiveRecommendations] = useState<WorkflowRecommendation[]>([]);
-
-  // Immersive Input Form State (추천 선택 후 바로 입력 폼으로)
-  const [isInputFormOpen, setIsInputFormOpen] = useState(false);
   const [selectedRecommendation, setSelectedRecommendation] = useState<WorkflowRecommendation | null>(null);
+  const [currentRecommendationIndex, setCurrentRecommendationIndex] = useState(0);
 
   // Zustand store
   const selectIndustry = useWorkflowStore((state) => state.selectIndustry);
@@ -101,12 +98,16 @@ export default function HomePage() {
     // Open immersive overlay if recommendations exist
     if (allRecs.length > 0) {
       setImmersiveRecommendations(allRecs);
+      setSelectedRecommendation(allRecs[0]);
+      setCurrentRecommendationIndex(0);
+      selectIndustry(allRecs[0].industry);
+      selectIntent(allRecs[0].intent);
       setIsImmersiveOpen(true);
     }
 
     // Also update the card list for fallback display
     setSearchRecommendations(allRecs.slice(0, 4));
-  }, [searchQuery, industries]);
+  }, [searchQuery, industries, selectIndustry, selectIntent]);
 
   // Handle industry click
   const handleIndustryClick = useCallback(
@@ -122,7 +123,7 @@ export default function HomePage() {
     [status, router, selectIndustry, setCurrentStep]
   );
 
-  // Handle recommendation selection - 스타일 선택 스킵하고 바로 입력 폼으로
+  // Handle recommendation selection - 추천 변경 시 상태 업데이트
   const handleRecommendationSelect = useCallback(
     (recommendation: WorkflowRecommendation) => {
       if (status !== "authenticated") {
@@ -130,30 +131,38 @@ export default function HomePage() {
         return;
       }
 
-      // 추천 모달 닫고 바로 입력 폼 열기
-      setIsImmersiveOpen(false);
+      // 선택된 추천 업데이트 (모달은 닫지 않음 - 스와이프로 입력 폼으로 이동)
       selectIndustry(recommendation.industry);
       selectIntent(recommendation.intent);
       setSelectedRecommendation(recommendation);
-      setIsInputFormOpen(true);
+
+      // 인덱스도 업데이트
+      const newIndex = immersiveRecommendations.findIndex(
+        (r) => r.industry === recommendation.industry && r.intent === recommendation.intent
+      );
+      if (newIndex >= 0) {
+        setCurrentRecommendationIndex(newIndex);
+      }
     },
-    [status, router, selectIndustry, selectIntent]
+    [status, router, selectIndustry, selectIntent, immersiveRecommendations]
   );
 
   // 입력 폼에서 생성 완료 시
   const handleInputFormGenerate = useCallback(
     (sessionId: string) => {
-      setIsInputFormOpen(false);
+      setIsImmersiveOpen(false);
       setSelectedRecommendation(null);
+      setImmersiveRecommendations([]);
       router.push(`/result?sessionId=${sessionId}`);
     },
     [router]
   );
 
-  // 입력 폼 닫기
-  const handleInputFormClose = useCallback(() => {
-    setIsInputFormOpen(false);
+  // 통합 모달 닫기
+  const handleImmersiveClose = useCallback(() => {
+    setIsImmersiveOpen(false);
     setSelectedRecommendation(null);
+    setImmersiveRecommendations([]);
   }, []);
 
   // Handle recent workflow click
@@ -171,22 +180,17 @@ export default function HomePage() {
 
   return (
     <>
-      {/* Immersive Recommendation Overlay */}
-      <ImmersiveRecommend
-        isOpen={isImmersiveOpen}
-        onClose={() => setIsImmersiveOpen(false)}
-        recommendations={immersiveRecommendations}
-        onSelect={handleRecommendationSelect}
-      />
-
-      {/* Immersive Input Form - 추천 선택 후 바로 입력 폼 */}
+      {/* 통합 몰입형 모달 - AI 추천 + 입력 폼 (스와이프로 이동 가능) */}
       {selectedRecommendation && (
         <ImmersiveInputForm
-          isOpen={isInputFormOpen}
-          onClose={handleInputFormClose}
+          isOpen={isImmersiveOpen}
+          onClose={handleImmersiveClose}
           industry={selectedRecommendation.industry}
           intent={selectedRecommendation.intent as ExpressionIntent}
           onGenerate={handleInputFormGenerate}
+          recommendations={immersiveRecommendations}
+          onRecommendationSelect={handleRecommendationSelect}
+          currentRecommendationIndex={currentRecommendationIndex}
         />
       )}
 

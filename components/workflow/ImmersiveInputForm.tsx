@@ -4,16 +4,17 @@
  * Evidence: Phase D - 입력 폼 몰입형 전환
  *
  * 특징:
+ * - AI 추천 카드와 입력 필드를 통합 스와이프로 연결
  * - 각 입력 필드를 개별 스텝 카드로 표시
  * - 스와이프 네비게이션 지원
- * - 프롬프트 미리보기 제외
+ * - AI 추천으로 돌아가기 가능
  */
 
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { X, Sparkles, Loader2, Upload, Check } from "lucide-react";
+import { X, Sparkles, Loader2, Upload, Check, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ImmersiveNavigation } from "@/components/immersive/ImmersiveNavigation";
@@ -21,9 +22,10 @@ import { ImageUpload, UploadedImage } from "@/components/workflow/ImageUpload";
 import { Button } from "@/components/ui/button";
 import { Action, ActionInput } from "@/lib/workflow/actions";
 import { getActionsForIntent } from "@/lib/workflow/intents";
-import { getIndustryInfo, Industry } from "@/lib/workflow/industries";
+import { getIndustryInfo, Industry, INDUSTRY_INFO } from "@/lib/workflow/industries";
 import { ExpressionIntent, EXPRESSION_INTENT_INFO } from "@/lib/workflow/intents";
 import { useWorkflowStore } from "@/lib/workflow/store";
+import { WorkflowRecommendation } from "@/lib/workflow/recommend";
 
 // ============================================================
 // 타입 정의
@@ -35,6 +37,16 @@ export interface ImmersiveInputFormProps {
   industry: Industry;
   intent: ExpressionIntent;
   onGenerate?: (sessionId: string) => void;
+  /** AI 추천 목록 - 제공 시 첫 스텝으로 추천 카드 표시 */
+  recommendations?: WorkflowRecommendation[];
+  /** 추천 선택 시 콜백 - 다른 추천 선택 시 industry/intent 변경 */
+  onRecommendationSelect?: (recommendation: WorkflowRecommendation) => void;
+  /** 현재 선택된 추천의 인덱스 */
+  currentRecommendationIndex?: number;
+}
+
+interface RecommendStep {
+  type: "recommend";
 }
 
 interface InputStep {
@@ -50,7 +62,7 @@ interface ConfirmStep {
   type: "confirm";
 }
 
-type Step = InputStep | ImageStep | ConfirmStep;
+type Step = RecommendStep | InputStep | ImageStep | ConfirmStep;
 
 // ============================================================
 // 애니메이션 Variants
@@ -115,6 +127,11 @@ interface InputCardProps {
   onGenerate: () => void;
   industryInfo: ReturnType<typeof getIndustryInfo>;
   intentInfo: (typeof EXPRESSION_INTENT_INFO)[ExpressionIntent];
+  /** 추천 관련 props */
+  recommendations?: WorkflowRecommendation[];
+  currentRecommendationIndex?: number;
+  onRecommendationChange?: (index: number) => void;
+  onRecommendationAccept?: () => void;
 }
 
 function InputCard({
@@ -131,6 +148,10 @@ function InputCard({
   onGenerate,
   industryInfo,
   intentInfo,
+  recommendations,
+  currentRecommendationIndex = 0,
+  onRecommendationChange,
+  onRecommendationAccept,
 }: InputCardProps) {
   const handleImageUpload = useCallback(async (file: File): Promise<string> => {
     return new Promise((resolve) => {
@@ -139,6 +160,170 @@ function InputCard({
       }, 500);
     });
   }, []);
+
+  // AI 추천 카드 렌더링
+  if (step.type === "recommend" && recommendations && recommendations.length > 0) {
+    const currentRec = recommendations[currentRecommendationIndex];
+    const recIndustryInfo = INDUSTRY_INFO[currentRec.industry];
+    const recIntentInfo = EXPRESSION_INTENT_INFO[currentRec.intent];
+    const percentage = Math.round(currentRec.score * 100);
+    const colorClass =
+      percentage >= 80
+        ? "bg-green-500"
+        : percentage >= 60
+        ? "bg-yellow-500"
+        : "bg-gray-400";
+
+    return (
+      <div className="flex flex-col h-full w-full max-w-lg mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
+        {/* 헤더 */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2 text-primary-600">
+            <Sparkles className="w-4 h-4" />
+            <span className="text-sm font-medium">AI 추천</span>
+          </div>
+          <div className="text-sm text-gray-500 font-medium">
+            {currentRecommendationIndex + 1} / {recommendations.length}
+          </div>
+        </div>
+
+        {/* 메인 콘텐츠 */}
+        <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-8 text-center">
+          {/* 업종 아이콘 */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="w-20 h-20 md:w-24 md:h-24 rounded-2xl flex items-center justify-center text-4xl md:text-5xl mb-4"
+            style={{ backgroundColor: `${recIndustryInfo?.color || "#6366f1"}20` }}
+          >
+            {recIndustryInfo?.icon || "📦"}
+          </motion.div>
+
+          <motion.div
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="text-sm text-gray-500 mb-2"
+          >
+            {recIndustryInfo?.nameKo || currentRec.industry}
+          </motion.div>
+
+          {/* 제목 */}
+          <motion.h2
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+            className="text-2xl md:text-3xl font-bold text-gray-900 mb-3"
+          >
+            {recIntentInfo?.nameKo || currentRec.intent}
+          </motion.h2>
+
+          {/* 설명 */}
+          <motion.p
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="text-gray-600 mb-6 max-w-sm leading-relaxed"
+          >
+            {recIntentInfo?.description || currentRec.reason}
+          </motion.p>
+
+          {/* 매칭률 */}
+          <motion.div
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.25 }}
+            className="w-full max-w-xs"
+          >
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm text-gray-500">매칭률</span>
+              <span className="text-sm font-semibold text-gray-700">{percentage}%</span>
+            </div>
+            <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+              <motion.div
+                className={cn("h-full rounded-full", colorClass)}
+                initial={{ width: 0 }}
+                animate={{ width: `${percentage}%` }}
+                transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
+              />
+            </div>
+          </motion.div>
+
+          {/* 추천 네비게이션 도트 */}
+          {recommendations.length > 1 && (
+            <motion.div
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.3 }}
+              className="flex items-center gap-2 mt-6"
+            >
+              {recommendations.slice(0, 7).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => onRecommendationChange?.(index)}
+                  className={cn(
+                    "w-2 h-2 rounded-full transition-all",
+                    index === currentRecommendationIndex
+                      ? "bg-primary-600 scale-125"
+                      : "bg-gray-300 hover:bg-gray-400"
+                  )}
+                />
+              ))}
+              {recommendations.length > 7 && (
+                <span className="text-xs text-gray-400">+{recommendations.length - 7}</span>
+              )}
+            </motion.div>
+          )}
+        </div>
+
+        {/* 하단 버튼 */}
+        <div className="p-5 md:p-6 bg-gray-50 space-y-3">
+          <Button
+            onClick={onRecommendationAccept}
+            className="w-full h-12 text-base font-semibold"
+            size="lg"
+          >
+            이 워크플로우로 시작하기
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Button>
+
+          {recommendations.length > 1 && (
+            <div className="flex justify-center gap-2">
+              <Button
+                onClick={() => onRecommendationChange?.(
+                  currentRecommendationIndex <= 0
+                    ? recommendations.length - 1
+                    : currentRecommendationIndex - 1
+                )}
+                variant="ghost"
+                size="sm"
+                className="text-gray-600"
+              >
+                ← 이전 추천
+              </Button>
+              <Button
+                onClick={() => onRecommendationChange?.(
+                  currentRecommendationIndex >= recommendations.length - 1
+                    ? 0
+                    : currentRecommendationIndex + 1
+                )}
+                variant="ghost"
+                size="sm"
+                className="text-gray-600"
+              >
+                다음 추천 →
+              </Button>
+            </div>
+          )}
+
+          <p className="text-xs text-gray-400 text-center">
+            → 스와이프하여 바로 입력 시작
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // 입력 필드 렌더링
   if (step.type === "input") {
@@ -386,6 +571,9 @@ export function ImmersiveInputForm({
   industry,
   intent,
   onGenerate,
+  recommendations,
+  onRecommendationSelect,
+  currentRecommendationIndex: initialRecommendationIndex = 0,
 }: ImmersiveInputFormProps) {
   const router = useRouter();
   const [[currentIndex, direction], setPage] = useState<[number, number]>([0, 0]);
@@ -393,6 +581,7 @@ export function ImmersiveInputForm({
   const [referenceImages, setReferenceImages] = useState<UploadedImage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recommendationIndex, setRecommendationIndex] = useState(initialRecommendationIndex);
 
   // Zustand store
   const addToHistory = useWorkflowStore((state) => state.addToHistory);
@@ -406,9 +595,19 @@ export function ImmersiveInputForm({
   const industryInfo = useMemo(() => getIndustryInfo(industry), [industry]);
   const intentInfo = useMemo(() => EXPRESSION_INTENT_INFO[intent], [intent]);
 
-  // 스텝 구성: 입력 필드들 + 이미지 업로드 + 확인
+  // 추천이 있는지 여부
+  const hasRecommendations = recommendations && recommendations.length > 0;
+
+  // 스텝 구성: [추천 카드] + 입력 필드들 + 이미지 업로드 + 확인
   const steps: Step[] = useMemo(() => {
     if (!action) return [];
+
+    const stepList: Step[] = [];
+
+    // 추천이 있으면 첫 번째 스텝으로 추가
+    if (hasRecommendations) {
+      stepList.push({ type: "recommend" as const });
+    }
 
     const inputSteps: InputStep[] = action.inputs.map((input) => ({
       type: "input" as const,
@@ -418,18 +617,20 @@ export function ImmersiveInputForm({
     const imageStep: ImageStep = { type: "image" };
     const confirmStep: ConfirmStep = { type: "confirm" };
 
-    return [...inputSteps, imageStep, confirmStep];
-  }, [action]);
+    return [...stepList, ...inputSteps, imageStep, confirmStep];
+  }, [action, hasRecommendations]);
 
   // 인덱스 초기화
   useEffect(() => {
     if (isOpen) {
+      // 추천이 있으면 0(추천 카드)부터, 없으면 0(첫 입력 필드)부터 시작
       setPage([0, 0]);
       setInputs({});
       setReferenceImages([]);
       setError(null);
+      setRecommendationIndex(initialRecommendationIndex);
     }
-  }, [isOpen]);
+  }, [isOpen, initialRecommendationIndex]);
 
   // 네비게이션
   const handleNext = useCallback(() => {
@@ -487,6 +688,20 @@ export function ImmersiveInputForm({
   const handleInputChange = useCallback((inputId: string, value: string) => {
     setInputs((prev) => ({ ...prev, [inputId]: value }));
   }, []);
+
+  // 추천 인덱스 변경
+  const handleRecommendationChange = useCallback((index: number) => {
+    setRecommendationIndex(index);
+    if (recommendations && onRecommendationSelect) {
+      onRecommendationSelect(recommendations[index]);
+    }
+  }, [recommendations, onRecommendationSelect]);
+
+  // 추천 수락 (다음 스텝으로 이동)
+  const handleRecommendationAccept = useCallback(() => {
+    // 다음 스텝(입력 폼)으로 이동
+    handleNext();
+  }, [handleNext]);
 
   // 이미지 생성
   const handleGenerate = useCallback(async () => {
@@ -632,6 +847,10 @@ export function ImmersiveInputForm({
                   isGenerating={isGenerating}
                   onGenerate={handleGenerate}
                   industryInfo={industryInfo}
+                  recommendations={recommendations}
+                  currentRecommendationIndex={recommendationIndex}
+                  onRecommendationChange={handleRecommendationChange}
+                  onRecommendationAccept={handleRecommendationAccept}
                   intentInfo={intentInfo}
                 />
               </motion.div>

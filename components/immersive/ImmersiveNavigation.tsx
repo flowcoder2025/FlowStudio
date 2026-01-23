@@ -312,9 +312,9 @@ export function ImmersiveNavigation({
 
   // 절대 위치 레이아웃 (기본)
   return (
-    <div className={cn("relative", className)}>
-      {/* 좌우 네비게이션 버튼 */}
-      <div className="absolute inset-y-0 left-0 flex items-center -ml-14 md:-ml-16">
+    <div className={cn("absolute inset-0 pointer-events-none", className)}>
+      {/* 좌우 네비게이션 버튼 - 카드 세로 중앙 */}
+      <div className="absolute top-1/2 -translate-y-1/2 left-0 -ml-14 md:-ml-16 pointer-events-auto">
         <NavigationButton
           direction="prev"
           onClick={onPrevious}
@@ -323,7 +323,7 @@ export function ImmersiveNavigation({
         />
       </div>
 
-      <div className="absolute inset-y-0 right-0 flex items-center -mr-14 md:-mr-16">
+      <div className="absolute top-1/2 -translate-y-1/2 right-0 -mr-14 md:-mr-16 pointer-events-auto">
         <NavigationButton
           direction="next"
           onClick={onNext}
@@ -333,7 +333,7 @@ export function ImmersiveNavigation({
       </div>
 
       {/* 하단 도트 인디케이터 + 온보딩 힌트 */}
-      <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
+      <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 pointer-events-auto">
         <DotIndicator
           current={currentIndex}
           total={total}
