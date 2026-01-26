@@ -6,9 +6,10 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import dynamic from "next/dynamic";
 import { Search, ArrowRight, Sparkles, TrendingUp, Clock } from "lucide-react";
 import { getAllIndustries, IndustryInfo, Industry } from "@/lib/workflow/industries";
 import { analyzeIntent } from "@/lib/workflow/intentAnalyzer";
@@ -20,9 +21,14 @@ import {
   WorkflowRecommendation,
 } from "@/lib/workflow/recommend";
 import { RecommendCard, RecommendList } from "@/components/workflow/RecommendCard";
-import { ImmersiveInputForm } from "@/components/workflow/ImmersiveInputForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ExpressionIntent } from "@/lib/workflow/intents";
+
+// Dynamic import for modal component (bundle optimization)
+const ImmersiveInputForm = dynamic(
+  () => import("@/components/workflow/ImmersiveInputForm").then(mod => mod.ImmersiveInputForm),
+  { ssr: false }
+);
 
 export default function HomePage() {
   const router = useRouter();
@@ -33,7 +39,16 @@ export default function HomePage() {
     message: string;
   } | null>(null);
   const [searchRecommendations, setSearchRecommendations] = useState<WorkflowRecommendation[]>([]);
-  const [popularRecommendations, setPopularRecommendations] = useState<WorkflowRecommendation[]>([]);
+  // Lazy initialization: 마운트 시 1회만 계산 (rerender-lazy-state-init)
+  const [popularRecommendations] = useState<WorkflowRecommendation[]>(() => {
+    const industryList = getAllIndustries();
+    const allRecommendations: WorkflowRecommendation[] = [];
+    industryList.slice(0, 4).forEach((industry) => {
+      const recs = quickRecommend(industry.id as Industry);
+      allRecommendations.push(...recs.slice(0, 2));
+    });
+    return allRecommendations.slice(0, 6);
+  });
 
   // 통합 몰입형 상태 (AI 추천 + 입력 폼)
   const [isImmersiveOpen, setIsImmersiveOpen] = useState(false);
@@ -48,18 +63,6 @@ export default function HomePage() {
   const setCurrentStep = useWorkflowStore((state) => state.setCurrentStep);
 
   const industries = useMemo(() => getAllIndustries(), []);
-
-  // Load popular recommendations on mount (1회만 실행)
-  useEffect(() => {
-    // Get popular recommendations (mix from different industries)
-    const industryList = getAllIndustries();
-    const allRecommendations: WorkflowRecommendation[] = [];
-    industryList.slice(0, 4).forEach((industry) => {
-      const recs = quickRecommend(industry.id as Industry);
-      allRecommendations.push(...recs.slice(0, 2));
-    });
-    setPopularRecommendations(allRecommendations.slice(0, 6));
-  }, []);
 
   // Search handler
   const handleSearch = useCallback(() => {

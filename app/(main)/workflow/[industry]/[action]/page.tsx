@@ -199,7 +199,7 @@ export default function WorkflowWizardPage({ params }: Props) {
     startGeneration();
 
     try {
-      // Create session and generate
+      // 1. Create session
       const sessionRes = await fetch("/api/workflows/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -218,15 +218,61 @@ export default function WorkflowWizardPage({ params }: Props) {
 
       const session = await sessionRes.json();
 
-      // Add to history
+      // 2. Generate prompt
+      const promptRes = await fetch("/api/workflows/session", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: session.id,
+          generatePromptFlag: true,
+        }),
+      });
+
+      if (!promptRes.ok) {
+        const data = await promptRes.json();
+        throw new Error(data.error || "프롬프트 생성에 실패했습니다");
+      }
+
+      const { prompt } = await promptRes.json();
+
+      // 3. Generate images
+      const generateRes = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt,
+          workflowSessionId: session.id,
+          count: 1,
+        }),
+      });
+
+      if (!generateRes.ok) {
+        const data = await generateRes.json();
+        throw new Error(data.error || "이미지 생성에 실패했습니다");
+      }
+
+      const generateResult = await generateRes.json();
+
+      // 4. Save result to store
+      setGenerationResult({
+        success: generateResult.success,
+        images: generateResult.images || [],
+        creditsUsed: generateResult.creditsUsed || action.creditCost,
+        provider: generateResult.provider || "unknown",
+        model: generateResult.model || "unknown",
+        duration: generateResult.duration,
+        error: generateResult.error,
+      });
+
+      // 5. Add to history
       addToHistory({
         industry: industry as Industry,
         action: actionId,
         intent: intentParam ?? undefined,
       });
 
-      // Navigate to result page
-      router.push(`/result?sessionId=${session.id}`);
+      // 6. Navigate to result page
+      router.push(`/result?session=${session.id}`);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "오류가 발생했습니다";
       setError(errorMessage);

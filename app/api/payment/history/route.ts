@@ -11,7 +11,7 @@ import {
   getBillingSummary,
   getPaymentStats,
   getInvoiceData,
-} from "@/lib/payment";
+} from "@/lib/payment/history";
 
 /**
  * GET - Get payment history, billing summary, or invoice

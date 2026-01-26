@@ -5,12 +5,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import {
-  upscaleImage,
-  type UpscaleMode,
-  ImageGenerationError,
-  ErrorCodes,
-} from '@/lib/imageProvider';
+import { upscaleImage } from '@/lib/imageProvider/upscale';
+import type { UpscaleMode } from '@/lib/imageProvider/types';
+import { ImageGenerationError, ErrorCodes } from '@/lib/imageProvider/types';
 import { uploadImageFromUrl } from '@/lib/storage';
 
 // =====================================================

@@ -10,6 +10,7 @@ import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { Download, Share2, RefreshCw, ZoomIn, Heart, ArrowLeft, Sparkles, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,10 +23,15 @@ import {
 import { cn } from '@/lib/utils';
 import { useWorkflowStore, GenerationResult } from '@/lib/workflow/store';
 import { SimilarWorkflows, CrossIndustryList } from '@/components/workflow/SimilarWorkflows';
-import { ImmersiveResult } from '@/components/workflow/ImmersiveResult';
 import { generateRecommendations, WorkflowRecommendation } from '@/lib/workflow/recommend';
 import { matchIntent } from '@/lib/workflow/intents';
 import type { ExpressionIntent } from '@/lib/workflow/intents';
+
+// Dynamic import for modal component (bundle optimization)
+const ImmersiveResult = dynamic(
+  () => import('@/components/workflow/ImmersiveResult').then(mod => mod.ImmersiveResult),
+  { ssr: false }
+);
 
 // =====================================================
 // Types
@@ -67,17 +73,12 @@ function ResultContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session');
 
-  // Zustand store
+  // Zustand store - state selectors only (rerender-defer-reads)
+  // Actions are accessed via getState() in callbacks to avoid unnecessary re-renders
   const storeResult = useWorkflowStore((state) => state.generationResult);
   const selectedIndustry = useWorkflowStore((state) => state.selectedIndustry);
   const selectedIntent = useWorkflowStore((state) => state.selectedIntent);
-  const selectIndustry = useWorkflowStore((state) => state.selectIndustry);
-  const selectIntent = useWorkflowStore((state) => state.selectIntent);
-  const setCurrentStep = useWorkflowStore((state) => state.setCurrentStep);
-  const resetWorkflow = useWorkflowStore((state) => state.resetWorkflow);
   const showImmersiveResult = useWorkflowStore((state) => state.showImmersiveResult);
-  const openImmersiveResult = useWorkflowStore((state) => state.openImmersiveResult);
-  const closeImmersiveResult = useWorkflowStore((state) => state.closeImmersiveResult);
 
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,10 +124,10 @@ function ResultContent() {
   // Auto-open immersive result when result is loaded
   useEffect(() => {
     if (result?.success && result.images.length > 0) {
-      // 결과가 로드되면 자동으로 몰입형 모드 열기
-      openImmersiveResult();
+      // 결과가 로드되면 자동으로 몰입형 모드 열기 (getState for action)
+      useWorkflowStore.getState().openImmersiveResult();
     }
-  }, [result, openImmersiveResult]);
+  }, [result]);
 
   // Load similar workflows based on current selection
   useEffect(() => {
@@ -195,22 +196,23 @@ function ResultContent() {
     }
   }, []);
 
-  // Handle similar workflow selection
+  // Handle similar workflow selection (using getState for actions)
   const handleSimilarSelect = useCallback(
     (recommendation: WorkflowRecommendation) => {
-      selectIndustry(recommendation.industry);
-      selectIntent(recommendation.intent);
-      setCurrentStep('guide');
+      const store = useWorkflowStore.getState();
+      store.selectIndustry(recommendation.industry);
+      store.selectIntent(recommendation.intent);
+      store.setCurrentStep('guide');
       router.push(`/workflow/${recommendation.industry}?intent=${recommendation.intent}`);
     },
-    [selectIndustry, selectIntent, setCurrentStep, router]
+    [router]
   );
 
-  // Handle create new
+  // Handle create new (using getState for action)
   const handleCreateNew = useCallback(() => {
-    resetWorkflow();
+    useWorkflowStore.getState().resetWorkflow();
     router.push('/');
-  }, [resetWorkflow, router]);
+  }, [router]);
 
   // Loading state
   if (loading) {
@@ -269,7 +271,7 @@ function ResultContent() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={openImmersiveResult}>
+          <Button variant="outline" onClick={() => useWorkflowStore.getState().openImmersiveResult()}>
             <Maximize2 className="w-4 h-4 mr-2" />
             몰입 모드
           </Button>
@@ -436,7 +438,7 @@ function ResultContent() {
       {result && (
         <ImmersiveResult
           isOpen={showImmersiveResult}
-          onClose={closeImmersiveResult}
+          onClose={() => useWorkflowStore.getState().closeImmersiveResult()}
           result={result}
           onRegenerate={handleRegenerate}
           onCreateNew={handleCreateNew}

@@ -16,7 +16,7 @@ import {
   getCustomerPortalUrl,
   getUpdatePaymentMethodUrl,
   getSubscriptionHistory,
-} from "@/lib/payment";
+} from "@/lib/payment/subscription";
 import { z } from "zod";
 
 /**

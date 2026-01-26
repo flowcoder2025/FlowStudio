@@ -1,8 +1,8 @@
 # FlowStudio 구현 태스크
 
-> **총 111 Contracts** (Phase 1-12 + Immersive UX)
-> **완료**: Phase 1-12 (101 Contracts) ✅ + Immersive Phase A-F ✅
-> **모든 Phase 완료!**
+> **총 122 Contracts** (Phase 1-14)
+> **완료**: Phase 1-13 (111 Contracts) ✅ + Phase 14a-e (10 Contracts) ✅
+> **완료**: Phase 14 Performance Optimization (10/11) ✅
 
 ---
 
@@ -42,7 +42,8 @@
 | Phase 10 | ✅ 완료 | 6/6 | HANDOFF_2026-01-22_P10.md |
 | Phase 11 | ✅ 완료 | 6/6 | HANDOFF_2026-01-22_P11.md |
 | Phase 12 | ✅ 완료 | 6/6 | HANDOFF_2026-01-22_P12_FINAL.md |
-| **Immersive** | ✅ 완료 | 10/10 | HANDOFF_2026-01-22_PHASE_E.md |
+| Phase 13 (Immersive) | ✅ 완료 | 10/10 | HANDOFF_2026-01-22_PHASE_E.md |
+| **Phase 14 (Perf)** | ✅ 완료 | 10/11 | HANDOFF_2026-01-26_P14e.md |
 
 ---
 
@@ -135,17 +136,38 @@
 
 ### 필요 환경변수
 ```env
-GOOGLE_AI_API_KEY=
-OPENROUTER_API_KEY=
+GOOGLE_API_KEY=           # Google AI Studio API 키
+OPENROUTER_API_KEY=       # OpenRouter API 키
+GOOGLE_GENAI_USE_VERTEXAI=false  # (선택) Vertex AI 사용 시 true
 ```
 
 ### 완료일: 2026-01-21
 
 ### 필요 의존성
 ```bash
-npm install @google/generative-ai
+npm install @google/genai  # 이미지 생성용 (2026-01-26 변경)
 npx shadcn@latest add button card dialog dropdown-menu input progress select skeleton
 ```
+
+### 2026-01-26 핫픽스: 이미지 생성 로직 교체
+
+원본 FlowStudio 프로젝트 로직 적용:
+
+| 항목 | 변경 전 | 변경 후 |
+|------|---------|---------|
+| 패키지 | `@google/generative-ai` | `@google/genai` |
+| API 호출 | `model.generateContent()` | `ai.models.generateContent()` |
+| 모델 | `gemini-2.0-flash-exp` | `gemini-3-pro-image-preview` |
+| OpenRouter | images/generations API | chat/completions API |
+
+**수정된 파일:**
+- `lib/imageProvider/vertexai.ts` - 신규 (GenAI 클라이언트)
+- `lib/imageProvider/googleGenAI.ts` - 전면 수정
+- `lib/imageProvider/openRouter.ts` - 전면 수정
+- `lib/imageProvider/types.ts` - 모델/옵션 확장
+- `lib/imageProvider/selectProvider.ts` - 프로바이더 설정 업데이트
+
+**핸드오프**: `HANDOFF_2026-01-26_P14g.md`
 
 ---
 
@@ -593,13 +615,14 @@ components/workflow/
 | Phase 10 | Page Integration | 6 | ✅ 완료 |
 | Phase 11 | Testing | 6 | ✅ 완료 |
 | Phase 12 | Polish & Optimization | 6 | ✅ 완료 |
-| **Phase 13** | **Immersive UX** | **10/10** | ✅ 완료 |
+| Phase 13 | Immersive UX | 10 | ✅ 완료 |
+| **Phase 14** | **Performance (Vercel BP)** | **0/11** | 🔄 대기 |
 
-**총 Contracts**: 111개 (완료 111, 미완료 0) 🎉
+**총 Contracts**: 122개 (완료 111, 대기 11)
 
 ---
 
-> **마지막 업데이트**: 2026-01-23 UI 스타일 마이그레이션 전체 완료 🎉
+> **마지막 업데이트**: 2026-01-26 Vercel Best Practices 리뷰 추가
 
 ---
 
@@ -666,3 +689,132 @@ components/workflow/
 - [x] 다크모드 미적용 파일 검색 (gray-*)
 - [x] 12개 파일 다크모드 수정 완료
 - [x] 품질 체크 통과
+
+---
+
+## Phase 14: Performance Optimization (Vercel Best Practices) 🔄
+
+> Vercel React Best Practices 기반 성능 최적화 - 코드베이스 리뷰 결과
+
+### 진행 상태
+
+| 우선순위 | 카테고리 | 이슈 수 | 상태 |
+|----------|----------|---------|------|
+| 🔴 1 | 번들 최적화 (Barrel + Dynamic) | 3 | ✅ 완료 |
+| 🟡 2 | SWR/React Query 도입 | 2 | ✅ 완료 (1 스킵) |
+| 🟡 3 | Server Component 전환 | 1 | ✅ 완료 |
+| 🟢 4 | Re-render 최적화 | 3 | ⬜ 대기 |
+| 🟢 5 | 추가 최적화 | 2 | ⬜ 대기 |
+
+### Contracts (11개)
+
+#### Phase 14a: 번들 최적화 (CRITICAL) ✅
+
+- [x] PERF_BUNDLE_BARREL_IMPORTS → `lib/imageProvider/index.ts` 외 10개
+  - **Rule**: `bundle-barrel-imports`
+  - **What**: Barrel file 직접 import로 변경 (트리쉐이킹 개선)
+  - **Files**:
+    - `app/api/generate/route.ts` → `@/lib/imageProvider/generate`, `@/lib/imageProvider/types`
+    - `app/api/upscale/route.ts` → `@/lib/imageProvider/upscale`, `@/lib/imageProvider/types`
+    - `app/api/payment/*.ts` → `@/lib/payment/checkout`, `subscription`, `history`, `webhook`
+    - `app/api/images/*.ts` → `@/lib/images/list`, `@/lib/images/delete`
+    - `lib/workflow/session.ts` → `@/lib/permissions/grant`
+  - **Completed**: 2026-01-26
+
+- [x] PERF_BUNDLE_DYNAMIC_MODAL → `components/workflow/Immersive*.tsx`
+  - **Rule**: `bundle-dynamic-imports`
+  - **What**: Modal/Dialog 컴포넌트에 next/dynamic 적용
+  - **Files**:
+    - `app/(main)/page.tsx` → ImmersiveInputForm
+    - `app/(main)/result/page.tsx` → ImmersiveResult
+    - `app/(main)/workflow/[industry]/page.tsx` → ImmersiveActionSelect
+  - **Completed**: 2026-01-26
+
+- [x] PERF_BUNDLE_DYNAMIC_STUDIO → `components/studio/*.tsx`
+  - **Rule**: `bundle-dynamic-imports`
+  - **What**: Studio 탭 컴포넌트에 next/dynamic 적용
+  - **Files**:
+    - `app/(main)/color-correction/page.tsx` → FilterTab, ColorTransferTab, BackgroundRemovalTab
+  - **Completed**: 2026-01-26
+
+#### Phase 14b: 데이터 페칭 최적화 (HIGH) ✅
+
+- [x] PERF_CLIENT_SWR_GALLERY → `app/(main)/gallery/page.tsx`
+  - **Rule**: `client-swr-dedup`
+  - **What**: SWR 도입으로 캐싱/중복요청 방지
+  - **Current**: useCallback + useEffect + fetch
+  - **Expected**: 자동 캐싱, 요청 중복 제거, revalidation
+  - **Completed**: 2026-01-26
+
+- [~] PERF_CLIENT_SWR_RESULT → `app/(main)/result/page.tsx` (스킵)
+  - **Rule**: `client-swr-dedup`
+  - **What**: 결과 페이지 데이터 페칭 SWR 전환
+  - **Status**: 아키텍처 부적합으로 스킵 (API 호출 없음, sessionStorage 기반)
+  - **Alternative**: Phase 14d Re-render 최적화로 대체
+
+#### Phase 14c: Server Component 전환 (HIGH) ✅
+
+- [x] PERF_SERVER_GALLERY → `app/(main)/gallery/page.tsx`
+  - **Rule**: `server-parallel-fetching`
+  - **What**: 초기 데이터 서버에서 prefetch
+  - **Pattern**: Server Component → Client Component (with initialData)
+  - **Expected**: TTFB 30-50% 개선
+  - **Completed**: 2026-01-26
+
+#### Phase 14d: Re-render 최적화 (MEDIUM) ✅
+
+- [x] PERF_RERENDER_HOME_LAZY_STATE → `app/(main)/page.tsx`
+  - **Rule**: `rerender-lazy-state-init`
+  - **What**: popularRecommendations 초기화 최적화
+  - **Before**: useEffect로 계산 후 setState
+  - **After**: useState(() => ...) lazy init 패턴
+  - **Completed**: 2026-01-26
+
+- [x] PERF_RERENDER_RESULT_DEFER_READS → `app/(main)/result/page.tsx`
+  - **Rule**: `rerender-defer-reads`
+  - **What**: callback 전용 store action 구독 제거
+  - **Before**: 개별 selector로 action 구독
+  - **After**: useWorkflowStore.getState() 사용
+  - **Completed**: 2026-01-26
+
+- [x] PERF_RERENDER_GALLERY_FUNCTIONAL → `components/gallery/GalleryClient.tsx`
+  - **Rule**: `rerender-functional-setstate`
+  - **What**: setImages에 함수형 업데이트 적용
+  - **Status**: SWR 마이그레이션(Phase 14b/c)으로 이미 해결 (setImages 제거됨)
+  - **Completed**: 2026-01-26
+
+#### Phase 14e: 추가 최적화 (LOW) ✅
+
+- [x] PERF_ADVANCED_MEMO_COMPONENTS → 대규모 리스트 컴포넌트
+  - **Rule**: `rerender-memo`
+  - **What**: React.memo 적용
+  - **Files**:
+    - `RecommendCard.tsx` - ScoreBadge, RecommendCard에 memo 적용
+    - `GalleryClient.tsx` - GalleryImageCard 컴포넌트 추출 및 memo 적용
+  - **Completed**: 2026-01-26
+
+- [x] PERF_RENDERING_HOIST_JSX → 정적 JSX 추출
+  - **Rule**: `rendering-hoist-jsx`
+  - **What**: 컴포넌트 외부로 정적 JSX 추출
+  - **Files**:
+    - `RecommendCard.tsx` - Sparkles, ArrowRight 아이콘 추출
+    - `GalleryClient.tsx` - ZoomIn, ImageIcon, MoreVertical, Download, Trash2 아이콘 추출
+  - **Completed**: 2026-01-26
+
+### 필요 의존성
+```bash
+npm install swr
+```
+
+### 작업 우선순위
+```
+1. Phase 14a (번들 최적화) → 영향도 가장 큼
+2. Phase 14b (SWR 도입) → UX 개선
+3. Phase 14c (Server Component) → 난이도 높음, 나중에
+4. Phase 14d (Re-render) → 점진적 적용
+5. Phase 14e (추가) → 선택적
+```
+
+### 참고 문서
+- Vercel React Best Practices: `~/.claude/skills/vercel-react-best-practices/`
+- Rules: `rules/bundle-*.md`, `rules/client-*.md`, `rules/rerender-*.md`

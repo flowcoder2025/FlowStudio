@@ -1,12 +1,12 @@
 /**
  * Recommend Card Component - 추천 카드 UI
  * Contract: Phase 8 UI Components
- * Evidence: HANDOFF_2026-01-21_P7.md
+ * Optimized: React.memo + hoisted JSX (Phase 14e)
  */
 
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,16 @@ import { cn } from "@/lib/utils";
 import { WorkflowRecommendation } from "@/lib/workflow/recommend";
 import { INDUSTRY_INFO } from "@/lib/workflow/industries";
 import { EXPRESSION_INTENT_INFO } from "@/lib/workflow/intents";
+
+// ============================================================
+// Hoisted Static JSX (rendering-hoist-jsx)
+// ============================================================
+
+const SparklesIconSmall = <Sparkles className="w-3 h-3" />;
+const SparklesIconMedium = <Sparkles className="w-4 h-4 text-primary-500" />;
+const SparklesIconLarge = <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-50" />;
+const ArrowRightIconSmall = <ArrowRight className="w-4 h-4 ml-1" />;
+const ArrowRightIconCompact = <ArrowRight className="w-4 h-4 text-zinc-400 dark:text-zinc-500 shrink-0" />;
 
 // ============================================================
 // 타입 정의
@@ -29,10 +39,10 @@ export interface RecommendCardProps {
 }
 
 // ============================================================
-// 스코어 배지 컴포넌트
+// 스코어 배지 컴포넌트 (memoized)
 // ============================================================
 
-function ScoreBadge({ score }: { score: number }) {
+const ScoreBadge = memo(function ScoreBadge({ score }: { score: number }) {
   const percentage = Math.round(score * 100);
   const colorClass =
     percentage >= 80
@@ -46,13 +56,13 @@ function ScoreBadge({ score }: { score: number }) {
       {percentage}% 매칭
     </div>
   );
-}
+});
 
 // ============================================================
-// 메인 컴포넌트
+// 메인 컴포넌트 (memoized - rerender-memo)
 // ============================================================
 
-export function RecommendCard({
+export const RecommendCard = memo(function RecommendCard({
   recommendation,
   variant = "default",
   showScore = true,
@@ -81,7 +91,7 @@ export function RecommendCard({
       >
         {/* 추천 배지 */}
         <div className="absolute top-3 right-3 flex items-center gap-1 bg-primary-500 text-white px-2 py-1 rounded-full text-xs">
-          <Sparkles className="w-3 h-3" />
+          {SparklesIconSmall}
           추천
         </div>
 
@@ -121,7 +131,7 @@ export function RecommendCard({
               )}
             >
               시작하기
-              <ArrowRight className="w-4 h-4 ml-1" />
+              {ArrowRightIconSmall}
             </Button>
           </div>
         </CardContent>
@@ -159,7 +169,7 @@ export function RecommendCard({
           </div>
         )}
 
-        <ArrowRight className="w-4 h-4 text-zinc-400 dark:text-zinc-500 shrink-0" />
+        {ArrowRightIconCompact}
       </div>
     );
   }
@@ -237,13 +247,13 @@ export function RecommendCard({
             className="transition-all"
           >
             선택
-            <ArrowRight className="w-4 h-4 ml-1" />
+            {ArrowRightIconSmall}
           </Button>
         </div>
       </CardContent>
     </Card>
   );
-}
+});
 
 // ============================================================
 // 추천 리스트 컴포넌트
@@ -271,7 +281,7 @@ export function RecommendList({
   if (recommendations.length === 0) {
     return (
       <div className={cn("text-center py-8 text-zinc-500 dark:text-zinc-400", className)}>
-        <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-50" />
+        {SparklesIconLarge}
         <p className="text-sm">{emptyMessage}</p>
       </div>
     );
@@ -281,7 +291,7 @@ export function RecommendList({
     <div className={className}>
       {title && (
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-4 h-4 text-primary-500" />
+          {SparklesIconMedium}
           <h3 className="font-medium text-zinc-900 dark:text-zinc-100">{title}</h3>
         </div>
       )}

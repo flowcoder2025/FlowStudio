@@ -1,9 +1,8 @@
 /**
- * Google GenAI Image Provider
+ * Google GenAI Image Provider (Using @google/genai)
  * Contract: IMAGE_FUNC_GENERATE (Google Gemini implementation)
  *
- * Note: Requires @google/generative-ai package to be installed
- * npm install @google/generative-ai
+ * Uses the new @google/genai package with ai.models.generateContent() API
  */
 
 import {
@@ -15,6 +14,7 @@ import {
   AspectRatio,
   ProviderConfig,
 } from './types';
+import { getGenAIClient, VERTEX_AI_MODELS } from './vertexai';
 
 // =====================================================
 // Configuration
@@ -22,18 +22,23 @@ import {
 
 export const GOOGLE_CONFIG: ProviderConfig = {
   provider: 'google',
-  model: 'gemini-2.0-flash-exp-image-generation',
+  model: VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE,
   maxBatchSize: 4,
   rateLimit: {
     requestsPerMinute: 10,
   },
   costPerImage: 5, // credits
-  supportedAspectRatios: ['1:1', '16:9', '9:16', '4:3', '3:4'],
+  supportedAspectRatios: ['1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3'],
   maxResolution: {
-    width: 1024,
-    height: 1024,
+    width: 2048,
+    height: 2048,
   },
 };
+
+// 프로덕션에서는 디버그 로그 비활성화
+const isDev = process.env.NODE_ENV === 'development';
+const log = (message: string) => isDev && console.log(message);
+const logError = (message: string) => console.error(message);
 
 // =====================================================
 // Aspect Ratio to Dimensions
@@ -50,6 +55,30 @@ const ASPECT_RATIO_DIMENSIONS: Record<AspectRatio, { width: number; height: numb
 };
 
 // =====================================================
+// Utility Functions
+// =====================================================
+
+/**
+ * Extract base64 data from data URL
+ */
+function extractBase64Data(dataUrl: string): { mimeType: string; data: string } {
+  if (dataUrl.startsWith('data:')) {
+    const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+    if (matches) {
+      return {
+        mimeType: matches[1],
+        data: matches[2],
+      };
+    }
+  }
+  // Assume raw base64 with PNG mime type
+  return {
+    mimeType: 'image/png',
+    data: dataUrl,
+  };
+}
+
+// =====================================================
 // Main Generation Function
 // =====================================================
 
@@ -61,19 +90,9 @@ export async function generateWithGoogle(
   const images: GeneratedImage[] = [];
 
   try {
-    const apiKey = process.env.GOOGLE_AI_API_KEY;
-    if (!apiKey) {
-      throw new ImageGenerationError(
-        'GOOGLE_AI_API_KEY is not configured',
-        ErrorCodes.PROVIDER_ERROR,
-        'google',
-        false
-      );
-    }
-
-    // Dynamic import to handle case where package is not installed
-    const { GoogleGenerativeAI } = await import('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(apiKey);
+    // Get GenAI client (auto-initializes based on env vars)
+    const ai = getGenAIClient();
+    const imageModel = VERTEX_AI_MODELS.GEMINI_3_PRO_IMAGE;
 
     // Get dimensions from aspect ratio
     const aspectRatio = options.aspectRatio ?? '1:1';
@@ -81,28 +100,58 @@ export async function generateWithGoogle(
       ? { width: options.width, height: options.height }
       : ASPECT_RATIO_DIMENSIONS[aspectRatio];
 
-    // Build enhanced prompt
-    const enhancedPrompt = buildPrompt(options);
-
-    // Get the model for image generation
-    const model = genAI.getGenerativeModel({
-      model: GOOGLE_CONFIG.model,
-    });
+    log(`[GoogleGenAI] Generating ${count} image(s) with model: ${imageModel}`);
 
     // Generate images (Gemini generates one at a time)
     for (let i = 0; i < count; i++) {
       try {
-        const result = await model.generateContent({
-          contents: [{ role: 'user', parts: [{ text: enhancedPrompt }] }],
-          generationConfig: {
-            responseMimeType: 'text/plain',
+        // Build content parts
+        const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
+
+        // Add source image if provided (for editing mode)
+        if (options.sourceImage) {
+          const { mimeType, data } = extractBase64Data(options.sourceImage);
+          parts.push({ inlineData: { mimeType, data } });
+        }
+
+        // Add reference image if provided
+        if (options.refImage) {
+          const { mimeType, data } = extractBase64Data(options.refImage);
+          parts.push({ inlineData: { mimeType, data } });
+        }
+
+        // Build enhanced prompt
+        const enhancedPrompt = buildPrompt(options);
+        parts.push({ text: enhancedPrompt });
+
+        // Call the new @google/genai API
+        const response = await ai.models.generateContent({
+          model: imageModel,
+          contents: parts,
+          config: {
+            imageConfig: {
+              aspectRatio: aspectRatio,
+              imageSize: '2K',
+            },
           },
         });
 
-        // Extract image from response
-        const response = result.response;
+        // Debug logging
+        if (isDev) {
+          const res = response as unknown as GenAIResponse;
+          log(`[GoogleGenAI] Response structure: ${JSON.stringify({
+            hasCandidates: !!res.candidates,
+            candidatesLength: res.candidates?.length,
+            firstCandidate: res.candidates?.[0] ? {
+              hasContent: !!res.candidates[0].content,
+              partsCount: res.candidates[0].content?.parts?.length,
+            } : null,
+          })}`);
+        }
+
+        // Extract image from response (cast to our known response shape)
         const generatedImage = extractImageFromResponse(
-          response,
+          response as unknown as GenAIResponse,
           options,
           dimensions,
           i
@@ -110,10 +159,13 @@ export async function generateWithGoogle(
 
         if (generatedImage) {
           images.push(generatedImage);
+          log(`[GoogleGenAI] ✅ Image ${i + 1}/${count} generated successfully`);
+        } else {
+          log(`[GoogleGenAI] ⚠️ No image in response for image ${i + 1}/${count}`);
         }
       } catch (error) {
         // Handle individual image generation error
-        console.error(`Failed to generate image ${i + 1}/${count}:`, error);
+        logError(`[GoogleGenAI] Failed to generate image ${i + 1}/${count}: ${error instanceof Error ? error.message : String(error)}`);
 
         // Check if it's a content filter error
         if (isContentFilterError(error)) {
@@ -162,7 +214,7 @@ export async function generateWithGoogle(
       throw error;
     }
 
-    console.error('Google GenAI generation error:', error);
+    logError(`[GoogleGenAI] Generation error: ${error instanceof Error ? error.message : String(error)}`);
     throw new ImageGenerationError(
       error instanceof Error ? error.message : 'Unknown error occurred',
       ErrorCodes.PROVIDER_ERROR,
@@ -193,7 +245,7 @@ function buildPrompt(options: GenerationOptions): string {
   return prompt;
 }
 
-interface GenerateContentResponse {
+interface GenAIResponse {
   candidates?: Array<{
     content?: {
       parts?: Array<{
@@ -209,44 +261,39 @@ interface GenerateContentResponse {
 }
 
 function extractImageFromResponse(
-  response: GenerateContentResponse,
+  response: GenAIResponse,
   options: GenerationOptions,
   dimensions: { width: number; height: number },
   index: number
 ): GeneratedImage | null {
-  const candidate = response.candidates?.[0];
-  if (!candidate?.content?.parts) {
-    return null;
+  // Navigate through response structure
+  for (const candidate of response.candidates || []) {
+    for (const part of candidate.content?.parts || []) {
+      if (part.inlineData?.mimeType?.startsWith('image/')) {
+        // Convert base64 to data URL
+        const dataUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+
+        return {
+          id: `google_${Date.now()}_${index}`,
+          url: dataUrl,
+          width: dimensions.width,
+          height: dimensions.height,
+          prompt: options.prompt,
+          negativePrompt: options.negativePrompt,
+          provider: 'google',
+          model: GOOGLE_CONFIG.model,
+          seed: options.seed,
+          metadata: {
+            aspectRatio: options.aspectRatio ?? '1:1',
+            style: options.style,
+            generatedAt: new Date().toISOString(),
+          },
+        };
+      }
+    }
   }
 
-  // Find image part
-  const imagePart = candidate.content.parts.find(
-    (part) => part.inlineData?.mimeType?.startsWith('image/')
-  );
-
-  if (!imagePart?.inlineData) {
-    return null;
-  }
-
-  // Convert base64 to data URL
-  const dataUrl = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
-
-  return {
-    id: `google_${Date.now()}_${index}`,
-    url: dataUrl, // Will be uploaded to storage later
-    width: dimensions.width,
-    height: dimensions.height,
-    prompt: options.prompt,
-    negativePrompt: options.negativePrompt,
-    provider: 'google',
-    model: GOOGLE_CONFIG.model,
-    seed: options.seed,
-    metadata: {
-      aspectRatio: options.aspectRatio ?? '1:1',
-      style: options.style,
-      generatedAt: new Date().toISOString(),
-    },
-  };
+  return null;
 }
 
 function isContentFilterError(error: unknown): boolean {
@@ -269,7 +316,8 @@ function isRateLimitError(error: unknown): boolean {
       message.includes('rate limit') ||
       message.includes('quota') ||
       message.includes('429') ||
-      message.includes('too many requests')
+      message.includes('too many requests') ||
+      message.includes('resource exhausted')
     );
   }
   return false;

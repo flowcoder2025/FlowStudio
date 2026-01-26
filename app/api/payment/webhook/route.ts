@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { handleWebhook } from "@/lib/payment";
+import { handleWebhook } from "@/lib/payment/webhook";
 
 export async function POST(request: NextRequest) {
   try {

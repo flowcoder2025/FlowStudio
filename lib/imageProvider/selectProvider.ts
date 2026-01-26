@@ -16,6 +16,7 @@ import { GOOGLE_CONFIG, checkRateLimit as checkGoogleRateLimit } from './googleG
 import {
   OPENROUTER_FLUX_CONFIG,
   OPENROUTER_SDXL_CONFIG,
+  OPENROUTER_GEMINI_CONFIG,
   checkOpenRouterRateLimit,
 } from './openRouter';
 
@@ -24,10 +25,17 @@ import {
 // =====================================================
 
 const PROVIDER_CONFIGS: Record<ImageModel, ProviderConfig> = {
-  // Google Models
+  // Google Models (via @google/genai)
+  'gemini-3-pro-image-preview': GOOGLE_CONFIG,
   'gemini-2.0-flash-exp-image-generation': GOOGLE_CONFIG,
   'imagen-3.0-generate-001': GOOGLE_CONFIG,
+  'imagen-4.0-fast-generate-001': GOOGLE_CONFIG,
+  'imagen-4.0-generate-001': GOOGLE_CONFIG,
+  'imagen-4.0-ultra-generate-001': GOOGLE_CONFIG,
   // OpenRouter Models
+  'google/gemini-3-pro-image-preview': OPENROUTER_GEMINI_CONFIG,
+  'black-forest-labs/flux.2-pro': OPENROUTER_GEMINI_CONFIG,
+  'black-forest-labs/flux.2-flex': OPENROUTER_GEMINI_CONFIG,
   'flux-1.1-pro': OPENROUTER_FLUX_CONFIG,
   'flux-1.1-pro-ultra': OPENROUTER_FLUX_CONFIG,
   'sdxl': OPENROUTER_SDXL_CONFIG,
@@ -288,7 +296,7 @@ export function getProviderConfig(model: ImageModel): ProviderConfig {
 }
 
 export function getAllProviderConfigs(): ProviderConfig[] {
-  return [GOOGLE_CONFIG, OPENROUTER_FLUX_CONFIG, OPENROUTER_SDXL_CONFIG];
+  return [GOOGLE_CONFIG, OPENROUTER_GEMINI_CONFIG, OPENROUTER_FLUX_CONFIG, OPENROUTER_SDXL_CONFIG];
 }
 
 export function getProviderStatus(): Record<ImageProvider, RateLimitStatus> {

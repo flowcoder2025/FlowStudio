@@ -10,10 +10,17 @@
 export type ImageProvider = 'google' | 'openrouter';
 
 export type ImageModel =
-  // Google Models
+  // Google Models (via @google/genai)
+  | 'gemini-3-pro-image-preview'
   | 'gemini-2.0-flash-exp-image-generation'
   | 'imagen-3.0-generate-001'
+  | 'imagen-4.0-fast-generate-001'
+  | 'imagen-4.0-generate-001'
+  | 'imagen-4.0-ultra-generate-001'
   // OpenRouter Models
+  | 'google/gemini-3-pro-image-preview'
+  | 'black-forest-labs/flux.2-pro'
+  | 'black-forest-labs/flux.2-flex'
   | 'flux-1.1-pro'
   | 'flux-1.1-pro-ultra'
   | 'sdxl';
@@ -53,6 +60,13 @@ export interface GenerationOptions {
   style?: string;
   provider?: ImageProvider;
   model?: ImageModel;
+  // Image editing/reference options
+  sourceImage?: string; // base64 data URL for editing
+  refImage?: string; // base64 data URL for reference
+  refImages?: string[]; // multiple reference images (COMPOSITE mode)
+  logoImage?: string; // logo image for overlay
+  maskImage?: string; // mask image for DETAIL_EDIT mode
+  mode?: string; // generation mode (e.g., 'DETAIL_EDIT', 'COMPOSITE')
 }
 
 export interface GenerationRequest extends GenerationOptions {

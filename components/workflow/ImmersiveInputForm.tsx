@@ -711,7 +711,7 @@ export function ImmersiveInputForm({
     setError(null);
 
     try {
-      // 세션 생성
+      // 1. 세션 생성
       const sessionRes = await fetch("/api/workflows/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -730,18 +730,65 @@ export function ImmersiveInputForm({
 
       const session = await sessionRes.json();
 
-      // 히스토리에 추가
+      // 2. 프롬프트 생성
+      const promptRes = await fetch("/api/workflows/session", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: session.id,
+          generatePromptFlag: true,
+        }),
+      });
+
+      if (!promptRes.ok) {
+        const data = await promptRes.json();
+        throw new Error(data.error || "프롬프트 생성에 실패했습니다");
+      }
+
+      const { prompt } = await promptRes.json();
+
+      // 3. 이미지 생성
+      const generateRes = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt,
+          workflowSessionId: session.id,
+          count: 1,
+        }),
+      });
+
+      if (!generateRes.ok) {
+        const data = await generateRes.json();
+        throw new Error(data.error || "이미지 생성에 실패했습니다");
+      }
+
+      const generateResult = await generateRes.json();
+
+      // 4. 결과를 store에 저장
+      const store = useWorkflowStore.getState();
+      store.setGenerationResult({
+        success: generateResult.success,
+        images: generateResult.images || [],
+        creditsUsed: generateResult.creditsUsed || action.creditCost,
+        provider: generateResult.provider || "unknown",
+        model: generateResult.model || "unknown",
+        duration: generateResult.duration,
+        error: generateResult.error,
+      });
+
+      // 5. 히스토리에 추가
       addToHistory({
         industry,
         action: action.id,
         intent,
       });
 
-      // 콜백 또는 결과 페이지로 이동
+      // 6. 콜백 또는 결과 페이지로 이동
       if (onGenerate) {
         onGenerate(session.id);
       } else {
-        router.push(`/result?sessionId=${session.id}`);
+        router.push(`/result?session=${session.id}`);
       }
 
       onClose();

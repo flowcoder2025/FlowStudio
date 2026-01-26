@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { listDeletedImages, cleanupDeletedImages, deleteImages } from '@/lib/images';
+import { listDeletedImages, cleanupDeletedImages, deleteImages } from '@/lib/images/delete';
 
 // =====================================================
 // GET /api/images/trash (List deleted images)

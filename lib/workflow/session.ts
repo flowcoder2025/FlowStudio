@@ -13,7 +13,7 @@
 import { prisma } from "@/lib/db";
 import { Industry, isValidIndustry } from "./industries";
 import { getAction } from "./actions";
-import { grantOwnership } from "@/lib/permissions";
+import { grantOwnership } from "@/lib/permissions/grant";
 
 export interface WorkflowSessionData {
   id: string;

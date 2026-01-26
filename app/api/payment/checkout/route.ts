@@ -11,7 +11,7 @@ import {
   createSubscriptionCheckout,
   getCreditPackages,
   getSubscriptionPlans,
-} from "@/lib/payment";
+} from "@/lib/payment/checkout";
 import { z } from "zod";
 
 const checkoutSchema = z.object({

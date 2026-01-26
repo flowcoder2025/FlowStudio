@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { searchImages, type SearchOptions } from '@/lib/images';
+import { searchImages, type SearchOptions } from '@/lib/images/list';
 
 // =====================================================
 // GET /api/images/search

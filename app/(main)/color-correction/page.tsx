@@ -6,10 +6,22 @@
  */
 
 import { useState, useCallback, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { Upload, Image as ImageIcon, Wand2, Palette, Eraser, Layers } from 'lucide-react';
-import { FilterTab } from '@/components/studio/FilterTab';
-import { ColorTransferTab } from '@/components/studio/ColorTransferTab';
-import { BackgroundRemovalTab } from '@/components/studio/BackgroundRemovalTab';
+
+// Dynamic imports for heavy tab components (bundle optimization)
+const FilterTab = dynamic(
+  () => import('@/components/studio/FilterTab').then(mod => mod.FilterTab),
+  { ssr: false }
+);
+const ColorTransferTab = dynamic(
+  () => import('@/components/studio/ColorTransferTab').then(mod => mod.ColorTransferTab),
+  { ssr: false }
+);
+const BackgroundRemovalTab = dynamic(
+  () => import('@/components/studio/BackgroundRemovalTab').then(mod => mod.BackgroundRemovalTab),
+  { ssr: false }
+);
 
 // =====================================================
 // Types

@@ -7,12 +7,18 @@
 
 import { use, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { ArrowLeft, ArrowRight, Maximize2 } from "lucide-react";
 import { getIndustryInfo, isValidIndustry, type Industry } from "@/lib/workflow/industries";
 import { getIndustryActions, type Action } from "@/lib/workflow/actions";
 import { useWorkflowStore } from "@/lib/workflow/store";
-import { ImmersiveActionSelect } from "@/components/workflow/ImmersiveActionSelect";
 import { Button } from "@/components/ui/button";
+
+// Dynamic import for modal component (bundle optimization)
+const ImmersiveActionSelect = dynamic(
+  () => import("@/components/workflow/ImmersiveActionSelect").then(mod => mod.ImmersiveActionSelect),
+  { ssr: false }
+);
 
 interface Props {
   params: Promise<{ industry: string }>;

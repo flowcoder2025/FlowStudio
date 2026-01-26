@@ -5,15 +5,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import {
-  generateImages,
-  type GenerationRequest,
-  type AspectRatio,
-  type ImageProvider,
-  type ImageModel,
-  ImageGenerationError,
-  ErrorCodes,
-} from '@/lib/imageProvider';
+import { generateImages } from '@/lib/imageProvider/generate';
+import type { AspectRatio, ImageProvider, ImageModel, GenerationRequest } from '@/lib/imageProvider/types';
+import { ImageGenerationError, ErrorCodes } from '@/lib/imageProvider/types';
 import { uploadImageFromUrl } from '@/lib/storage';
 
 // =====================================================
