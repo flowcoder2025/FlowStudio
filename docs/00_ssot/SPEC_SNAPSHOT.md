@@ -1,138 +1,75 @@
 # SPEC_SNAPSHOT - 코드 인벤토리
 
-> 코드에서 자동 추출된 "현재 구현된 표면적(Inventory)"
+> 자동 생성: specctl snapshot (2026-01-27 08:39:14)
 
 ---
 
-## 메타 정보
+## 스캔 정보
 
 | 항목 | 값 |
 |------|-----|
-| **생성 일시** | 2026-01-22 |
-| **생성 방식** | 수동 (MVP) |
-| **커버리지 범위** | UI 라우트, API 라우트, Immersive 컴포넌트 |
-
----
-
-## 인벤토리 유형별 상태
-
-| 유형 | 자동화 상태 | 항목 수 |
-|------|:-----------:|:-------:|
-| UI 라우트 | MVP | 10 |
-| API 라우트 | MVP | 24 |
-| Immersive 컴포넌트 | MVP | 9 |
-| 이벤트 타입 | 미구현 | - |
-| 상태 목록 | 미구현 | - |
+| **생성일** | 2026-01-27 |
+| **도구** | specctl v0.2.0 |
+| **프로젝트** | FlowStudio_re |
 
 ---
 
 ## UI 라우트
 
-> `specctl snapshot --type=ui-routes`로 자동 생성
-
-| 경로 | 컴포넌트 | SPEC_KEY | 상태 |
-|------|---------|----------|------|
-| `/` | `app/(main)/page.tsx` | WORKFLOW | SYNC |
-| `/login` | `app/(auth)/login/page.tsx` | AUTH | SYNC |
-| `/settings` | `app/(main)/settings/page.tsx` | USER | SYNC |
-| `/gallery` | `app/(main)/gallery/page.tsx` | IMAGE | SYNC |
-| `/color-correction` | `app/(main)/color-correction/page.tsx` | HYBRID | SYNC |
-| `/pricing` | `app/(main)/pricing/page.tsx` | PAYMENT | SYNC |
-| `/payment/success` | `app/(main)/payment/success/page.tsx` | PAYMENT | SYNC |
-| `/result` | `app/(main)/result/page.tsx` | IMAGE | SYNC |
-| `/workflow/[industry]` | `app/(main)/workflow/[industry]/page.tsx` | WORKFLOW | SYNC |
-| `/workflow/[industry]/[action]` | `app/(main)/workflow/[industry]/[action]/page.tsx` | WORKFLOW | SYNC |
+| Route | File | SPEC_KEY |
+|-------|------|----------|
 
 ---
 
 ## API 라우트
 
-> `specctl snapshot --type=api-routes`로 자동 생성
-
-| 경로 | 메서드 | 핸들러 | SPEC_KEY | 상태 |
-|------|--------|--------|----------|------|
-| `/api/auth/[...nextauth]` | ALL | `route.ts` | AUTH | SYNC |
-| `/api/user/profile` | GET/PUT | `route.ts` | USER | SYNC |
-| `/api/user/business/verify` | POST | `route.ts` | USER | SYNC |
-| `/api/user/referral/apply` | POST | `route.ts` | USER | SYNC |
-| `/api/credits/balance` | GET | `route.ts` | CREDIT | SYNC |
-| `/api/credits/history` | GET | `route.ts` | CREDIT | SYNC |
-| `/api/generate` | POST | `route.ts` | IMAGE | SYNC |
-| `/api/upscale` | POST | `route.ts` | IMAGE | SYNC |
-| `/api/images/list` | GET | `route.ts` | IMAGE | SYNC |
-| `/api/images/search` | GET | `route.ts` | IMAGE | SYNC |
-| `/api/images/trash` | POST | `route.ts` | IMAGE | SYNC |
-| `/api/images/[id]` | GET/DELETE | `route.ts` | IMAGE | SYNC |
-| `/api/images/save` | POST | `route.ts` | IMAGE | SYNC |
-| `/api/workflows/industries` | GET | `route.ts` | WORKFLOW | SYNC |
-| `/api/workflows/session` | POST/GET/PUT | `route.ts` | WORKFLOW | SYNC |
-| `/api/workflows/guide` | GET | `route.ts` | GUIDE | SYNC |
-| `/api/workflows/intent` | POST | `route.ts` | GUIDE | SYNC |
-| `/api/permissions/grant` | POST | `route.ts` | PERMISSION | SYNC |
-| `/api/permissions/revoke` | DELETE | `route.ts` | PERMISSION | SYNC |
-| `/api/permissions/list` | GET | `route.ts` | PERMISSION | SYNC |
-| `/api/payment/webhook` | POST | `route.ts` | PAYMENT | SYNC |
-| `/api/payment/checkout` | POST | `route.ts` | PAYMENT | SYNC |
-| `/api/payment/subscription` | GET/PUT/DELETE | `route.ts` | PAYMENT | SYNC |
-| `/api/payment/history` | GET | `route.ts` | PAYMENT | SYNC |
+| Route | File | SPEC_KEY | Method |
+|-------|------|----------|--------|
+| /api/ | app/api/auth/[...nextauth]/route.ts | API | ALL |
+| /api/ | app/api/images/trash/route.ts | API | GET,DELETE |
+| /api/ | app/api/images/search/route.ts | API | GET |
+| /api/ | app/api/images/list/route.ts | API | GET |
+| /api/ | app/api/images/[id]/route.ts | API | GET,DELETE |
+| /api/ | app/api/images/save/route.ts | API | POST |
+| /api/ | app/api/payment/webhook/route.ts | API | POST |
+| /api/ | app/api/payment/checkout/route.ts | API | GET,POST |
+| /api/ | app/api/payment/subscription/route.ts | API | GET,PUT |
+| /api/ | app/api/payment/history/route.ts | API | GET |
+| /api/ | app/api/upscale/route.ts | API | GET,POST |
+| /api/ | app/api/workflows/guide/route.ts | API | GET,POST |
+| /api/ | app/api/workflows/industries/route.ts | API | GET |
+| /api/ | app/api/workflows/intent/route.ts | API | GET,POST |
+| /api/ | app/api/workflows/session/route.ts | API | GET,POST,PUT,DELETE |
+| /api/ | app/api/user/referral/apply/route.ts | API | GET,POST |
+| /api/ | app/api/user/business/verify/route.ts | API | GET,POST |
+| /api/ | app/api/user/profile/route.ts | API | GET |
+| /api/ | app/api/permissions/revoke/route.ts | API | POST,DELETE |
+| /api/ | app/api/permissions/list/route.ts | API | GET |
+| /api/ | app/api/permissions/grant/route.ts | API | POST |
+| /api/ | app/api/generate/route.ts | API | GET,POST |
+| /api/ | app/api/credits/balance/route.ts | API | GET |
+| /api/ | app/api/credits/history/route.ts | API | GET |
 
 ---
 
-## Immersive 컴포넌트 (Phase 13+)
+## 이벤트 타입
 
-> Immersive UX 관련 컴포넌트 및 훅
+> 자동화 미구현 - 수동 관리
 
-| 컴포넌트 | 경로 | SPEC_KEY | 상태 |
-|---------|------|----------|------|
-| `ImmersiveNavigation` | `components/immersive/ImmersiveNavigation.tsx` | IMMERSIVE | SYNC |
-| `ImmersiveContainer` | `components/immersive/ImmersiveContainer.tsx` | IMMERSIVE | SYNC |
-| `ImmersiveCard` | `components/immersive/ImmersiveCard.tsx` | IMMERSIVE | SYNC |
-| `useOnboarding` | `components/immersive/hooks/useOnboarding.ts` | IMMERSIVE | SYNC |
-| `useSwipeNavigation` | `components/immersive/hooks/useSwipeNavigation.ts` | IMMERSIVE | SYNC |
-| `useImmersiveKeyboard` | `components/immersive/hooks/useImmersiveKeyboard.ts` | IMMERSIVE | SYNC |
-| `ImmersiveRecommend` | `components/workflow/ImmersiveRecommend.tsx` | IMMERSIVE | SYNC |
-| `ImmersiveActionSelect` | `components/workflow/ImmersiveActionSelect.tsx` | IMMERSIVE | SYNC |
-| `index (barrel)` | `components/immersive/index.ts` | IMMERSIVE | SYNC |
+| Event | File | SPEC_KEY |
+|-------|------|----------|
+| (수동 추가 필요) | - | - |
 
 ---
 
-## 이벤트 타입 (미구현)
+## 상태 목록
 
-> `specctl snapshot --type=events`로 자동 생성 예정
+> 자동화 미구현 - 수동 관리
 
-```
-(자동화 구현 후 채워짐)
-```
-
----
-
-## 상태 목록 (미구현)
-
-> `specctl snapshot --type=states`로 자동 생성 예정
-
-```
-(자동화 구현 후 채워짐)
-```
+| State | File | SPEC_KEY |
+|-------|------|----------|
+| (수동 추가 필요) | - | - |
 
 ---
 
-## 미분류 항목
-
-> SPEC_KEY가 할당되지 않은 항목들. 분류 후 해당 섹션으로 이동.
-
-| 유형 | 항목 | 제안 SPEC_KEY |
-|------|------|--------------|
-| - | (미분류 항목 없음) | - |
-
----
-
-## 갱신 히스토리
-
-| 날짜 | 유형 | 변경 내용 |
-|------|------|----------|
-| 2026-01-20 | 정리 | 템플릿 제거, 클린 상태 |
-| 2026-01-22 | 전체 | UI/API/Immersive 인벤토리 추가 (Phase 1-12 + Immersive UX) |
-
----
-
-> **자동 생성**: `specctl snapshot` 실행 시 갱신됨
+> **참고**: UI/API 라우트는 자동 스캔됨. 이벤트/상태는 수동 관리 필요.
