@@ -242,8 +242,11 @@ export function getPopularityScore(
  * 사용자 이력 기반 점수 (추후 확장)
  */
 export function calculateUserHistoryScore(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _intent: ExpressionIntent,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _userId: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _recentIntents: ExpressionIntent[]
 ): number {
   // TODO: 사용자의 최근 사용 이력 기반 점수 계산

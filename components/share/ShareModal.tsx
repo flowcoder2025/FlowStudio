@@ -43,6 +43,7 @@ export function ShareModal({
     if (isOpen) {
       fetchSharedUsers();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, resourceId]);
 
   const fetchSharedUsers = async () => {
@@ -83,7 +84,7 @@ export function ShareModal({
         const data = await response.json();
         setError(data.error || "공유에 실패했습니다");
       }
-    } catch (error) {
+    } catch {
       setError("공유에 실패했습니다");
     } finally {
       setIsLoading(false);

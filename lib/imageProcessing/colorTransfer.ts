@@ -337,8 +337,6 @@ export async function applyColorStatistics(
   targetStats: { mean: [number, number, number]; std: [number, number, number] },
   strength: number = 1.0
 ): Promise<Blob | null> {
-  const startTime = performance.now();
-
   try {
     const imageData = await loadImageData(image);
     const channels = imageDataToLab(imageData.imageData.data);

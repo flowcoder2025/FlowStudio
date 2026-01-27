@@ -9,7 +9,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import Google from "next-auth/providers/google";
 import Kakao from "next-auth/providers/kakao";
 import { prisma } from "@/lib/db";
-import type { User, Account, Profile } from "next-auth";
+import type { User, Account } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import type { Session } from "next-auth";
 import type { AdapterUser } from "next-auth/adapters";
@@ -62,7 +62,7 @@ export const authOptions: NextAuthConfig = {
       }
       return session;
     },
-    async signIn({ user, account, profile }) {
+    async signIn() {
       // Allow sign in
       return true;
     },

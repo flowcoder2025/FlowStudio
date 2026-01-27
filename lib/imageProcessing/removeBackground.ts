@@ -9,9 +9,7 @@ import type {
   BackgroundRemovalResult,
   BackgroundRemovalModel,
   ImageSource,
-  ImageProcessingError,
 } from './types';
-import { ProcessingErrorCodes } from './types';
 
 // =====================================================
 // Types
@@ -29,7 +27,9 @@ interface RemovalConfig {
 // Configuration
 // =====================================================
 
-const MODEL_CONFIG: Record<BackgroundRemovalModel, { publicPath: string }> = {
+// Model configuration for future use with custom model paths
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _MODEL_CONFIG: Record<BackgroundRemovalModel, { publicPath: string }> = {
   'isnet': {
     publicPath: '/models/background-removal/isnet/',
   },

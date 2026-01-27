@@ -132,7 +132,7 @@ export default function ColorCorrectionPage() {
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
       {/* Header */}
       <header className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
             이미지 스튜디오
           </h1>
@@ -142,7 +142,7 @@ export default function ColorCorrectionPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left: Image Upload & Preview */}
           <div className="lg:col-span-2 space-y-4">

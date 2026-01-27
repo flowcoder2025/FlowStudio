@@ -7,7 +7,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { uploadImage, uploadImageFromUrl } from '@/lib/storage';
 import { prisma } from '@/lib/db';
-import type { Prisma } from '@prisma/client';
 
 // =====================================================
 // Request Schema

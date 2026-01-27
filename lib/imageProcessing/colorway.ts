@@ -17,7 +17,6 @@ import {
   hslToRgb,
   rgbToHex,
   getComplementary,
-  getAnalogous,
   getTriadic,
   rgbToLab,
   labToRgb,
@@ -257,8 +256,10 @@ async function loadImageData(
 
 /**
  * Apply color transformation to image
+ * Note: Reserved for future direct color mapping implementation
  */
-function applyColorTransformation(
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _applyColorTransformation(
   imageData: ImageData,
   originalColor: RGB,
   targetColor: RGB,
@@ -450,7 +451,7 @@ export async function generateSingleColorway(
   strength: number = 0.8
 ): Promise<Blob | null> {
   try {
-    const { canvas, ctx, imageData, width, height } = await loadImageData(image);
+    const { canvas, ctx, imageData } = await loadImageData(image);
     const baseColor = await extractDominantColor(image);
 
     // Calculate hue shift

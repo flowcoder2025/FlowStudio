@@ -8,13 +8,12 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Check, RotateCcw, Sliders } from 'lucide-react';
 import {
-  ALL_PRESETS,
   getCategories,
   getPresetsByCategory,
   type FilterPreset,
 } from '@/lib/imageProcessing/presets';
 import { applyFilters, previewFilter } from '@/lib/imageProcessing/applyFilter';
-import type { FilterValue, FilterType } from '@/lib/imageProcessing/types';
+import type { FilterValue } from '@/lib/imageProcessing/types';
 
 // =====================================================
 // Types

@@ -46,7 +46,10 @@ export const foodActions: Action[] = [
       },
     ],
     promptTemplate:
-      "Appetizing food photography of {{product}}, {{style}} angle, {{lighting}} lighting, mouth-watering presentation, professional food styling, steam and freshness visible, 4K quality",
+      "Create an appetizing food photograph that showcases {{product}} in its most delicious presentation. " +
+      "Captured from a {{style}} angle, the image highlights the dish's textures, colors, and appetizing qualities. " +
+      "{{lighting}} lighting creates the perfect mood, making the food look fresh and inviting with visible steam rising. " +
+      "Professional food styling ensures every element is positioned to maximize visual appeal and trigger appetite in stunning 4K quality.",
     creditCost: 5,
   },
   {
@@ -89,7 +92,10 @@ export const foodActions: Action[] = [
       },
     ],
     promptTemplate:
-      "Food flat lay photography of {{product}} with {{ingredients}} arrangement, {{surface}} surface, top-down view, natural lighting, professional food styling, 4K",
+      "Create a beautiful food flat lay photograph featuring {{product}} with {{ingredients}} arrangement of fresh ingredients surrounding it. " +
+      "Shot from directly above on a {{surface}} surface, the composition tells the story of the dish's preparation and flavors. " +
+      "Natural lighting gently illuminates each element, showcasing colors and textures that make the viewer hungry. " +
+      "Professional food styling creates a harmonious composition perfect for cookbooks, menus, or social media in 4K clarity.",
     creditCost: 5,
   },
   {
@@ -120,7 +126,10 @@ export const foodActions: Action[] = [
       },
     ],
     promptTemplate:
-      "Professional product photography of {{product}} packaging, {{presentation}} presentation style, clean background, attractive food packaging design, commercial quality, 4K",
+      "Create a professional product photograph showcasing {{product}} packaging in a {{presentation}} style presentation. " +
+      "The clean background allows the packaging design to take center stage, highlighting its visual appeal and brand identity. " +
+      "Strategic lighting creates attractive reflections and emphasizes the packaging's premium quality and design details. " +
+      "This commercial-quality 4K image is perfect for e-commerce, advertising, and marketing materials.",
     creditCost: 5,
   },
   {
@@ -152,7 +161,10 @@ export const foodActions: Action[] = [
       },
     ],
     promptTemplate:
-      "Dynamic food photography capturing {{action}} of {{product}}, freeze motion, appetizing moment, professional food photography, high-speed capture, 4K",
+      "Create a dynamic food photograph that captures the exciting moment of {{action}} featuring {{product}}. " +
+      "High-speed photography freezes the motion perfectly, showcasing the action in stunning detail. " +
+      "This appetizing moment draws viewers in, creating a sense of freshness and culinary excitement. " +
+      "Professional lighting ensures every droplet, crumb, and texture is visible in crisp 4K clarity.",
     creditCost: 5,
   },
   {
@@ -195,7 +207,10 @@ export const foodActions: Action[] = [
       },
     ],
     promptTemplate:
-      "Professional beverage photography of {{product}} in {{glass}}, {{style}} style, refreshing appearance, perfect lighting highlights, commercial quality, 4K",
+      "Create a professional beverage photograph featuring {{product}} served in a {{glass}} with {{style}} style presentation. " +
+      "The drink looks incredibly refreshing with perfect clarity and inviting appearance. " +
+      "Strategic lighting creates beautiful highlights on the liquid and container, emphasizing its refreshing qualities. " +
+      "This commercial-quality 4K image captures the essence of the beverage experience.",
     creditCost: 5,
   },
 ];

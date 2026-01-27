@@ -55,7 +55,7 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="container max-w-6xl mx-auto py-12 px-4">
+    <div className="container max-w-4xl mx-auto py-12 px-4">
       {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">가격 정책</h1>

@@ -38,7 +38,11 @@ const interiorActions: Action[] = [
         required: true,
       },
     ],
-    promptTemplate: "Interior design photography of {{product}} in a {{room}}, modern Scandinavian style, natural lighting, 4K",
+    promptTemplate:
+      "Create an inspiring interior design photograph showcasing {{product}} beautifully placed in a {{room}} setting. " +
+      "The modern Scandinavian style creates a clean, minimalist atmosphere that highlights the furniture's design. " +
+      "Soft natural lighting streams through windows, creating warm, inviting shadows and a lived-in feel. " +
+      "This aspirational image helps viewers envision the piece in their own home in stunning 4K clarity.",
     creditCost: 5,
   },
 ];
@@ -64,7 +68,11 @@ const electronicsActions: Action[] = [
         required: true,
       },
     ],
-    promptTemplate: "Professional electronics product photography of {{product}}, {{angle}} view, clean background, tech aesthetic, 4K",
+    promptTemplate:
+      "Create a sleek product photograph of {{product}} captured from a {{angle}} view that emphasizes its modern design. " +
+      "Set against a clean background, the tech aesthetic highlights the device's premium build quality and innovative features. " +
+      "Professional lighting creates subtle reflections that showcase the product's materials and craftsmanship. " +
+      "This commercial-quality 4K image conveys cutting-edge technology and sophisticated design.",
     creditCost: 5,
   },
 ];
@@ -90,7 +98,11 @@ const jewelryActions: Action[] = [
         required: true,
       },
     ],
-    promptTemplate: "Luxury jewelry photography of {{product}}, {{lighting}} lighting, elegant presentation, diamond-like sparkle, 4K",
+    promptTemplate:
+      "Create a luxurious jewelry photograph that showcases {{product}} with exquisite {{lighting}} lighting. " +
+      "The elegant presentation captures every facet's brilliant sparkle and the precious metal's lustrous finish. " +
+      "Strategic lighting creates mesmerizing reflections that make the piece irresistible and aspirational. " +
+      "This high-end jewelry photograph embodies luxury and craftsmanship in stunning 4K detail.",
     creditCost: 5,
   },
 ];
@@ -116,7 +128,11 @@ const sportsActions: Action[] = [
         required: true,
       },
     ],
-    promptTemplate: "Dynamic sports photography featuring {{product}} during {{activity}}, action freeze frame, energetic atmosphere, 4K",
+    promptTemplate:
+      "Create a dynamic sports photograph featuring {{product}} in action during {{activity}}. " +
+      "High-speed photography freezes the perfect moment, capturing movement, energy, and athletic intensity. " +
+      "The energetic atmosphere conveys the excitement and performance benefits of the product. " +
+      "This action-packed 4K image inspires viewers to achieve their fitness goals.",
     creditCost: 5,
   },
 ];
@@ -141,7 +157,11 @@ const petActions: Action[] = [
         required: true,
       },
     ],
-    promptTemplate: "Adorable pet product photography of {{product}} with a cute {{pet}}, warm and friendly atmosphere, 4K",
+    promptTemplate:
+      "Create an adorable pet product photograph showcasing {{product}} with a happy, cute {{pet}} enjoying it. " +
+      "The warm, friendly atmosphere captures the special bond between pets and their favorite things. " +
+      "Soft, natural lighting creates an inviting scene that pet lovers will find irresistible. " +
+      "This heartwarming 4K image connects emotionally with pet owners and highlights product quality.",
     creditCost: 5,
   },
 ];
@@ -167,7 +187,11 @@ const kidsActions: Action[] = [
         required: true,
       },
     ],
-    promptTemplate: "Cheerful kids product photography of {{product}}, {{mood}} atmosphere, bright and colorful, family-friendly, 4K",
+    promptTemplate:
+      "Create a cheerful kids product photograph featuring {{product}} in a {{mood}} atmosphere that captures childhood joy. " +
+      "Bright, colorful elements create an engaging scene that appeals to both children and parents. " +
+      "The family-friendly aesthetic emphasizes safety, fun, and quality in a way that builds trust. " +
+      "This vibrant 4K image brings smiles and showcases the product's appeal to young audiences.",
     creditCost: 5,
   },
 ];

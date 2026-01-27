@@ -106,8 +106,9 @@ export function ScreenReaderProvider({
 
   // Cleanup on unmount
   useEffect(() => {
+    const timeouts = timeoutRef.current;
     return () => {
-      timeoutRef.current.forEach((timeout) => clearTimeout(timeout));
+      timeouts.forEach((timeout) => clearTimeout(timeout));
     };
   }, []);
 

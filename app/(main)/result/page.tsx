@@ -260,7 +260,7 @@ function ResultContent() {
   }
 
   return (
-    <div className="container max-w-6xl mx-auto py-8 px-4">
+    <div className="container max-w-4xl mx-auto py-8 px-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

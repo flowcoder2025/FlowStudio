@@ -818,3 +818,101 @@ npm install swr
 ### 참고 문서
 - Vercel React Best Practices: `~/.claude/skills/vercel-react-best-practices/`
 - Rules: `rules/bundle-*.md`, `rules/client-*.md`, `rules/rerender-*.md`
+
+---
+
+## Phase 15: 프롬프트 시스템 & 워크플로우 UX 개선 ✅
+
+> Gemini 3 Pro Image 최적화 + 워크플로우 UX 향상
+
+### 진행 상태: 완료
+
+| Phase | 내용 | Contracts | 상태 |
+|-------|------|-----------|------|
+| Phase 1 | 프롬프트 시스템 개선 | 3/3 | ✅ 완료 |
+| Phase 2 | 워크플로우 UX 개선 | 3/3 | ✅ 완료 |
+
+### Phase 1: 프롬프트 시스템 개선 ✅
+
+- [x] Contract 1.1: promptBuilder.ts 생성
+  - 6-컴포넌트 구조 (Subject, Action, Environment, Art Style, Lighting, Details)
+  - 텍스트 렌더링 방지 접미사 (`NO_TEXT_SUFFIX`)
+  - 참조 이미지 지시문 생성 함수
+  - **파일**: `lib/imageProvider/promptBuilder.ts`
+
+- [x] Contract 1.2: buildPrompt 함수 개선
+  - 6-컴포넌트 구조 적용
+  - 텍스트 방지 접미사 자동 추가
+  - **파일**: `lib/imageProvider/googleGenAI.ts`
+
+- [x] Contract 1.3: promptTemplate 자연어화
+  - 키워드 나열 → 자연어 문장 변환
+  - **파일**: `lib/workflow/actions/{fashion,food,beauty,index}.ts`
+
+### Phase 2: 워크플로우 UX 개선 ✅
+
+- [x] Contract 2.1: store.ts에 상태/액션 추가
+  - `initialQuery`: 검색 쿼리 저장
+  - `imageCount`: 이미지 장수 (1-4)
+  - **파일**: `lib/workflow/store.ts`
+
+- [x] Contract 2.2: page.tsx에서 쿼리 전달
+  - `setInitialQuery` 호출 추가
+  - **파일**: `app/(main)/page.tsx`
+
+- [x] Contract 2.3: ImmersiveInputForm 수정
+  - 검색 쿼리 자동 입력
+  - 이미지 장수 선택 UI
+  - **파일**: `components/workflow/ImmersiveInputForm.tsx`
+
+### 핸드오프
+- **완료일**: 2026-01-27
+- **핸드오프**: `HANDOFF_2026-01-27_PROMPT_UX.md`
+
+---
+
+## Phase 16: 버그 수정 & UX 개선 ✅
+
+> 보고된 버그 수정 및 불필요한 UI 요소 제거
+
+### 진행 상태: 완료
+
+| Phase | 내용 | Contracts | 상태 |
+|-------|------|-----------|------|
+| Phase 1 | 버그 수정 | 3/3 | ✅ 완료 |
+| Phase 2 | UX 개선 (UI 요소 제거) | 2/2 | ✅ 완료 |
+
+### Phase 1: 버그 수정 ✅
+
+#### Contract 16.1.1: 상품 설명 자동 입력 수정 ✅
+- **문제**: 검색 쿼리가 상품 설명 필드에 자동 입력되지 않음
+- **원인**: `useEffect`에서 `action` 의존성으로 인해 추천 변경 시 inputs 리셋
+- **해결**: useEffect를 두 개로 분리 - 모달 초기화와 자동 입력 분리
+- **파일**: `components/workflow/ImmersiveInputForm.tsx`
+
+#### Contract 16.1.2: 이미지 장수 선택 확인 ✅
+- **상태**: UI 및 로직 정상 작동 확인
+- **파일**: `components/workflow/ImmersiveInputForm.tsx`
+
+#### Contract 16.1.3: 전자제품 참조 이미지 반영 ✅
+- **문제**: API 라우트에서 참조 이미지를 전달하지 않음
+- **해결**:
+  - `app/api/generate/route.ts`에 `refImages` 필드 추가
+  - `ImmersiveInputForm.tsx`에서 참조 이미지 URL 전달
+- **파일**:
+  - `app/api/generate/route.ts`
+  - `components/workflow/ImmersiveInputForm.tsx`
+
+### Phase 2: UX 개선 ✅
+
+#### Contract 16.2.1: 홈화면 검색 결과 추천 섹션 제거 ✅
+- **해결**: `RecommendList` 렌더링 코드 제거
+- **파일**: `app/(main)/page.tsx`
+
+#### Contract 16.2.2: 워크플로우 프롬프트 미리보기 제거 ✅
+- **해결**: `PromptPreview` 컴포넌트 및 import 제거
+- **파일**: `app/(main)/workflow/[industry]/[action]/page.tsx`
+
+### 핸드오프
+- **완료일**: 2026-01-27
+- **핸드오프**: `HANDOFF_2026-01-27_BUGFIX_UX.md`

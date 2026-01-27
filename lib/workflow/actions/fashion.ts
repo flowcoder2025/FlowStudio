@@ -62,7 +62,10 @@ export const fashionActions: Action[] = [
       },
     ],
     promptTemplate:
-      "Professional fashion photography of a {{model}} model wearing {{product}}, {{pose}} pose, {{background}} background, high-end fashion editorial style, soft natural lighting, 4K, professional product photography",
+      "Create a professional fashion photograph that captures a {{model}} model naturally wearing {{product}}. " +
+      "The model is shown in a {{pose}} pose, positioned against a {{background}} background. " +
+      "The scene features soft, diffused natural lighting that beautifully highlights the texture, color, and fit of the garment. " +
+      "Shot from a flattering angle with a professional camera, the image embodies high-end editorial fashion photography with 4K clarity and crisp focus on every detail of the clothing.",
     creditCost: 5,
     examples: ["여름 원피스 착용 모델", "캐주얼 셔츠 모델 착용컷"],
   },
@@ -106,7 +109,10 @@ export const fashionActions: Action[] = [
       },
     ],
     promptTemplate:
-      "Flat lay photography of {{product}}, {{styling}} styling, {{background}} background, top-down view, professional product photography, soft shadows, 4K quality",
+      "Create a beautiful flat lay photograph showcasing {{product}} arranged with {{styling}} styling. " +
+      "The items are carefully placed on a {{background}} surface, captured from a perfect top-down perspective. " +
+      "Soft, diffused lighting creates gentle shadows that add depth while maintaining the clean, professional aesthetic. " +
+      "Every detail of the fabric, texture, and craftsmanship is visible in stunning 4K clarity.",
     creditCost: 5,
   },
   {
@@ -138,7 +144,10 @@ export const fashionActions: Action[] = [
       },
     ],
     promptTemplate:
-      "Macro detail shot of {{product}}, focusing on {{focus}}, extreme close-up, professional product photography, sharp focus, studio lighting, 4K",
+      "Create a stunning macro detail photograph of {{product}} with an extreme close-up focus on the {{focus}}. " +
+      "The camera captures every intricate detail with razor-sharp precision, revealing the quality of craftsmanship. " +
+      "Professional studio lighting illuminates the textures beautifully, creating depth and dimension. " +
+      "This high-resolution 4K image showcases the premium quality and attention to detail that defines the garment.",
     creditCost: 5,
   },
   {
@@ -169,7 +178,10 @@ export const fashionActions: Action[] = [
       },
     ],
     promptTemplate:
-      "Ghost mannequin product photography of {{product}}, {{angle}} view, invisible mannequin effect, white background, professional e-commerce style, clean and minimal, 4K",
+      "Create a professional ghost mannequin photograph of {{product}} captured from a {{angle}} view. " +
+      "The invisible mannequin technique reveals the garment's true shape and structure, showing how it naturally drapes and fits. " +
+      "Set against a clean white background, the image maintains a minimal e-commerce aesthetic perfect for online retail. " +
+      "Professional lighting ensures every detail is clearly visible in crisp 4K quality.",
     creditCost: 5,
   },
   {
@@ -213,7 +225,10 @@ export const fashionActions: Action[] = [
       },
     ],
     promptTemplate:
-      "Lifestyle fashion photography of {{model}} wearing {{product}}, {{scene}} scene, candid natural moment, warm ambient lighting, authentic and relatable, 4K",
+      "Create an authentic lifestyle fashion photograph featuring a {{model}} naturally wearing {{product}} in a {{scene}} setting. " +
+      "The image captures a candid, genuine moment that feels relatable and aspirational. " +
+      "Warm ambient lighting creates an inviting atmosphere that connects emotionally with the viewer. " +
+      "Shot in documentary style with 4K clarity, this photograph tells a story about the lifestyle the clothing represents.",
     creditCost: 5,
   },
 ];

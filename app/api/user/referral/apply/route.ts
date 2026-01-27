@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { applyReferralCode, getReferralCode, getReferralStats } from "@/lib/user/referral";
+import { applyReferralCode, getReferralStats } from "@/lib/user/referral";
 
 /**
  * POST /api/user/referral/apply

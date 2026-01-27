@@ -10,17 +10,17 @@ import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
-import { Search, ArrowRight, Sparkles, TrendingUp, Clock } from "lucide-react";
+import { Search, ArrowRight, Sparkles, Clock } from "lucide-react";
 import { getAllIndustries, IndustryInfo, Industry } from "@/lib/workflow/industries";
 import { analyzeIntent } from "@/lib/workflow/intentAnalyzer";
 import { useWorkflowStore } from "@/lib/workflow/store";
 import { matchIntent } from "@/lib/workflow/intents";
 import {
   generateRecommendations,
-  quickRecommend,
   WorkflowRecommendation,
 } from "@/lib/workflow/recommend";
-import { RecommendCard, RecommendList } from "@/components/workflow/RecommendCard";
+// RecommendList available for future card-based fallback display
+// import { RecommendList } from "@/components/workflow/RecommendCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ExpressionIntent } from "@/lib/workflow/intents";
 
@@ -38,18 +38,8 @@ export default function HomePage() {
     industry: IndustryInfo | null;
     message: string;
   } | null>(null);
-  const [searchRecommendations, setSearchRecommendations] = useState<WorkflowRecommendation[]>([]);
-  // Lazy initialization: 마운트 시 1회만 계산 (rerender-lazy-state-init)
-  const [popularRecommendations] = useState<WorkflowRecommendation[]>(() => {
-    const industryList = getAllIndustries();
-    const allRecommendations: WorkflowRecommendation[] = [];
-    industryList.slice(0, 4).forEach((industry) => {
-      const recs = quickRecommend(industry.id as Industry);
-      allRecommendations.push(...recs.slice(0, 2));
-    });
-    return allRecommendations.slice(0, 6);
-  });
-
+  // searchRecommendations state preserved for potential card-based fallback display
+const [, setSearchRecommendations] = useState<WorkflowRecommendation[]>([]);
   // 통합 몰입형 상태 (AI 추천 + 입력 폼)
   const [isImmersiveOpen, setIsImmersiveOpen] = useState(false);
   const [immersiveRecommendations, setImmersiveRecommendations] = useState<WorkflowRecommendation[]>([]);
@@ -61,6 +51,7 @@ export default function HomePage() {
   const selectIntent = useWorkflowStore((state) => state.selectIntent);
   const recentWorkflows = useWorkflowStore((state) => state.recentWorkflows);
   const setCurrentStep = useWorkflowStore((state) => state.setCurrentStep);
+  const setInitialQuery = useWorkflowStore((state) => state.setInitialQuery);
 
   const industries = useMemo(() => getAllIndustries(), []);
 
@@ -100,6 +91,8 @@ export default function HomePage() {
 
     // Open immersive overlay if recommendations exist
     if (allRecs.length > 0) {
+      // Save initial query for auto-fill in input form
+      setInitialQuery(searchQuery.trim());
       setImmersiveRecommendations(allRecs);
       setSelectedRecommendation(allRecs[0]);
       setCurrentRecommendationIndex(0);
@@ -110,7 +103,7 @@ export default function HomePage() {
 
     // Also update the card list for fallback display
     setSearchRecommendations(allRecs.slice(0, 4));
-  }, [searchQuery, industries, selectIndustry, selectIntent]);
+  }, [searchQuery, industries, selectIndustry, selectIntent, setInitialQuery]);
 
   // Handle industry click
   const handleIndustryClick = useCallback(
@@ -194,10 +187,11 @@ export default function HomePage() {
           recommendations={immersiveRecommendations}
           onRecommendationSelect={handleRecommendationSelect}
           currentRecommendationIndex={currentRecommendationIndex}
+          initialQuery={searchQuery}
         />
       )}
 
-      <div className="max-w-6xl mx-auto px-4 py-12">
+      <div className="max-w-4xl mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
@@ -246,17 +240,6 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Search Recommendations */}
-        {searchRecommendations.length > 0 && (
-          <div className="mb-12">
-            <RecommendList
-              recommendations={searchRecommendations}
-              title="검색 결과 추천"
-              onSelect={handleRecommendationSelect}
-            />
-          </div>
-        )}
-
         {/* Recent Workflows (if user has history) */}
         {recentWorkflows.length > 0 && (
           <Card className="mb-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
@@ -288,54 +271,23 @@ export default function HomePage() {
           </Card>
         )}
 
-        {/* Popular Recommendations */}
-        {popularRecommendations.length > 0 && !searchRecommendations.length && (
-          <div className="mb-12">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-primary-500" />
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">인기 워크플로우</h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {popularRecommendations.map((rec, index) => (
-                <RecommendCard
-                  key={`${rec.industry}-${rec.intent}-${index}`}
-                  recommendation={rec}
-                  variant={index === 0 ? "featured" : "default"}
-                  showScore={false}
-                  onSelect={handleRecommendationSelect}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Industry Grid */}
         <div className="mb-12">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-5 h-5 text-primary-500" />
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">업종별 시작하기</h2>
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-primary-500" />
+            <h2 className="text-sm font-medium text-zinc-600 dark:text-zinc-400">업종별 시작하기</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="flex flex-wrap gap-2">
             {industries.map((industry) => (
               <button
                 key={industry.id}
                 onClick={() => handleIndustryClick(industry.id)}
-                className="group p-6 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-lg dark:hover:shadow-zinc-900/50 transition-all text-left"
+                className="group flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-full border border-zinc-200 dark:border-zinc-800 hover:border-primary-400 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-950 transition-all"
               >
-                <div
-                  className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl mb-4"
-                  style={{ backgroundColor: `${industry.color}20` }}
-                >
-                  {industry.icon}
-                </div>
-                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                <span className="text-lg">{industry.icon}</span>
+                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-primary-600 dark:group-hover:text-primary-400">
                   {industry.nameKo}
-                </h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">{industry.description}</p>
-                <div className="mt-4 flex items-center text-primary-600 dark:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-sm">시작하기</span>
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </div>
+                </span>
               </button>
             ))}
           </div>

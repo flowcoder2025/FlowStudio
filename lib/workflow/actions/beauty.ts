@@ -46,7 +46,10 @@ export const beautyActions: Action[] = [
       },
     ],
     promptTemplate:
-      "Luxury cosmetic product photography of {{product}}, {{style}} aesthetic, {{background}} background, premium brand feel, perfect reflections and highlights, 4K quality",
+      "Create a luxurious cosmetic product photograph featuring {{product}} with a {{style}} aesthetic presentation. " +
+      "Set against an elegant {{background}} background, the product exudes premium quality and brand sophistication. " +
+      "Perfect lighting creates beautiful reflections and highlights that emphasize the product's finish and design. " +
+      "This high-end beauty photograph captures the essence of luxury skincare and cosmetics in stunning 4K quality.",
     creditCost: 5,
   },
   {
@@ -89,7 +92,10 @@ export const beautyActions: Action[] = [
       },
     ],
     promptTemplate:
-      "Beauty product texture shot of {{product}}, {{texture}} presentation on {{surface}}, macro photography, highlighting texture and consistency, professional cosmetic photography, 4K",
+      "Create a captivating texture photograph of {{product}} showing a beautiful {{texture}} presentation on {{surface}}. " +
+      "Macro photography reveals the product's unique consistency, formula, and sensory qualities in intricate detail. " +
+      "The lighting emphasizes the texture's luxurious appearance and helps viewers imagine how it feels on the skin. " +
+      "This professional cosmetic photograph showcases the product's quality and efficacy in stunning 4K clarity.",
     creditCost: 5,
   },
   {
@@ -132,7 +138,10 @@ export const beautyActions: Action[] = [
       },
     ],
     promptTemplate:
-      "Beauty campaign photography featuring {{model}} model with {{product}} applied on {{application}}, flawless skin, professional beauty lighting, high-end cosmetic advertising style, 4K",
+      "Create a stunning beauty campaign photograph featuring a {{model}} model with {{product}} beautifully applied on the {{application}}. " +
+      "The model's flawless skin showcases the product's transformative qualities and color payoff. " +
+      "Professional beauty lighting flatters every angle and creates the perfect canvas for the makeup. " +
+      "This high-end cosmetic advertising photograph embodies elegance and aspiration in gorgeous 4K quality.",
     creditCost: 5,
   },
   {
@@ -175,7 +184,10 @@ export const beautyActions: Action[] = [
       },
     ],
     promptTemplate:
-      "Beauty flat lay photography of {{products}}, {{arrangement}} arrangement, with {{props}}, top-down view, soft natural lighting, premium cosmetic brand aesthetic, 4K",
+      "Create a beautiful flat lay photograph showcasing {{products}} in a {{arrangement}} arrangement, complemented by {{props}}. " +
+      "Shot from a top-down perspective, the composition tells the story of a complete beauty routine. " +
+      "Soft natural lighting creates an inviting atmosphere that highlights each product's design and packaging. " +
+      "This premium cosmetic brand photograph embodies elegance and luxury in stunning 4K clarity.",
     creditCost: 5,
   },
   {
@@ -218,7 +230,10 @@ export const beautyActions: Action[] = [
       },
     ],
     promptTemplate:
-      "Skincare product photography of {{product}} with {{element}} effect, {{mood}} mood, clean and hydrating appearance, professional cosmetic photography, 4K",
+      "Create a professional skincare photograph featuring {{product}} with a stunning {{element}} effect that emphasizes hydration and freshness. " +
+      "The image conveys a {{mood}} mood that aligns with the product's brand identity and benefits. " +
+      "Clean, refreshing visual elements communicate the product's hydrating and nourishing qualities. " +
+      "This professional cosmetic photograph captures the essence of effective skincare in beautiful 4K quality.",
     creditCost: 5,
   },
 ];

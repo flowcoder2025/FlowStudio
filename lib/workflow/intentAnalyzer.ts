@@ -133,7 +133,9 @@ export function analyzeIntent(userInput: string): IntentAnalysisResult {
  * (Placeholder for future ML-based recommendations)
  */
 export function getPersonalizedRecommendations(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _userId: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _recentActions: string[]
 ): Action[] {
   // TODO: Implement ML-based recommendations based on user history

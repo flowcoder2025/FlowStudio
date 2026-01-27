@@ -10,7 +10,7 @@ import type {
   ExtractedColor,
   ImageSource,
 } from './types';
-import { rgbToHex, rgbToLab, colorDistance } from './labConversion';
+import { rgbToHex, colorDistance } from './labConversion';
 
 // =====================================================
 // Color Names Database

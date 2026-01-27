@@ -22,7 +22,7 @@ interface Profile {
 }
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  useSession(); // Ensure authentication context
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"profile" | "credits" | "business" | "referral">("profile");
@@ -104,7 +104,7 @@ export default function SettingsPage() {
       } else {
         setVerifyError(data.error || "인증에 실패했습니다");
       }
-    } catch (error) {
+    } catch {
       setVerifyError("인증 중 오류가 발생했습니다");
     } finally {
       setIsVerifying(false);
@@ -130,7 +130,7 @@ export default function SettingsPage() {
       } else {
         setReferralError(data.error || "추천 코드 적용에 실패했습니다");
       }
-    } catch (error) {
+    } catch {
       setReferralError("추천 코드 적용 중 오류가 발생했습니다");
     } finally {
       setIsApplyingReferral(false);

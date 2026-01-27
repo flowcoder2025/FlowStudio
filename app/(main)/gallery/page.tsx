@@ -21,7 +21,7 @@ import { Card } from '@/components/ui/card';
 
 function GalleryLoading() {
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="max-w-4xl mx-auto py-8 px-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <Skeleton className="h-8 w-24 mb-2" />

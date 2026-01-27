@@ -368,7 +368,7 @@ export function GalleryClient({ initialData }: GalleryClientProps) {
   );
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="max-w-4xl mx-auto py-8 px-4">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>

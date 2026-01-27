@@ -7,7 +7,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Loader2, CreditCard, Shield, AlertCircle } from "lucide-react";
 import {
   Dialog,
@@ -36,7 +35,6 @@ export function CheckoutModal({
   itemName,
   priceFormatted,
 }: CheckoutModalProps) {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
