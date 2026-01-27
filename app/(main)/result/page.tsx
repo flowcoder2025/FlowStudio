@@ -262,26 +262,25 @@ function ResultContent() {
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold">생성 결과</h1>
           <p className="text-muted-foreground text-sm">
-            {result.images.length}장의 이미지가 생성되었습니다 •{' '}
-            {result.creditsUsed} 크레딧 사용
+            {result.images.length}장의 이미지가 생성되었습니다 • {result.creditsUsed} 크레딧 사용
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => useWorkflowStore.getState().openImmersiveResult()}>
-            <Maximize2 className="w-4 h-4 mr-2" />
-            몰입 모드
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => useWorkflowStore.getState().openImmersiveResult()}>
+            <Maximize2 className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">몰입 모드</span>
           </Button>
-          <Button variant="outline" onClick={handleCreateNew}>
-            <Sparkles className="w-4 h-4 mr-2" />
-            새로 만들기
+          <Button variant="outline" size="sm" onClick={handleCreateNew}>
+            <Sparkles className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">새로 만들기</span>
           </Button>
-          <Button onClick={handleRegenerate}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            다시 생성
+          <Button size="sm" onClick={handleRegenerate}>
+            <RefreshCw className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">다시 생성</span>
           </Button>
         </div>
       </div>
