@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { generateImages } from '@/lib/imageProvider/generate';
-import type { AspectRatio, ImageProvider, ImageModel, GenerationRequest } from '@/lib/imageProvider/types';
+import type { AspectRatio, ImageProvider, ImageModel, GenerationRequest, ReferenceMode } from '@/lib/imageProvider/types';
 import { ImageGenerationError, ErrorCodes } from '@/lib/imageProvider/types';
 import { uploadImageFromUrl } from '@/lib/storage';
 
@@ -24,6 +24,10 @@ interface GenerateRequestBody {
   model?: ImageModel;
   workflowSessionId?: string;
   saveToStorage?: boolean;
+  /** Reference images for style guidance (base64 data URLs) */
+  refImages?: string[];
+  /** 참조 이미지 활용 모드: style(분위기만), product(제품유지), composition(구도), full(전체) */
+  referenceMode?: ReferenceMode;
 }
 
 // =====================================================
@@ -80,6 +84,8 @@ export async function POST(request: NextRequest) {
       provider: body.provider,
       model: body.model,
       workflowSessionId: body.workflowSessionId,
+      refImages: body.refImages,
+      referenceMode: body.referenceMode,
     };
 
     // 5. Generate images

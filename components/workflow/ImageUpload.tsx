@@ -15,11 +15,14 @@ import {
   CheckCircle,
   Loader2,
   ZoomIn,
+  Palette,
+  Package,
+  LayoutGrid,
+  Copy,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import type { ReferenceMode } from "@/lib/imageProvider/types";
 
 // ============================================================
 // 타입 정의
@@ -29,6 +32,8 @@ export interface UploadedImage {
   id: string;
   file: File;
   previewUrl: string;
+  /** Base64 data URL for API calls */
+  base64Data?: string;
   uploadedUrl?: string;
   status: "pending" | "uploading" | "success" | "error";
   progress: number;
@@ -44,6 +49,12 @@ export interface ImageUploadProps {
   acceptedFormats?: string[];
   disabled?: boolean;
   className?: string;
+  /** 참조 모드 선택 UI 표시 여부 */
+  showReferenceMode?: boolean;
+  /** 현재 선택된 참조 모드 */
+  referenceMode?: ReferenceMode;
+  /** 참조 모드 변경 핸들러 */
+  onReferenceModeChange?: (mode: ReferenceMode) => void;
 }
 
 // ============================================================
@@ -80,6 +91,16 @@ function validateFile(
     return `파일 크기가 너무 큽니다. (최대 ${formatFileSize(maxFileSize)})`;
   }
   return null;
+}
+
+/** File을 base64 data URL로 변환 */
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 // ============================================================
@@ -168,6 +189,103 @@ function ImagePreview({ image, onRemove, disabled }: ImagePreviewProps) {
 }
 
 // ============================================================
+// 참조 모드 선택 컴포넌트
+// ============================================================
+
+interface ReferenceModeOption {
+  value: ReferenceMode;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
+const REFERENCE_MODE_OPTIONS: ReferenceModeOption[] = [
+  {
+    value: "style",
+    label: "스타일",
+    description: "색감, 분위기만 참조",
+    icon: <Palette className="w-4 h-4" />,
+  },
+  {
+    value: "product",
+    label: "제품 유지",
+    description: "제품은 그대로, 배경 변경",
+    icon: <Package className="w-4 h-4" />,
+  },
+  {
+    value: "composition",
+    label: "구도",
+    description: "레이아웃만 참조",
+    icon: <LayoutGrid className="w-4 h-4" />,
+  },
+  {
+    value: "full",
+    label: "전체 참조",
+    description: "최대한 유사하게",
+    icon: <Copy className="w-4 h-4" />,
+  },
+];
+
+interface ReferenceModeSelectorProps {
+  value: ReferenceMode;
+  onChange: (mode: ReferenceMode) => void;
+  disabled?: boolean;
+}
+
+function ReferenceModeSelector({ value, onChange, disabled }: ReferenceModeSelectorProps) {
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        참조 방식
+      </label>
+      <div className="grid grid-cols-2 gap-2">
+        {REFERENCE_MODE_OPTIONS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => !disabled && onChange(option.value)}
+            disabled={disabled}
+            className={cn(
+              "flex items-start gap-2 p-3 rounded-lg border text-left transition-all",
+              value === option.value
+                ? "border-violet-500 bg-violet-50 dark:bg-violet-900/20"
+                : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600",
+              disabled && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            <div
+              className={cn(
+                "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center",
+                value === option.value
+                  ? "bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
+              )}
+            >
+              {option.icon}
+            </div>
+            <div className="min-w-0">
+              <p
+                className={cn(
+                  "text-sm font-medium",
+                  value === option.value
+                    ? "text-violet-700 dark:text-violet-300"
+                    : "text-zinc-700 dark:text-zinc-300"
+                )}
+              >
+                {option.label}
+              </p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                {option.description}
+              </p>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // 메인 컴포넌트
 // ============================================================
 
@@ -180,6 +298,9 @@ export function ImageUpload({
   acceptedFormats = DEFAULT_FORMATS,
   disabled = false,
   className,
+  showReferenceMode = false,
+  referenceMode = "full",
+  onReferenceModeChange,
 }: ImageUploadProps) {
   const [images, setImages] = useState<UploadedImage[]>(value);
   const [isDragging, setIsDragging] = useState(false);
@@ -214,11 +335,14 @@ export function ImageUpload({
       for (const file of filesToProcess) {
         const error = validateFile(file, acceptedFormats, maxFileSize);
         const previewUrl = error ? "" : URL.createObjectURL(file);
+        // base64 변환 (에러가 없을 때만)
+        const base64Data = error ? undefined : await fileToBase64(file);
 
         newImages.push({
           id: generateId(),
           file,
           previewUrl,
+          base64Data,
           status: error ? "error" : "pending",
           progress: 0,
           error: error || undefined,
@@ -395,6 +519,22 @@ export function ImageUpload({
               disabled={disabled}
             />
           ))}
+        </div>
+      )}
+
+      {/* 참조 모드 선택 */}
+      {showReferenceMode && onReferenceModeChange && (
+        <div className="space-y-2">
+          <ReferenceModeSelector
+            value={referenceMode}
+            onChange={onReferenceModeChange}
+            disabled={disabled || images.length === 0}
+          />
+          {images.length === 0 && (
+            <p className="text-xs text-zinc-400 dark:text-zinc-500 text-center">
+              이미지를 업로드하면 참조 방식을 선택할 수 있습니다
+            </p>
+          )}
         </div>
       )}
 

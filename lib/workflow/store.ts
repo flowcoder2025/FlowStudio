@@ -11,6 +11,7 @@ import type { ExpressionIntent } from "./intents";
 import type { DynamicGuide, StepType } from "./guide";
 import type { WorkflowRecommendation } from "./recommend";
 import type { UploadedImage } from "@/components/workflow/ImageUpload";
+import type { ReferenceMode } from "@/lib/imageProvider/types";
 
 // ============================================================
 // Types
@@ -74,6 +75,13 @@ export interface WorkflowState {
   // User inputs
   inputs: Record<string, unknown>;
   referenceImages: UploadedImage[];
+  /** 참조 이미지 활용 모드 */
+  referenceMode: ReferenceMode;
+
+  // Initial query from search (for auto-fill)
+  initialQuery: string;
+  // Image count for generation (1-4)
+  imageCount: number;
 
   // Guide state
   guide: DynamicGuide | null;
@@ -128,6 +136,7 @@ export interface WorkflowActions {
   setReferenceImages: (images: UploadedImage[]) => void;
   addReferenceImage: (image: UploadedImage) => void;
   removeReferenceImage: (imageId: string) => void;
+  setReferenceMode: (mode: ReferenceMode) => void;
 
   // Guide
   setGuide: (guide: DynamicGuide | null) => void;
@@ -167,6 +176,10 @@ export interface WorkflowActions {
   dismissOnboarding: () => void;
   openImmersiveResult: () => void;
   closeImmersiveResult: () => void;
+
+  // Initial query & image count
+  setInitialQuery: (query: string) => void;
+  setImageCount: (count: number) => void;
 }
 
 // ============================================================
@@ -180,6 +193,9 @@ const initialState: WorkflowState = {
   selectedIntent: null,
   inputs: {},
   referenceImages: [],
+  referenceMode: "full",
+  initialQuery: "",
+  imageCount: 1,
   guide: null,
   isGenerating: false,
   generationProgress: 0,
@@ -293,6 +309,8 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>()(
             referenceImages: state.referenceImages.filter((img) => img.id !== imageId),
           }));
         },
+
+        setReferenceMode: (mode) => set({ referenceMode: mode }),
 
         // Guide
         setGuide: (guide) => set({ guide }),
@@ -419,6 +437,7 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>()(
             selectedIntent: null,
             inputs: {},
             referenceImages: [],
+            referenceMode: "full",
             guide: null,
             isGenerating: false,
             generationProgress: 0,
@@ -469,6 +488,17 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>()(
         closeImmersiveResult: () => {
           set({ showImmersiveResult: false });
         },
+
+        // Initial query & image count
+        setInitialQuery: (query) => {
+          set({ initialQuery: query });
+        },
+
+        setImageCount: (count) => {
+          // Clamp count between 1 and 4
+          const validCount = Math.max(1, Math.min(4, count));
+          set({ imageCount: validCount });
+        },
       }),
       {
         name: "flowstudio-workflow",
@@ -491,6 +521,7 @@ export const selectCurrentWorkflow = (state: WorkflowState) => ({
   intent: state.selectedIntent,
   inputs: state.inputs,
   referenceImages: state.referenceImages,
+  referenceMode: state.referenceMode,
 });
 
 export const selectGuideState = (state: WorkflowState) => ({

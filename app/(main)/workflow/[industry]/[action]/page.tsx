@@ -13,7 +13,6 @@ import { getIndustryInfo, isValidIndustry, Industry } from "@/lib/workflow/indus
 import { getAction, ActionInput } from "@/lib/workflow/actions";
 import { generateDynamicGuide, StepType, DynamicGuide } from "@/lib/workflow/guide";
 import { ExpressionIntent } from "@/lib/workflow/intents";
-import { PromptPreview } from "@/components/workflow/PromptPreview";
 import { StepFlow, MiniStepIndicator } from "@/components/workflow/StepFlow";
 import { GuideChat } from "@/components/workflow/GuideChat";
 import { ImageUpload, UploadedImage } from "@/components/workflow/ImageUpload";
@@ -46,6 +45,8 @@ export default function WorkflowWizardPage({ params }: Props) {
   const storeInputs = useWorkflowStore((state) => state.inputs);
   const referenceImages = useWorkflowStore((state) => state.referenceImages);
   const setReferenceImages = useWorkflowStore((state) => state.setReferenceImages);
+  const referenceMode = useWorkflowStore((state) => state.referenceMode);
+  const setReferenceMode = useWorkflowStore((state) => state.setReferenceMode);
   const setStoreInput = useWorkflowStore((state) => state.setInput);
   const startGeneration = useWorkflowStore((state) => state.startGeneration);
   const setGenerationResult = useWorkflowStore((state) => state.setGenerationResult);
@@ -235,7 +236,11 @@ export default function WorkflowWizardPage({ params }: Props) {
 
       const { prompt } = await promptRes.json();
 
-      // 3. Generate images
+      // 3. Generate images (참조 이미지 base64 사용)
+      const refImagesBase64 = referenceImages
+        .map((img) => img.base64Data || img.uploadedUrl)
+        .filter((url): url is string => !!url);
+
       const generateRes = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -243,6 +248,8 @@ export default function WorkflowWizardPage({ params }: Props) {
           prompt,
           workflowSessionId: session.id,
           count: 1,
+          refImages: refImagesBase64.length > 0 ? refImagesBase64 : undefined,
+          referenceMode: refImagesBase64.length > 0 ? referenceMode : undefined,
         }),
       });
 
@@ -336,7 +343,7 @@ export default function WorkflowWizardPage({ params }: Props) {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Back Button */}
       <button
         onClick={() => router.push(`/workflow/${industry}`)}
@@ -416,6 +423,9 @@ export default function WorkflowWizardPage({ params }: Props) {
                       onUpload={handleImageUpload}
                       maxFiles={3}
                       maxFileSize={5 * 1024 * 1024}
+                      showReferenceMode={true}
+                      referenceMode={referenceMode}
+                      onReferenceModeChange={setReferenceMode}
                     />
                     <p className="text-xs text-gray-500 mt-2">
                       참조 이미지를 업로드하면 더 정확한 결과를 얻을 수 있습니다.
@@ -479,14 +489,11 @@ export default function WorkflowWizardPage({ params }: Props) {
           </Button>
         </div>
 
-        {/* Right Panel - Preview */}
-        <div className="md:col-span-1">
-          <div className="sticky top-8">
-            <PromptPreview template={action.promptTemplate} inputs={inputs} action={action} />
-
-            {/* Reference Images Preview */}
-            {referenceImages.length > 0 && (
-              <Card className="mt-4">
+        {/* Right Panel - Reference Images Preview */}
+        {referenceImages.length > 0 && (
+          <div className="md:col-span-1">
+            <div className="sticky top-8">
+              <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm">참조 이미지</CardTitle>
                 </CardHeader>
@@ -507,9 +514,9 @@ export default function WorkflowWizardPage({ params }: Props) {
                   </div>
                 </CardContent>
               </Card>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

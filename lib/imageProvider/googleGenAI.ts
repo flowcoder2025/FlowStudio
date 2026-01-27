@@ -114,14 +114,21 @@ export async function generateWithGoogle(
           parts.push({ inlineData: { mimeType, data } });
         }
 
-        // Add reference image if provided
-        if (options.refImage) {
-          const { mimeType, data } = extractBase64Data(options.refImage);
+        // Add reference images if provided (array takes priority over single)
+        const refImageList = options.refImages?.length
+          ? options.refImages
+          : options.refImage
+            ? [options.refImage]
+            : [];
+
+        for (const refImg of refImageList) {
+          const { mimeType, data } = extractBase64Data(refImg);
           parts.push({ inlineData: { mimeType, data } });
         }
 
-        // Build enhanced prompt
-        const enhancedPrompt = buildPrompt(options);
+        // Build enhanced prompt with reference image count
+        const enhancedPrompt = buildPrompt(options, refImageList.length);
+        log(`[GoogleGenAI] Prompt length: ${enhancedPrompt.length}, refImages: ${refImageList.length}`);
         parts.push({ text: enhancedPrompt });
 
         // Call the new @google/genai API
@@ -228,21 +235,145 @@ export async function generateWithGoogle(
 // Helper Functions
 // =====================================================
 
-function buildPrompt(options: GenerationOptions): string {
-  let prompt = options.prompt;
+/**
+ * Build optimized prompt using 6-component structure
+ * Based on Google official docs + Nano Banana Pro best practices
+ *
+ * Components: Subject + Action + Environment + Art Style + Lighting + Details
+ * + Reference Image Instructions + Negative Prompt + Quality + No Text Suffix
+ *
+ * @param options Generation options
+ * @param refImageCount Number of reference images provided
+ */
+function buildPrompt(options: GenerationOptions, refImageCount: number = 0): string {
+  const components: string[] = [];
+  const referenceMode = options.referenceMode ?? 'full';
 
-  // Add style if specified
-  if (options.style) {
-    prompt = `${options.style} style: ${prompt}`;
+  // 참조 이미지가 있으면 모드에 따라 다른 지시 추가 (프롬프트 최상단)
+  if (refImageCount > 0) {
+    const refInstruction = buildReferenceInstruction(refImageCount, referenceMode);
+    components.push(refInstruction);
   }
 
-  // Note: Negative prompts are handled differently in Gemini
-  // We append guidance to avoid certain elements
+  // 1. 메인 프롬프트 (Subject + Action + Environment)
+  components.push(options.prompt);
+
+  // 2. 스타일 (Art Style) - 자연어로 표현 (style 모드에서는 참조 이미지가 스타일을 정의)
+  if (options.style && referenceMode !== 'style') {
+    components.push(
+      `The visual style is ${options.style}, with attention to aesthetic coherence and artistic excellence.`
+    );
+  }
+
+  // 3. 참조 이미지 상기 지시 (프롬프트 중간에 다시 강조)
+  if (refImageCount > 0) {
+    const reminder = buildReferenceReminder(referenceMode);
+    components.push(reminder);
+  }
+
+  // 4. 네거티브 프롬프트 (문장형)
   if (options.negativePrompt) {
-    prompt = `${prompt}. Avoid: ${options.negativePrompt}`;
+    components.push(`Avoid depicting: ${options.negativePrompt}.`);
   }
 
-  return prompt;
+  // 5. 품질 지시 (Lighting + Details) - 모드별 처리
+  if (refImageCount > 0 && (referenceMode === 'full' || referenceMode === 'product')) {
+    components.push(
+      "Maintain the lighting style and quality level from the reference image(s) with sharp focus and high detail."
+    );
+  } else {
+    components.push(
+      "Professional photography quality with soft natural lighting, sharp focus, high detail, and photorealistic rendering."
+    );
+  }
+
+  // 6. 텍스트 렌더링 방지 (항상 마지막에 - 매우 중요!)
+  components.push(
+    "IMPORTANT: The image must contain absolutely no text, no logos, no watermarks, no written words, no letters, no numbers, no brand names visible anywhere in the image."
+  );
+
+  return components.join(" ");
+}
+
+/**
+ * 참조 모드별 메인 지시문 생성
+ */
+function buildReferenceInstruction(count: number, mode: string): string {
+  const countText = count === 1 ? 'the provided reference image' : `the provided ${count} reference images`;
+
+  switch (mode) {
+    case 'style':
+      // 스타일/분위기만 참조 - 새로운 피사체 생성
+      return (
+        `STYLE REFERENCE MODE: Analyze ${countText} to extract the visual style, color palette, lighting mood, and artistic atmosphere. ` +
+        "Apply these stylistic elements to create a NEW image with DIFFERENT subjects/content as described below. " +
+        "Do NOT copy the actual objects, people, or scenes from the reference - only inherit its aesthetic qualities like color grading, lighting style, and overall mood."
+      );
+
+    case 'product':
+      // 제품 유지 - 배경/스타일만 변경
+      return (
+        `PRODUCT PRESERVATION MODE: The product/subject shown in ${countText} MUST be preserved exactly as it appears. ` +
+        "Keep the product's shape, details, colors, and identifying features identical. " +
+        "You may change the background, lighting style, or surrounding elements as described below, but the main product must remain recognizable and unchanged."
+      );
+
+    case 'composition':
+      // 구도/레이아웃 참조
+      return (
+        `COMPOSITION REFERENCE MODE: Use ${countText} as a guide for spatial layout and arrangement. ` +
+        "Match the positioning, framing, angles, and visual hierarchy from the reference. " +
+        "The actual subjects and content can be different as described below, but maintain similar composition structure."
+      );
+
+    case 'full':
+    default:
+      // 전체 참조 (기존 동작)
+      if (count === 1) {
+        return (
+          "CRITICAL INSTRUCTION: You MUST use the provided reference image as the PRIMARY visual guide. " +
+          "The generated image should closely replicate the reference image's composition, subject placement, color scheme, lighting, mood, and overall visual style. " +
+          "Treat the reference image as the foundation - maintain its key visual elements while applying the requested modifications described below."
+        );
+      }
+      return (
+        `CRITICAL INSTRUCTION: You MUST use the provided ${count} reference images as PRIMARY visual guides. ` +
+        "Analyze each reference image carefully and synthesize their visual elements - composition, colors, lighting, and style - into the generated image. " +
+        "The output should feel like a natural combination of the reference images while incorporating the requested modifications below."
+      );
+  }
+}
+
+/**
+ * 참조 모드별 리마인더 생성
+ */
+function buildReferenceReminder(mode: string): string {
+  switch (mode) {
+    case 'style':
+      return (
+        "STYLE REMINDER: Apply the color palette, lighting mood, and artistic style from the reference to your new creation. " +
+        "The CONTENT should be different, but the AESTHETIC should match."
+      );
+
+    case 'product':
+      return (
+        "PRODUCT REMINDER: Ensure the product remains IDENTICAL to the reference. " +
+        "Only the environment and presentation style should change, not the product itself."
+      );
+
+    case 'composition':
+      return (
+        "COMPOSITION REMINDER: Maintain the spatial arrangement and framing from the reference. " +
+        "Position elements similarly even if they are different subjects."
+      );
+
+    case 'full':
+    default:
+      return (
+        "REMINDER: The reference image(s) provided above should directly influence the visual output. " +
+        "Do NOT ignore or deviate significantly from the reference - it defines the expected visual direction."
+      );
+  }
 }
 
 interface GenAIResponse {

@@ -47,6 +47,15 @@ export interface ProviderConfig {
 
 export type AspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '3:2' | '2:3';
 
+/**
+ * 참조 이미지 활용 모드
+ * - style: 분위기, 색감, 조명, 스타일만 참조 (새로운 피사체 생성)
+ * - product: 제품/피사체를 그대로 유지하면서 배경/스타일만 변경
+ * - composition: 구도와 레이아웃을 참조하여 유사한 배치로 생성
+ * - full: 참조 이미지를 최대한 충실하게 재현 (기본값)
+ */
+export type ReferenceMode = 'style' | 'product' | 'composition' | 'full';
+
 export interface GenerationOptions {
   prompt: string;
   negativePrompt?: string;
@@ -64,6 +73,7 @@ export interface GenerationOptions {
   sourceImage?: string; // base64 data URL for editing
   refImage?: string; // base64 data URL for reference
   refImages?: string[]; // multiple reference images (COMPOSITE mode)
+  referenceMode?: ReferenceMode; // 참조 이미지 활용 방식 (style/product/composition/full)
   logoImage?: string; // logo image for overlay
   maskImage?: string; // mask image for DETAIL_EDIT mode
   mode?: string; // generation mode (e.g., 'DETAIL_EDIT', 'COMPOSITE')

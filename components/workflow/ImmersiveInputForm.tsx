@@ -43,6 +43,8 @@ export interface ImmersiveInputFormProps {
   onRecommendationSelect?: (recommendation: WorkflowRecommendation) => void;
   /** 현재 선택된 추천의 인덱스 */
   currentRecommendationIndex?: number;
+  /** 초기 검색 쿼리 (자동 입력용) */
+  initialQuery?: string;
 }
 
 interface RecommendStep {
@@ -132,6 +134,12 @@ interface InputCardProps {
   currentRecommendationIndex?: number;
   onRecommendationChange?: (index: number) => void;
   onRecommendationAccept?: () => void;
+  /** 이미지 장수 관련 props */
+  imageCount: number;
+  onImageCountChange: (count: number) => void;
+  /** 참조 모드 관련 props */
+  referenceMode: import("@/lib/imageProvider/types").ReferenceMode;
+  onReferenceModeChange: (mode: import("@/lib/imageProvider/types").ReferenceMode) => void;
 }
 
 function InputCard({
@@ -152,6 +160,10 @@ function InputCard({
   currentRecommendationIndex = 0,
   onRecommendationChange,
   onRecommendationAccept,
+  imageCount,
+  onImageCountChange,
+  referenceMode,
+  onReferenceModeChange,
 }: InputCardProps) {
   const handleImageUpload = useCallback(async (file: File): Promise<string> => {
     return new Promise((resolve) => {
@@ -419,19 +431,22 @@ function InputCard({
           </div>
         </div>
 
-        {/* 메인 콘텐츠 */}
-        <div className="flex-1 flex flex-col p-6 md:p-8">
+        {/* 메인 콘텐츠 - 스크롤 가능 */}
+        <div className="flex-1 overflow-y-auto p-6 md:p-8">
           <motion.div
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.3 }}
+            className="space-y-4"
           >
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-              참조 이미지 (선택)
-            </h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-              비슷한 스타일의 이미지를 업로드하면 더 정확한 결과를 얻을 수 있습니다.
-            </p>
+            <div>
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+                참조 이미지 (선택)
+              </h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                비슷한 스타일의 이미지를 업로드하면 더 정확한 결과를 얻을 수 있습니다.
+              </p>
+            </div>
 
             <ImageUpload
               value={referenceImages}
@@ -439,12 +454,15 @@ function InputCard({
               onUpload={handleImageUpload}
               maxFiles={3}
               maxFileSize={5 * 1024 * 1024}
+              showReferenceMode={true}
+              referenceMode={referenceMode}
+              onReferenceModeChange={onReferenceModeChange}
             />
           </motion.div>
         </div>
 
         {/* 하단 힌트 */}
-        <div className="px-6 pb-6 text-center">
+        <div className="px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 text-center">
           <p className="text-sm text-zinc-400 dark:text-zinc-500">
             스킵하려면 다음으로 스와이프 →
           </p>
@@ -508,7 +526,7 @@ function InputCard({
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.2 }}
-            className="w-full max-w-sm text-left space-y-2 mb-6"
+            className="w-full max-w-sm text-left space-y-2 mb-4"
           >
             {action.inputs.map((input) => {
               const val = inputs[input.id];
@@ -531,6 +549,37 @@ function InputCard({
               );
             })}
           </motion.div>
+
+          {/* 이미지 장수 선택 */}
+          <motion.div
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.25 }}
+            className="w-full max-w-sm"
+          >
+            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2 block text-left">
+              생성할 이미지 수
+            </label>
+            <div className="flex gap-2 justify-center">
+              {[1, 2, 3, 4].map((num) => (
+                <button
+                  key={num}
+                  onClick={() => onImageCountChange(num)}
+                  className={cn(
+                    "w-12 h-12 rounded-lg border-2 font-semibold transition-all",
+                    imageCount === num
+                      ? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400"
+                      : "border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600"
+                  )}
+                >
+                  {num}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 text-center">
+              {imageCount}장 × {action.creditCost} = {imageCount * action.creditCost} 크레딧
+            </p>
+          </motion.div>
         </div>
 
         {/* 하단 버튼 */}
@@ -549,7 +598,7 @@ function InputCard({
             ) : (
               <>
                 <Sparkles className="w-5 h-5 mr-2" />
-                이미지 생성하기 ({action.creditCost} 크레딧)
+                이미지 {imageCount}장 생성하기 ({action.creditCost * imageCount} 크레딧)
               </>
             )}
           </Button>
@@ -574,6 +623,7 @@ export function ImmersiveInputForm({
   recommendations,
   onRecommendationSelect,
   currentRecommendationIndex: initialRecommendationIndex = 0,
+  initialQuery,
 }: ImmersiveInputFormProps) {
   const router = useRouter();
   const [[currentIndex, direction], setPage] = useState<[number, number]>([0, 0]);
@@ -582,9 +632,15 @@ export function ImmersiveInputForm({
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recommendationIndex, setRecommendationIndex] = useState(initialRecommendationIndex);
+  const [imageCount, setImageCount] = useState(1);
 
   // Zustand store
   const addToHistory = useWorkflowStore((state) => state.addToHistory);
+  const storeInitialQuery = useWorkflowStore((state) => state.initialQuery);
+  const storeImageCount = useWorkflowStore((state) => state.imageCount);
+  const setStoreImageCount = useWorkflowStore((state) => state.setImageCount);
+  const referenceMode = useWorkflowStore((state) => state.referenceMode);
+  const setReferenceMode = useWorkflowStore((state) => state.setReferenceMode);
 
   // intent에서 적합한 action 가져오기
   const action = useMemo(() => {
@@ -620,17 +676,35 @@ export function ImmersiveInputForm({
     return [...stepList, ...inputSteps, imageStep, confirmStep];
   }, [action, hasRecommendations]);
 
-  // 인덱스 초기화
+  // 모달 열릴 때 초기화 (isOpen 변경 시에만)
   useEffect(() => {
     if (isOpen) {
-      // 추천이 있으면 0(추천 카드)부터, 없으면 0(첫 입력 필드)부터 시작
+      // 모달이 열릴 때만 초기화
       setPage([0, 0]);
-      setInputs({});
       setReferenceImages([]);
       setError(null);
       setRecommendationIndex(initialRecommendationIndex);
+      setImageCount(storeImageCount || 1);
     }
-  }, [isOpen, initialRecommendationIndex]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  // 자동 입력 (action이나 initialQuery 변경 시)
+  useEffect(() => {
+    if (isOpen && action) {
+      // initialQuery가 있으면 'product' 또는 '상품' 관련 필드에 자동 입력
+      const queryToUse = initialQuery || storeInitialQuery;
+      if (queryToUse) {
+        const productInput = action.inputs.find(
+          (i) => i.id === "product" || i.id === "products" || i.label.includes("상품") || i.label.includes("설명")
+        );
+        if (productInput) {
+          // 기존 inputs 유지하면서 product 필드만 설정
+          setInputs((prev) => ({ ...prev, [productInput.id]: queryToUse }));
+        }
+      }
+    }
+  }, [isOpen, action, initialQuery, storeInitialQuery]);
 
   // 네비게이션
   const handleNext = useCallback(() => {
@@ -747,14 +821,20 @@ export function ImmersiveInputForm({
 
       const { prompt } = await promptRes.json();
 
-      // 3. 이미지 생성
+      // 3. 이미지 생성 (참조 이미지 base64 사용)
+      const refImagesBase64 = referenceImages
+        .map((img) => img.base64Data || img.uploadedUrl)
+        .filter((url): url is string => !!url);
+
       const generateRes = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt,
           workflowSessionId: session.id,
-          count: 1,
+          count: imageCount,
+          refImages: refImagesBase64.length > 0 ? refImagesBase64 : undefined,
+          referenceMode: refImagesBase64.length > 0 ? referenceMode : undefined,
         }),
       });
 
@@ -770,12 +850,15 @@ export function ImmersiveInputForm({
       store.setGenerationResult({
         success: generateResult.success,
         images: generateResult.images || [],
-        creditsUsed: generateResult.creditsUsed || action.creditCost,
+        creditsUsed: generateResult.creditsUsed || action.creditCost * imageCount,
         provider: generateResult.provider || "unknown",
         model: generateResult.model || "unknown",
         duration: generateResult.duration,
         error: generateResult.error,
       });
+
+      // 5. Store의 imageCount도 업데이트
+      setStoreImageCount(imageCount);
 
       // 5. 히스토리에 추가
       addToHistory({
@@ -797,7 +880,7 @@ export function ImmersiveInputForm({
       setError(errorMessage);
       setIsGenerating(false);
     }
-  }, [action, industry, intent, inputs, referenceImages, addToHistory, onGenerate, router, onClose]);
+  }, [action, industry, intent, inputs, referenceImages, referenceMode, addToHistory, onGenerate, router, onClose, imageCount, setStoreImageCount]);
 
   // action이 없으면 렌더링하지 않음
   if (!action || !steps.length) return null;
@@ -899,6 +982,10 @@ export function ImmersiveInputForm({
                   onRecommendationChange={handleRecommendationChange}
                   onRecommendationAccept={handleRecommendationAccept}
                   intentInfo={intentInfo}
+                  imageCount={imageCount}
+                  onImageCountChange={setImageCount}
+                  referenceMode={referenceMode}
+                  onReferenceModeChange={setReferenceMode}
                 />
               </motion.div>
             </AnimatePresence>
