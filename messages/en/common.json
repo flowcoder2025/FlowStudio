@@ -447,11 +447,11 @@
       "faq": {
         "title": "Frequently Asked Questions",
         "q1": "How are credits used?",
-        "a1": "1-5 credits are deducted per image based on quality. Additional features like upscaling and background removal also use credits.",
-        "q2": "Do unused credits roll over?",
-        "a2": "Subscription plan credits roll over to the next month. Credit package purchases are valid for 1 year.",
+        "a1": "Image generation (4 images) costs 20 credits. 4K upscaling costs 10 credits per image.",
+        "q2": "What is the credit validity period?",
+        "a2": "Subscription credits are granted monthly and valid for 30 days (no rollover). Purchased credits never expire.",
         "q3": "What happens if I cancel my subscription?",
-        "a3": "You can continue using the service until the end of your billing period. Remaining credits can be used until they expire.",
+        "a3": "You can continue using the service until the end of your billing period. Subscription credits expire after 30 days, but purchased credits never expire.",
         "q4": "What is the refund policy?",
         "a4": "Full refunds are available within 7 days of purchase if no credits have been used. Please see our refund policy for details."
       }
@@ -515,25 +515,23 @@
     },
     "plans": {
       "free": "Free",
-      "starter": "Starter",
+      "plus": "Plus",
       "pro": "Pro",
       "business": "Business"
     },
     "features": {
-      "monthlyCredits": "{count} credits/month",
-      "basicImageGeneration": "Basic image generation",
-      "workflows": "{count} workflows",
-      "unlimitedWorkflows": "Unlimited workflows",
-      "communitySupport": "Community support",
-      "emailSupport": "Email support",
-      "prioritySupport": "Priority support",
-      "dedicatedSupport": "Dedicated support",
-      "hdImageGeneration": "HD image generation",
-      "ultraImageGeneration": "Ultra HD images",
-      "creditRollover": "Credit rollover",
-      "teamSharing": "Team sharing",
+      "monthlyCredits": "{count} credits/month (30-day limit)",
+      "storage": "{size} storage",
+      "concurrentGenerations": "{count} concurrent generations",
+      "watermarkIncluded": "Watermark included",
+      "watermarkRemoved": "Watermark removed",
+      "standardProcessing": "Standard processing",
+      "priorityProcessing": "Priority processing",
+      "highestPriorityProcessing": "Highest priority processing",
+      "historyDays": "{days} days history",
+      "historyUnlimited": "Unlimited history",
       "apiAccess": "API access",
-      "customWorkflows": "Custom workflows"
+      "teamMembers": "Team collaboration ({count} members)"
     },
     "checkout": {
       "title": "Confirm Payment",
@@ -574,6 +572,224 @@
       "perMonth": "/month",
       "selectPlan": "Select",
       "currentPlan": "Current Plan"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "profile": "Profile",
+      "credits": "Credits",
+      "business": "Business Verification",
+      "referral": "Referral"
+    },
+    "profile": {
+      "title": "Profile Information",
+      "profileImage": "Profile",
+      "noName": "No name",
+      "name": "Name",
+      "save": "Save",
+      "saved": "Saved"
+    },
+    "credits": {
+      "title": "Credits",
+      "balance": "Credit Balance",
+      "description": "Credits are used for image generation. 5 credits are required per image."
+    },
+    "business": {
+      "title": "Business Verification",
+      "verified": "Verified",
+      "verifiedDesc": "Business verification has been completed.",
+      "description": "Complete business verification to receive additional benefits.",
+      "businessNumber": "Business Registration Number",
+      "placeholder": "10 digits",
+      "verify": "Verify",
+      "verifyFailed": "Verification failed",
+      "verifyError": "An error occurred during verification"
+    },
+    "referral": {
+      "title": "Referral System",
+      "myCode": "My Referral Code",
+      "copy": "Copy",
+      "shareDesc": "Share your referral code with friends and both of you will receive 5 credits.",
+      "inputLabel": "Enter Referral Code",
+      "inputPlaceholder": "Enter referral code",
+      "apply": "Apply",
+      "applyFailed": "Failed to apply referral code",
+      "applyError": "An error occurred while applying referral code"
+    }
+  },
+  "colorCorrection": {
+    "title": "Image Studio",
+    "subtitle": "Image editing tools including filters, color transfer, and background removal",
+    "tabs": {
+      "filter": "Filter",
+      "transfer": "Color Transfer",
+      "background": "Background Removal",
+      "colorway": "Colorway"
+    },
+    "upload": {
+      "dragOrClick": "Drag or click to upload image",
+      "supportedFormats": "PNG, JPG, WebP supported"
+    },
+    "preview": {
+      "original": "Original",
+      "result": "Result",
+      "download": "Download",
+      "processing": "Processing...",
+      "selectAnother": "Select another image",
+      "reset": "Reset",
+      "processedPlaceholder": "Processed image will appear here"
+    },
+    "uploadFirst": "Please upload an image first",
+    "colorwayComingSoon": "Colorway feature coming soon"
+  },
+  "legal": {
+    "back": "Back",
+    "effectiveDate": "Effective Date",
+    "lastUpdated": "Last Updated",
+    "privacy": {
+      "title": "Privacy Policy",
+      "intro": "FlowCoder (\"Company\") values the privacy of users of the FlowStudio service (\"Service\") and protects personal information in accordance with the Personal Information Protection Act and related laws.",
+      "article1": {
+        "title": "Article 1 (Purpose of Processing Personal Information)",
+        "intro": "The Company processes personal information for the following purposes. Personal information will not be used for purposes other than those listed below, and prior consent will be obtained if the purpose of use changes.",
+        "item1": "Member Registration and Management: Verification of membership registration, identification and authentication for member services, maintenance and management of membership status, prevention of fraudulent use of services",
+        "item2": "Service Provision: AI image generation service, customized service provision, content provision, identity verification",
+        "item3": "Marketing and Advertising: Development of new services and customized services, provision of event and promotional information, verification of service effectiveness",
+        "item4": "Grievance Handling: Identity verification of complainants, confirmation of complaints, notification of processing results"
+      },
+      "article2": {
+        "title": "Article 2 (Retention and Use Period of Personal Information)",
+        "intro": "The Company processes and retains personal information within the retention period agreed upon when collecting personal information from the data subject or within the retention period under the law.",
+        "item1": "Member Information: Until membership withdrawal",
+        "item2": "Generated Images and Content: Until deletion request or membership withdrawal",
+        "item3": "Service Usage Records: 3 months",
+        "item4": "Payment Records: 5 years under the Electronic Commerce Act"
+      },
+      "article3": {
+        "title": "Article 3 (Personal Information Items Processed)",
+        "required": "Required Items",
+        "requiredItems": ["Email address", "Password (encrypted storage)", "Name or nickname", "Access logs, IP address, cookies, service usage records"],
+        "optional": "Optional Items",
+        "optionalItems": ["Profile image", "Business registration number (for business verification)", "Contact information"],
+        "auto": "Automatically Collected Items",
+        "autoItems": ["Images and prompt data generated during service use", "Device information, browser information"]
+      },
+      "article4": {
+        "title": "Article 4 (Provision of Personal Information to Third Parties)",
+        "intro": "The Company does not provide users' personal information to third parties in principle. However, the following cases are exceptions:",
+        "item1": "When the user has given prior consent",
+        "item2": "When required by law or when requested by investigative agencies in accordance with legal procedures and methods",
+        "thirdParty": "Third-party Provision for Service Delivery",
+        "thirdPartyItem": "Google LLC (Vertex AI): API service provision for AI image generation"
+      },
+      "article5": {
+        "title": "Article 5 (Entrustment of Personal Information Processing)",
+        "intro": "The Company entrusts personal information processing to the following external parties for service improvement:",
+        "item1": "Vercel Inc.: Web hosting and server operation",
+        "item2": "Supabase Inc.: Database management and file storage"
+      },
+      "article6": {
+        "title": "Article 6 (Rights and Obligations of Data Subjects and Exercise Methods)",
+        "intro": "Users can exercise the following rights as data subjects:",
+        "item1": "Request to access personal information",
+        "item2": "Request for correction if there are errors",
+        "item3": "Request for deletion",
+        "item4": "Request to suspend processing",
+        "outro": "The above rights can be exercised through writing, telephone, or email to the Company, and the Company will take action without delay."
+      },
+      "article7": {
+        "title": "Article 7 (Marketing Use and Advertising Information Transmission)",
+        "notice": "With user consent, the Company may use personal information for marketing purposes as follows:",
+        "item1": "Use of images generated by users as promotional and marketing materials (after de-identification)",
+        "item2": "Transmission of advertising information such as new service announcements, event information, and promotions to users' email addresses",
+        "item3": "Analysis of usage patterns for service improvement",
+        "outro": "Users can withdraw their consent for marketing at any time, and upon withdrawal, marketing use of related information will be immediately suspended."
+      },
+      "article8": {
+        "title": "Article 8 (Measures for Security of Personal Information)",
+        "intro": "The Company takes the following measures to ensure the security of personal information:",
+        "item1": "Administrative Measures: Establishment and implementation of internal management plans, employee training",
+        "item2": "Technical Measures: Encryption of personal information, installation of security programs, access control management",
+        "item3": "Physical Measures: Restriction of physical access through use of cloud services"
+      },
+      "article9": {
+        "title": "Article 9 (Personal Information Protection Officer)",
+        "officer": "Personal Information Protection Officer",
+        "name": "Name",
+        "nameValue": "Yonghyun Cho, Hyunil Park",
+        "position": "Position",
+        "positionValue": "Co-CEOs",
+        "email": "Email"
+      },
+      "article10": {
+        "title": "Article 10 (Changes to Privacy Policy)",
+        "content": "This privacy policy may be amended with additions, deletions, or modifications due to changes in laws, policies, or security technology. Changes will be announced through notices within the service at least 7 days before implementation."
+      },
+      "article11": {
+        "title": "Article 11 (Data Processing for AI Service Use)",
+        "notice": "This service is an AI-based image generation service, and we disclose data processing matters in accordance with the Framework Act on AI Development and Trust Building.",
+        "item1": "Data Transfer for AI Processing: Data such as prompts (text) and reference images entered by users when using the service are transmitted to external AI service providers (Google Vertex AI) for AI image generation.",
+        "item2": "Scope of Data Use: Transmitted data is used only for image generation purposes and is not used for AI model training.",
+        "item3": "AI Output Marking Information: The Company may include the following information in AI outputs in accordance with relevant laws:",
+        "item3Sub1": "Watermarks indicating AI generation",
+        "item3Sub2": "Metadata such as generation date and service name",
+        "item4": "Non-identifying Information: Marking information included in AI outputs does not identify individuals and is included for legal compliance."
+      },
+      "addendum": {
+        "title": "Addendum",
+        "item1": "This privacy policy is effective from January 1, 2026.",
+        "item2": "The provisions of Article 11 (Data Processing for AI Service Use) regarding the Framework Act on AI Development and Trust Building shall become effective on January 22, 2026, when the relevant law comes into force."
+      }
+    },
+    "terms": {
+      "title": "FlowStudio Terms of Service",
+      "chapter1": {
+        "title": "Chapter 1 General Provisions",
+        "article1": {
+          "title": "Article 1 (Purpose)",
+          "content": "These terms and conditions are intended to regulate the rights, obligations, and responsibilities of the Company and users in using the FlowStudio service (\"Service\") provided by FlowCoder (\"Company\")."
+        },
+        "article2": {
+          "title": "Article 2 (Definitions)",
+          "item1": "\"Service\" means the AI-based image generation platform and related services provided by the Company.",
+          "item2": "\"User\" means members and non-members who use the Service in accordance with these terms.",
+          "item3": "\"Member\" means a person who has registered for the Service and has been assigned a user ID.",
+          "item4": "\"Content\" means images, text, and other creative works generated through the Service.",
+          "item5": "\"Credits\" means virtual currency used for image generation within the Service.",
+          "item6": "\"AI Output\" means images, text, and other results generated using the AI technology of this Service.",
+          "item7": "\"AI Marking\" means watermarks, metadata, or other identification marks attached to AI outputs in accordance with the Framework Act on AI Development and Trust Building."
+        },
+        "article3": {
+          "title": "Article 3 (Effect and Modification of Terms)",
+          "item1": "These terms become effective when posted on the service screen or announced through other methods.",
+          "item2": "The Company may modify these terms to the extent that it does not violate relevant laws and regulations.",
+          "item3": "When the terms are changed, the Company will announce the effective date and reasons for the change at least 7 days before the effective date. However, changes unfavorable to users will be announced at least 30 days in advance.",
+          "item4": "If users do not agree to the changed terms, they may stop using the Service and withdraw."
+        }
+      },
+      "addendum": {
+        "title": "Addendum",
+        "item1": "These terms are effective from January 1, 2026.",
+        "item2": "The obligation provisions of Chapter 9 (AI Outputs and Legal Compliance) regarding the Framework Act on AI Development and Trust Building shall become effective on January 22, 2026, when the relevant law comes into force."
+      }
+    },
+    "refund": {
+      "title": "FlowStudio Refund Policy",
+      "article1": {
+        "title": "Article 1 (Purpose)",
+        "content": "This policy is intended to regulate the procedures and standards for withdrawal, refund, and related matters regarding credit purchases for the FlowStudio service (\"Service\") provided by FlowCoder (\"Company\")."
+      },
+      "contact": {
+        "title": "Contact",
+        "refundInquiry": "Refund Inquiries",
+        "operatingHours": "Operating Hours: Weekdays 10:00 - 18:00 KST (Excluding weekends and holidays)"
+      },
+      "addendum": {
+        "title": "Addendum",
+        "item1": "This policy is effective from January 1, 2026.",
+        "item2": "The provisions of Article 14 (Understanding the Characteristics of AI Outputs) regarding the Framework Act on AI Development and Trust Building shall become effective on January 22, 2026, when the relevant law comes into force."
+      }
     }
   }
 }

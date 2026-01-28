@@ -136,8 +136,10 @@ export interface CreditPackage {
   variantId: string;
   name: string;
   credits: number;
-  price: number; // in cents
-  priceFormatted: string;
+  price: number; // in KRW
+  priceUSD: number; // in cents (USD)
+  priceFormatted: string; // KRW formatted
+  priceFormattedUSD: string; // USD formatted
   popular?: boolean;
   bonus?: number; // bonus percentage
 }
@@ -150,13 +152,23 @@ export interface SubscriptionPlan {
   id: string;
   variantId: string;
   name: string;
-  monthlyCredits: number;
-  price: number; // in cents
-  priceFormatted: string;
+  price: number; // in KRW
+  priceUSD: number; // in cents (USD)
+  priceFormatted: string; // KRW formatted
+  priceFormattedUSD: string; // USD formatted
   interval: "month" | "year";
   features: string[]; // Legacy: hardcoded text (kept for backward compatibility)
   featureKeys?: FeatureKeyItem[]; // i18n: translation keys with optional params
   popular?: boolean;
+  monthlyCredits?: number; // Optional: for subscription-based credit grants
+  // Plan-specific features
+  storage?: string; // e.g., "1GB", "100GB"
+  concurrentGenerations?: number;
+  watermarkRemoved?: boolean;
+  priority?: "standard" | "priority" | "highest";
+  historyDays?: number | "unlimited";
+  apiAccess?: boolean;
+  teamMembers?: number;
 }
 
 // =====================================================

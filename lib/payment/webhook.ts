@@ -185,8 +185,12 @@ async function handleOrderCreated(
   });
 
   // Grant credits if payment is successful
+  // 구매 크레딧은 영구 보존 (expiresInDays: null)
   if (attributes.status === "paid" && credits > 0) {
-    await grantCredits(userId, credits, `Purchase: ${orderId}`);
+    await grantCredits(userId, credits, `Purchase: ${orderId}`, {
+      expiresInDays: null,
+      type: "purchase",
+    });
   }
 }
 
@@ -248,12 +252,14 @@ async function handleSubscriptionCreated(
     },
   });
 
-  // Grant initial credits for subscription
-  if (plan && attributes.status === "active") {
+  // Grant initial credits for subscription (if plan has monthly credits)
+  // 구독 크레딧은 30일 한정
+  if (plan && attributes.status === "active" && plan.monthlyCredits) {
     await grantCredits(
       userId,
       plan.monthlyCredits,
-      `Subscription: ${plan.name}`
+      `Subscription: ${plan.name}`,
+      { expiresInDays: 30, type: "subscription" }
     );
   }
 }
@@ -301,12 +307,14 @@ async function handleSubscriptionPaymentSuccess(
     // Get plan info from tier
     const plan = getPlanByVariantId(subscription.tier.toLowerCase());
 
-    // Grant monthly credits
-    if (plan) {
+    // Grant monthly credits (if plan has monthly credits)
+    // 구독 크레딧은 30일 한정
+    if (plan && plan.monthlyCredits) {
       await grantCredits(
         subscription.userId,
         plan.monthlyCredits,
-        `Subscription renewal: ${plan.name}`
+        `Subscription renewal: ${plan.name}`,
+        { expiresInDays: 30, type: "subscription" }
       );
     }
 
@@ -343,11 +351,13 @@ async function handleSubscriptionPaymentStatus(
 
     if (subscription) {
       const plan = getPlanByVariantId(subscription.tier.toLowerCase());
-      if (plan) {
+      // 구독 크레딧은 30일 한정
+      if (plan && plan.monthlyCredits) {
         await grantCredits(
           subscription.userId,
           plan.monthlyCredits,
-          `Payment recovered: ${plan.name}`
+          `Payment recovered: ${plan.name}`,
+          { expiresInDays: 30, type: "subscription" }
         );
       }
     }
@@ -358,11 +368,31 @@ async function handleSubscriptionPaymentStatus(
 // Credit Management Helpers
 // =====================================================
 
+interface GrantCreditsOptions {
+  expiresInDays?: number | null; // null = 영구 보존
+  type?: string;
+}
+
+/**
+ * Grant credits to user
+ * @param userId - User ID
+ * @param amount - Credit amount
+ * @param description - Transaction description
+ * @param options - Options including expiry (null = permanent, number = days)
+ */
 async function grantCredits(
   userId: string,
   amount: number,
-  description: string
+  description: string,
+  options: GrantCreditsOptions = {}
 ): Promise<void> {
+  const { expiresInDays = null, type = "bonus" } = options;
+
+  // Calculate expiry date (null = permanent/never expires)
+  const expiresAt = expiresInDays !== null
+    ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
+    : null;
+
   await prisma.$transaction([
     // Update user balance
     prisma.user.update({
@@ -384,13 +414,15 @@ async function grantCredits(
         updatedAt: new Date(),
       },
     }),
-    // Create transaction record (no status field)
+    // Create transaction record with expiry info
     prisma.creditTransaction.create({
       data: {
         userId,
         amount,
-        type: "bonus",
+        type,
         description,
+        expiresAt,
+        remainingAmount: amount, // Track remaining for expirable credits
       },
     }),
   ]);

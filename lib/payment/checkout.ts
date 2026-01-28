@@ -170,7 +170,7 @@ export async function createSubscriptionCheckout(
     email,
     customData: {
       plan_id: planId,
-      monthly_credits: plan.monthlyCredits,
+      monthly_credits: plan.monthlyCredits ?? 0,
       type: "subscription",
     },
   });

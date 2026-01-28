@@ -8,7 +8,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Check, Sparkles, Zap, Crown, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,13 +26,14 @@ type Tab = "credits" | "subscription";
 
 const PLAN_ICONS: Record<string, React.ReactNode> = {
   free: <Sparkles className="h-6 w-6" />,
-  starter: <Zap className="h-6 w-6" />,
+  plus: <Zap className="h-6 w-6" />,
   pro: <Crown className="h-6 w-6" />,
   business: <Building2 className="h-6 w-6" />,
 };
 
 export default function PricingPage() {
   const router = useRouter();
+  const locale = useLocale();
   const t = useTranslations("pages.pricing");
   const tFeatures = useTranslations("payment.features");
   const tPackages = useTranslations("payment.packages");
@@ -43,6 +44,18 @@ export default function PricingPage() {
     item: CreditPackage | SubscriptionPlan;
   } | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+  // Get price based on locale
+  const getPackagePrice = (pkg: CreditPackage) => {
+    return locale === "ko" ? pkg.priceFormatted : pkg.priceFormattedUSD;
+  };
+
+  const getPlanPrice = (plan: SubscriptionPlan) => {
+    if (plan.price === 0) {
+      return locale === "ko" ? "무료" : "Free";
+    }
+    return locale === "ko" ? plan.priceFormatted : plan.priceFormattedUSD;
+  };
 
   const handleSelectPackage = (pkg: CreditPackage) => {
     setSelectedItem({ type: "credit_package", item: pkg });
@@ -121,7 +134,7 @@ export default function PricingPage() {
               </CardHeader>
               <CardContent className="text-center">
                 <div className="mb-6">
-                  <span className="text-4xl font-bold">{pkg.priceFormatted}</span>
+                  <span className="text-4xl font-bold">{getPackagePrice(pkg)}</span>
                 </div>
                 <Button
                   onClick={() => handleSelectPackage(pkg)}
@@ -158,13 +171,13 @@ export default function PricingPage() {
                   {PLAN_ICONS[plan.id]}
                   <CardTitle className="text-xl">{tPlans(plan.id)}</CardTitle>
                 </div>
-                <CardDescription>
-                  {t("perMonth")} {plan.monthlyCredits.toLocaleString()} {t("credits")}
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="mb-6">
-                  <span className="text-3xl font-bold">{plan.priceFormatted}</span>
+                  <span className="text-3xl font-bold">{getPlanPrice(plan)}</span>
+                  {plan.price > 0 && (
+                    <span className="text-muted-foreground text-sm">{t("perMonth")}</span>
+                  )}
                 </div>
                 <ul className="space-y-3 mb-6 text-sm">
                   {(plan.featureKeys || []).map((featureKey, idx) => (
@@ -234,8 +247,12 @@ export default function PricingPage() {
               ? tPackages(selectedItem.item.id)
               : tPlans(selectedItem.item.id)
           }
-          price={selectedItem.item.price}
-          priceFormatted={selectedItem.item.priceFormatted}
+          price={locale === "ko" ? selectedItem.item.price : selectedItem.item.priceUSD}
+          priceFormatted={
+            locale === "ko"
+              ? selectedItem.item.priceFormatted
+              : selectedItem.item.priceFormattedUSD
+          }
         />
       )}
     </div>
