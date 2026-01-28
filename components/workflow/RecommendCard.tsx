@@ -8,6 +8,7 @@
 
 import { useState, memo } from "react";
 import { Sparkles, ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -42,7 +43,7 @@ export interface RecommendCardProps {
 // 스코어 배지 컴포넌트 (memoized)
 // ============================================================
 
-const ScoreBadge = memo(function ScoreBadge({ score }: { score: number }) {
+const ScoreBadge = memo(function ScoreBadge({ score, matchText }: { score: number; matchText: string }) {
   const percentage = Math.round(score * 100);
   const colorClass =
     percentage >= 80
@@ -53,7 +54,7 @@ const ScoreBadge = memo(function ScoreBadge({ score }: { score: number }) {
 
   return (
     <div className={cn("px-2 py-0.5 rounded-full text-xs font-medium", colorClass)}>
-      {percentage}% 매칭
+      {percentage}% {matchText}
     </div>
   );
 });
@@ -71,6 +72,7 @@ export const RecommendCard = memo(function RecommendCard({
   className,
 }: RecommendCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const t = useTranslations("workflow.recommend");
 
   const industryInfo = INDUSTRY_INFO[recommendation.industry];
   const intentInfo = EXPRESSION_INTENT_INFO[recommendation.intent];
@@ -92,7 +94,7 @@ export const RecommendCard = memo(function RecommendCard({
         {/* 추천 배지 */}
         <div className="absolute top-3 right-3 flex items-center gap-1 bg-primary-500 text-white px-2 py-1 rounded-full text-xs">
           {SparklesIconSmall}
-          추천
+          {t("recommended")}
         </div>
 
         <CardHeader className="pb-2">
@@ -122,7 +124,7 @@ export const RecommendCard = memo(function RecommendCard({
           )}
 
           <div className="flex items-center justify-between">
-            {showScore && <ScoreBadge score={recommendation.score} />}
+            {showScore && <ScoreBadge score={recommendation.score} matchText={t("matching")} />}
             <Button
               size="sm"
               className={cn(
@@ -130,7 +132,7 @@ export const RecommendCard = memo(function RecommendCard({
                 isHovered && "bg-primary-600"
               )}
             >
-              시작하기
+              {t("startNow")}
               {ArrowRightIconSmall}
             </Button>
           </div>
@@ -165,7 +167,7 @@ export const RecommendCard = memo(function RecommendCard({
 
         {showScore && (
           <div className="shrink-0">
-            <ScoreBadge score={recommendation.score} />
+            <ScoreBadge score={recommendation.score} matchText={t("matching")} />
           </div>
         )}
 
@@ -239,14 +241,14 @@ export const RecommendCard = memo(function RecommendCard({
 
         {/* 하단 */}
         <div className="flex items-center justify-between">
-          {showScore && <ScoreBadge score={recommendation.score} />}
+          {showScore && <ScoreBadge score={recommendation.score} matchText={t("matching")} />}
 
           <Button
             size="sm"
             variant={isHovered ? "default" : "ghost"}
             className="transition-all"
           >
-            선택
+            {t("select")}
             {ArrowRightIconSmall}
           </Button>
         </div>
@@ -272,17 +274,20 @@ export interface RecommendListProps {
 export function RecommendList({
   recommendations,
   title,
-  emptyMessage = "추천 워크플로우가 없습니다",
+  emptyMessage,
   variant = "default",
   showScore = true,
   onSelect,
   className,
 }: RecommendListProps) {
+  const t = useTranslations("workflow.recommend");
+  const displayEmptyMessage = emptyMessage || t("emptyMessage");
+
   if (recommendations.length === 0) {
     return (
       <div className={cn("text-center py-8 text-zinc-500 dark:text-zinc-400", className)}>
         {SparklesIconLarge}
-        <p className="text-sm">{emptyMessage}</p>
+        <p className="text-sm">{displayEmptyMessage}</p>
       </div>
     );
   }

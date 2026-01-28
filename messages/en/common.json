@@ -1,0 +1,579 @@
+{
+  "nav": {
+    "home": "Home",
+    "gallery": "Gallery",
+    "colorCorrection": "Color Correction",
+    "login": "Login",
+    "logout": "Logout",
+    "settings": "Settings",
+    "myGallery": "My Gallery",
+    "pricing": "Pricing"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "changeTheme": "Change theme"
+  },
+  "language": {
+    "ko": "한국어",
+    "en": "English",
+    "changeLanguage": "Change language"
+  },
+  "auth": {
+    "profile": "Profile",
+    "loginWith": "Login with {provider}",
+    "continueWith": "Continue with {provider}",
+    "termsAgreement": "By logging in, you agree to our {terms} and {privacy}.",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy"
+  },
+  "common": {
+    "loading": "Loading..."
+  },
+  "footer": {
+    "companyName": "FlowCoder",
+    "businessNumber": "Business Registration",
+    "representatives": "Representatives",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "refundPolicy": "Refund Policy",
+    "allRightsReserved": "All rights reserved."
+  },
+  "metadata": {
+    "title": "FlowStudio - AI Product Image Generation",
+    "description": "Industry-specific AI image generation platform. Create optimized product images for fashion, food, beauty, interior, and more with AI."
+  },
+  "login": {
+    "title": "FlowStudio",
+    "subtitle": "AI Product Image Generation",
+    "description": "Create industry-specific images easily with AI",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithKakao": "Continue with Kakao",
+    "error": "An error occurred during login. Please try again."
+  },
+  "workflow": {
+    "industries": {
+      "fashion": {
+        "name": "Fashion",
+        "description": "Clothing, accessories, shoes and fashion product images"
+      },
+      "food": {
+        "name": "Food & Beverage",
+        "description": "Food, beverage, and bakery product images"
+      },
+      "beauty": {
+        "name": "Beauty",
+        "description": "Cosmetics, skincare, and haircare product images"
+      },
+      "interior": {
+        "name": "Interior",
+        "description": "Furniture, home decor, and lighting product images"
+      },
+      "electronics": {
+        "name": "Electronics",
+        "description": "Electronics, IT devices, and mobile accessory images"
+      },
+      "jewelry": {
+        "name": "Jewelry",
+        "description": "Gemstones, precious metals, and fashion jewelry images"
+      },
+      "sports": {
+        "name": "Sports & Outdoor",
+        "description": "Sports equipment, camping, and outdoor gear images"
+      },
+      "pet": {
+        "name": "Pet",
+        "description": "Pet supplies, food, and toy product images"
+      },
+      "kids": {
+        "name": "Kids & Baby",
+        "description": "Baby products, toys, and children's clothing images"
+      }
+    },
+    "actions": {
+      "fashion-model-shot": {
+        "name": "Model Shot",
+        "description": "Full or half-body image of a model wearing the clothing"
+      },
+      "fashion-flat-lay": {
+        "name": "Flat Lay",
+        "description": "Top-down view of clothing laid flat"
+      },
+      "fashion-detail": {
+        "name": "Detail Shot",
+        "description": "Close-up emphasizing fabric and details"
+      },
+      "fashion-ghost-mannequin": {
+        "name": "Ghost Mannequin",
+        "description": "Invisible mannequin effect highlighting garment shape"
+      },
+      "fashion-lifestyle": {
+        "name": "Lifestyle",
+        "description": "Clothing worn in everyday situations"
+      },
+      "food-hero-shot": {
+        "name": "Hero Shot",
+        "description": "Main appetizing image of the food"
+      },
+      "food-flat-lay": {
+        "name": "Flat Lay",
+        "description": "Top-down view with ingredients"
+      },
+      "food-packaging": {
+        "name": "Packaging Shot",
+        "description": "Image featuring product packaging"
+      },
+      "food-action": {
+        "name": "Action Shot",
+        "description": "Capturing food being prepared or eaten"
+      },
+      "food-beverage": {
+        "name": "Beverage Shot",
+        "description": "Specialized beverage product image"
+      },
+      "beauty-product-hero": {
+        "name": "Product Hero",
+        "description": "Main image of cosmetic product"
+      },
+      "beauty-texture": {
+        "name": "Texture Shot",
+        "description": "Image emphasizing product texture"
+      },
+      "beauty-model": {
+        "name": "Model Application",
+        "description": "Model using the product"
+      },
+      "beauty-flatlay": {
+        "name": "Flat Lay Collection",
+        "description": "Multiple products arranged together"
+      },
+      "beauty-skincare": {
+        "name": "Skincare Focus",
+        "description": "Specialized skincare product image"
+      },
+      "interior-room-scene": {
+        "name": "Room Scene",
+        "description": "Complete room image with furniture placement"
+      },
+      "electronics-product": {
+        "name": "Product Shot",
+        "description": "Main electronics product image"
+      },
+      "jewelry-glamour": {
+        "name": "Glamour Shot",
+        "description": "Image emphasizing jewelry sparkle"
+      },
+      "sports-action": {
+        "name": "Action Shot",
+        "description": "Sports equipment in use"
+      },
+      "pet-product": {
+        "name": "Product with Pet",
+        "description": "Pet with product together"
+      },
+      "kids-playful": {
+        "name": "Playful Scene",
+        "description": "Child enjoying the product"
+      }
+    },
+    "inputs": {
+      "product": "Product Description",
+      "model": "Model Type",
+      "pose": "Pose",
+      "background": "Background",
+      "styling": "Styling",
+      "focus": "Focus Area",
+      "angle": "Camera Angle",
+      "scene": "Scene",
+      "style": "Photo Style",
+      "lighting": "Lighting",
+      "ingredients": "Ingredient Arrangement",
+      "surface": "Background Surface",
+      "presentation": "Presentation Style",
+      "action": "Action",
+      "glass": "Container",
+      "texture": "Texture Style",
+      "application": "Application Area",
+      "products": "Products",
+      "arrangement": "Arrangement Style",
+      "props": "Props",
+      "element": "Visual Element",
+      "mood": "Mood",
+      "room": "Room Type",
+      "activity": "Activity",
+      "pet": "Pet Type"
+    },
+    "options": {
+      "korean-female-20s": "Korean Female 20s",
+      "korean-female-30s": "Korean Female 30s",
+      "korean-male-20s": "Korean Male 20s",
+      "korean-male-30s": "Korean Male 30s",
+      "western-female": "Western Female",
+      "western-male": "Western Male",
+      "standing-front": "Standing Front",
+      "standing-side": "Standing Side",
+      "walking": "Walking",
+      "sitting": "Sitting",
+      "dynamic": "Dynamic Pose",
+      "white-studio": "White Studio",
+      "urban-street": "Urban Street",
+      "nature": "Nature",
+      "cafe": "Cafe",
+      "minimal": "Minimal",
+      "with-accessories": "With Accessories",
+      "seasonal": "Seasonal Props",
+      "lifestyle": "Lifestyle",
+      "white": "White",
+      "marble": "Marble",
+      "wood": "Wood",
+      "fabric": "Fabric",
+      "fabric-texture": "Fabric Texture",
+      "stitching": "Stitching",
+      "buttons": "Buttons/Details",
+      "embroidery": "Embroidery/Print",
+      "zipper": "Zipper/Hardware",
+      "front": "Front",
+      "back": "Back",
+      "side": "Side",
+      "three-quarter": "3/4 Angle",
+      "commuting": "Commuting",
+      "weekend": "Weekend",
+      "travel": "Travel",
+      "date": "Date",
+      "work": "Office",
+      "overhead": "Overhead",
+      "45-degree": "45 Degree",
+      "close-up": "Close-up",
+      "natural": "Natural Light",
+      "warm": "Warm Light",
+      "dramatic": "Dramatic",
+      "soft": "Soft",
+      "scattered": "Scattered",
+      "organized": "Organized",
+      "abundant": "Abundant",
+      "dark-slate": "Dark Slate",
+      "package-only": "Package Only",
+      "with-product": "With Product",
+      "serving": "Serving",
+      "pouring": "Pouring",
+      "cutting": "Cutting",
+      "lifting": "Lifting",
+      "drizzling": "Drizzling",
+      "steam-rising": "Steam Rising",
+      "splash": "Splash",
+      "condensation": "Condensation",
+      "clean": "Clean",
+      "glass": "Glass",
+      "bottle": "Bottle",
+      "can": "Can",
+      "tumbler": "Tumbler",
+      "luxury": "Luxury",
+      "editorial": "Editorial",
+      "gradient": "Gradient",
+      "silk": "Silk/Fabric",
+      "water": "Water/Wave",
+      "swatch": "Swatch",
+      "smear": "Smear",
+      "drop": "Drop",
+      "spread": "Spread",
+      "skin": "On Skin",
+      "acrylic": "Acrylic",
+      "paper": "Paper",
+      "lips": "Lips",
+      "eyes": "Eyes",
+      "face": "Full Face",
+      "nails": "Nails",
+      "diverse": "Diverse Skin Tones",
+      "geometric": "Geometric",
+      "organic": "Organic",
+      "symmetrical": "Symmetrical",
+      "flowers": "Flowers",
+      "none": "No Props",
+      "water-splash": "Water Splash",
+      "bubble": "Bubble",
+      "gel-texture": "Gel Texture",
+      "dropper": "Dropper",
+      "fresh": "Fresh",
+      "luxurious": "Luxurious",
+      "clinical": "Clinical",
+      "living": "Living Room",
+      "bedroom": "Bedroom",
+      "office": "Office",
+      "hero": "Hero Angle",
+      "floating": "Floating",
+      "sparkle": "Sparkle",
+      "running": "Running",
+      "gym": "Gym",
+      "outdoor": "Outdoor",
+      "dog": "Dog",
+      "cat": "Cat",
+      "playful": "Playful",
+      "cozy": "Cozy",
+      "educational": "Educational"
+    },
+    "placeholders": {
+      "product": "e.g., Navy linen shirt, casual fit",
+      "model": "e.g., Korean Female 20s",
+      "food": "e.g., Pepperoni pizza with rich tomato sauce",
+      "beauty": "e.g., Rose gold lipstick",
+      "interior": "e.g., Minimal living room sofa",
+      "electronics": "e.g., Black wireless earbuds",
+      "jewelry": "e.g., 18K gold necklace",
+      "sports": "e.g., Lightweight running shoes",
+      "pet": "e.g., Dog cushion bed",
+      "kids": "e.g., Wooden block toy"
+    },
+    "ui": {
+      "selectIndustry": "Select Industry",
+      "selectAction": "Select Style",
+      "generateImage": "Generate Image",
+      "generating": "Generating...",
+      "required": "Required",
+      "optional": "Optional",
+      "next": "Next",
+      "previous": "Previous",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "uploadImage": "Upload Image",
+      "referenceImage": "Reference Image",
+      "imageCount": "Number of Images",
+      "imageCountDesc": "Generate {count} images",
+      "aiRecommendation": "AI Recommendation",
+      "matchRate": "Match Rate",
+      "startWithThisWorkflow": "Start with this workflow",
+      "prevRecommendation": "Previous",
+      "nextRecommendation": "Next",
+      "swipeToStartInput": "Swipe to start input",
+      "swipeToNavigate": "Swipe to navigate",
+      "swipeToSkip": "Swipe to skip",
+      "referenceImageOptional": "Reference Image (Optional)",
+      "referenceImageDesc": "Upload similar style images for more accurate results.",
+      "readyToGenerate": "Ready to Go!",
+      "completeInputs": "Please complete inputs",
+      "clickToGenerate": "Click the button below to generate images",
+      "emptyFields": "{count} fields are empty",
+      "creditCalculation": "{count} × {cost} = {total} credits",
+      "generateNImages": "Generate {count} images ({credits} credits)",
+      "navigate": "Navigate",
+      "close": "Close",
+      "credits": "credits",
+      "inputItems": "{count} input items",
+      "startWithThisStyle": "Start with this style",
+      "viewOtherStyles": "View other styles",
+      "viewAsList": "View as list",
+      "selectActionAria": "Select action",
+      "swipeForOtherStyles": "Swipe to see other styles",
+      "arrowKeysForStyles": "Use ← → arrow keys to browse styles",
+      "keyboardHintMove": "← → Move",
+      "keyboardHintSelect": "Enter Select",
+      "keyboardHintClose": "ESC Close"
+    },
+    "actionCard": {
+      "imageUpload": "Image Upload",
+      "colorSelect": "Color Selection",
+      "styleSelect": "Style Selection",
+      "aiGeneration": "AI Generation",
+      "affordable": "Affordable",
+      "highQuality": "High Quality"
+    },
+    "result": {
+      "generatedImages": "{count} images generated",
+      "creditsUsed": "{credits} credits used",
+      "createNew": "Create New",
+      "regenerate": "Regenerate",
+      "download": "Download",
+      "save": "Save",
+      "saved": "Saved",
+      "share": "Share",
+      "shareTitle": "FlowStudio Image",
+      "urlCopied": "URL copied to clipboard",
+      "resultAria": "Generation Result",
+      "prevImageAria": "Previous image",
+      "nextImageAria": "Next image",
+      "keyboardSwipeHint": "← → keyboard or swipe to navigate • ESC to close"
+    },
+    "recommend": {
+      "matching": "match",
+      "recommended": "Recommended",
+      "startNow": "Start",
+      "select": "Select",
+      "emptyMessage": "No recommended workflows"
+    },
+    "guide": {
+      "title": "Photo Guide",
+      "welcomeMessage": "Hello! I'll ask you a few questions to create the image you want.",
+      "completedMessage": "All information has been entered! Ready to generate your image. 🎉",
+      "minLengthError": "Please provide more details. (minimum {minLength} characters)",
+      "maxLengthError": "Text is too long. (maximum {maxLength} characters)",
+      "progress": "{current} / {total}",
+      "inputPlaceholder": "Enter here...",
+      "guideCompleted": "✅ Guide completed"
+    },
+    "similar": {
+      "title": "Similar Workflows",
+      "otherIndustry": "Other Industry",
+      "similarity": "{score}% similar",
+      "inspirationHint": "Get inspiration from other industries! {count} similar workflows available.",
+      "crossIndustryTitle": "Get Inspiration from Other Industries"
+    }
+  },
+  "pages": {
+    "home": {
+      "title": "Create Product Images with AI",
+      "subtitle": "AI creates professional product images optimized for your industry. Select your industry and enter simple information to get started!",
+      "searchPlaceholder": "What image would you like to create? (e.g., T-shirt model shot)",
+      "keywordsFound": "Found keywords: \"{keywords}\"",
+      "noIndustryFound": "No related industry found. Please select from below.",
+      "recentWorkflows": "Recent Workflows",
+      "browseByIndustry": "Browse by Industry",
+      "creditsPerImage": "5 credits per image",
+      "support4K": "4K high quality support",
+      "commercialUse": "Commercial use allowed"
+    },
+    "pricing": {
+      "title": "Pricing",
+      "subtitle": "Choose the plan that fits your needs. Purchase credit packages as needed, or subscribe for monthly credits.",
+      "creditPackages": "Credit Packages",
+      "subscriptionPlans": "Subscription Plans",
+      "popular": "Popular",
+      "recommended": "Recommended",
+      "credits": "credits",
+      "bonus": "+{bonus}% bonus",
+      "purchase": "Purchase",
+      "subscribe": "Subscribe",
+      "currentPlan": "Current Plan",
+      "perMonth": "/month",
+      "faq": {
+        "title": "Frequently Asked Questions",
+        "q1": "How are credits used?",
+        "a1": "1-5 credits are deducted per image based on quality. Additional features like upscaling and background removal also use credits.",
+        "q2": "Do unused credits roll over?",
+        "a2": "Subscription plan credits roll over to the next month. Credit package purchases are valid for 1 year.",
+        "q3": "What happens if I cancel my subscription?",
+        "a3": "You can continue using the service until the end of your billing period. Remaining credits can be used until they expire.",
+        "q4": "What is the refund policy?",
+        "a4": "Full refunds are available within 7 days of purchase if no credits have been used. Please see our refund policy for details."
+      }
+    },
+    "gallery": {
+      "title": "Gallery",
+      "totalImages": "{count} images total",
+      "searchPlaceholder": "Search prompts...",
+      "sortCreatedAt": "Created",
+      "sortUpdatedAt": "Updated",
+      "download": "Download",
+      "delete": "Delete",
+      "noPrompt": "No prompt",
+      "emptyTitle": "No images yet",
+      "emptyDescription": "Generate images and save them to your gallery",
+      "createImage": "Create Image",
+      "loadError": "Failed to load images",
+      "retry": "Retry",
+      "previous": "Previous",
+      "next": "Next",
+      "imageDetail": "Image Detail",
+      "prompt": "Prompt",
+      "deleteConfirmTitle": "Delete Image",
+      "deleteConfirmDesc": "Are you sure you want to delete this image? Deleted images can be restored from trash.",
+      "cancel": "Cancel"
+    },
+    "result": {
+      "loadingResult": "Loading result...",
+      "title": "Generation Result",
+      "imagesGenerated": "{count} images generated",
+      "creditsUsed": "{credits} credits used",
+      "immersiveMode": "Immersive Mode",
+      "createNew": "Create New",
+      "regenerate": "Regenerate",
+      "noResult": "No result found.",
+      "goHome": "Go to Home",
+      "generationFailed": "Image Generation Failed",
+      "goBack": "Go Back",
+      "tryAgain": "Try Again",
+      "prompt": "Prompt",
+      "negativePrompt": "Negative Prompt",
+      "provider": "Provider",
+      "model": "Model",
+      "generationTime": "Generation time: {seconds}s",
+      "similarWorkflows": "Create more images like this",
+      "imageDetail": "Image Detail",
+      "saveToGallery": "Save to Gallery",
+      "download": "Download",
+      "share": "Share",
+      "savedToGallery": "Image saved to gallery.",
+      "saveFailed": "Failed to save.",
+      "saveError": "Error occurred while saving."
+    }
+  },
+  "payment": {
+    "packages": {
+      "starter": "Starter",
+      "basic": "Basic",
+      "pro": "Pro",
+      "business": "Business"
+    },
+    "plans": {
+      "free": "Free",
+      "starter": "Starter",
+      "pro": "Pro",
+      "business": "Business"
+    },
+    "features": {
+      "monthlyCredits": "{count} credits/month",
+      "basicImageGeneration": "Basic image generation",
+      "workflows": "{count} workflows",
+      "unlimitedWorkflows": "Unlimited workflows",
+      "communitySupport": "Community support",
+      "emailSupport": "Email support",
+      "prioritySupport": "Priority support",
+      "dedicatedSupport": "Dedicated support",
+      "hdImageGeneration": "HD image generation",
+      "ultraImageGeneration": "Ultra HD images",
+      "creditRollover": "Credit rollover",
+      "teamSharing": "Team sharing",
+      "apiAccess": "API access",
+      "customWorkflows": "Custom workflows"
+    },
+    "checkout": {
+      "title": "Confirm Payment",
+      "subscription": "Start your subscription",
+      "creditPurchase": "Purchase credits",
+      "orderSummary": "Order Summary",
+      "monthlyAutoPayment": "Billed monthly. Cancel anytime.",
+      "securityNotice": "Payment is securely processed through LemonSqueezy. Your card information is not stored on our servers.",
+      "cancel": "Cancel",
+      "pay": "Pay Now",
+      "processing": "Processing...",
+      "error": "Failed to create payment session",
+      "genericError": "An error occurred"
+    },
+    "insufficient": {
+      "title": "Insufficient Credits",
+      "description": "You need more credits to proceed with {action}",
+      "currentBalance": "Current Balance",
+      "requiredCredits": "Required Credits",
+      "shortage": "Shortage",
+      "credits": "credits",
+      "recommendedPackage": "Recommended Package",
+      "starterRecommend": "Starter Package (100 credits)",
+      "basicRecommend": "Basic Package (300 credits + 10% bonus)",
+      "proRecommend": "Pro Package (700 credits + 17% bonus)",
+      "rechargeMessage": "will give you plenty of credits to work with.",
+      "later": "Later",
+      "purchaseCredits": "Purchase Credits",
+      "defaultAction": "this action"
+    },
+    "pricing": {
+      "title": "Pricing",
+      "subtitle": "Choose the plan that fits your needs",
+      "creditPackages": "Credit Packages",
+      "subscriptionPlans": "Subscription Plans",
+      "popular": "Popular",
+      "bonus": "{percent}% bonus",
+      "perMonth": "/month",
+      "selectPlan": "Select",
+      "currentPlan": "Current Plan"
+    }
+  }
+}

@@ -8,6 +8,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Send, Bot, User, Loader2, ChevronDown, RotateCcw } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -70,6 +71,7 @@ export function GuideChat({
   onReset,
   className,
 }: GuideChatProps) {
+  const t = useTranslations("workflow.guide");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -87,7 +89,7 @@ export function GuideChat({
       const welcomeMessage: ChatMessage = {
         id: generateMessageId(),
         role: "assistant",
-        content: "안녕하세요! 원하시는 이미지를 만들기 위해 몇 가지 질문을 드릴게요.",
+        content: t("welcomeMessage"),
         timestamp: new Date(),
       };
 
@@ -102,7 +104,7 @@ export function GuideChat({
 
       setMessages([welcomeMessage, stepMessage]);
     }
-  }, [currentStep, messages.length]);
+  }, [currentStep, messages.length, t]);
 
   // 스크롤 관리
   const scrollToBottom = useCallback(() => {
@@ -160,7 +162,7 @@ export function GuideChat({
       const completeMessage: ChatMessage = {
         id: generateMessageId(),
         role: "assistant",
-        content: "모든 정보 입력이 완료되었습니다! 이제 이미지를 생성할 준비가 되었어요. 🎉",
+        content: t("completedMessage"),
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, completeMessage]);
@@ -195,7 +197,7 @@ export function GuideChat({
         const errorMessage: ChatMessage = {
           id: generateMessageId(),
           role: "assistant",
-          content: `조금 더 자세히 설명해주세요. (최소 ${validation.minLength}자 이상)`,
+          content: t("minLengthError", { minLength: validation.minLength }),
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, errorMessage]);
@@ -206,7 +208,7 @@ export function GuideChat({
         const errorMessage: ChatMessage = {
           id: generateMessageId(),
           role: "assistant",
-          content: `텍스트가 너무 길어요. (최대 ${validation.maxLength}자)`,
+          content: t("maxLengthError", { maxLength: validation.maxLength }),
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, errorMessage]);
@@ -238,7 +240,7 @@ export function GuideChat({
       const completeMessage: ChatMessage = {
         id: generateMessageId(),
         role: "assistant",
-        content: "모든 정보 입력이 완료되었습니다! 이제 이미지를 생성할 준비가 되었어요. 🎉",
+        content: t("completedMessage"),
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, completeMessage]);
@@ -260,11 +262,11 @@ export function GuideChat({
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center gap-2">
           <Bot className="w-5 h-5 text-primary-500 dark:text-primary-400" />
-          <span className="font-medium text-sm text-zinc-900 dark:text-zinc-100">촬영 가이드</span>
+          <span className="font-medium text-sm text-zinc-900 dark:text-zinc-100">{t("title")}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
-            {guide.currentStep + 1} / {guide.totalSteps}
+            {t("progress", { current: guide.currentStep + 1, total: guide.totalSteps })}
           </span>
           {onReset && (
             <Button
@@ -382,7 +384,7 @@ export function GuideChat({
             <Input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder={currentStep.placeholder || "입력해주세요..."}
+              placeholder={currentStep.placeholder || t("inputPlaceholder")}
               disabled={isLoading}
               className="flex-1"
             />
@@ -401,7 +403,7 @@ export function GuideChat({
       {isComplete && (
         <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-green-50 dark:bg-green-900/30">
           <p className="text-sm text-green-700 dark:text-green-300 text-center">
-            ✅ 가이드가 완료되었습니다
+            {t("guideCompleted")}
           </p>
         </div>
       )}

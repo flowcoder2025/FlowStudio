@@ -10,11 +10,14 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
 import { Menu, X, User, LogOut, Settings, ImageIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { CreditBadge } from "./CreditBadge";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { LanguageToggle } from "@/components/theme/language-toggle";
 
 export function Header() {
   const { data: session, status } = useSession();
+  const t = useTranslations();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -38,19 +41,19 @@ export function Header() {
                   href="/"
                   className="px-4 py-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                 >
-                  홈
+                  {t("nav.home")}
                 </Link>
                 <Link
                   href="/gallery"
                   className="px-4 py-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                 >
-                  갤러리
+                  {t("nav.gallery")}
                 </Link>
                 <Link
                   href="/color-correction"
                   className="px-4 py-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                 >
-                  색상 보정
+                  {t("nav.colorCorrection")}
                 </Link>
               </>
             )}
@@ -60,6 +63,9 @@ export function Header() {
           <div className="flex items-center gap-3">
             {/* Theme Toggle */}
             <ThemeToggle />
+
+            {/* Language Toggle */}
+            <LanguageToggle />
 
             {isLoading ? (
               <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
@@ -77,7 +83,7 @@ export function Header() {
                     {session?.user?.image ? (
                       <img
                         src={session.user.image}
-                        alt={session.user.name || "프로필"}
+                        alt={session.user.name || t("auth.profile")}
                         className="w-8 h-8 rounded-full"
                       />
                     ) : (
@@ -108,7 +114,7 @@ export function Header() {
                           onClick={() => setIsProfileOpen(false)}
                         >
                           <ImageIcon className="w-4 h-4" />
-                          내 갤러리
+                          {t("nav.myGallery")}
                         </Link>
                         <Link
                           href="/settings"
@@ -116,14 +122,14 @@ export function Header() {
                           onClick={() => setIsProfileOpen(false)}
                         >
                           <Settings className="w-4 h-4" />
-                          설정
+                          {t("nav.settings")}
                         </Link>
                         <button
                           onClick={() => signOut({ callbackUrl: "/login" })}
                           className="flex items-center gap-2 w-full px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 active:scale-95 transition-all touch-target"
                         >
                           <LogOut className="w-4 h-4" />
-                          로그아웃
+                          {t("nav.logout")}
                         </button>
                       </div>
                     </>
@@ -135,7 +141,7 @@ export function Header() {
                 href="/login"
                 className="btn-primary"
               >
-                로그인
+                {t("nav.login")}
               </Link>
             )}
 
@@ -159,21 +165,21 @@ export function Header() {
                   className="block px-4 py-3 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-lg active:scale-95 transition-all touch-target"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  홈
+                  {t("nav.home")}
                 </Link>
                 <Link
                   href="/gallery"
                   className="block px-4 py-3 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-lg active:scale-95 transition-all touch-target"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  갤러리
+                  {t("nav.gallery")}
                 </Link>
                 <Link
                   href="/color-correction"
                   className="block px-4 py-3 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-lg active:scale-95 transition-all touch-target"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  색상 보정
+                  {t("nav.colorCorrection")}
                 </Link>
               </div>
             ) : (
@@ -182,7 +188,7 @@ export function Header() {
                 className="block px-4 py-3 text-primary-600 dark:text-primary-400 font-medium active:scale-95 transition-all touch-target"
                 onClick={() => setIsMenuOpen(false)}
               >
-                로그인
+                {t("nav.login")}
               </Link>
             )}
           </nav>

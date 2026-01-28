@@ -7,6 +7,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { AlertCircle, CreditCard, Sparkles } from "lucide-react";
 import {
   Dialog,
@@ -22,7 +23,7 @@ interface InsufficientModalProps {
   onClose: () => void;
   currentBalance: number;
   requiredCredits: number;
-  action?: string; // e.g., "이미지 생성", "업스케일"
+  action?: string; // e.g., "image generation", "upscale"
 }
 
 export function InsufficientModal({
@@ -30,14 +31,22 @@ export function InsufficientModal({
   onClose,
   currentBalance,
   requiredCredits,
-  action = "이 작업",
+  action,
 }: InsufficientModalProps) {
+  const t = useTranslations("payment.insufficient");
   const router = useRouter();
   const shortage = requiredCredits - currentBalance;
+  const actionText = action || t("defaultAction");
 
   const handlePurchase = () => {
     onClose();
     router.push("/pricing");
+  };
+
+  const getRecommendedPackage = () => {
+    if (shortage <= 100) return t("starterRecommend");
+    if (shortage <= 300) return t("basicRecommend");
+    return t("proRecommend");
   };
 
   return (
@@ -46,10 +55,10 @@ export function InsufficientModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-orange-500" />
-            크레딧이 부족합니다
+            {t("title")}
           </DialogTitle>
           <DialogDescription>
-            {action}을 진행하려면 추가 크레딧이 필요합니다
+            {t("description", { action: actionText })}
           </DialogDescription>
         </DialogHeader>
 
@@ -57,24 +66,24 @@ export function InsufficientModal({
           {/* Credit Status */}
           <div className="space-y-3">
             <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
-              <span className="text-muted-foreground">현재 잔액</span>
+              <span className="text-muted-foreground">{t("currentBalance")}</span>
               <span className="font-medium flex items-center gap-1">
                 <Sparkles className="h-4 w-4 text-primary" />
-                {currentBalance.toLocaleString()} 크레딧
+                {currentBalance.toLocaleString()} {t("credits")}
               </span>
             </div>
             <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
-              <span className="text-muted-foreground">필요 크레딧</span>
+              <span className="text-muted-foreground">{t("requiredCredits")}</span>
               <span className="font-medium">
-                {requiredCredits.toLocaleString()} 크레딧
+                {requiredCredits.toLocaleString()} {t("credits")}
               </span>
             </div>
             <div className="flex justify-between items-center p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
               <span className="text-orange-600 dark:text-orange-400 font-medium">
-                부족한 크레딧
+                {t("shortage")}
               </span>
               <span className="font-bold text-orange-600 dark:text-orange-400">
-                {shortage.toLocaleString()} 크레딧
+                {shortage.toLocaleString()} {t("credits")}
               </span>
             </div>
           </div>
@@ -83,15 +92,10 @@ export function InsufficientModal({
           <div className="p-4 rounded-lg border bg-primary/5 border-primary/20">
             <h4 className="font-medium mb-2 flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
-              추천 패키지
+              {t("recommendedPackage")}
             </h4>
             <p className="text-sm text-muted-foreground mb-3">
-              {shortage <= 100
-                ? "스타터 패키지 (100 크레딧)"
-                : shortage <= 300
-                ? "베이직 패키지 (300 크레딧 + 10% 보너스)"
-                : "프로 패키지 (700 크레딧 + 17% 보너스)"}
-              로 충전하시면 여유있게 사용하실 수 있습니다.
+              {getRecommendedPackage()} {t("rechargeMessage")}
             </p>
           </div>
 
@@ -102,13 +106,13 @@ export function InsufficientModal({
               onClick={onClose}
               className="flex-1"
             >
-              나중에
+              {t("later")}
             </Button>
             <Button
               onClick={handlePurchase}
               className="flex-1"
             >
-              크레딧 구매하기
+              {t("purchaseCredits")}
             </Button>
           </div>
         </div>

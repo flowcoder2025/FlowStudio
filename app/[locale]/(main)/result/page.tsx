@@ -11,6 +11,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 import { Download, Share2, RefreshCw, ZoomIn, Heart, ArrowLeft, Sparkles, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -53,12 +54,12 @@ interface GeneratedImage {
 // Loading Component
 // =====================================================
 
-function LoadingState() {
+function LoadingState({ message }: { message?: string }) {
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="text-center">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-muted-foreground">결과를 불러오는 중...</p>
+        <p className="text-muted-foreground">{message || 'Loading...'}</p>
       </div>
     </div>
   );
@@ -72,6 +73,7 @@ function ResultContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session');
+  const t = useTranslations("pages.result");
 
   // Zustand store - state selectors only (rerender-defer-reads)
   // Actions are accessed via getState() in callbacks to avoid unnecessary re-renders
@@ -186,15 +188,15 @@ function ResultContent() {
 
       const data = await response.json();
       if (data.success) {
-        alert('이미지가 갤러리에 저장되었습니다.');
+        alert(t("savedToGallery"));
       } else {
-        alert(data.error || '저장에 실패했습니다.');
+        alert(data.error || t("saveFailed"));
       }
     } catch (error) {
       console.error('Save failed:', error);
-      alert('저장 중 오류가 발생했습니다.');
+      alert(t("saveError"));
     }
-  }, []);
+  }, [t]);
 
   // Handle similar workflow selection (using getState for actions)
   const handleSimilarSelect = useCallback(
@@ -216,16 +218,16 @@ function ResultContent() {
 
   // Loading state
   if (loading) {
-    return <LoadingState />;
+    return <LoadingState message={t("loadingResult")} />;
   }
 
   // No result
   if (!result) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <p className="text-muted-foreground">결과를 찾을 수 없습니다.</p>
+        <p className="text-muted-foreground">{t("noResult")}</p>
         <Button asChild>
-          <Link href="/">홈으로 돌아가기</Link>
+          <Link href="/">{t("goHome")}</Link>
         </Button>
       </div>
     );
@@ -239,17 +241,17 @@ function ResultContent() {
           <CardContent className="pt-6">
             <div className="text-center">
               <h2 className="text-lg font-semibold text-destructive mb-2">
-                이미지 생성 실패
+                {t("generationFailed")}
               </h2>
               <p className="text-muted-foreground mb-4">{result.error}</p>
               <div className="flex justify-center gap-2">
                 <Button variant="outline" onClick={() => router.back()}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  돌아가기
+                  {t("goBack")}
                 </Button>
                 <Button onClick={handleRegenerate}>
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  다시 시도
+                  {t("tryAgain")}
                 </Button>
               </div>
             </div>
@@ -264,23 +266,23 @@ function ResultContent() {
       {/* Header */}
       <div className="flex flex-col gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold">생성 결과</h1>
+          <h1 className="text-2xl font-bold">{t("title")}</h1>
           <p className="text-muted-foreground text-sm">
-            {result.images.length}장의 이미지가 생성되었습니다 • {result.creditsUsed} 크레딧 사용
+            {t("imagesGenerated", { count: result.images.length })} • {t("creditsUsed", { credits: result.creditsUsed })}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={() => useWorkflowStore.getState().openImmersiveResult()}>
             <Maximize2 className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">몰입 모드</span>
+            <span className="hidden sm:inline">{t("immersiveMode")}</span>
           </Button>
           <Button variant="outline" size="sm" onClick={handleCreateNew}>
             <Sparkles className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">새로 만들기</span>
+            <span className="hidden sm:inline">{t("createNew")}</span>
           </Button>
           <Button size="sm" onClick={handleRegenerate}>
             <RefreshCw className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">다시 생성</span>
+            <span className="hidden sm:inline">{t("regenerate")}</span>
           </Button>
         </div>
       </div>
@@ -353,21 +355,21 @@ function ResultContent() {
 
       {/* Generation Info */}
       <div className="p-4 bg-muted rounded-lg mb-8">
-        <h3 className="font-medium mb-2">프롬프트</h3>
+        <h3 className="font-medium mb-2">{t("prompt")}</h3>
         <p className="text-sm text-muted-foreground">{result.images[0]?.prompt}</p>
         {result.images[0]?.negativePrompt && (
           <>
-            <h3 className="font-medium mt-4 mb-2">네거티브 프롬프트</h3>
+            <h3 className="font-medium mt-4 mb-2">{t("negativePrompt")}</h3>
             <p className="text-sm text-muted-foreground">
               {result.images[0].negativePrompt}
             </p>
           </>
         )}
         <div className="mt-4 flex gap-4 text-sm text-muted-foreground">
-          <span>Provider: {result.provider}</span>
-          <span>Model: {result.model}</span>
+          <span>{t("provider")}: {result.provider}</span>
+          <span>{t("model")}: {result.model}</span>
           {result.duration && (
-            <span>생성 시간: {(result.duration / 1000).toFixed(1)}초</span>
+            <span>{t("generationTime", { seconds: (result.duration / 1000).toFixed(1) })}</span>
           )}
         </div>
       </div>
@@ -379,7 +381,7 @@ function ResultContent() {
           currentIntent={selectedIntent ?? ('model_wearing' as ExpressionIntent)}
           recommendations={similarWorkflows}
           onSelect={handleSimilarSelect}
-          title="이런 이미지도 만들어보세요"
+          title={t("similarWorkflows")}
           showReason={true}
           maxItems={8}
           className="mb-8"
@@ -401,7 +403,7 @@ function ResultContent() {
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>이미지 상세</DialogTitle>
+            <DialogTitle>{t("imageDetail")}</DialogTitle>
           </DialogHeader>
           {selectedImage && (
             <div className="space-y-4">
@@ -417,15 +419,15 @@ function ResultContent() {
               <div className="flex justify-center gap-2">
                 <Button variant="outline" onClick={() => handleSave(selectedImage)}>
                   <Heart className="w-4 h-4 mr-2" />
-                  갤러리에 저장
+                  {t("saveToGallery")}
                 </Button>
                 <Button variant="outline" onClick={() => handleDownload(selectedImage)}>
                   <Download className="w-4 h-4 mr-2" />
-                  다운로드
+                  {t("download")}
                 </Button>
                 <Button variant="outline">
                   <Share2 className="w-4 h-4 mr-2" />
-                  공유
+                  {t("share")}
                 </Button>
               </div>
             </div>

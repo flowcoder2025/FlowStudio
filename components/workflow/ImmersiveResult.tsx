@@ -28,6 +28,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { ImmersiveNavigation } from "@/components/immersive/ImmersiveNavigation";
 import { Button } from "@/components/ui/button";
@@ -183,6 +184,7 @@ interface ImageCardProps {
   onShare: () => void;
   saving: boolean;
   saved: boolean;
+  t: ReturnType<typeof useTranslations>;
 }
 
 function ImageCard({
@@ -194,6 +196,7 @@ function ImageCard({
   onShare,
   saving,
   saved,
+  t,
 }: ImageCardProps) {
   return (
     <div className="flex flex-col h-full w-full max-w-4xl mx-auto">
@@ -227,13 +230,13 @@ function ImageCard({
       <div className="flex justify-center gap-4 px-4 pb-8 md:pb-12">
         <ActionButton
           icon={<Download className="w-full h-full" />}
-          label="다운로드"
+          label={t("download")}
           onClick={onDownload}
           index={0}
         />
         <ActionButton
           icon={saved ? <Check className="w-full h-full" /> : <Heart className="w-full h-full" />}
-          label={saved ? "저장됨" : "저장"}
+          label={saved ? t("saved") : t("save")}
           onClick={onSave}
           variant={saved ? "success" : "secondary"}
           loading={saving}
@@ -242,7 +245,7 @@ function ImageCard({
         />
         <ActionButton
           icon={<Share2 className="w-full h-full" />}
-          label="공유"
+          label={t("share")}
           onClick={onShare}
           index={2}
         />
@@ -275,6 +278,8 @@ export function ImmersiveResult({
   onCreateNew,
 }: ImmersiveResultProps) {
   const router = useRouter();
+  const t = useTranslations("workflow.result");
+  const tUI = useTranslations("workflow.ui");
   const [[currentIndex, direction], setPage] = useState<[number, number]>([0, 0]);
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
   const [savedStates, setSavedStates] = useState<Record<string, boolean>>({});
@@ -397,11 +402,11 @@ export function ImmersiveResult({
   }, [savedStates]);
 
   // 공유
-  const handleShare = useCallback(async (image: GeneratedImage) => {
+  const handleShare = useCallback(async (image: GeneratedImage, shareTitle: string) => {
     try {
       if (navigator.share) {
         await navigator.share({
-          title: "FlowStudio 이미지",
+          title: shareTitle,
           text: image.prompt,
           url: image.url,
         });
@@ -458,7 +463,7 @@ export function ImmersiveResult({
           exit="exit"
           role="dialog"
           aria-modal="true"
-          aria-label="생성 결과"
+          aria-label={t("resultAria")}
         >
           {/* 배경 */}
           <div
@@ -476,11 +481,11 @@ export function ImmersiveResult({
               <div className="flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-full">
                 <Sparkles className="w-4 h-4 text-primary-400" />
                 <span className="text-white text-sm font-medium">
-                  {images.length}장 생성됨
+                  {t("generatedImages", { count: images.length })}
                 </span>
               </div>
               <span className="text-white/60 text-sm hidden md:inline">
-                {result.creditsUsed} 크레딧 사용
+                {t("creditsUsed", { credits: result.creditsUsed })}
               </span>
             </div>
 
@@ -493,7 +498,7 @@ export function ImmersiveResult({
                 className="text-white/80 hover:text-white hover:bg-white/10"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">새로 만들기</span>
+                <span className="hidden md:inline">{t("createNew")}</span>
               </Button>
               <Button
                 variant="ghost"
@@ -502,7 +507,7 @@ export function ImmersiveResult({
                 className="text-white/80 hover:text-white hover:bg-white/10"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">다시 생성</span>
+                <span className="hidden md:inline">{t("regenerate")}</span>
               </Button>
               <button
                 onClick={onClose}
@@ -512,7 +517,7 @@ export function ImmersiveResult({
                   "text-white transition-colors",
                   "focus:outline-none focus:ring-2 focus:ring-white/50"
                 )}
-                aria-label="닫기"
+                aria-label={tUI("close")}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -529,7 +534,7 @@ export function ImmersiveResult({
                 className="absolute top-20 left-1/2 -translate-x-1/2 z-20 px-4 py-2 bg-green-500 text-white rounded-lg text-sm flex items-center gap-2"
               >
                 <Copy className="w-4 h-4" />
-                URL이 클립보드에 복사되었습니다
+                {t("urlCopied")}
               </motion.div>
             )}
           </AnimatePresence>
@@ -551,7 +556,7 @@ export function ImmersiveResult({
                     "text-white transition-colors",
                     "focus:outline-none focus:ring-2 focus:ring-white/50"
                   )}
-                  aria-label="이전 이미지"
+                  aria-label={t("prevImageAria")}
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
@@ -564,7 +569,7 @@ export function ImmersiveResult({
                     "text-white transition-colors",
                     "focus:outline-none focus:ring-2 focus:ring-white/50"
                   )}
-                  aria-label="다음 이미지"
+                  aria-label={t("nextImageAria")}
                 >
                   <ChevronRight className="w-6 h-6" />
                 </button>
@@ -593,9 +598,10 @@ export function ImmersiveResult({
                   total={images.length}
                   onDownload={() => handleDownload(currentImage)}
                   onSave={() => handleSave(currentImage)}
-                  onShare={() => handleShare(currentImage)}
+                  onShare={() => handleShare(currentImage, t("shareTitle"))}
                   saving={savingStates[currentImage.id] || false}
                   saved={savedStates[currentImage.id] || false}
+                  t={t}
                 />
               </motion.div>
             </AnimatePresence>
@@ -624,7 +630,7 @@ export function ImmersiveResult({
           >
             {images.length > 1 && (
               <p className="text-white/40 text-sm hidden md:block">
-                ← → 키보드 또는 스와이프로 이동 • ESC로 닫기
+                {t("keyboardSwipeHint")}
               </p>
             )}
           </motion.div>

@@ -14,6 +14,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { X, Sparkles, Loader2, Upload, Check, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -165,6 +166,7 @@ function InputCard({
   referenceMode,
   onReferenceModeChange,
 }: InputCardProps) {
+  const t = useTranslations("workflow");
   const handleImageUpload = useCallback(async (file: File): Promise<string> => {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -192,7 +194,7 @@ function InputCard({
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
           <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400">
             <Sparkles className="w-4 h-4" />
-            <span className="text-sm font-medium">AI 추천</span>
+            <span className="text-sm font-medium">{t("ui.aiRecommendation")}</span>
           </div>
           <div className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
             {currentRecommendationIndex + 1} / {recommendations.length}
@@ -218,7 +220,7 @@ function InputCard({
             transition={{ duration: 0.3, delay: 0.1 }}
             className="text-sm text-zinc-500 dark:text-zinc-400 mb-2"
           >
-            {recIndustryInfo?.nameKo || currentRec.industry}
+            {t(`industries.${currentRec.industry}.name`)}
           </motion.div>
 
           {/* 제목 */}
@@ -249,7 +251,7 @@ function InputCard({
             className="w-full max-w-xs"
           >
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-sm text-zinc-500 dark:text-zinc-400">매칭률</span>
+              <span className="text-sm text-zinc-500 dark:text-zinc-400">{t("ui.matchRate")}</span>
               <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{percentage}%</span>
             </div>
             <div className="w-full h-2.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
@@ -296,7 +298,7 @@ function InputCard({
             className="w-full h-12 text-base font-semibold"
             size="lg"
           >
-            이 워크플로우로 시작하기
+            {t("ui.startWithThisWorkflow")}
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
 
@@ -312,7 +314,7 @@ function InputCard({
                 size="sm"
                 className="text-zinc-600 dark:text-zinc-400"
               >
-                ← 이전 추천
+                ← {t("ui.prevRecommendation")}
               </Button>
               <Button
                 onClick={() => onRecommendationChange?.(
@@ -324,13 +326,13 @@ function InputCard({
                 size="sm"
                 className="text-zinc-600 dark:text-zinc-400"
               >
-                다음 추천 →
+                {t("ui.nextRecommendation")} →
               </Button>
             </div>
           )}
 
           <p className="text-xs text-zinc-400 dark:text-zinc-500 text-center">
-            → 스와이프하여 바로 입력 시작
+            → {t("ui.swipeToStartInput")}
           </p>
         </div>
       </div>
@@ -409,7 +411,7 @@ function InputCard({
         {/* 하단 힌트 */}
         <div className="px-6 pb-6 text-center">
           <p className="text-sm text-zinc-400 dark:text-zinc-500">
-            ← 스와이프하여 이동 →
+            ← {t("ui.swipeToNavigate")} →
           </p>
         </div>
       </div>
@@ -424,7 +426,7 @@ function InputCard({
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
           <div className="flex items-center gap-2">
             <Upload className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
-            <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">참조 이미지</span>
+            <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{t("ui.referenceImage")}</span>
           </div>
           <div className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
             {stepIndex + 1} / {totalSteps}
@@ -441,10 +443,10 @@ function InputCard({
           >
             <div>
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-                참조 이미지 (선택)
+                {t("ui.referenceImageOptional")}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                비슷한 스타일의 이미지를 업로드하면 더 정확한 결과를 얻을 수 있습니다.
+                {t("ui.referenceImageDesc")}
               </p>
             </div>
 
@@ -464,7 +466,7 @@ function InputCard({
         {/* 하단 힌트 */}
         <div className="px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 text-center">
           <p className="text-sm text-zinc-400 dark:text-zinc-500">
-            스킵하려면 다음으로 스와이프 →
+            {t("ui.swipeToSkip")} →
           </p>
         </div>
       </div>
@@ -483,7 +485,7 @@ function InputCard({
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
           <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400">
             <Sparkles className="w-4 h-4" />
-            <span className="text-sm font-medium">이미지 생성</span>
+            <span className="text-sm font-medium">{t("ui.generateImage")}</span>
           </div>
           <div className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
             {stepIndex + 1} / {totalSteps}
@@ -507,7 +509,7 @@ function InputCard({
             transition={{ duration: 0.3, delay: 0.1 }}
             className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-3"
           >
-            {isValid ? "준비 완료!" : "입력을 완료해주세요"}
+            {isValid ? t("ui.readyToGenerate") : t("ui.completeInputs")}
           </motion.h2>
 
           <motion.p
@@ -517,8 +519,8 @@ function InputCard({
             className="text-zinc-600 dark:text-zinc-400 mb-6"
           >
             {isValid
-              ? "아래 버튼을 눌러 이미지를 생성하세요"
-              : `${requiredInputs.length - filledInputs.length}개 항목이 비어있습니다`}
+              ? t("ui.clickToGenerate")
+              : t("ui.emptyFields", { count: requiredInputs.length - filledInputs.length })}
           </motion.p>
 
           {/* 입력 요약 */}
@@ -558,7 +560,7 @@ function InputCard({
             className="w-full max-w-sm"
           >
             <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2 block text-left">
-              생성할 이미지 수
+              {t("ui.imageCount")}
             </label>
             <div className="flex gap-2 justify-center">
               {[1, 2, 3, 4].map((num) => (
@@ -577,7 +579,7 @@ function InputCard({
               ))}
             </div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 text-center">
-              {imageCount}장 × {action.creditCost} = {imageCount * action.creditCost} 크레딧
+              {t("ui.creditCalculation", { count: imageCount, cost: action.creditCost, total: imageCount * action.creditCost })}
             </p>
           </motion.div>
         </div>
@@ -593,12 +595,12 @@ function InputCard({
             {isGenerating ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                생성 중...
+                {t("ui.generating")}
               </>
             ) : (
               <>
                 <Sparkles className="w-5 h-5 mr-2" />
-                이미지 {imageCount}장 생성하기 ({action.creditCost * imageCount} 크레딧)
+                {t("ui.generateNImages", { count: imageCount, credits: action.creditCost * imageCount })}
               </>
             )}
           </Button>
@@ -626,6 +628,7 @@ export function ImmersiveInputForm({
   initialQuery,
 }: ImmersiveInputFormProps) {
   const router = useRouter();
+  const t = useTranslations("common");
   const [[currentIndex, direction], setPage] = useState<[number, number]>([0, 0]);
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [referenceImages, setReferenceImages] = useState<UploadedImage[]>([]);
@@ -993,9 +996,9 @@ export function ImmersiveInputForm({
 
           {/* 키보드 힌트 */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden md:flex items-center gap-4 text-white/60 text-sm">
-            <span>← → 이동</span>
+            <span>← → {t("workflow.ui.navigate")}</span>
             <span>•</span>
-            <span>ESC 닫기</span>
+            <span>ESC {t("workflow.ui.close")}</span>
           </div>
         </motion.div>
       )}

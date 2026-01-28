@@ -9,6 +9,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { Search, ArrowRight, Sparkles, Clock } from "lucide-react";
 import { getAllIndustries, IndustryInfo, Industry } from "@/lib/workflow/industries";
@@ -33,6 +34,8 @@ const ImmersiveInputForm = dynamic(
 export default function HomePage() {
   const router = useRouter();
   const { status } = useSession();
+  const t = useTranslations("pages.home");
+  const tWorkflow = useTranslations("workflow.industries");
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<{
     industry: IndustryInfo | null;
@@ -80,12 +83,12 @@ const [, setSearchRecommendations] = useState<WorkflowRecommendation[]>([]);
       const industryInfo = industries.find((i) => i.id === result.suggestedIndustry);
       setSuggestions({
         industry: industryInfo || null,
-        message: `"${result.extractedKeywords.join(", ")}" 키워드를 찾았습니다`,
+        message: t("keywordsFound", { keywords: result.extractedKeywords.join(", ") }),
       });
     } else {
       setSuggestions({
         industry: null,
-        message: "관련 업종을 찾지 못했습니다. 아래에서 직접 선택해주세요.",
+        message: t("noIndustryFound"),
       });
     }
 
@@ -195,11 +198,10 @@ const [, setSearchRecommendations] = useState<WorkflowRecommendation[]>([]);
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
-            AI로 상품 이미지를 생성하세요
+            {t("title")}
           </h1>
           <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">
-            업종에 맞는 전문적인 상품 이미지를 AI가 만들어드립니다.
-            원하는 업종을 선택하고 간단한 정보만 입력하면 완성!
+            {t("subtitle")}
           </p>
         </div>
 
@@ -211,7 +213,7 @@ const [, setSearchRecommendations] = useState<WorkflowRecommendation[]>([]);
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              placeholder="어떤 이미지를 만들고 싶으신가요? (예: 티셔츠 모델 착용샷)"
+              placeholder={t("searchPlaceholder")}
               className="w-full px-5 py-4 pr-12 border border-zinc-300 dark:border-zinc-700 rounded-xl shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
             />
             <button
@@ -232,7 +234,7 @@ const [, setSearchRecommendations] = useState<WorkflowRecommendation[]>([]);
                   className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   <span>{suggestions.industry.icon}</span>
-                  <span>{suggestions.industry.nameKo}</span>
+                  <span>{tWorkflow(`${suggestions.industry.id}.name`)}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               )}
@@ -246,7 +248,7 @@ const [, setSearchRecommendations] = useState<WorkflowRecommendation[]>([]);
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
-                <CardTitle className="text-base text-zinc-900 dark:text-zinc-100">최근 작업</CardTitle>
+                <CardTitle className="text-base text-zinc-900 dark:text-zinc-100">{t("recentWorkflows")}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
@@ -261,7 +263,7 @@ const [, setSearchRecommendations] = useState<WorkflowRecommendation[]>([]);
                     >
                       <span>{industryInfo?.icon}</span>
                       <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                        {industryInfo?.nameKo} - {workflow.action}
+                        {tWorkflow(`${workflow.industry}.name`)} - {workflow.action}
                       </span>
                     </button>
                   );
@@ -275,7 +277,7 @@ const [, setSearchRecommendations] = useState<WorkflowRecommendation[]>([]);
         <div className="mb-12">
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="w-4 h-4 text-primary-500" />
-            <h2 className="text-sm font-medium text-zinc-600 dark:text-zinc-400">업종별 시작하기</h2>
+            <h2 className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{t("browseByIndustry")}</h2>
           </div>
           <div className="flex flex-wrap gap-2">
             {industries.map((industry) => (
@@ -286,7 +288,7 @@ const [, setSearchRecommendations] = useState<WorkflowRecommendation[]>([]);
               >
                 <span className="text-lg">{industry.icon}</span>
                 <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-primary-600 dark:group-hover:text-primary-400">
-                  {industry.nameKo}
+                  {tWorkflow(`${industry.id}.name`)}
                 </span>
               </button>
             ))}
@@ -298,15 +300,15 @@ const [, setSearchRecommendations] = useState<WorkflowRecommendation[]>([]);
           <div className="inline-flex items-center gap-8 text-sm text-zinc-500 dark:text-zinc-400">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 bg-green-500 rounded-full" />
-              <span>이미지 1장당 5크레딧</span>
+              <span>{t("creditsPerImage")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 bg-blue-500 rounded-full" />
-              <span>4K 고화질 지원</span>
+              <span>{t("support4K")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 bg-purple-500 rounded-full" />
-              <span>상업적 사용 가능</span>
+              <span>{t("commercialUse")}</span>
             </div>
           </div>
         </div>

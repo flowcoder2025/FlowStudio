@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 /**
  * Next.js Configuration
@@ -8,6 +11,7 @@ import type { NextConfig } from "next";
  * - 코드 스플리팅 최적화
  * - 청크 분리 설정
  * - 번들 크기 최적화
+ * - i18n 다국어 지원
  */
 
 const nextConfig: NextConfig = {
@@ -184,4 +188,4 @@ export const bundleSplitConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

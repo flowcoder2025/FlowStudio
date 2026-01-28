@@ -7,6 +7,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, CreditCard, Shield, AlertCircle } from "lucide-react";
 import {
   Dialog,
@@ -35,6 +36,7 @@ export function CheckoutModal({
   itemName,
   priceFormatted,
 }: CheckoutModalProps) {
+  const t = useTranslations("payment.checkout");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +53,7 @@ export function CheckoutModal({
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "결제 세션 생성에 실패했습니다");
+        throw new Error(data.error || t("error"));
       }
 
       const { checkoutUrl } = await response.json();
@@ -59,7 +61,7 @@ export function CheckoutModal({
       // Redirect to LemonSqueezy checkout
       window.location.href = checkoutUrl;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다");
+      setError(err instanceof Error ? err.message : t("genericError"));
       setIsLoading(false);
     }
   };
@@ -70,24 +72,24 @@ export function CheckoutModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
-            결제 확인
+            {t("title")}
           </DialogTitle>
           <DialogDescription>
-            {type === "subscription" ? "구독을 시작합니다" : "크레딧을 구매합니다"}
+            {type === "subscription" ? t("subscription") : t("creditPurchase")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           {/* Order Summary */}
           <div className="rounded-lg border p-4 bg-muted/50">
-            <h3 className="font-medium mb-2">주문 내역</h3>
+            <h3 className="font-medium mb-2">{t("orderSummary")}</h3>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">{itemName}</span>
               <span className="font-semibold">{priceFormatted}</span>
             </div>
             {type === "subscription" && (
               <p className="text-xs text-muted-foreground mt-2">
-                매월 자동 결제됩니다. 언제든지 취소할 수 있습니다.
+                {t("monthlyAutoPayment")}
               </p>
             )}
           </div>
@@ -95,10 +97,7 @@ export function CheckoutModal({
           {/* Security Notice */}
           <div className="flex items-start gap-3 text-sm text-muted-foreground">
             <Shield className="h-5 w-5 shrink-0 text-green-500" />
-            <p>
-              결제는 LemonSqueezy를 통해 안전하게 처리됩니다.
-              카드 정보는 당사 서버에 저장되지 않습니다.
-            </p>
+            <p>{t("securityNotice")}</p>
           </div>
 
           {/* Error Message */}
@@ -117,7 +116,7 @@ export function CheckoutModal({
               className="flex-1"
               disabled={isLoading}
             >
-              취소
+              {t("cancel")}
             </Button>
             <Button
               onClick={handleCheckout}
@@ -127,10 +126,10 @@ export function CheckoutModal({
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  처리 중...
+                  {t("processing")}
                 </>
               ) : (
-                <>결제하기</>
+                <>{t("pay")}</>
               )}
             </Button>
           </div>

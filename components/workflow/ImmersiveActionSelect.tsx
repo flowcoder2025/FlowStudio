@@ -9,6 +9,7 @@ import { useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { ArrowRight, Sparkles, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Industry, getIndustryInfo } from "@/lib/workflow/industries";
@@ -103,6 +104,8 @@ interface ActionCardProps {
   total: number;
   onSelect: () => void;
   onNext: () => void;
+  t: ReturnType<typeof useTranslations>;
+  tCard: ReturnType<typeof useTranslations>;
 }
 
 function ActionCard({
@@ -112,11 +115,13 @@ function ActionCard({
   total,
   onSelect,
   onNext,
+  t,
+  tCard,
 }: ActionCardProps) {
   // 액션에 대한 추가 정보 생성
   const actionMeta = {
     icon: getActionIcon(action.id),
-    features: getActionFeatures(action),
+    features: getActionFeatures(action, tCard),
   };
 
   return (
@@ -194,9 +199,9 @@ function ActionCard({
           className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400"
         >
           <Sparkles className="w-4 h-4 text-yellow-500" />
-          <span>{action.creditCost} 크레딧</span>
+          <span>{action.creditCost} {t("credits")}</span>
           <span className="text-zinc-300 dark:text-zinc-600">•</span>
-          <span>{action.inputs.length}개 입력 항목</span>
+          <span>{t("inputItems", { count: action.inputs.length })}</span>
         </motion.div>
       </div>
 
@@ -207,7 +212,7 @@ function ActionCard({
           className="w-full h-12 text-base font-semibold"
           size="lg"
         >
-          이 스타일로 시작하기
+          {t("startWithThisStyle")}
           <ArrowRight className="w-5 h-5 ml-2" />
         </Button>
 
@@ -217,7 +222,7 @@ function ActionCard({
             variant="ghost"
             className="w-full h-10 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
           >
-            다른 스타일 보기
+            {t("viewOtherStyles")}
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         )}
@@ -295,19 +300,19 @@ function getActionIcon(actionId: string): string {
   return iconMap[actionId] || "📷";
 }
 
-function getActionFeatures(action: Action): string[] {
+function getActionFeatures(action: Action, t: ReturnType<typeof useTranslations>): string[] {
   const features: string[] = [];
 
   // 입력 필드 기반 기능 추출
   const inputTypes = action.inputs.map((i) => i.type);
-  if (inputTypes.includes("image")) features.push("이미지 업로드");
-  if (inputTypes.includes("color")) features.push("색상 선택");
-  if (inputTypes.includes("select")) features.push("스타일 선택");
+  if (inputTypes.includes("image")) features.push(t("imageUpload"));
+  if (inputTypes.includes("color")) features.push(t("colorSelect"));
+  if (inputTypes.includes("select")) features.push(t("styleSelect"));
 
   // 기본 기능 추가
-  features.push("AI 생성");
-  if (action.creditCost <= 3) features.push("저렴한 가격");
-  if (action.creditCost >= 8) features.push("고품질");
+  features.push(t("aiGeneration"));
+  if (action.creditCost <= 3) features.push(t("affordable"));
+  if (action.creditCost >= 8) features.push(t("highQuality"));
 
   return features.slice(0, 4);
 }
@@ -324,6 +329,8 @@ export function ImmersiveActionSelect({
   onSwitchToList,
 }: ImmersiveActionSelectProps) {
   const router = useRouter();
+  const t = useTranslations("workflow.ui");
+  const tCard = useTranslations("workflow.actionCard");
   const industryInfo = getIndustryInfo(industry);
   const actions = getIndustryActions(industry);
   const { shouldShow: showHint } = useActionSelectHintOnboarding();
@@ -397,7 +404,7 @@ export function ImmersiveActionSelect({
           exit="exit"
           role="dialog"
           aria-modal="true"
-          aria-label="액션 선택"
+          aria-label={t("selectActionAria")}
         >
           {/* 배경 블러 오버레이 */}
           <div
@@ -415,7 +422,7 @@ export function ImmersiveActionSelect({
               "text-white transition-colors",
               "focus:outline-none focus:ring-2 focus:ring-white/50"
             )}
-            aria-label="닫기"
+            aria-label={t("close")}
           >
             <X className="w-5 h-5" />
           </button>
@@ -432,7 +439,7 @@ export function ImmersiveActionSelect({
                 "transition-colors"
               )}
             >
-              리스트로 보기
+              {t("viewAsList")}
             </button>
           )}
 
@@ -454,8 +461,8 @@ export function ImmersiveActionSelect({
               variant="dark"
               size="lg"
               showOnboardingHint={showHint && actions.length > 1}
-              mobileHintMessage="스와이프해서 다른 스타일 보기"
-              desktopHintMessage="← → 화살표 키로 스타일 탐색"
+              mobileHintMessage={t("swipeForOtherStyles")}
+              desktopHintMessage={t("arrowKeysForStyles")}
             />
 
             {/* 카드 슬라이드 */}
@@ -481,6 +488,8 @@ export function ImmersiveActionSelect({
                   total={actions.length}
                   onSelect={handleSelect}
                   onNext={goNext}
+                  t={t}
+                  tCard={tCard}
                 />
               </motion.div>
             </AnimatePresence>
@@ -488,11 +497,11 @@ export function ImmersiveActionSelect({
 
           {/* 하단 키보드 힌트 */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden md:flex items-center gap-4 text-white/60 text-sm whitespace-nowrap">
-            <span>← → 이동</span>
+            <span>{t("keyboardHintMove")}</span>
             <span>•</span>
-            <span>Enter 선택</span>
+            <span>{t("keyboardHintSelect")}</span>
             <span>•</span>
-            <span>ESC 닫기</span>
+            <span>{t("keyboardHintClose")}</span>
           </div>
         </motion.div>
       )}

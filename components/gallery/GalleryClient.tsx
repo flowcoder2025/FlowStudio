@@ -11,6 +11,7 @@ import { useState, useCallback, memo } from 'react';
 import useSWR from 'swr';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import {
   Download,
   Trash2,
@@ -104,6 +105,7 @@ interface GalleryImageCardProps {
   onImageClick: (image: GalleryImage) => void;
   onDownload: (image: GalleryImage) => void;
   onDelete: (image: GalleryImage) => void;
+  t: ReturnType<typeof useTranslations>;
 }
 
 const GalleryImageCard = memo(function GalleryImageCard({
@@ -112,6 +114,7 @@ const GalleryImageCard = memo(function GalleryImageCard({
   onImageClick,
   onDownload,
   onDelete,
+  t,
 }: GalleryImageCardProps) {
   return (
     <Card className="overflow-hidden group cursor-pointer">
@@ -167,7 +170,7 @@ const GalleryImageCard = memo(function GalleryImageCard({
                   }}
                 >
                   {DownloadIconSmall}
-                  다운로드
+                  {t("download")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -178,7 +181,7 @@ const GalleryImageCard = memo(function GalleryImageCard({
                   }}
                 >
                   {Trash2IconSmall}
-                  삭제
+                  {t("delete")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -189,7 +192,7 @@ const GalleryImageCard = memo(function GalleryImageCard({
         {viewMode === 'large' && (
           <div className="p-3">
             <p className="text-sm text-muted-foreground line-clamp-2">
-              {image.prompt || 'No prompt'}
+              {image.prompt || t("noPrompt")}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               {new Date(image.createdAt).toLocaleDateString()}
@@ -238,6 +241,7 @@ function buildApiUrl(
 // =====================================================
 
 export function GalleryClient({ initialData }: GalleryClientProps) {
+  const t = useTranslations("pages.gallery");
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'createdAt' | 'updatedAt'>('createdAt');
@@ -357,12 +361,12 @@ export function GalleryClient({ initialData }: GalleryClientProps) {
   const renderEmpty = () => (
     <div className="flex flex-col items-center justify-center py-16 text-center">
       {ImagePlaceholderIconEmpty}
-      <h3 className="text-lg font-medium mb-2">아직 이미지가 없습니다</h3>
+      <h3 className="text-lg font-medium mb-2">{t("emptyTitle")}</h3>
       <p className="text-muted-foreground mb-4">
-        이미지를 생성하고 갤러리에 저장해보세요
+        {t("emptyDescription")}
       </p>
       <Button asChild>
-        <Link href="/">이미지 생성하기</Link>
+        <Link href="/">{t("createImage")}</Link>
       </Button>
     </div>
   );
@@ -372,8 +376,8 @@ export function GalleryClient({ initialData }: GalleryClientProps) {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold">갤러리</h1>
-          <p className="text-muted-foreground text-sm">총 {total}개의 이미지</p>
+          <h1 className="text-2xl font-bold">{t("title")}</h1>
+          <p className="text-muted-foreground text-sm">{t("totalImages", { count: total })}</p>
         </div>
 
         {/* Search and Filters */}
@@ -383,7 +387,7 @@ export function GalleryClient({ initialData }: GalleryClientProps) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="프롬프트 검색..."
+                placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 w-[200px]"
@@ -399,8 +403,8 @@ export function GalleryClient({ initialData }: GalleryClientProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="createdAt">생성일</SelectItem>
-              <SelectItem value="updatedAt">수정일</SelectItem>
+              <SelectItem value="createdAt">{t("sortCreatedAt")}</SelectItem>
+              <SelectItem value="updatedAt">{t("sortUpdatedAt")}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -440,8 +444,8 @@ export function GalleryClient({ initialData }: GalleryClientProps) {
         renderSkeletons()
       ) : error ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-destructive mb-4">이미지를 불러오는데 실패했습니다</p>
-          <Button onClick={() => mutate()}>다시 시도</Button>
+          <p className="text-destructive mb-4">{t("loadError")}</p>
+          <Button onClick={() => mutate()}>{t("retry")}</Button>
         </div>
       ) : images.length === 0 ? (
         renderEmpty()
@@ -462,6 +466,7 @@ export function GalleryClient({ initialData }: GalleryClientProps) {
               onImageClick={handleImageClick}
               onDownload={handleDownload}
               onDelete={handleDeleteClick}
+              t={t}
             />
           ))}
         </div>
@@ -475,7 +480,7 @@ export function GalleryClient({ initialData }: GalleryClientProps) {
             disabled={page === 1}
             onClick={() => setPage(page - 1)}
           >
-            이전
+            {t("previous")}
           </Button>
           <span className="flex items-center px-4 text-sm text-muted-foreground">
             {page} / {totalPages}
@@ -485,7 +490,7 @@ export function GalleryClient({ initialData }: GalleryClientProps) {
             disabled={page === totalPages}
             onClick={() => setPage(page + 1)}
           >
-            다음
+            {t("next")}
           </Button>
         </div>
       )}
@@ -494,7 +499,7 @@ export function GalleryClient({ initialData }: GalleryClientProps) {
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>{selectedImage?.title || '이미지 상세'}</DialogTitle>
+            <DialogTitle>{selectedImage?.title || t("imageDetail")}</DialogTitle>
           </DialogHeader>
           {selectedImage && (
             <div className="space-y-4">
@@ -514,9 +519,9 @@ export function GalleryClient({ initialData }: GalleryClientProps) {
                 )}
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-medium">프롬프트</p>
+                <p className="text-sm font-medium">{t("prompt")}</p>
                 <p className="text-sm text-muted-foreground">
-                  {selectedImage.prompt || 'No prompt'}
+                  {selectedImage.prompt || t("noPrompt")}
                 </p>
               </div>
               <div className="flex justify-between items-center text-sm text-muted-foreground">
@@ -528,7 +533,7 @@ export function GalleryClient({ initialData }: GalleryClientProps) {
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => handleDownload(selectedImage)}>
                   {DownloadIconSmall}
-                  다운로드
+                  {t("download")}
                 </Button>
                 <Button
                   variant="destructive"
@@ -539,7 +544,7 @@ export function GalleryClient({ initialData }: GalleryClientProps) {
                   }}
                 >
                   {Trash2IconSmall}
-                  삭제
+                  {t("delete")}
                 </Button>
               </div>
             </div>
@@ -551,17 +556,17 @@ export function GalleryClient({ initialData }: GalleryClientProps) {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>이미지 삭제</DialogTitle>
+            <DialogTitle>{t("deleteConfirmTitle")}</DialogTitle>
             <DialogDescription>
-              이 이미지를 삭제하시겠습니까? 삭제된 이미지는 휴지통에서 복원할 수 있습니다.
+              {t("deleteConfirmDesc")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              취소
+              {t("cancel")}
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
-              삭제
+              {t("delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

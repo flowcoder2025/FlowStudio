@@ -916,3 +916,65 @@ npm install swr
 ### 핸드오프
 - **완료일**: 2026-01-27
 - **핸드오프**: `HANDOFF_2026-01-27_BUGFIX_UX.md`
+
+---
+
+## i18n (다국어 지원) Migration
+
+> next-intl 기반 한국어/영어 다국어 지원
+
+### Phase 진행 현황
+
+| Phase | 내용 | 상태 | 핸드오프 |
+|-------|------|------|----------|
+| Phase 1 | Foundation (next-intl 설정, 미들웨어) | ✅ 완료 | HANDOFF_2026-01-27_I18N_P1.md |
+| Phase 2 | Layout (Header, Footer, 네비게이션) | ✅ 완료 | HANDOFF_2026-01-27_I18N_P2.md |
+| Phase 3 | 워크플로우 & 결제 시스템 번역 | ✅ 완료 | HANDOFF_2026-01-27_I18N_P3.md |
+| Phase 4 | 워크플로우 컴포넌트 번역 | ✅ 완료 | HANDOFF_2026-01-28_I18N_P4.md |
+| Phase 5 | 페이지 번역 (홈, 가격, 갤러리, 결과) | ✅ 완료 | HANDOFF_2026-01-28_I18N_P5.md |
+| Phase 6 | 데이터 파일 번역 연동 | ✅ 완료 | HANDOFF_2026-01-28_I18N_P6.md |
+
+### Phase 5: 페이지 번역 ✅
+
+#### 번역 적용 파일
+- [x] `app/[locale]/(main)/page.tsx` - 홈페이지
+- [x] `app/[locale]/(main)/pricing/page.tsx` - 가격 페이지
+- [x] `components/gallery/GalleryClient.tsx` - 갤러리 클라이언트
+- [x] `app/[locale]/(main)/result/page.tsx` - 결과 페이지
+
+#### 추가된 번역 키
+- `pages.home` - 홈페이지 UI 텍스트
+- `pages.pricing` - 가격 페이지 UI 텍스트 + FAQ
+- `pages.gallery` - 갤러리 페이지 UI 텍스트
+- `pages.result` - 결과 페이지 UI 텍스트
+
+#### 완료일: 2026-01-28
+
+### Phase 6: 데이터 파일 번역 연동 ✅
+
+#### 번역 적용 컴포넌트
+- [x] `components/workflow/SimilarWorkflows.tsx` - SimilarWorkflows 컴포넌트 번역
+- [x] `components/workflow/SimilarWorkflows.tsx` - CrossIndustryList 컴포넌트 번역
+- [x] `components/workflow/SimilarWorkflows.tsx` - IndustryNavigation 컴포넌트 번역
+
+#### 추가된 번역 키
+- `workflow.similar` 섹션 (ko/en)
+
+#### 아키텍처 결정
+데이터 파일(`industries.ts`, `actions/*.ts`, `payment/config.ts`)은 수정하지 않고, **컴포넌트에서 번역 키를 사용하는 방식** 채택. 기존 `nameKo`/`name` 필드는 fallback으로 유지.
+
+#### 완료일: 2026-01-28
+
+### Phase 7: 선택적 추가 작업 ✅
+
+#### 결제 시스템 동적 번역 연동
+- [x] `lib/payment/config.ts` - featureKeys 추가 (i18n 번역 키)
+- [x] `lib/payment/types.ts` - FeatureKeyItem 타입 추가
+- [x] `app/[locale]/(main)/pricing/page.tsx` - 동적 번역 적용
+
+#### 추가된 번역 연동
+- 패키지명: `payment.packages.{id}` 키로 동적 번역
+- 플랜명: `payment.plans.{id}` 키로 동적 번역
+- 기능 목록: `payment.features.{key}` 키로 파라미터 지원 동적 번역
+
+#### 완료일: 2026-01-28

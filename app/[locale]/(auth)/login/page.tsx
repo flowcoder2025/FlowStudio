@@ -9,11 +9,14 @@
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 function LoginContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
   const error = searchParams.get("error");
+  const t = useTranslations();
 
   const handleGoogleLogin = () => {
     signIn("google", { callbackUrl });
@@ -28,19 +31,16 @@ function LoginContent() {
       <div className="max-w-md w-full space-y-8 p-8 bg-white dark:bg-zinc-900 rounded-xl shadow-lg dark:shadow-zinc-900/50 border border-zinc-200 dark:border-zinc-800">
         {/* Logo & Title */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">FlowStudio</h1>
+          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{t("login.title")}</h1>
           <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-            AI 상품 이미지 생성 플랫폼
+            {t("login.subtitle")}
           </p>
         </div>
 
         {/* Error Message */}
         {error && (
           <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-700 dark:text-red-400 text-sm">
-            {error === "OAuthSignin" && "로그인 중 오류가 발생했습니다."}
-            {error === "OAuthCallback" && "인증 콜백 처리 중 오류가 발생했습니다."}
-            {error === "OAuthAccountNotLinked" && "이미 다른 방법으로 가입된 계정입니다."}
-            {error === "default" && "로그인에 실패했습니다. 다시 시도해주세요."}
+            {t("login.error")}
           </div>
         )}
 
@@ -69,7 +69,7 @@ function LoginContent() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            <span className="text-zinc-700 dark:text-zinc-300 font-medium">Google로 계속하기</span>
+            <span className="text-zinc-700 dark:text-zinc-300 font-medium">{t("login.continueWithGoogle")}</span>
           </button>
 
           {/* Kakao Login */}
@@ -83,21 +83,24 @@ function LoginContent() {
                 d="M12 3c-5.52 0-10 3.59-10 8 0 2.82 1.88 5.29 4.69 6.69-.21.77-.77 2.8-.88 3.24-.14.55.2.54.42.39.17-.12 2.69-1.83 3.77-2.57.65.09 1.32.14 2 .14 5.52 0 10-3.59 10-8s-4.48-8-10-8z"
               />
             </svg>
-            <span className="text-zinc-900 font-medium">카카오로 계속하기</span>
+            <span className="text-zinc-900 font-medium">{t("login.continueWithKakao")}</span>
           </button>
         </div>
 
         {/* Terms */}
         <p className="text-center text-xs text-zinc-500 dark:text-zinc-400 mt-8">
-          로그인함으로써{" "}
-          <a href="/terms" className="underline hover:text-zinc-700 dark:hover:text-zinc-300">
-            이용약관
-          </a>
-          과{" "}
-          <a href="/privacy" className="underline hover:text-zinc-700 dark:hover:text-zinc-300">
-            개인정보처리방침
-          </a>
-          에 동의합니다.
+          {t.rich("auth.termsAgreement", {
+            terms: () => (
+              <Link href="/terms" className="underline hover:text-zinc-700 dark:hover:text-zinc-300">
+                {t("auth.termsOfService")}
+              </Link>
+            ),
+            privacy: () => (
+              <Link href="/privacy" className="underline hover:text-zinc-700 dark:hover:text-zinc-300">
+                {t("auth.privacyPolicy")}
+              </Link>
+            ),
+          })}
         </p>
       </div>
     </div>
@@ -106,7 +109,11 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400">로딩 중...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+        <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
       <LoginContent />
     </Suspense>
   );

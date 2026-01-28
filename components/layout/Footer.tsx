@@ -1,28 +1,31 @@
 /**
  * Footer Component
- * FlowCoder Brand Kit 기반 푸터
+ * FlowCoder Brand Kit 기반 푸터 (i18n 지원)
  */
 
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 const BRAND = {
-  companyName: "플로우코더(FlowCoder)",
   companyNameEn: "FlowCoder",
   serviceName: "FlowStudio",
   businessNumber: "374-16-02889",
   representatives: "조용현, 박현일",
+  representativesEn: "Yonghyun Cho, Hyunil Park",
   address: "경기도 남양주시 홍유릉로248번길 26, 지하1층(금곡동)",
+  addressEn: "26, Hongyureung-ro 248beon-gil, Namyangju-si, Gyeonggi-do, South Korea",
   email: "admin@flow-coder.com",
 };
 
-const LEGAL_LINKS = [
-  { href: "/privacy", label: "개인정보처리방침" },
-  { href: "/terms", label: "이용약관" },
-  { href: "/refund", label: "환불약관" },
-];
-
-export function Footer() {
+export async function Footer() {
+  const t = await getTranslations("footer");
   const currentYear = new Date().getFullYear();
+
+  const legalLinks = [
+    { href: "/privacy", labelKey: "privacyPolicy" as const },
+    { href: "/terms", labelKey: "termsOfService" as const },
+    { href: "/refund", labelKey: "refundPolicy" as const },
+  ];
 
   return (
     <footer className="py-6 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-100/50 dark:bg-zinc-900/50">
@@ -36,13 +39,13 @@ export function Footer() {
 
             {/* 법적 링크 */}
             <nav className="flex items-center gap-4">
-              {LEGAL_LINKS.map((link) => (
+              {legalLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
                 >
-                  {link.label}
+                  {t(link.labelKey)}
                 </Link>
               ))}
             </nav>
@@ -54,11 +57,11 @@ export function Footer() {
           {/* 회사 정보 */}
           <div className="space-y-1.5">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
-              <span>{BRAND.companyName}</span>
+              <span>{t("companyName")}</span>
               <span className="text-zinc-300 dark:text-zinc-600">|</span>
-              <span>사업자등록번호: {BRAND.businessNumber}</span>
+              <span>{t("businessNumber")}: {BRAND.businessNumber}</span>
               <span className="text-zinc-300 dark:text-zinc-600">|</span>
-              <span>대표: {BRAND.representatives}</span>
+              <span>{t("representatives")}: {BRAND.representatives}</span>
             </div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
               <span>{BRAND.address}</span>
@@ -74,7 +77,7 @@ export function Footer() {
 
           {/* 저작권 */}
           <p className="text-xs text-zinc-400 dark:text-zinc-500">
-            © {currentYear} {BRAND.companyNameEn}. All rights reserved.
+            © {currentYear} {BRAND.companyNameEn}. {t("allRightsReserved")}
           </p>
         </div>
       </div>

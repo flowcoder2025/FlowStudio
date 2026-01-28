@@ -3,12 +3,14 @@
 import { Sun, Moon, Monitor } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 export function ThemeToggle() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations("theme");
 
   useEffect(() => {
     setMounted(true);
@@ -28,10 +30,10 @@ export function ThemeToggle() {
   }, []);
 
   const options = [
-    { value: "light", label: "라이트", icon: Sun },
-    { value: "dark", label: "다크", icon: Moon },
-    { value: "system", label: "시스템", icon: Monitor },
-  ] as const;
+    { value: "light", labelKey: "light" as const, icon: Sun },
+    { value: "dark", labelKey: "dark" as const, icon: Moon },
+    { value: "system", labelKey: "system" as const, icon: Monitor },
+  ];
 
   // SSR placeholder
   if (!mounted) {
@@ -47,14 +49,14 @@ export function ThemeToggle() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors touch-target active:scale-95"
-        aria-label="테마 변경"
+        aria-label={t("changeTheme")}
       >
         <CurrentIcon className="w-5 h-5 text-zinc-600 dark:text-zinc-300" />
       </button>
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-36 py-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg z-50 animate-fade-in">
-          {options.map(({ value, label, icon: Icon }) => (
+          {options.map(({ value, labelKey, icon: Icon }) => (
             <button
               key={value}
               onClick={() => {
@@ -69,7 +71,7 @@ export function ThemeToggle() {
                 }`}
             >
               <Icon className="w-4 h-4" />
-              {label}
+              {t(labelKey)}
             </button>
           ))}
         </div>
@@ -81,6 +83,7 @@ export function ThemeToggle() {
 export function ThemeToggleSimple() {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const t = useTranslations("theme");
 
   useEffect(() => {
     setMounted(true);
@@ -101,7 +104,7 @@ export function ThemeToggleSimple() {
     <button
       onClick={toggleTheme}
       className="p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors touch-target active:scale-95"
-      aria-label="테마 변경"
+      aria-label={t("changeTheme")}
     >
       {resolvedTheme === "dark" ? (
         <Sun className="w-5 h-5 text-zinc-300" />

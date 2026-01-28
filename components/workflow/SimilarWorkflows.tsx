@@ -7,6 +7,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import {
   Shuffle,
   ArrowRight,
@@ -43,6 +44,8 @@ interface WorkflowCardProps {
   isCurrentIndustry: boolean;
   showReason: boolean;
   onSelect?: () => void;
+  t: ReturnType<typeof useTranslations>;
+  tIndustries: ReturnType<typeof useTranslations>;
 }
 
 // ============================================================
@@ -54,9 +57,14 @@ function WorkflowCard({
   isCurrentIndustry,
   showReason,
   onSelect,
+  t,
+  tIndustries,
 }: WorkflowCardProps) {
   const industryInfo = INDUSTRY_INFO[recommendation.industry];
   const intentInfo = EXPRESSION_INTENT_INFO[recommendation.intent];
+
+  // 번역된 업종명 가져오기
+  const industryName = tIndustries(`${recommendation.industry}.name`);
 
   return (
     <div
@@ -74,12 +82,12 @@ function WorkflowCard({
         <div className="flex items-center gap-2">
           <span className="text-lg">{industryInfo?.icon}</span>
           <span className="text-sm text-zinc-600 dark:text-zinc-400">
-            {industryInfo?.nameKo || recommendation.industry}
+            {industryName}
           </span>
         </div>
         {!isCurrentIndustry && (
           <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">
-            다른 업종
+            {t("otherIndustry")}
           </span>
         )}
       </div>
@@ -112,7 +120,7 @@ function WorkflowCard({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
           <TrendingUp className="w-3 h-3" />
-          <span>{Math.round(recommendation.score * 100)}% 유사</span>
+          <span>{t("similarity", { score: Math.round(recommendation.score * 100) })}</span>
         </div>
         <ArrowRight className="w-4 h-4 text-zinc-400" />
       </div>
@@ -130,12 +138,17 @@ export function SimilarWorkflows({
   currentIntent,
   recommendations,
   onSelect,
-  title = "비슷한 워크플로우",
+  title,
   showReason = true,
   maxItems = 10,
   className,
 }: SimilarWorkflowsProps) {
+  const t = useTranslations("workflow.similar");
+  const tIndustries = useTranslations("workflow.industries");
   const [scrollPosition, setScrollPosition] = useState(0);
+
+  // title이 제공되지 않으면 번역된 기본값 사용
+  const displayTitle = title ?? t("title");
 
   // 현재 업종과 다른 업종 분리
   const { sameIndustry, crossIndustry } = useMemo(() => {
@@ -171,7 +184,7 @@ export function SimilarWorkflows({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Shuffle className="w-5 h-5 text-primary-500" />
-            <CardTitle className="text-base">{title}</CardTitle>
+            <CardTitle className="text-base">{displayTitle}</CardTitle>
           </div>
 
           {/* 스크롤 버튼 */}
@@ -200,8 +213,7 @@ export function SimilarWorkflows({
           <div className="flex items-center gap-2 mt-2 text-xs text-primary-600 bg-primary-50 px-3 py-2 rounded-lg">
             <Lightbulb className="w-4 h-4" />
             <span>
-              다른 업종에서 영감을 얻어보세요! {crossIndustry.length}개의 유사한
-              워크플로우가 있습니다.
+              {t("inspirationHint", { count: crossIndustry.length })}
             </span>
           </div>
         )}
@@ -222,6 +234,8 @@ export function SimilarWorkflows({
               isCurrentIndustry={false}
               showReason={showReason}
               onSelect={() => onSelect?.(rec)}
+              t={t}
+              tIndustries={tIndustries}
             />
           ))}
 
@@ -233,6 +247,8 @@ export function SimilarWorkflows({
               isCurrentIndustry={true}
               showReason={showReason}
               onSelect={() => onSelect?.(rec)}
+              t={t}
+              tIndustries={tIndustries}
             />
           ))}
         </div>
@@ -258,6 +274,9 @@ export function CrossIndustryList({
   onSelect,
   className,
 }: CrossIndustryListProps) {
+  const t = useTranslations("workflow.similar");
+  const tIndustries = useTranslations("workflow.industries");
+
   const crossIndustry = useMemo(
     () => recommendations.filter((r) => r.industry !== currentIndustry).slice(0, 5),
     [recommendations, currentIndustry]
@@ -271,13 +290,14 @@ export function CrossIndustryList({
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
         <Shuffle className="w-4 h-4 text-primary-500" />
-        <span>다른 업종에서 영감 얻기</span>
+        <span>{t("crossIndustryTitle")}</span>
       </div>
 
       <div className="space-y-1.5">
         {crossIndustry.map((rec) => {
           const industryInfo = INDUSTRY_INFO[rec.industry];
           const intentInfo = EXPRESSION_INTENT_INFO[rec.intent];
+          const industryName = tIndustries(`${rec.industry}.name`);
 
           return (
             <button
@@ -295,7 +315,7 @@ export function CrossIndustryList({
                   {intentInfo?.nameKo || rec.intent}
                 </p>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {industryInfo?.nameKo} • {Math.round(rec.score * 100)}% 유사
+                  {industryName} • {t("similarity", { score: Math.round(rec.score * 100) })}
                 </p>
               </div>
               <ExternalLink className="w-4 h-4 text-zinc-400" />
@@ -324,11 +344,14 @@ export function IndustryNavigation({
   onSelect,
   className,
 }: IndustryNavigationProps) {
+  const tIndustries = useTranslations("workflow.industries");
+
   return (
     <div className={cn("flex gap-2 overflow-x-auto pb-2", className)}>
       {industries.map((industry) => {
         const info = INDUSTRY_INFO[industry];
         const isActive = industry === currentIndustry;
+        const industryName = tIndustries(`${industry}.name`);
 
         return (
           <button
@@ -343,7 +366,7 @@ export function IndustryNavigation({
             )}
           >
             <span>{info?.icon}</span>
-            <span>{info?.nameKo || industry}</span>
+            <span>{industryName}</span>
           </button>
         );
       })}

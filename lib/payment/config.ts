@@ -65,6 +65,23 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
 // Subscription Plans
 // =====================================================
 
+// Feature keys for i18n - mapped in pricing page with useTranslations
+export type FeatureKey =
+  | { key: "monthlyCredits"; params: { count: number } }
+  | { key: "basicImageGeneration" }
+  | { key: "workflows"; params: { count: number } }
+  | { key: "unlimitedWorkflows" }
+  | { key: "communitySupport" }
+  | { key: "emailSupport" }
+  | { key: "prioritySupport" }
+  | { key: "dedicatedSupport" }
+  | { key: "hdImageGeneration" }
+  | { key: "ultraImageGeneration" }
+  | { key: "creditRollover" }
+  | { key: "teamSharing" }
+  | { key: "apiAccess" }
+  | { key: "customWorkflows" };
+
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: "free",
@@ -80,6 +97,13 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       "워크플로우 3개",
       "커뮤니티 지원",
     ],
+    // i18n feature keys for dynamic translation
+    featureKeys: [
+      { key: "monthlyCredits", params: { count: 10 } },
+      { key: "basicImageGeneration" },
+      { key: "workflows", params: { count: 3 } },
+      { key: "communitySupport" },
+    ] as FeatureKey[],
   },
   {
     id: "starter",
@@ -96,6 +120,13 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       "이메일 지원",
       "미사용 크레딧 이월",
     ],
+    featureKeys: [
+      { key: "monthlyCredits", params: { count: 100 } },
+      { key: "hdImageGeneration" },
+      { key: "unlimitedWorkflows" },
+      { key: "emailSupport" },
+      { key: "creditRollover" },
+    ] as FeatureKey[],
   },
   {
     id: "pro",
@@ -113,6 +144,14 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       "미사용 크레딧 이월",
       "팀 공유 기능",
     ],
+    featureKeys: [
+      { key: "monthlyCredits", params: { count: 500 } },
+      { key: "ultraImageGeneration" },
+      { key: "unlimitedWorkflows" },
+      { key: "prioritySupport" },
+      { key: "creditRollover" },
+      { key: "teamSharing" },
+    ] as FeatureKey[],
     popular: true,
   },
   {
@@ -133,6 +172,16 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       "API 액세스",
       "커스텀 워크플로우",
     ],
+    featureKeys: [
+      { key: "monthlyCredits", params: { count: 2000 } },
+      { key: "ultraImageGeneration" },
+      { key: "unlimitedWorkflows" },
+      { key: "dedicatedSupport" },
+      { key: "creditRollover" },
+      { key: "teamSharing" },
+      { key: "apiAccess" },
+      { key: "customWorkflows" },
+    ] as FeatureKey[],
   },
 ];
 

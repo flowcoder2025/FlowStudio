@@ -142,6 +142,10 @@ export interface CreditPackage {
   bonus?: number; // bonus percentage
 }
 
+// Feature key for i18n dynamic translation
+export type FeatureKeyItem =
+  | { key: string; params?: Record<string, number | string> };
+
 export interface SubscriptionPlan {
   id: string;
   variantId: string;
@@ -150,7 +154,8 @@ export interface SubscriptionPlan {
   price: number; // in cents
   priceFormatted: string;
   interval: "month" | "year";
-  features: string[];
+  features: string[]; // Legacy: hardcoded text (kept for backward compatibility)
+  featureKeys?: FeatureKeyItem[]; // i18n: translation keys with optional params
   popular?: boolean;
 }
 
