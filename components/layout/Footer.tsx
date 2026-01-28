@@ -4,22 +4,31 @@
  */
 
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 
 const BRAND = {
   companyNameEn: "FlowCoder",
   serviceName: "FlowStudio",
   businessNumber: "374-16-02889",
-  representatives: "조용현, 박현일",
-  representativesEn: "Yonghyun Cho, Hyunil Park",
-  address: "경기도 남양주시 홍유릉로248번길 26, 지하1층(금곡동)",
-  addressEn: "26, Hongyureung-ro 248beon-gil, Namyangju-si, Gyeonggi-do, South Korea",
+  representatives: {
+    ko: "조용현, 박현일",
+    en: "Yonghyun Cho, Hyunil Park",
+  },
+  address: {
+    ko: "경기도 남양주시 홍유릉로248번길 26, 지하1층(금곡동)",
+    en: "B1, 26, Hongyureung-ro 248beon-gil, Namyangju-si, Gyeonggi-do, South Korea",
+  },
   email: "admin@flow-coder.com",
 };
 
 export async function Footer() {
   const t = await getTranslations("footer");
+  const locale = await getLocale();
   const currentYear = new Date().getFullYear();
+
+  // Get localized brand info
+  const representatives = BRAND.representatives[locale as keyof typeof BRAND.representatives] || BRAND.representatives.en;
+  const address = BRAND.address[locale as keyof typeof BRAND.address] || BRAND.address.en;
 
   const legalLinks = [
     { href: "/privacy", labelKey: "privacyPolicy" as const },
@@ -61,10 +70,10 @@ export async function Footer() {
               <span className="text-zinc-300 dark:text-zinc-600">|</span>
               <span>{t("businessNumber")}: {BRAND.businessNumber}</span>
               <span className="text-zinc-300 dark:text-zinc-600">|</span>
-              <span>{t("representatives")}: {BRAND.representatives}</span>
+              <span>{t("representatives")}: {representatives}</span>
             </div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
-              <span>{BRAND.address}</span>
+              <span>{address}</span>
               <span className="text-zinc-300 dark:text-zinc-600">|</span>
               <Link
                 href={`mailto:${BRAND.email}`}

@@ -36,8 +36,12 @@ interface GenerateRequestBody {
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Authenticate
-    const session = await auth();
+    // 1. Authenticate & Parse body in parallel (Vercel Best Practice: async-parallel)
+    const [session, body] = await Promise.all([
+      auth(),
+      request.json() as Promise<GenerateRequestBody>,
+    ]);
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -46,9 +50,6 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = session.user.id;
-
-    // 2. Parse request body
-    const body = await request.json() as GenerateRequestBody;
 
     // 3. Validate
     if (!body.prompt || typeof body.prompt !== 'string') {

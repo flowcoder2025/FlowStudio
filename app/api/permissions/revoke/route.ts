@@ -85,13 +85,16 @@ export async function DELETE(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
+    // Authenticate & Parse body in parallel (Vercel Best Practice: async-parallel)
+    const [session, body] = await Promise.all([
+      auth(),
+      request.json(),
+    ]);
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
     const { namespace, objectId, relation, subjectId } = body;
 
     // Validate required fields

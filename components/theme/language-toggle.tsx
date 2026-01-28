@@ -46,6 +46,9 @@ export function LanguageToggle() {
   const switchLocale = (newLocale: Locale) => {
     setIsOpen(false);
 
+    // Set cookie to remember user's language preference
+    document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=${60 * 60 * 24 * 365}`;
+
     startTransition(() => {
       // Remove current locale prefix from pathname
       let newPathname = pathname;
@@ -53,6 +56,7 @@ export function LanguageToggle() {
       // Handle locale prefix removal
       for (const loc of routing.locales) {
         if (pathname.startsWith(`/${loc}/`)) {
+          // e.g., /en/gallery -> /gallery (remove /en prefix)
           newPathname = pathname.slice(loc.length + 1);
           break;
         } else if (pathname === `/${loc}`) {
@@ -61,12 +65,18 @@ export function LanguageToggle() {
         }
       }
 
-      // Add new locale prefix if not default
+      // Build the new path with locale
+      // For default locale (ko): use path without prefix
+      // For other locales (en): add locale prefix
       if (newLocale === routing.defaultLocale) {
-        router.push(newPathname);
+        router.push(newPathname || '/');
       } else {
-        router.push(`/${newLocale}${newPathname === '/' ? '' : newPathname}`);
+        const path = newPathname === '/' ? '' : newPathname;
+        router.push(`/${newLocale}${path}`);
       }
+
+      // Force refresh to ensure locale change takes effect
+      router.refresh();
     });
   };
 
