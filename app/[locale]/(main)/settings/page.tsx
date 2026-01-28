@@ -8,8 +8,9 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { User, CreditCard, Building2, Users, Loader2, Check } from "lucide-react";
+import { User, CreditCard, Loader2, Check } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 interface Profile {
   id: string;
@@ -22,25 +23,16 @@ interface Profile {
 }
 
 export default function SettingsPage() {
+  const t = useTranslations("settings");
   useSession(); // Ensure authentication context
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"profile" | "credits" | "business" | "referral">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "credits">("profile");
 
   // Profile form state
   const [name, setName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-
-  // Business verification state
-  const [businessNumber, setBusinessNumber] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verifyError, setVerifyError] = useState<string | null>(null);
-
-  // Referral state
-  const [referralInput, setReferralInput] = useState("");
-  const [isApplyingReferral, setIsApplyingReferral] = useState(false);
-  const [referralError, setReferralError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProfile();
@@ -85,64 +77,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handleVerifyBusiness = async () => {
-    setIsVerifying(true);
-    setVerifyError(null);
-
-    try {
-      const response = await fetch("/api/user/business/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessNumber }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.verified) {
-        setProfile((prev) => prev ? { ...prev, businessVerified: true } : null);
-        setBusinessNumber("");
-      } else {
-        setVerifyError(data.error || "인증에 실패했습니다");
-      }
-    } catch {
-      setVerifyError("인증 중 오류가 발생했습니다");
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleApplyReferral = async () => {
-    setIsApplyingReferral(true);
-    setReferralError(null);
-
-    try {
-      const response = await fetch("/api/user/referral/apply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ referralCode: referralInput }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        setReferralInput("");
-        fetchProfile(); // Refresh to get updated credits
-      } else {
-        setReferralError(data.error || "추천 코드 적용에 실패했습니다");
-      }
-    } catch {
-      setReferralError("추천 코드 적용 중 오류가 발생했습니다");
-    } finally {
-      setIsApplyingReferral(false);
-    }
-  };
-
-  const copyReferralCode = () => {
-    if (profile?.referralCode) {
-      navigator.clipboard.writeText(profile.referralCode);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -152,15 +86,13 @@ export default function SettingsPage() {
   }
 
   const tabs = [
-    { id: "profile" as const, label: "프로필", icon: User },
-    { id: "credits" as const, label: "크레딧", icon: CreditCard },
-    { id: "business" as const, label: "사업자 인증", icon: Building2 },
-    { id: "referral" as const, label: "추천인", icon: Users },
+    { id: "profile" as const, labelKey: "profile" as const, icon: User },
+    { id: "credits" as const, labelKey: "credits" as const, icon: CreditCard },
   ];
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-8">설정</h1>
+      <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-8">{t("title")}</h1>
 
       <div className="flex flex-col md:flex-row gap-8">
         {/* Tabs */}
@@ -176,7 +108,7 @@ export default function SettingsPage() {
               }`}
             >
               <tab.icon className="w-5 h-5" />
-              <span className="hidden md:inline">{tab.label}</span>
+              <span className="hidden md:inline">{t(`tabs.${tab.labelKey}`)}</span>
             </button>
           ))}
         </nav>
@@ -186,13 +118,13 @@ export default function SettingsPage() {
           {/* Profile Tab */}
           {activeTab === "profile" && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">프로필 정보</h2>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{t("profile.title")}</h2>
 
               <div className="flex items-center gap-4">
                 {profile?.image ? (
                   <img
                     src={profile.image}
-                    alt="프로필"
+                    alt={t("profile.profileImage")}
                     className="w-16 h-16 rounded-full"
                   />
                 ) : (
@@ -201,14 +133,14 @@ export default function SettingsPage() {
                   </div>
                 )}
                 <div>
-                  <p className="font-medium text-zinc-900 dark:text-zinc-100">{profile?.name || "이름 없음"}</p>
+                  <p className="font-medium text-zinc-900 dark:text-zinc-100">{profile?.name || t("profile.noName")}</p>
                   <p className="text-sm text-zinc-500 dark:text-zinc-400">{profile?.email}</p>
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                  이름
+                  {t("profile.name")}
                 </label>
                 <input
                   type="text"
@@ -228,7 +160,7 @@ export default function SettingsPage() {
                 ) : saveSuccess ? (
                   <Check className="w-4 h-4" />
                 ) : null}
-                {saveSuccess ? "저장됨" : "저장"}
+                {saveSuccess ? t("profile.saved") : t("profile.save")}
               </button>
             </div>
           )}
@@ -236,125 +168,18 @@ export default function SettingsPage() {
           {/* Credits Tab */}
           {activeTab === "credits" && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">크레딧</h2>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{t("credits.title")}</h2>
 
               <div className="bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-lg p-6">
-                <p className="text-sm text-amber-600 dark:text-amber-400 mb-1">보유 크레딧</p>
+                <p className="text-sm text-amber-600 dark:text-amber-400 mb-1">{t("credits.balance")}</p>
                 <p className="text-3xl font-bold text-amber-700 dark:text-amber-300">
                   {formatNumber(profile?.creditBalance ?? 0)}
                 </p>
               </div>
 
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                크레딧은 이미지 생성에 사용됩니다. 1장당 5 크레딧이 필요합니다.
+                {t("credits.description")}
               </p>
-            </div>
-          )}
-
-          {/* Business Tab */}
-          {activeTab === "business" && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">사업자 인증</h2>
-
-              {profile?.businessVerified ? (
-                <div className="bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                  <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
-                    <Check className="w-5 h-5" />
-                    <span className="font-medium">인증 완료</span>
-                  </div>
-                  <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                    사업자 인증이 완료되었습니다.
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    사업자 인증을 완료하면 추가 혜택을 받을 수 있습니다.
-                  </p>
-
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                      사업자등록번호
-                    </label>
-                    <input
-                      type="text"
-                      value={businessNumber}
-                      onChange={(e) => setBusinessNumber(e.target.value.replace(/\D/g, ""))}
-                      placeholder="숫자 10자리"
-                      maxLength={10}
-                      className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                    />
-                    {verifyError && (
-                      <p className="text-sm text-red-600 dark:text-red-400 mt-1">{verifyError}</p>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={handleVerifyBusiness}
-                    disabled={isVerifying || businessNumber.length !== 10}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors"
-                  >
-                    {isVerifying && <Loader2 className="w-4 h-4 animate-spin" />}
-                    인증하기
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Referral Tab */}
-          {activeTab === "referral" && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">추천인 시스템</h2>
-
-              {/* My Referral Code */}
-              <div className="bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4">
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">내 추천 코드</p>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-600 rounded font-mono text-sm text-zinc-900 dark:text-zinc-100">
-                    {profile?.referralCode}
-                  </code>
-                  <button
-                    onClick={copyReferralCode}
-                    className="px-3 py-2 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded transition-colors text-sm text-zinc-700 dark:text-zinc-300"
-                  >
-                    복사
-                  </button>
-                </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
-                  친구에게 추천 코드를 공유하면 양쪽 모두 5 크레딧을 받습니다.
-                </p>
-              </div>
-
-              {/* Apply Referral Code */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                  추천 코드 입력
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={referralInput}
-                    onChange={(e) => setReferralInput(e.target.value)}
-                    placeholder="추천 코드를 입력하세요"
-                    className="flex-1 px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                  />
-                  <button
-                    onClick={handleApplyReferral}
-                    disabled={isApplyingReferral || !referralInput}
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors"
-                  >
-                    {isApplyingReferral ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      "적용"
-                    )}
-                  </button>
-                </div>
-                {referralError && (
-                  <p className="text-sm text-red-600 dark:text-red-400 mt-1">{referralError}</p>
-                )}
-              </div>
             </div>
           )}
         </div>

@@ -2,6 +2,7 @@
  * Header Component
  * Contract: AUTH_DESIGN_HEADER_STATE
  * Evidence: IMPLEMENTATION_PLAN.md Phase 1
+ * Optimized: Hoisted JSX icons (Vercel Best Practice: rendering-hoist-jsx)
  */
 
 "use client";
@@ -14,6 +15,14 @@ import { useTranslations } from "next-intl";
 import { CreditBadge } from "./CreditBadge";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { LanguageToggle } from "@/components/theme/language-toggle";
+
+// Hoisted static JSX - prevents recreation on every render
+const UserIconSmall = <User className="w-4 h-4 text-primary-600 dark:text-primary-400" />;
+const LogOutIcon = <LogOut className="w-4 h-4" />;
+const SettingsIcon = <Settings className="w-4 h-4" />;
+const GalleryIcon = <ImageIcon className="w-4 h-4" />;
+const MenuIcon = <Menu className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />;
+const CloseIcon = <X className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />;
 
 export function Header() {
   const { data: session, status } = useSession();
@@ -55,6 +64,12 @@ export function Header() {
                 >
                   {t("nav.colorCorrection")}
                 </Link>
+                <Link
+                  href="/pricing"
+                  className="px-4 py-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  {t("nav.pricing")}
+                </Link>
               </>
             )}
           </nav>
@@ -88,12 +103,13 @@ export function Header() {
                       />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
-                        <User className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                        {UserIconSmall}
                       </div>
                     )}
                   </button>
 
-                  {isProfileOpen && (
+                  {/* Conditional rendering with ternary (Vercel Best Practice: rendering-conditional-render) */}
+                  {isProfileOpen ? (
                     <>
                       <div
                         className="fixed inset-0 z-10"
@@ -113,7 +129,7 @@ export function Header() {
                           className="flex items-center gap-2 px-4 py-3 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 active:scale-95 transition-all touch-target"
                           onClick={() => setIsProfileOpen(false)}
                         >
-                          <ImageIcon className="w-4 h-4" />
+                          {GalleryIcon}
                           {t("nav.myGallery")}
                         </Link>
                         <Link
@@ -121,19 +137,19 @@ export function Header() {
                           className="flex items-center gap-2 px-4 py-3 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 active:scale-95 transition-all touch-target"
                           onClick={() => setIsProfileOpen(false)}
                         >
-                          <Settings className="w-4 h-4" />
+                          {SettingsIcon}
                           {t("nav.settings")}
                         </Link>
                         <button
                           onClick={() => signOut({ callbackUrl: "/login" })}
                           className="flex items-center gap-2 w-full px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 active:scale-95 transition-all touch-target"
                         >
-                          <LogOut className="w-4 h-4" />
+                          {LogOutIcon}
                           {t("nav.logout")}
                         </button>
                       </div>
                     </>
-                  )}
+                  ) : null}
                 </div>
               </>
             ) : (
@@ -150,13 +166,13 @@ export function Header() {
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="md:hidden p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 touch-target"
             >
-              {isMenuOpen ? <X className="w-5 h-5 text-zinc-700 dark:text-zinc-300" /> : <Menu className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />}
+              {isMenuOpen ? CloseIcon : MenuIcon}
             </button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
+        {/* Mobile Navigation - ternary conditional (Vercel Best Practice: rendering-conditional-render) */}
+        {isMenuOpen ? (
           <nav className="md:hidden py-4 border-t border-zinc-200 dark:border-zinc-700 animate-fade-in">
             {isAuthenticated ? (
               <div className="space-y-1">
@@ -181,6 +197,13 @@ export function Header() {
                 >
                   {t("nav.colorCorrection")}
                 </Link>
+                <Link
+                  href="/pricing"
+                  className="block px-4 py-3 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-lg active:scale-95 transition-all touch-target"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {t("nav.pricing")}
+                </Link>
               </div>
             ) : (
               <Link
@@ -192,7 +215,7 @@ export function Header() {
               </Link>
             )}
           </nav>
-        )}
+        ) : null}
       </div>
     </header>
   );

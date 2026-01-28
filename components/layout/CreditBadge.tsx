@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { Coins } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
 
@@ -59,7 +60,10 @@ export function CreditBadge() {
   }
 
   return (
-    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-full">
+    <Link
+      href="/pricing"
+      className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-full hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors cursor-pointer"
+    >
       <Coins className="w-4 h-4 text-amber-600 dark:text-amber-400" />
       <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
         {credit ? formatNumber(credit.balance) : 0}
@@ -69,6 +73,6 @@ export function CreditBadge() {
           (-{formatNumber(credit.pendingHolds)})
         </span>
       )}
-    </div>
+    </Link>
   );
 }

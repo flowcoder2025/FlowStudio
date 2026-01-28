@@ -223,19 +223,21 @@ export default function PricingPage() {
       </div>
 
       {/* Checkout Modal */}
-      <CheckoutModal
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-        type={selectedItem?.type || "credit_package"}
-        itemId={selectedItem?.item.id || ""}
-        itemName={
-          selectedItem?.type === "credit_package"
-            ? tPackages(selectedItem?.item.id || "")
-            : tPlans(selectedItem?.item.id || "")
-        }
-        price={selectedItem?.item.price || 0}
-        priceFormatted={selectedItem?.item.priceFormatted || ""}
-      />
+      {selectedItem && (
+        <CheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          type={selectedItem.type}
+          itemId={selectedItem.item.id}
+          itemName={
+            selectedItem.type === "credit_package"
+              ? tPackages(selectedItem.item.id)
+              : tPlans(selectedItem.item.id)
+          }
+          price={selectedItem.item.price}
+          priceFormatted={selectedItem.item.priceFormatted}
+        />
+      )}
     </div>
   );
 }
