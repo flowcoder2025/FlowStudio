@@ -66,18 +66,26 @@ export function isGoogleConfigured(): boolean {
 }
 
 /**
- * Rate limit 관련 에러인지 확인
+ * Rate limit 또는 서버 과부하 에러인지 확인
+ * - Rate limit: 429, quota, too many requests
+ * - 서버 과부하: 503, overloaded, unavailable
  */
 export function isRateLimitError(error: unknown): boolean {
   if (error instanceof Error) {
     const msg = error.message.toLowerCase()
     return (
+      // Rate limit 에러
       msg.includes('rate') ||
       msg.includes('quota') ||
       msg.includes('resource exhausted') ||
       msg.includes('429') ||
       msg.includes('too many requests') ||
-      msg.includes('limit exceeded')
+      msg.includes('limit exceeded') ||
+      // 서버 과부하 에러 (503)
+      msg.includes('503') ||
+      msg.includes('overloaded') ||
+      msg.includes('unavailable') ||
+      msg.includes('service unavailable')
     )
   }
   return false
