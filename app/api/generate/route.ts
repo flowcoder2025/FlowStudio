@@ -29,7 +29,7 @@ import { genaiLogger } from '@/lib/logger'
 import { apiErrorResponse } from '@/lib/errors'
 import { ensureBase64 } from '@/lib/utils/imageConverter'
 import {
-  generateImage,
+  generateImagesBatchWithMeta,
   getImageProvider,
   getProviderMode,
   getEstimatedCostPerImage,
@@ -197,14 +197,28 @@ export async function POST(req: NextRequest) {
     const generationStartTime = Date.now()
     genaiLogger.info('Starting parallel generation', { provider: imageProvider, mode: providerMode, userId: session.user.id, imageCount, imageSize: generationOptions.imageSize, aspectRatio: generationOptions.aspectRatio })
 
-    // 병렬로 이미지 생성
-    const generationPromises = Array.from({ length: imageCount }, () =>
-      generateImage(finalPrompt, generationOptions)
-    )
-    const results = await Promise.all(generationPromises)
+    // 병렬로 이미지 생성 (하이브리드 전략 + 자동 fallback 포함)
+    // - 503 에러(모델 과부하) 발생 시 자동으로 OpenRouter로 fallback
+    // - Promise.allSettled로 개별 실패 허용
+    const batchResult = await generateImagesBatchWithMeta(finalPrompt, imageCount, generationOptions)
     const generationDuration = Date.now() - generationStartTime
-    genaiLogger.info('Image generation completed', { durationMs: generationDuration, imageCount: results.filter(r => r !== null).length })
-    base64Images = results.filter((r): r is string => r !== null)
+
+    // fallback 사용 시 로깅
+    if (batchResult.fallbackUsed) {
+      genaiLogger.info('Fallback provider used', {
+        originalProvider: imageProvider,
+        actualProvider: batchResult.provider,
+        reason: 'rate_limit_or_overload'
+      })
+    }
+
+    genaiLogger.info('Image generation completed', {
+      durationMs: generationDuration,
+      imageCount: batchResult.images.length,
+      provider: batchResult.provider,
+      fallbackUsed: batchResult.fallbackUsed
+    })
+    base64Images = batchResult.images
 
     if (base64Images.length === 0) {
       // 생성 실패 이력 기록
