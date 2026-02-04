@@ -58,7 +58,7 @@ export async function processExpiredCredits(): Promise<ExpiryResult> {
   );
 
   // Process each user's expired credits
-  for (const [userId, transactions] of Object.entries(txByUser)) {
+  for (const [userId, transactions] of Object.entries(txByUser) as [string, Transaction[]][]) {
     try {
       const totalExpired = transactions.reduce(
         (sum: number, tx: Transaction) => sum + (tx.remainingAmount ?? 0),
