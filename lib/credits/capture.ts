@@ -44,7 +44,7 @@ export async function captureCredits(
   const amount = hold.holdAmount;
 
   // Execute capture in transaction
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
     // Update ledger status to CAPTURED
     await tx.creditLedger.update({
       where: { requestId },
