@@ -90,14 +90,14 @@ function LoginContent() {
         {/* Terms */}
         <p className="text-center text-xs text-zinc-500 dark:text-zinc-400 mt-8">
           {t.rich("auth.termsAgreement", {
-            terms: () => (
+            terms: (chunks) => (
               <Link href="/terms" className="underline hover:text-zinc-700 dark:hover:text-zinc-300">
-                {t("auth.termsOfService")}
+                {chunks}
               </Link>
             ),
-            privacy: () => (
+            privacy: (chunks) => (
               <Link href="/privacy" className="underline hover:text-zinc-700 dark:hover:text-zinc-300">
-                {t("auth.privacyPolicy")}
+                {chunks}
               </Link>
             ),
           })}

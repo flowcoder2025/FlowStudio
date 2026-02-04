@@ -629,6 +629,7 @@ export function ImmersiveInputForm({
 }: ImmersiveInputFormProps) {
   const router = useRouter();
   const t = useTranslations("common");
+  const tWorkflow = useTranslations("workflow");
   const [[currentIndex, direction], setPage] = useState<[number, number]>([0, 0]);
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [referenceImages, setReferenceImages] = useState<UploadedImage[]>([]);
@@ -996,9 +997,9 @@ export function ImmersiveInputForm({
 
           {/* 키보드 힌트 */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden md:flex items-center gap-4 text-white/60 text-sm">
-            <span>← → {t("workflow.ui.navigate")}</span>
+            <span>← → {tWorkflow("ui.navigate")}</span>
             <span>•</span>
-            <span>ESC {t("workflow.ui.close")}</span>
+            <span>ESC {tWorkflow("ui.close")}</span>
           </div>
         </motion.div>
       )}

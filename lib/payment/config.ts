@@ -2,19 +2,21 @@
  * Payment Configuration
  * Contract: PAYMENT_FUNC_CHECKOUT
  * Evidence: IMPLEMENTATION_PLAN.md Phase 9
+ *
+ * Payment Provider: Polar (https://polar.sh)
  */
 
 import type { CreditPackage, SubscriptionPlan } from "./types";
 
 // =====================================================
-// LemonSqueezy Configuration
+// Polar Configuration
 // =====================================================
 
-export const LEMONSQUEEZY_CONFIG = {
-  apiKey: process.env.LEMONSQUEEZY_API_KEY || "",
-  storeId: process.env.LEMONSQUEEZY_STORE_ID || "",
-  webhookSecret: process.env.LEMONSQUEEZY_WEBHOOK_SECRET || "",
-  apiUrl: "https://api.lemonsqueezy.com/v1",
+export const POLAR_CONFIG = {
+  accessToken: process.env.POLAR_ACCESS_TOKEN || "",
+  successUrl: process.env.POLAR_SUCCESS_URL || "http://localhost:3000/payment/success?checkout_id={CHECKOUT_ID}",
+  webhookSecret: process.env.POLAR_WEBHOOK_SECRET || "",
+  environment: (process.env.POLAR_ENVIRONMENT || "sandbox") as "sandbox" | "production",
 } as const;
 
 // =====================================================
@@ -24,7 +26,7 @@ export const LEMONSQUEEZY_CONFIG = {
 export const CREDIT_PACKAGES: CreditPackage[] = [
   {
     id: "starter",
-    variantId: process.env.LEMONSQUEEZY_VARIANT_STARTER || "starter",
+    productId: process.env.POLAR_PRODUCT_CREDITS_STARTER || "",
     name: "스타터",
     credits: 100,
     price: 10000, // ₩10,000
@@ -35,7 +37,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
   },
   {
     id: "basic",
-    variantId: process.env.LEMONSQUEEZY_VARIANT_BASIC || "basic",
+    productId: process.env.POLAR_PRODUCT_CREDITS_BASIC || "",
     name: "베이직",
     credits: 300,
     price: 28000, // ₩28,000
@@ -47,7 +49,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
   },
   {
     id: "pro",
-    variantId: process.env.LEMONSQUEEZY_VARIANT_PRO || "pro",
+    productId: process.env.POLAR_PRODUCT_CREDITS_PRO || "",
     name: "프로",
     credits: 1000,
     price: 90000, // ₩90,000
@@ -58,7 +60,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
   },
   {
     id: "business",
-    variantId: process.env.LEMONSQUEEZY_VARIANT_BUSINESS || "business",
+    productId: process.env.POLAR_PRODUCT_CREDITS_BUSINESS || "",
     name: "비즈니스",
     credits: 3000,
     price: 250000, // ₩250,000
@@ -89,9 +91,12 @@ export type FeatureKey =
   | { key: "teamMembers"; params: { count: number } };
 
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
+  // =====================================================
+  // Free Plan (interval: month - 기본값)
+  // =====================================================
   {
     id: "free",
-    variantId: "",
+    productId: "",
     name: "무료",
     price: 0,
     priceUSD: 0,
@@ -117,9 +122,13 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       { key: "historyDays", params: { days: 7 } },
     ] as FeatureKey[],
   },
+
+  // =====================================================
+  // Plus Plan - Monthly
+  // =====================================================
   {
     id: "plus",
-    variantId: process.env.LEMONSQUEEZY_VARIANT_SUB_PLUS || "sub_plus",
+    productId: process.env.POLAR_PRODUCT_PLUS_MONTHLY || "",
     name: "Plus",
     price: 9900,
     priceUSD: 700, // $7
@@ -150,9 +159,50 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     ] as FeatureKey[],
     popular: true,
   },
+
+  // =====================================================
+  // Plus Plan - Yearly (2개월 무료 = ~17% 할인)
+  // =====================================================
+  {
+    id: "plus-yearly",
+    productId: process.env.POLAR_PRODUCT_PLUS_YEARLY || "",
+    name: "Plus",
+    price: 99000, // 9,900 × 10개월
+    priceUSD: 7000, // $7 × 10개월 = $70
+    priceFormatted: "₩99,000",
+    priceFormattedUSD: "$70",
+    interval: "year",
+    monthlyCredits: 100,
+    storage: "100GB",
+    concurrentGenerations: 3,
+    watermarkRemoved: true,
+    priority: "priority",
+    historyDays: 30,
+    features: [
+      "월 100 크레딧 (30일 한정)",
+      "100GB 저장공간",
+      "3개 동시 생성",
+      "워터마크 제거",
+      "우선 처리",
+      "30일 히스토리",
+    ],
+    featureKeys: [
+      { key: "monthlyCredits", params: { count: 100 } },
+      { key: "storage", params: { size: "100GB" } },
+      { key: "concurrentGenerations", params: { count: 3 } },
+      { key: "watermarkRemoved" },
+      { key: "priorityProcessing" },
+      { key: "historyDays", params: { days: 30 } },
+    ] as FeatureKey[],
+    popular: true,
+  },
+
+  // =====================================================
+  // Pro Plan - Monthly
+  // =====================================================
   {
     id: "pro",
-    variantId: process.env.LEMONSQUEEZY_VARIANT_SUB_PRO || "sub_pro",
+    productId: process.env.POLAR_PRODUCT_PRO_MONTHLY || "",
     name: "Pro",
     price: 29900,
     priceUSD: 2100, // $21
@@ -173,7 +223,6 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       "워터마크 제거",
       "우선 처리",
       "90일 히스토리",
-      "API 접근",
     ],
     featureKeys: [
       { key: "monthlyCredits", params: { count: 300 } },
@@ -182,12 +231,52 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       { key: "watermarkRemoved" },
       { key: "priorityProcessing" },
       { key: "historyDays", params: { days: 90 } },
-      { key: "apiAccess" },
     ] as FeatureKey[],
   },
+
+  // =====================================================
+  // Pro Plan - Yearly (2개월 무료 = ~17% 할인)
+  // =====================================================
+  {
+    id: "pro-yearly",
+    productId: process.env.POLAR_PRODUCT_PRO_YEARLY || "",
+    name: "Pro",
+    price: 299000, // 29,900 × 10개월
+    priceUSD: 21000, // $21 × 10개월 = $210
+    priceFormatted: "₩299,000",
+    priceFormattedUSD: "$210",
+    interval: "year",
+    monthlyCredits: 300,
+    storage: "500GB",
+    concurrentGenerations: 5,
+    watermarkRemoved: true,
+    priority: "priority",
+    historyDays: 90,
+    apiAccess: true,
+    features: [
+      "월 300 크레딧 (30일 한정)",
+      "500GB 저장공간",
+      "5개 동시 생성",
+      "워터마크 제거",
+      "우선 처리",
+      "90일 히스토리",
+    ],
+    featureKeys: [
+      { key: "monthlyCredits", params: { count: 300 } },
+      { key: "storage", params: { size: "500GB" } },
+      { key: "concurrentGenerations", params: { count: 5 } },
+      { key: "watermarkRemoved" },
+      { key: "priorityProcessing" },
+      { key: "historyDays", params: { days: 90 } },
+    ] as FeatureKey[],
+  },
+
+  // =====================================================
+  // Business Plan - Monthly
+  // =====================================================
   {
     id: "business",
-    variantId: process.env.LEMONSQUEEZY_VARIANT_SUB_BUSINESS || "sub_business",
+    productId: process.env.POLAR_PRODUCT_BUSINESS_MONTHLY || "",
     name: "Business",
     price: 99000,
     priceUSD: 7100, // $71
@@ -209,8 +298,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       "워터마크 제거",
       "최우선 처리",
       "무제한 히스토리",
-      "API 접근",
-      "팀 협업 (5명)",
+      "팀 협업 (5명) - 추후 예정",
     ],
     featureKeys: [
       { key: "monthlyCredits", params: { count: 1000 } },
@@ -219,7 +307,46 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       { key: "watermarkRemoved" },
       { key: "highestPriorityProcessing" },
       { key: "historyUnlimited" },
-      { key: "apiAccess" },
+      { key: "teamMembers", params: { count: 5 } },
+    ] as FeatureKey[],
+  },
+
+  // =====================================================
+  // Business Plan - Yearly (2개월 무료 = ~17% 할인)
+  // =====================================================
+  {
+    id: "business-yearly",
+    productId: process.env.POLAR_PRODUCT_BUSINESS_YEARLY || "",
+    name: "Business",
+    price: 990000, // 99,000 × 10개월
+    priceUSD: 71000, // $71 × 10개월 = $710
+    priceFormatted: "₩990,000",
+    priceFormattedUSD: "$710",
+    interval: "year",
+    monthlyCredits: 1000,
+    storage: "1TB",
+    concurrentGenerations: 10,
+    watermarkRemoved: true,
+    priority: "highest",
+    historyDays: "unlimited",
+    apiAccess: true,
+    teamMembers: 5,
+    features: [
+      "월 1,000 크레딧 (30일 한정)",
+      "1TB 저장공간",
+      "10개 동시 생성",
+      "워터마크 제거",
+      "최우선 처리",
+      "무제한 히스토리",
+      "팀 협업 (5명) - 추후 예정",
+    ],
+    featureKeys: [
+      { key: "monthlyCredits", params: { count: 1000 } },
+      { key: "storage", params: { size: "1TB" } },
+      { key: "concurrentGenerations", params: { count: 10 } },
+      { key: "watermarkRemoved" },
+      { key: "highestPriorityProcessing" },
+      { key: "historyUnlimited" },
       { key: "teamMembers", params: { count: 5 } },
     ] as FeatureKey[],
   },
@@ -264,20 +391,20 @@ export const CREDIT_VALIDITY = {
 // Helper Functions
 // =====================================================
 
-export function getPackageByVariantId(
-  variantId: string
+export function getPackageByProductId(
+  productId: string
 ): CreditPackage | undefined {
-  return CREDIT_PACKAGES.find((pkg) => pkg.variantId === variantId);
+  return CREDIT_PACKAGES.find((pkg) => pkg.productId === productId);
 }
 
-export function getPlanByVariantId(
-  variantId: string
+export function getPlanByProductId(
+  productId: string
 ): SubscriptionPlan | undefined {
-  return SUBSCRIPTION_PLANS.find((plan) => plan.variantId === variantId);
+  return SUBSCRIPTION_PLANS.find((plan) => plan.productId === productId);
 }
 
-export function getCreditsForPackage(variantId: string): number {
-  const pkg = getPackageByVariantId(variantId);
+export function getCreditsForPackage(productId: string): number {
+  const pkg = getPackageByProductId(productId);
   if (pkg) {
     const bonusCredits = pkg.bonus
       ? Math.floor(pkg.credits * (pkg.bonus / 100))
@@ -285,4 +412,70 @@ export function getCreditsForPackage(variantId: string): number {
     return pkg.credits + bonusCredits;
   }
   return 0;
+}
+
+// Legacy support - map variantId to productId
+export function getPackageByVariantId(variantId: string): CreditPackage | undefined {
+  return getPackageByProductId(variantId);
+}
+
+export function getPlanByVariantId(variantId: string): SubscriptionPlan | undefined {
+  return getPlanByProductId(variantId);
+}
+
+// =====================================================
+// Billing Interval Helper Functions
+// =====================================================
+
+/**
+ * 특정 결제 주기에 해당하는 플랜 목록을 반환합니다.
+ * Free 플랜은 항상 포함됩니다.
+ */
+export function getPlansByInterval(interval: "month" | "year"): SubscriptionPlan[] {
+  return SUBSCRIPTION_PLANS.filter(
+    (plan) => plan.interval === interval || plan.id === "free"
+  );
+}
+
+/**
+ * 월간 플랜 목록을 반환합니다.
+ */
+export function getMonthlyPlans(): SubscriptionPlan[] {
+  return getPlansByInterval("month");
+}
+
+/**
+ * 연간 플랜 목록을 반환합니다.
+ */
+export function getYearlyPlans(): SubscriptionPlan[] {
+  return getPlansByInterval("year");
+}
+
+/**
+ * 연간 플랜의 월별 환산 가격을 계산합니다.
+ */
+export function getYearlyPlanMonthlyPrice(plan: SubscriptionPlan): {
+  monthly: number;
+  monthlyUSD: number;
+  monthlyFormatted: string;
+  monthlyFormattedUSD: string;
+} {
+  if (plan.interval !== "year") {
+    return {
+      monthly: plan.price,
+      monthlyUSD: plan.priceUSD,
+      monthlyFormatted: plan.priceFormatted,
+      monthlyFormattedUSD: plan.priceFormattedUSD,
+    };
+  }
+
+  const monthly = Math.round(plan.price / 12);
+  const monthlyUSD = Math.round(plan.priceUSD / 12);
+
+  return {
+    monthly,
+    monthlyUSD,
+    monthlyFormatted: `₩${monthly.toLocaleString()}`,
+    monthlyFormattedUSD: `$${(monthlyUSD / 100).toFixed(0)}`,
+  };
 }

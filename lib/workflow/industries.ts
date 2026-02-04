@@ -14,6 +14,7 @@ export const INDUSTRIES = [
   "sports",
   "pet",
   "kids",
+  "photo-studio",
 ] as const;
 
 export type Industry = (typeof INDUSTRIES)[number];
@@ -99,6 +100,14 @@ export const INDUSTRY_INFO: Record<Industry, IndustryInfo> = {
     description: "유아용품, 장난감, 아동복 이미지",
     icon: "🧸",
     color: "#06B6D4",
+  },
+  "photo-studio": {
+    id: "photo-studio",
+    name: "AI Photo Studio",
+    nameKo: "AI 사진관",
+    description: "증명사진, 프로필사진, 보정, 배경처리 등 인물 사진 서비스",
+    icon: "📷",
+    color: "#6366F1",
   },
 };
 

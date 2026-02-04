@@ -47,6 +47,7 @@ const POPULARITY_SCORES: Partial<Record<ExpressionIntent, Record<Industry, numbe
     sports: 0.85,
     pet: 0.80,
     kids: 0.85,
+    "photo-studio": 0.10,
   },
   "with-person.model-fullbody": {
     fashion: 0.90,
@@ -58,6 +59,7 @@ const POPULARITY_SCORES: Partial<Record<ExpressionIntent, Record<Industry, numbe
     sports: 0.85,
     pet: 0.30,
     kids: 0.80,
+    "photo-studio": 0.95,
   },
   "product-only.flat-lay": {
     fashion: 0.85,
@@ -69,6 +71,7 @@ const POPULARITY_SCORES: Partial<Record<ExpressionIntent, Record<Industry, numbe
     sports: 0.50,
     pet: 0.60,
     kids: 0.65,
+    "photo-studio": 0.10,
   },
   "detail-focus.texture": {
     fashion: 0.70,
@@ -80,6 +83,7 @@ const POPULARITY_SCORES: Partial<Record<ExpressionIntent, Record<Industry, numbe
     sports: 0.40,
     pet: 0.30,
     kids: 0.30,
+    "photo-studio": 0.20,
   },
   "mood-styling.space-cozy": {
     fashion: 0.60,
@@ -91,6 +95,7 @@ const POPULARITY_SCORES: Partial<Record<ExpressionIntent, Record<Industry, numbe
     sports: 0.30,
     pet: 0.70,
     kids: 0.75,
+    "photo-studio": 0.30,
   },
   "with-person.hand-holding": {
     fashion: 0.50,
@@ -102,6 +107,7 @@ const POPULARITY_SCORES: Partial<Record<ExpressionIntent, Record<Industry, numbe
     sports: 0.60,
     pet: 0.65,
     kids: 0.70,
+    "photo-studio": 0.20,
   },
   "composition.color-variation": {
     fashion: 0.80,
@@ -113,6 +119,7 @@ const POPULARITY_SCORES: Partial<Record<ExpressionIntent, Record<Industry, numbe
     sports: 0.70,
     pet: 0.50,
     kids: 0.75,
+    "photo-studio": 0.40,
   },
 };
 

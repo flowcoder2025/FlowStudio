@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { checkStorageQuota, updateStorageUsage } from './quota';
 
 // =====================================================
 // Configuration
@@ -32,6 +33,7 @@ export interface UploadResult {
   path: string;
   size: number;
   error?: string;
+  errorCode?: 'STORAGE_QUOTA_EXCEEDED';
 }
 
 export interface DeleteResult {
@@ -89,6 +91,19 @@ export async function uploadImage(options: UploadOptions): Promise<UploadResult>
       };
     }
 
+    // Check storage quota before upload
+    const quotaCheck = await checkStorageQuota(userId, size);
+    if (!quotaCheck.allowed) {
+      return {
+        success: false,
+        url: '',
+        path: '',
+        size: 0,
+        error: quotaCheck.errorMessage,
+        errorCode: quotaCheck.errorCode,
+      };
+    }
+
     // Generate unique filename
     const extension = getExtension(contentType);
     const generatedFilename = filename ?? generateFilename(userId, extension);
@@ -125,6 +140,9 @@ export async function uploadImage(options: UploadOptions): Promise<UploadResult>
     if (generateThumbnail) {
       thumbnailUrl = await uploadThumbnail(userId, buffer, generatedFilename, contentType);
     }
+
+    // Update storage usage after successful upload
+    await updateStorageUsage(userId, BigInt(size), 1);
 
     return {
       success: true,

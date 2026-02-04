@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { ArrowRight, Sparkles, X } from "lucide-react";
@@ -14,12 +14,14 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Industry, getIndustryInfo } from "@/lib/workflow/industries";
 import { Action, getIndustryActions } from "@/lib/workflow/actions";
+import { getIntentForAction, type ExpressionIntent } from "@/lib/workflow/intents";
 import {
   ImmersiveNavigation,
   useSwipeNavigation,
   useImmersiveKeyboard,
   useActionSelectHintOnboarding,
 } from "@/components/immersive";
+import { ImmersiveInputForm } from "./ImmersiveInputForm";
 
 // ============================================================
 // Types
@@ -335,6 +337,10 @@ export function ImmersiveActionSelect({
   const actions = getIndustryActions(industry);
   const { shouldShow: showHint } = useActionSelectHintOnboarding();
 
+  // ImmersiveInputForm 상태
+  const [showInputForm, setShowInputForm] = useState(false);
+  const [selectedAction, setSelectedAction] = useState<Action | null>(null);
+
   // 스와이프 네비게이션
   const {
     currentIndex,
@@ -349,15 +355,32 @@ export function ImmersiveActionSelect({
     loop: true,
   });
 
-  // 현재 액션 선택
+  // 현재 액션 선택 → ImmersiveInputForm 열기
   const handleSelect = useCallback(() => {
     const currentAction = actions[currentIndex];
     if (currentAction) {
       onSelect(currentAction);
-      onClose();
-      router.push(`/workflow/${industry}/${currentAction.id}`);
+      setSelectedAction(currentAction);
+      setShowInputForm(true);
     }
-  }, [actions, currentIndex, onSelect, onClose, router, industry]);
+  }, [actions, currentIndex, onSelect]);
+
+  // ImmersiveInputForm에서 생성 완료 시
+  const handleInputFormGenerate = useCallback(
+    (sessionId: string) => {
+      setShowInputForm(false);
+      setSelectedAction(null);
+      onClose();
+      router.push(`/result?sessionId=${sessionId}`);
+    },
+    [router, onClose]
+  );
+
+  // ImmersiveInputForm 닫기
+  const handleInputFormClose = useCallback(() => {
+    setShowInputForm(false);
+    setSelectedAction(null);
+  }, []);
 
   // 키보드 네비게이션
   useImmersiveKeyboard({
@@ -394,8 +417,9 @@ export function ImmersiveActionSelect({
   const currentAction = actions[currentIndex];
 
   return (
-    <AnimatePresence>
-      {isOpen && currentAction && (
+    <>
+      <AnimatePresence>
+      {isOpen && currentAction && !showInputForm && (
         <motion.div
           className="fixed inset-0 z-50 flex items-center justify-center"
           variants={overlayVariants}
@@ -506,6 +530,18 @@ export function ImmersiveActionSelect({
         </motion.div>
       )}
     </AnimatePresence>
+
+      {/* ImmersiveInputForm - 액션 선택 후 바로 입력 폼 (DOM 순서상 위에 표시) */}
+      {selectedAction && (
+        <ImmersiveInputForm
+          isOpen={showInputForm}
+          onClose={handleInputFormClose}
+          industry={industry}
+          intent={getIntentForAction(selectedAction.id) as ExpressionIntent}
+          onGenerate={handleInputFormGenerate}
+        />
+      )}
+    </>
   );
 }
 

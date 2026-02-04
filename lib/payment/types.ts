@@ -2,87 +2,80 @@
  * Payment Types
  * Contract: PAYMENT_FUNC_WEBHOOK, PAYMENT_FUNC_CHECKOUT
  * Evidence: IMPLEMENTATION_PLAN.md Phase 9
+ *
+ * Payment Provider: Polar (https://polar.sh)
  */
 
 // =====================================================
-// LemonSqueezy Webhook Event Types
+// Polar Webhook Event Types
 // =====================================================
 
 export type WebhookEventName =
-  | "order_created"
-  | "order_refunded"
-  | "subscription_created"
-  | "subscription_updated"
-  | "subscription_cancelled"
-  | "subscription_resumed"
-  | "subscription_expired"
-  | "subscription_paused"
-  | "subscription_unpaused"
-  | "subscription_payment_success"
-  | "subscription_payment_failed"
-  | "subscription_payment_recovered";
+  | "order.created"
+  | "order.refunded"
+  | "subscription.created"
+  | "subscription.updated"
+  | "subscription.active"
+  | "subscription.canceled"
+  | "subscription.revoked"
+  | "checkout.created"
+  | "checkout.updated";
 
 export interface WebhookMeta {
-  event_name: WebhookEventName;
-  custom_data?: {
-    user_id?: string;
-    [key: string]: unknown;
-  };
-  test_mode: boolean;
+  event: WebhookEventName;
+  webhook_id: string;
+  delivery_id: string;
 }
 
 export interface WebhookPayload {
-  meta: WebhookMeta;
-  data: {
-    id: string;
-    type: string;
-    attributes: Record<string, unknown>;
-    relationships?: Record<string, unknown>;
+  type: WebhookEventName;
+  data: PolarWebhookData;
+}
+
+export interface PolarWebhookData {
+  id: string;
+  created_at: string;
+  modified_at?: string;
+  metadata?: {
+    user_id?: string;
+    [key: string]: unknown;
   };
+  [key: string]: unknown;
 }
 
 // =====================================================
 // Order Types
 // =====================================================
 
-export interface OrderAttributes {
-  store_id: number;
-  customer_id: number;
-  identifier: string;
-  order_number: number;
-  user_name: string;
-  user_email: string;
-  currency: string;
-  currency_rate: string;
-  subtotal: number;
-  discount_total: number;
-  tax: number;
-  total: number;
-  subtotal_usd: number;
-  discount_total_usd: number;
-  tax_usd: number;
-  total_usd: number;
-  tax_name: string | null;
-  tax_rate: string | null;
-  status: "pending" | "paid" | "refunded" | "failed";
-  status_formatted: string;
-  refunded: boolean;
-  refunded_at: string | null;
-  first_order_item: {
-    id: number;
-    order_id: number;
-    product_id: number;
-    variant_id: number;
-    product_name: string;
-    variant_name: string;
-    price: number;
-    quantity: number;
-    created_at: string;
-    updated_at: string;
-    test_mode: boolean;
-  };
+export interface PolarOrder {
+  id: string;
   created_at: string;
-  updated_at: string;
+  modified_at?: string;
+  amount: number;
+  tax_amount: number;
+  currency: string;
+  user_id?: string;
+  product_id: string;
+  product_price_id: string;
+  subscription_id?: string;
+  checkout_id: string;
+  metadata?: {
+    user_id?: string;
+    package_id?: string;
+    credits?: number;
+    type?: string;
+    [key: string]: unknown;
+  };
+  user?: {
+    id: string;
+    email: string;
+    name?: string;
+  };
+  product?: {
+    id: string;
+    name: string;
+    description?: string;
+  };
 }
 
 // =====================================================
@@ -90,41 +83,42 @@ export interface OrderAttributes {
 // =====================================================
 
 export type SubscriptionStatus =
-  | "on_trial"
+  | "incomplete"
+  | "incomplete_expired"
+  | "trialing"
   | "active"
-  | "paused"
   | "past_due"
-  | "unpaid"
-  | "cancelled"
-  | "expired";
+  | "canceled"
+  | "unpaid";
 
-export interface SubscriptionAttributes {
-  store_id: number;
-  customer_id: number;
-  order_id: number;
-  order_item_id: number;
-  product_id: number;
-  variant_id: number;
-  product_name: string;
-  variant_name: string;
-  user_name: string;
-  user_email: string;
-  status: SubscriptionStatus;
-  status_formatted: string;
-  card_brand: string | null;
-  card_last_four: string | null;
-  pause: {
-    mode: "void" | "free" | null;
-    resumes_at: string | null;
-  } | null;
-  cancelled: boolean;
-  trial_ends_at: string | null;
-  billing_anchor: number;
-  renews_at: string | null;
-  ends_at: string | null;
+export interface PolarSubscription {
+  id: string;
   created_at: string;
-  updated_at: string;
-  test_mode: boolean;
+  modified_at?: string;
+  status: SubscriptionStatus;
+  current_period_start: string;
+  current_period_end?: string;
+  cancel_at_period_end: boolean;
+  ended_at?: string;
+  user_id?: string;
+  product_id: string;
+  product_price_id: string;
+  checkout_id?: string;
+  metadata?: {
+    user_id?: string;
+    plan_id?: string;
+    [key: string]: unknown;
+  };
+  user?: {
+    id: string;
+    email: string;
+    name?: string;
+  };
+  product?: {
+    id: string;
+    name: string;
+    description?: string;
+  };
 }
 
 // =====================================================
@@ -133,7 +127,7 @@ export interface SubscriptionAttributes {
 
 export interface CreditPackage {
   id: string;
-  variantId: string;
+  productId: string;
   name: string;
   credits: number;
   price: number; // in KRW
@@ -142,6 +136,8 @@ export interface CreditPackage {
   priceFormattedUSD: string; // USD formatted
   popular?: boolean;
   bonus?: number; // bonus percentage
+  // Legacy compatibility
+  variantId?: string;
 }
 
 // Feature key for i18n dynamic translation
@@ -150,7 +146,7 @@ export type FeatureKeyItem =
 
 export interface SubscriptionPlan {
   id: string;
-  variantId: string;
+  productId: string;
   name: string;
   price: number; // in KRW
   priceUSD: number; // in cents (USD)
@@ -169,6 +165,8 @@ export interface SubscriptionPlan {
   historyDays?: number | "unlimited";
   apiAccess?: boolean;
   teamMembers?: number;
+  // Legacy compatibility
+  variantId?: string;
 }
 
 // =====================================================
@@ -176,16 +174,17 @@ export interface SubscriptionPlan {
 // =====================================================
 
 export interface CheckoutOptions {
-  variantId: string;
+  productId: string;
   userId: string;
   email?: string;
   name?: string;
-  customData?: Record<string, unknown>;
-  redirectUrl?: string;
+  metadata?: Record<string, unknown>;
+  successUrl?: string;
 }
 
 export interface CheckoutResult {
   checkoutUrl: string;
+  checkoutId?: string;
   expiresAt?: string;
 }
 

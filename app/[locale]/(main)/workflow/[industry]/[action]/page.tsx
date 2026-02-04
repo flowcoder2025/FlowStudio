@@ -375,9 +375,9 @@ export default function WorkflowWizardPage({ params }: Props) {
         </div>
       )}
 
-      <div className="grid md:grid-cols-3 gap-8">
+      <div className="grid md:grid-cols-2 gap-8">
         {/* Left Panel - Input Form / Guide */}
-        <div className="md:col-span-2">
+        <div className={referenceImages.length > 0 ? "md:col-span-1" : "md:col-span-2"}>
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "form" | "guide")}>
             <TabsList className="mb-4">
               <TabsTrigger value="form" className="flex items-center gap-2">

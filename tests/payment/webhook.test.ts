@@ -2,6 +2,8 @@
  * Payment System Unit Tests
  * Contract: TEST_FUNC_PAYMENT
  * Evidence: tests/payment/webhook.test.ts::describe("Webhook")
+ *
+ * Payment Provider: Polar (https://polar.sh)
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -36,30 +38,42 @@ vi.mock('@/lib/db', () => ({
 }));
 
 vi.mock('@/lib/payment/config', () => ({
-  LEMONSQUEEZY_CONFIG: {
-    apiKey: 'test-api-key',
-    storeId: 'test-store-id',
+  POLAR_CONFIG: {
+    accessToken: 'test-access-token',
+    successUrl: 'http://localhost:3000/payment/success',
     webhookSecret: 'test-webhook-secret',
-    apiUrl: 'https://api.lemonsqueezy.com/v1',
+    environment: 'sandbox',
   },
   CREDIT_PACKAGES: [
-    { id: 'starter', name: 'Starter', credits: 100, price: 9900, variantId: 'var-100' },
-    { id: 'pro', name: 'Pro', credits: 500, price: 39900, variantId: 'var-500' },
+    { id: 'starter', name: 'Starter', credits: 100, price: 9900, productId: 'prod-100' },
+    { id: 'pro', name: 'Pro', credits: 500, price: 39900, productId: 'prod-500' },
   ],
   SUBSCRIPTION_PLANS: [
-    { id: 'free', name: 'Free', monthlyCredits: 10, price: 0, variantId: null },
-    { id: 'basic', name: 'Basic', monthlyCredits: 100, price: 9900, variantId: 'sub-basic' },
+    { id: 'free', name: 'Free', monthlyCredits: 10, price: 0, productId: '' },
+    { id: 'basic', name: 'Basic', monthlyCredits: 100, price: 9900, productId: 'prod-basic' },
   ],
-  getCreditsForPackage: vi.fn((variantId: string) => {
-    const packages: Record<string, number> = { 'var-100': 100, 'var-500': 500 };
-    return packages[variantId] || 0;
+  getCreditsForPackage: vi.fn((productId: string) => {
+    const packages: Record<string, number> = { 'prod-100': 100, 'prod-500': 500 };
+    return packages[productId] || 0;
   }),
-  getPlanByVariantId: vi.fn((variantId: string) => {
-    if (variantId === 'sub-basic') {
+  getPlanByProductId: vi.fn((productId: string) => {
+    if (productId === 'prod-basic') {
       return { id: 'basic', name: 'Basic', monthlyCredits: 100, price: 9900 };
     }
     return null;
   }),
+  getPackageByProductId: vi.fn((productId: string) => {
+    if (productId === 'prod-100') {
+      return { id: 'starter', name: 'Starter', credits: 100, price: 9900, productId: 'prod-100' };
+    }
+    if (productId === 'prod-500') {
+      return { id: 'pro', name: 'Pro', credits: 500, price: 39900, productId: 'prod-500' };
+    }
+    return null;
+  }),
+  // Legacy support
+  getPlanByVariantId: vi.fn(),
+  getPackageByVariantId: vi.fn(),
 }));
 
 // Import after mocking
@@ -74,7 +88,7 @@ import {
   getSubscriptionPlanById,
 } from '@/lib/payment/checkout';
 import { prisma } from '@/lib/db';
-import { LEMONSQUEEZY_CONFIG } from '@/lib/payment/config';
+import { POLAR_CONFIG } from '@/lib/payment/config';
 
 describe('Webhook', () => {
   beforeEach(() => {
@@ -84,7 +98,7 @@ describe('Webhook', () => {
   describe('verifyWebhookSignature', () => {
     it('유효한 서명을 검증해야 한다', () => {
       const rawBody = JSON.stringify({ test: 'data' });
-      const hmac = crypto.createHmac('sha256', LEMONSQUEEZY_CONFIG.webhookSecret!);
+      const hmac = crypto.createHmac('sha256', POLAR_CONFIG.webhookSecret!);
       const signature = hmac.update(rawBody).digest('hex');
 
       const result = verifyWebhookSignature(rawBody, signature);
@@ -120,28 +134,26 @@ describe('Webhook', () => {
 
   describe('handleWebhook', () => {
     const createValidSignature = (body: string) => {
-      const hmac = crypto.createHmac('sha256', LEMONSQUEEZY_CONFIG.webhookSecret!);
+      const hmac = crypto.createHmac('sha256', POLAR_CONFIG.webhookSecret!);
       return hmac.update(body).digest('hex');
     };
 
-    it('order_created 이벤트를 처리해야 한다', async () => {
+    it('order.created 이벤트를 처리해야 한다', async () => {
       const payload = {
-        meta: {
-          event_name: 'order_created',
-          custom_data: { user_id: 'test-user-id' },
-        },
+        type: 'order.created',
         data: {
           id: 'order-123',
-          attributes: {
-            status: 'paid',
-            total: 9900,
-            currency: 'KRW',
-            customer_id: 'customer-123',
-            first_order_item: {
-              product_id: 'product-123',
-              variant_id: 'var-100',
-              product_name: 'Starter Pack',
-            },
+          metadata: { user_id: 'test-user-id' },
+          product_id: 'prod-100',
+          amount: 9900,
+          currency: 'USD',
+          user: {
+            id: 'polar-user-123',
+            email: 'test@example.com',
+          },
+          product: {
+            id: 'prod-100',
+            name: 'Starter Pack',
           },
         },
       };
@@ -163,8 +175,8 @@ describe('Webhook', () => {
 
     it('잘못된 서명으로 실패해야 한다', async () => {
       const payload = {
-        meta: { event_name: 'order_created' },
-        data: { id: 'order-123', attributes: {} },
+        type: 'order.created',
+        data: { id: 'order-123' },
       };
 
       const rawBody = JSON.stringify(payload);
@@ -185,10 +197,9 @@ describe('Webhook', () => {
       expect(result.message).toBe('Invalid JSON payload');
     });
 
-    it('이벤트 이름이 없으면 실패해야 한다', async () => {
+    it('이벤트 타입이 없으면 실패해야 한다', async () => {
       const payload = {
-        meta: {},
-        data: { id: 'order-123', attributes: {} },
+        data: { id: 'order-123' },
       };
 
       const rawBody = JSON.stringify(payload);
@@ -197,28 +208,26 @@ describe('Webhook', () => {
       const result = await handleWebhook(rawBody, signature);
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe('Missing event name');
+      expect(result.message).toBe('Missing event type');
     });
 
-    it('subscription_created 이벤트를 처리해야 한다', async () => {
+    it('subscription.created 이벤트를 처리해야 한다', async () => {
       const payload = {
-        meta: {
-          event_name: 'subscription_created',
-          custom_data: { user_id: 'test-user-id' },
-        },
+        type: 'subscription.created',
         data: {
           id: 'sub-123',
-          attributes: {
-            status: 'active',
-            customer_id: 'customer-123',
-            order_id: 'order-123',
-            product_id: 'product-123',
-            variant_id: 'sub-basic',
-            variant_name: 'Basic Plan',
-            renews_at: '2024-02-01T00:00:00Z',
-            ends_at: null,
-            trial_ends_at: null,
-            pause: null,
+          metadata: { user_id: 'test-user-id' },
+          status: 'active',
+          product_id: 'prod-basic',
+          current_period_start: '2024-01-01T00:00:00Z',
+          current_period_end: '2024-02-01T00:00:00Z',
+          user: {
+            id: 'polar-user-123',
+            email: 'test@example.com',
+          },
+          product: {
+            id: 'prod-basic',
+            name: 'Basic Plan',
           },
         },
       };
@@ -237,16 +246,13 @@ describe('Webhook', () => {
       expect(prisma.subscription.create).toHaveBeenCalled();
     });
 
-    it('order_refunded 이벤트를 처리해야 한다', async () => {
+    it('order.refunded 이벤트를 처리해야 한다', async () => {
       const payload = {
-        meta: {
-          event_name: 'order_refunded',
-        },
+        type: 'order.refunded',
         data: {
           id: 'order-123',
-          attributes: {
-            status: 'refunded',
-          },
+          metadata: {},
+          product_id: 'prod-100',
         },
       };
 
@@ -280,23 +286,20 @@ describe('Checkout', () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            data: {
-              id: 'checkout-123',
-              attributes: {
-                url: 'https://checkout.lemonsqueezy.com/checkout/123',
-                expires_at: '2024-01-01T00:00:00Z',
-              },
-            },
+            id: 'checkout-123',
+            url: 'https://checkout.polar.sh/checkout/123',
+            status: 'open',
+            expires_at: '2024-01-01T00:00:00Z',
           }),
       } as Response);
 
       const result = await createCheckout({
-        variantId: 'var-100',
+        productId: 'prod-100',
         userId: 'test-user-id',
         email: 'test@example.com',
       });
 
-      expect(result.checkoutUrl).toContain('lemonsqueezy.com');
+      expect(result.checkoutUrl).toContain('polar.sh');
       expect(result.expiresAt).toBeDefined();
     });
 
@@ -309,10 +312,10 @@ describe('Checkout', () => {
 
       await expect(
         createCheckout({
-          variantId: 'var-100',
+          productId: 'prod-100',
           userId: 'test-user-id',
         })
-      ).rejects.toThrow('LemonSqueezy API error');
+      ).rejects.toThrow('Polar API error');
     });
   });
 
@@ -322,13 +325,10 @@ describe('Checkout', () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            data: {
-              id: 'checkout-123',
-              attributes: {
-                url: 'https://checkout.lemonsqueezy.com/checkout/123',
-                expires_at: null,
-              },
-            },
+            id: 'checkout-123',
+            url: 'https://checkout.polar.sh/checkout/123',
+            status: 'open',
+            expires_at: null,
           }),
       } as Response);
 
@@ -354,13 +354,10 @@ describe('Checkout', () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            data: {
-              id: 'checkout-123',
-              attributes: {
-                url: 'https://checkout.lemonsqueezy.com/checkout/123',
-                expires_at: null,
-              },
-            },
+            id: 'checkout-123',
+            url: 'https://checkout.polar.sh/checkout/123',
+            status: 'open',
+            expires_at: null,
           }),
       } as Response);
 

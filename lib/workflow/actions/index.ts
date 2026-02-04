@@ -8,6 +8,7 @@ import { Action } from "./types";
 import { fashionActions } from "./fashion";
 import { foodActions } from "./food";
 import { beautyActions } from "./beauty";
+import { photoStudioActions } from "./photo-studio";
 
 export * from "./types";
 
@@ -15,6 +16,7 @@ export * from "./types";
 export { fashionActions } from "./fashion";
 export { foodActions } from "./food";
 export { beautyActions } from "./beauty";
+export { photoStudioActions } from "./photo-studio";
 
 // Placeholder actions for other industries (to be implemented)
 const interiorActions: Action[] = [
@@ -207,6 +209,7 @@ const ACTION_MAP: Record<Industry, Action[]> = {
   sports: sportsActions,
   pet: petActions,
   kids: kidsActions,
+  "photo-studio": photoStudioActions,
 };
 
 /**

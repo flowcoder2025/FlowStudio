@@ -24,6 +24,7 @@
     "@google/genai": "^1.38.0",
     "@google/generative-ai": "^0.24.1",
     "@imgly/background-removal": "^1.7.0",
+    "@polar-sh/nextjs": "^0.9.3",
     "@prisma/client": "^6.2.1",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",

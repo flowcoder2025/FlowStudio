@@ -1,7 +1,9 @@
 /**
- * LemonSqueezy Webhook Handler
+ * Polar Webhook Handler
  * Contract: PAYMENT_FUNC_WEBHOOK
  * Evidence: IMPLEMENTATION_PLAN.md Phase 9
+ *
+ * Payment Provider: Polar (https://polar.sh)
  *
  * DB Schema Notes:
  * - WebhookEvent model does NOT exist in schema
@@ -14,15 +16,16 @@
 import crypto from "node:crypto";
 import { prisma } from "@/lib/db";
 import {
-  LEMONSQUEEZY_CONFIG,
+  POLAR_CONFIG,
   getCreditsForPackage,
-  getPlanByVariantId,
+  getPlanByProductId,
+  getPackageByProductId,
 } from "./config";
 import type {
   WebhookPayload,
   WebhookEventName,
-  OrderAttributes,
-  SubscriptionAttributes,
+  PolarOrder,
+  PolarSubscription,
 } from "./types";
 
 // =====================================================
@@ -30,17 +33,22 @@ import type {
 // =====================================================
 
 /**
- * Verify webhook signature from LemonSqueezy
+ * Verify webhook signature from Polar
  */
 export function verifyWebhookSignature(
   rawBody: string,
   signature: string | null
 ): boolean {
-  if (!signature || !LEMONSQUEEZY_CONFIG.webhookSecret) {
+  if (!signature || !POLAR_CONFIG.webhookSecret) {
+    // If no webhook secret configured, skip verification in development
+    if (process.env.NODE_ENV === "development") {
+      console.warn("Webhook signature verification skipped - no secret configured");
+      return true;
+    }
     return false;
   }
 
-  const hmac = crypto.createHmac("sha256", LEMONSQUEEZY_CONFIG.webhookSecret);
+  const hmac = crypto.createHmac("sha256", POLAR_CONFIG.webhookSecret);
   const digest = Buffer.from(hmac.update(rawBody).digest("hex"), "utf8");
   const signatureBuffer = Buffer.from(signature, "utf8");
 
@@ -82,18 +90,18 @@ export async function handleWebhook(
     return { success: false, message: "Invalid JSON payload" };
   }
 
-  const eventName = payload.meta?.event_name;
-  if (!eventName) {
-    return { success: false, message: "Missing event name" };
+  const eventType = payload.type;
+  if (!eventType) {
+    return { success: false, message: "Missing event type" };
   }
 
   // Process event directly (no WebhookEvent model)
   try {
-    await processWebhookEvent(eventName, payload);
+    await processWebhookEvent(eventType, payload);
 
     return {
       success: true,
-      message: `Event ${eventName} processed successfully`,
+      message: `Event ${eventType} processed successfully`,
     };
   } catch (error) {
     console.error("Webhook processing error:", error);
@@ -108,47 +116,40 @@ export async function handleWebhook(
  * Process specific webhook event
  */
 async function processWebhookEvent(
-  eventName: WebhookEventName,
+  eventType: WebhookEventName,
   payload: WebhookPayload
 ): Promise<void> {
-  const userId = payload.meta.custom_data?.user_id;
-
-  switch (eventName) {
-    case "order_created":
-      await handleOrderCreated(payload, userId);
+  switch (eventType) {
+    case "order.created":
+      await handleOrderCreated(payload.data as unknown as PolarOrder);
       break;
 
-    case "order_refunded":
-      await handleOrderRefunded(payload);
+    case "order.refunded":
+      await handleOrderRefunded(payload.data as unknown as PolarOrder);
       break;
 
-    case "subscription_created":
-      await handleSubscriptionCreated(payload, userId);
+    case "subscription.created":
+      await handleSubscriptionCreated(payload.data as unknown as PolarSubscription);
       break;
 
-    case "subscription_updated":
-    case "subscription_resumed":
-    case "subscription_paused":
-    case "subscription_unpaused":
-      await handleSubscriptionUpdated(payload);
+    case "subscription.updated":
+    case "subscription.active":
+      await handleSubscriptionUpdated(payload.data as unknown as PolarSubscription);
       break;
 
-    case "subscription_cancelled":
-    case "subscription_expired":
-      await handleSubscriptionEnded(payload);
+    case "subscription.canceled":
+    case "subscription.revoked":
+      await handleSubscriptionEnded(payload.data as unknown as PolarSubscription);
       break;
 
-    case "subscription_payment_success":
-      await handleSubscriptionPaymentSuccess(payload);
-      break;
-
-    case "subscription_payment_failed":
-    case "subscription_payment_recovered":
-      await handleSubscriptionPaymentStatus(payload, eventName);
+    case "checkout.created":
+    case "checkout.updated":
+      // Checkout events - log only
+      console.log(`Checkout event: ${eventType}`, payload.data);
       break;
 
     default:
-      console.log(`Unhandled webhook event: ${eventName}`);
+      console.log(`Unhandled webhook event: ${eventType}`);
   }
 }
 
@@ -156,21 +157,19 @@ async function processWebhookEvent(
 // Order Event Handlers
 // =====================================================
 
-async function handleOrderCreated(
-  payload: WebhookPayload,
-  userId?: string
-): Promise<void> {
-  const attributes = payload.data.attributes as unknown as OrderAttributes;
-  const orderId = payload.data.id;
+async function handleOrderCreated(order: PolarOrder): Promise<void> {
+  const orderId = order.id;
+  const userId = order.metadata?.user_id;
+  const productId = order.product_id;
 
   if (!userId) {
-    console.error("Order created without user_id in custom_data");
+    console.error("Order created without user_id in metadata");
     return;
   }
 
-  // Check if this is a one-time purchase (not subscription)
-  const variantId = attributes.first_order_item?.variant_id?.toString();
-  const credits = variantId ? getCreditsForPackage(variantId) : 0;
+  // Check if this is a credit package purchase
+  const pkg = getPackageByProductId(productId);
+  const credits = pkg ? getCreditsForPackage(productId) : 0;
 
   // Record purchase via CreditTransaction (no Payment model)
   await prisma.creditTransaction.create({
@@ -178,15 +177,15 @@ async function handleOrderCreated(
       userId,
       amount: credits,
       type: "purchase",
-      description: `Purchase: ${attributes.first_order_item?.product_name ?? orderId}`,
+      description: `Purchase: ${order.product?.name ?? orderId}`,
       paymentId: orderId,
-      paymentProvider: "lemonsqueezy",
+      paymentProvider: "polar",
     },
   });
 
-  // Grant credits if payment is successful
+  // Grant credits if this is a credit package purchase
   // 구매 크레딧은 영구 보존 (expiresInDays: null)
-  if (attributes.status === "paid" && credits > 0) {
+  if (credits > 0) {
     await grantCredits(userId, credits, `Purchase: ${orderId}`, {
       expiresInDays: null,
       type: "purchase",
@@ -194,10 +193,8 @@ async function handleOrderCreated(
   }
 }
 
-async function handleOrderRefunded(
-  payload: WebhookPayload
-): Promise<void> {
-  const orderId = payload.data.id;
+async function handleOrderRefunded(order: PolarOrder): Promise<void> {
+  const orderId = order.id;
 
   // Find the original purchase transaction
   const purchaseTx = await prisma.creditTransaction.findFirst({
@@ -223,21 +220,18 @@ async function handleOrderRefunded(
 // Subscription Event Handlers
 // =====================================================
 
-async function handleSubscriptionCreated(
-  payload: WebhookPayload,
-  userId?: string
-): Promise<void> {
-  const attributes = payload.data.attributes as unknown as SubscriptionAttributes;
-  const subscriptionId = payload.data.id;
+async function handleSubscriptionCreated(subscription: PolarSubscription): Promise<void> {
+  const subscriptionId = subscription.id;
+  const userId = subscription.metadata?.user_id;
+  const productId = subscription.product_id;
 
   if (!userId) {
-    console.error("Subscription created without user_id in custom_data");
+    console.error("Subscription created without user_id in metadata");
     return;
   }
 
   // Get plan info
-  const variantId = attributes.variant_id?.toString();
-  const plan = variantId ? getPlanByVariantId(variantId) : null;
+  const plan = getPlanByProductId(productId);
 
   // Create subscription record with available fields
   await prisma.subscription.create({
@@ -245,16 +239,18 @@ async function handleSubscriptionCreated(
       userId,
       externalId: subscriptionId,
       tier: plan?.id?.toUpperCase() || "PRO",
-      status: attributes.status,
+      status: subscription.status,
       startDate: new Date(),
-      endDate: attributes.ends_at ? new Date(attributes.ends_at) : null,
-      paymentProvider: "lemonsqueezy",
+      endDate: subscription.current_period_end
+        ? new Date(subscription.current_period_end)
+        : null,
+      paymentProvider: "polar",
     },
   });
 
   // Grant initial credits for subscription (if plan has monthly credits)
   // 구독 크레딧은 30일 한정
-  if (plan && attributes.status === "active" && plan.monthlyCredits) {
+  if (plan && subscription.status === "active" && plan.monthlyCredits) {
     await grantCredits(
       userId,
       plan.monthlyCredits,
@@ -264,104 +260,49 @@ async function handleSubscriptionCreated(
   }
 }
 
-async function handleSubscriptionUpdated(
-  payload: WebhookPayload
-): Promise<void> {
-  const attributes = payload.data.attributes as unknown as SubscriptionAttributes;
-  const subscriptionId = payload.data.id;
+async function handleSubscriptionUpdated(subscription: PolarSubscription): Promise<void> {
+  const subscriptionId = subscription.id;
+
+  // Find existing subscription
+  const existingSub = await prisma.subscription.findFirst({
+    where: { externalId: subscriptionId },
+  });
 
   await prisma.subscription.updateMany({
     where: { externalId: subscriptionId },
     data: {
-      status: attributes.status,
-      endDate: attributes.ends_at ? new Date(attributes.ends_at) : null,
+      status: subscription.status,
+      endDate: subscription.current_period_end
+        ? new Date(subscription.current_period_end)
+        : null,
     },
   });
-}
 
-async function handleSubscriptionEnded(payload: WebhookPayload): Promise<void> {
-  const attributes = payload.data.attributes as unknown as SubscriptionAttributes;
-  const subscriptionId = payload.data.id;
-
-  await prisma.subscription.updateMany({
-    where: { externalId: subscriptionId },
-    data: {
-      status: attributes.status,
-      endDate: new Date(),
-      cancelledAt: new Date(),
-    },
-  });
-}
-
-async function handleSubscriptionPaymentSuccess(
-  payload: WebhookPayload
-): Promise<void> {
-  const attributes = payload.data.attributes as unknown as SubscriptionAttributes;
-  const subscriptionId = payload.data.id;
-
-  const subscription = await prisma.subscription.findFirst({
-    where: { externalId: subscriptionId },
-  });
-
-  if (subscription) {
-    // Get plan info from tier
-    const plan = getPlanByVariantId(subscription.tier.toLowerCase());
-
-    // Grant monthly credits (if plan has monthly credits)
-    // 구독 크레딧은 30일 한정
+  // If subscription became active and has plan with monthly credits, grant credits
+  if (existingSub && existingSub.status !== "active" && subscription.status === "active") {
+    const plan = getPlanByProductId(subscription.product_id);
     if (plan && plan.monthlyCredits) {
       await grantCredits(
-        subscription.userId,
+        existingSub.userId,
         plan.monthlyCredits,
         `Subscription renewal: ${plan.name}`,
         { expiresInDays: 30, type: "subscription" }
       );
     }
-
-    // Update subscription
-    await prisma.subscription.update({
-      where: { id: subscription.id },
-      data: {
-        status: attributes.status,
-        endDate: attributes.ends_at ? new Date(attributes.ends_at) : null,
-      },
-    });
   }
 }
 
-async function handleSubscriptionPaymentStatus(
-  payload: WebhookPayload,
-  eventName: WebhookEventName
-): Promise<void> {
-  const attributes = payload.data.attributes as unknown as SubscriptionAttributes;
-  const subscriptionId = payload.data.id;
+async function handleSubscriptionEnded(subscription: PolarSubscription): Promise<void> {
+  const subscriptionId = subscription.id;
 
   await prisma.subscription.updateMany({
     where: { externalId: subscriptionId },
     data: {
-      status: attributes.status,
+      status: subscription.status,
+      endDate: new Date(),
+      cancelledAt: new Date(),
     },
   });
-
-  // If payment recovered, grant credits
-  if (eventName === "subscription_payment_recovered") {
-    const subscription = await prisma.subscription.findFirst({
-      where: { externalId: subscriptionId },
-    });
-
-    if (subscription) {
-      const plan = getPlanByVariantId(subscription.tier.toLowerCase());
-      // 구독 크레딧은 30일 한정
-      if (plan && plan.monthlyCredits) {
-        await grantCredits(
-          subscription.userId,
-          plan.monthlyCredits,
-          `Payment recovered: ${plan.name}`,
-          { expiresInDays: 30, type: "subscription" }
-        );
-      }
-    }
-  }
 }
 
 // =====================================================

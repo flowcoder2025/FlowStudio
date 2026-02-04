@@ -73,6 +73,18 @@ export async function POST(request: NextRequest) {
     }
 
     if (!uploadResult.success) {
+      // Handle storage quota exceeded error with 402 Payment Required
+      if (uploadResult.errorCode === 'STORAGE_QUOTA_EXCEEDED') {
+        return NextResponse.json(
+          {
+            success: false,
+            error: uploadResult.error ?? 'Storage quota exceeded',
+            code: 'STORAGE_QUOTA_EXCEEDED',
+          },
+          { status: 402 }
+        );
+      }
+
       return NextResponse.json(
         { success: false, error: uploadResult.error ?? 'Upload failed' },
         { status: 500 }

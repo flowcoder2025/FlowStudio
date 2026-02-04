@@ -1,7 +1,9 @@
 /**
- * Checkout API Route
+ * Payment Checkout API Route
  * Contract: PAYMENT_FUNC_CHECKOUT
  * Evidence: IMPLEMENTATION_PLAN.md Phase 9
+ *
+ * Payment Provider: Polar (https://polar.sh)
  */
 
 import { NextRequest, NextResponse } from "next/server";

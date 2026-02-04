@@ -1,43 +1,46 @@
 /**
- * LemonSqueezy Checkout Service
+ * Polar Checkout Service
  * Contract: PAYMENT_FUNC_CHECKOUT
  * Evidence: IMPLEMENTATION_PLAN.md Phase 9
+ *
+ * Payment Provider: Polar (https://polar.sh)
  */
 
-import { LEMONSQUEEZY_CONFIG, CREDIT_PACKAGES, SUBSCRIPTION_PLANS } from "./config";
+import { POLAR_CONFIG, CREDIT_PACKAGES, SUBSCRIPTION_PLANS } from "./config";
 import type { CheckoutOptions, CheckoutResult, CreditPackage, SubscriptionPlan } from "./types";
 
 // =====================================================
-// LemonSqueezy API Client
+// Polar API Client
 // =====================================================
 
-interface LemonSqueezyCheckoutResponse {
-  data: {
-    id: string;
-    attributes: {
-      url: string;
-      expires_at: string | null;
-    };
-  };
+interface PolarCheckoutResponse {
+  id: string;
+  url: string;
+  status: string;
+  expires_at?: string;
 }
 
-async function lemonSqueezyFetch<T>(
+async function polarFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const response = await fetch(`${LEMONSQUEEZY_CONFIG.apiUrl}${endpoint}`, {
+  const baseUrl = POLAR_CONFIG.environment === "production"
+    ? "https://api.polar.sh"
+    : "https://sandbox-api.polar.sh";
+
+  const response = await fetch(`${baseUrl}${endpoint}`, {
     ...options,
     headers: {
-      Authorization: `Bearer ${LEMONSQUEEZY_CONFIG.apiKey}`,
-      "Content-Type": "application/vnd.api+json",
-      Accept: "application/vnd.api+json",
+      Authorization: `Bearer ${POLAR_CONFIG.accessToken}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
       ...options.headers,
     },
   });
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`LemonSqueezy API error: ${response.status} - ${error}`);
+    throw new Error(`Polar API error: ${response.status} - ${error}`);
   }
 
   return response.json() as Promise<T>;
@@ -53,63 +56,27 @@ async function lemonSqueezyFetch<T>(
 export async function createCheckout(
   options: CheckoutOptions
 ): Promise<CheckoutResult> {
-  const { variantId, userId, email, name, customData, redirectUrl } = options;
+  const { productId, userId, email, metadata, successUrl } = options;
 
-  if (!LEMONSQUEEZY_CONFIG.apiKey) {
-    throw new Error("LemonSqueezy API key not configured");
-  }
-
-  if (!LEMONSQUEEZY_CONFIG.storeId) {
-    throw new Error("LemonSqueezy store ID not configured");
+  if (!POLAR_CONFIG.accessToken) {
+    throw new Error("Polar access token not configured");
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const finalSuccessUrl = successUrl || POLAR_CONFIG.successUrl || `${baseUrl}/payment/success?checkout_id={CHECKOUT_ID}`;
 
   const checkoutData = {
-    data: {
-      type: "checkouts",
-      attributes: {
-        checkout_data: {
-          email: email || undefined,
-          name: name || undefined,
-          custom: {
-            user_id: userId,
-            ...customData,
-          },
-        },
-        checkout_options: {
-          embed: false,
-          media: true,
-          logo: true,
-          desc: true,
-          discount: true,
-        },
-        product_options: {
-          redirect_url: redirectUrl || `${baseUrl}/payment/success`,
-          receipt_button_text: "대시보드로 이동",
-          receipt_link_url: `${baseUrl}/dashboard`,
-          receipt_thank_you_note: "구매해 주셔서 감사합니다! 크레딧이 계정에 추가되었습니다.",
-        },
-      },
-      relationships: {
-        store: {
-          data: {
-            type: "stores",
-            id: LEMONSQUEEZY_CONFIG.storeId,
-          },
-        },
-        variant: {
-          data: {
-            type: "variants",
-            id: variantId,
-          },
-        },
-      },
+    product_id: productId,
+    success_url: finalSuccessUrl,
+    customer_email: email || undefined,
+    metadata: {
+      user_id: userId,
+      ...metadata,
     },
   };
 
-  const response = await lemonSqueezyFetch<LemonSqueezyCheckoutResponse>(
-    "/checkouts",
+  const response = await polarFetch<PolarCheckoutResponse>(
+    "/v1/checkouts/custom",
     {
       method: "POST",
       body: JSON.stringify(checkoutData),
@@ -117,8 +84,9 @@ export async function createCheckout(
   );
 
   return {
-    checkoutUrl: response.data.attributes.url,
-    expiresAt: response.data.attributes.expires_at || undefined,
+    checkoutUrl: response.url,
+    checkoutId: response.id,
+    expiresAt: response.expires_at,
   };
 }
 
@@ -135,11 +103,15 @@ export async function createCreditPackageCheckout(
     throw new Error(`Credit package not found: ${packageId}`);
   }
 
+  if (!pkg.productId) {
+    throw new Error(`Credit package ${packageId} does not have a Polar product ID configured`);
+  }
+
   return createCheckout({
-    variantId: pkg.variantId,
+    productId: pkg.productId,
     userId,
     email,
-    customData: {
+    metadata: {
       package_id: packageId,
       credits: pkg.credits,
       type: "credit_package",
@@ -160,15 +132,15 @@ export async function createSubscriptionCheckout(
     throw new Error(`Subscription plan not found: ${planId}`);
   }
 
-  if (!plan.variantId) {
+  if (!plan.productId) {
     throw new Error(`Free plan does not require checkout`);
   }
 
   return createCheckout({
-    variantId: plan.variantId,
+    productId: plan.productId,
     userId,
     email,
-    customData: {
+    metadata: {
       plan_id: planId,
       monthly_credits: plan.monthlyCredits ?? 0,
       type: "subscription",

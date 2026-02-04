@@ -15,3 +15,16 @@ export {
   type UploadResult,
   type DeleteResult,
 } from './uploadImage';
+
+export {
+  checkStorageQuota,
+  updateStorageUsage,
+  getStorageUsage,
+  getStorageLimitForUser,
+  getStorageStatsSummary,
+  parseStorageString,
+  formatStorageSize,
+  STORAGE_LIMITS,
+  type StorageUsage,
+  type QuotaCheckResult,
+} from './quota';

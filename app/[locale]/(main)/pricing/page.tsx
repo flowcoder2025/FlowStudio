@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { Check, Sparkles, Zap, Crown, Building2 } from "lucide-react";
@@ -19,17 +19,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CheckoutModal } from "@/components/payment/CheckoutModal";
-import { CREDIT_PACKAGES, SUBSCRIPTION_PLANS } from "@/lib/payment/config";
+import {
+  CREDIT_PACKAGES,
+  SUBSCRIPTION_PLANS,
+  getYearlyPlanMonthlyPrice,
+} from "@/lib/payment/config";
 import type { CreditPackage, SubscriptionPlan } from "@/lib/payment/types";
 
 type Tab = "credits" | "subscription";
+type BillingInterval = "month" | "year";
 
 const PLAN_ICONS: Record<string, React.ReactNode> = {
   free: <Sparkles className="h-6 w-6" />,
   plus: <Zap className="h-6 w-6" />,
+  "plus-yearly": <Zap className="h-6 w-6" />,
   pro: <Crown className="h-6 w-6" />,
+  "pro-yearly": <Crown className="h-6 w-6" />,
   business: <Building2 className="h-6 w-6" />,
+  "business-yearly": <Building2 className="h-6 w-6" />,
 };
+
+// 플랜 ID에서 베이스 ID 추출 (연간 플랜용)
+function getBasePlanId(planId: string): string {
+  return planId.replace("-yearly", "");
+}
 
 export default function PricingPage() {
   const router = useRouter();
@@ -39,11 +52,19 @@ export default function PricingPage() {
   const tPackages = useTranslations("payment.packages");
   const tPlans = useTranslations("payment.plans");
   const [activeTab, setActiveTab] = useState<Tab>("credits");
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>("month");
   const [selectedItem, setSelectedItem] = useState<{
     type: "credit_package" | "subscription";
     item: CreditPackage | SubscriptionPlan;
   } | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+  // 선택된 결제 주기에 따라 플랜 필터링
+  const filteredPlans = useMemo(() => {
+    return SUBSCRIPTION_PLANS.filter(
+      (plan) => plan.interval === billingInterval || plan.id === "free"
+    );
+  }, [billingInterval]);
 
   // Get price based on locale
   const getPackagePrice = (pkg: CreditPackage) => {
@@ -151,11 +172,48 @@ export default function PricingPage() {
 
       {/* Subscription Plans */}
       {activeTab === "subscription" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {SUBSCRIPTION_PLANS.map((plan) => (
+        <>
+          {/* 월간/연간 토글 */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex rounded-lg border p-1 bg-muted/50">
+              <button
+                onClick={() => setBillingInterval("month")}
+                className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+                  billingInterval === "month"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t("monthly")}
+              </button>
+              <button
+                onClick={() => setBillingInterval("year")}
+                className={`px-6 py-2 rounded-md text-sm font-medium transition-colors relative ${
+                  billingInterval === "year"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t("yearly")}
+                <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                  -17%
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* 연간 결제 혜택 안내 */}
+          {billingInterval === "year" && (
+            <p className="text-center text-sm text-muted-foreground mb-6">
+              {t("yearlyDiscount")}
+            </p>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {filteredPlans.map((plan) => (
             <Card
               key={plan.id}
-              className={`relative ${
+              className={`relative flex flex-col ${
                 plan.popular ? "border-primary shadow-lg" : ""
               }`}
             >
@@ -169,17 +227,36 @@ export default function PricingPage() {
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-2 mb-2">
                   {PLAN_ICONS[plan.id]}
-                  <CardTitle className="text-xl">{tPlans(plan.id)}</CardTitle>
+                  <CardTitle className="text-xl">{tPlans(getBasePlanId(plan.id))}</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex flex-col flex-1">
                 <div className="mb-6">
-                  <span className="text-3xl font-bold">{getPlanPrice(plan)}</span>
-                  {plan.price > 0 && (
-                    <span className="text-muted-foreground text-sm">{t("perMonth")}</span>
+                  {plan.interval === "year" && plan.price > 0 ? (
+                    <>
+                      {/* 연간 플랜: 월별 환산 가격 표시 */}
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-3xl font-bold">
+                          {locale === "ko"
+                            ? getYearlyPlanMonthlyPrice(plan).monthlyFormatted
+                            : getYearlyPlanMonthlyPrice(plan).monthlyFormattedUSD}
+                        </span>
+                        <span className="text-muted-foreground text-sm">{t("perMonth")}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {t("billedYearly")}: {getPlanPrice(plan)}{t("perYear")}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-3xl font-bold">{getPlanPrice(plan)}</span>
+                      {plan.price > 0 && (
+                        <span className="text-muted-foreground text-sm">{t("perMonth")}</span>
+                      )}
+                    </>
                   )}
                 </div>
-                <ul className="space-y-3 mb-6 text-sm">
+                <ul className="space-y-3 mb-6 text-sm flex-1">
                   {(plan.featureKeys || []).map((featureKey, idx) => (
                     <li key={idx} className="flex items-start gap-2">
                       <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
@@ -193,7 +270,7 @@ export default function PricingPage() {
                 </ul>
                 <Button
                   onClick={() => handleSelectPlan(plan)}
-                  className="w-full"
+                  className="w-full mt-auto"
                   variant={plan.popular ? "default" : "outline"}
                 >
                   {plan.id === "free" ? t("currentPlan") : t("subscribe")}
@@ -201,7 +278,8 @@ export default function PricingPage() {
               </CardContent>
             </Card>
           ))}
-        </div>
+          </div>
+        </>
       )}
 
       {/* FAQ Section */}
@@ -245,7 +323,7 @@ export default function PricingPage() {
           itemName={
             selectedItem.type === "credit_package"
               ? tPackages(selectedItem.item.id)
-              : tPlans(selectedItem.item.id)
+              : tPlans(getBasePlanId(selectedItem.item.id))
           }
           price={locale === "ko" ? selectedItem.item.price : selectedItem.item.priceUSD}
           priceFormatted={

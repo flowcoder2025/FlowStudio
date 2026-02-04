@@ -978,3 +978,43 @@ npm install swr
 - 기능 목록: `payment.features.{key}` 키로 파라미터 지원 동적 번역
 
 #### 완료일: 2026-01-28
+
+---
+
+## Phase 17: UI/UX 개선 및 연간 구독 ✅
+
+> 홈화면 여백, 워크플로우 연동, 그리드 레이아웃, 연간 구독 옵션
+
+### Phase 17a: 레이아웃 조정 (2 Contracts) ✅
+- [x] Contract 17.1.1: 홈화면 여백 개선 → `components/home/HomeClient.tsx`
+- [x] Contract 17.1.2: 정보입력 페이지 2-그리드 → `app/[locale]/(main)/workflow/[industry]/[action]/page.tsx`
+
+### Phase 17b: 인터렉티브 워크플로우 연결 (2 Contracts) ✅
+- [x] Contract 17.2.1: ImmersiveActionSelect → ImmersiveInputForm 연동
+- [x] Contract 17.2.2: Intent 매핑 함수 추가 → `lib/workflow/intents/index.ts`
+
+### Phase 17c: 연간 구독 옵션 (4 Contracts) ✅
+- [x] Contract 17.3.1: 연간 플랜 정의 → `lib/payment/config.ts`
+- [x] Contract 17.3.2: 월간/연간 토글 UI → `app/[locale]/(main)/pricing/page.tsx`
+- [x] Contract 17.3.3: 한국어 번역 → `messages/ko/common.json`
+- [x] Contract 17.3.4: 영어 번역 → `messages/en/common.json`
+
+### 완료일: 2026-02-03
+
+---
+
+## Phase 18: Storage & Limits
+
+> 저장공간 제한 및 사용량 추적 시스템
+
+### Phase 18a: Storage Quota (6 Contracts) ✅
+- [x] Contract 18.1.1: DB 스키마 → `prisma/schema.prisma` (UserStorageStats 모델)
+- [x] Contract 18.1.2: Quota 함수 → `lib/storage/quota.ts` (신규)
+- [x] Contract 18.1.3: Storage index → `lib/storage/index.ts`
+- [x] Contract 18.1.4: Upload quota 체크 → `lib/storage/uploadImage.ts`
+- [x] Contract 18.1.5: Delete usage 감소 → `lib/images/delete.ts`
+- [x] Contract 18.1.6: API 에러 핸들링 → `app/api/images/save/route.ts`
+
+### 완료일: 2026-02-03
+
+### 핸드오프: HANDOFF_2026-02-03_P18a.md

@@ -6,6 +6,7 @@
 import { prisma } from '@/lib/db';
 import { checkPermission } from '@/lib/permissions/check';
 import { deleteImage as deleteFromStorage, getPathFromUrl } from '@/lib/storage/uploadImage';
+import { updateStorageUsage } from '@/lib/storage/quota';
 
 // =====================================================
 // Types
@@ -79,8 +80,12 @@ export async function deleteImageById(options: DeleteOptions): Promise<DeleteRes
     }
 
     if (permanent) {
-      // Permanent delete
-      return await permanentDelete(image);
+      // Permanent delete - pass userId for storage stats update
+      return await permanentDelete({
+        id: image.id,
+        userId: image.userId,
+        resultImages: image.resultImages,
+      });
     } else {
       // Soft delete
       return await softDelete(imageId);
@@ -120,15 +125,29 @@ async function softDelete(imageId: string): Promise<DeleteResult> {
 
 interface ImageToDelete {
   id: string;
+  userId: string;
   resultImages: string[];
 }
 
 async function permanentDelete(image: ImageToDelete): Promise<DeleteResult> {
   try {
+    // Calculate total size of images to delete (estimate based on average image size)
+    // We estimate size from URL fetch or use a default estimate
+    let totalDeletedBytes = BigInt(0);
+    const imageCount = image.resultImages.length;
+
     // Delete from storage first - delete all result images
     for (const imageUrl of image.resultImages) {
       const imagePath = getPathFromUrl(imageUrl);
       if (imagePath) {
+        // Try to get image size before deleting
+        try {
+          const sizeEstimate = await estimateImageSize(imageUrl);
+          totalDeletedBytes += BigInt(sizeEstimate);
+        } catch {
+          // Use default estimate of 500KB per image if size fetch fails
+          totalDeletedBytes += BigInt(500 * 1024);
+        }
         await deleteFromStorage(imagePath);
       }
     }
@@ -146,6 +165,11 @@ async function permanentDelete(image: ImageToDelete): Promise<DeleteResult> {
       },
     });
 
+    // Update storage usage (decrease)
+    if (totalDeletedBytes > BigInt(0) || imageCount > 0) {
+      await updateStorageUsage(image.userId, -totalDeletedBytes, -imageCount);
+    }
+
     return { success: true };
   } catch (error) {
     return {
@@ -153,6 +177,23 @@ async function permanentDelete(image: ImageToDelete): Promise<DeleteResult> {
       error: error instanceof Error ? error.message : 'Failed to permanently delete',
     };
   }
+}
+
+/**
+ * Estimate image size from URL using HEAD request
+ */
+async function estimateImageSize(url: string): Promise<number> {
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    const contentLength = response.headers.get('content-length');
+    if (contentLength) {
+      return parseInt(contentLength, 10);
+    }
+  } catch {
+    // Ignore errors
+  }
+  // Default estimate: 500KB
+  return 500 * 1024;
 }
 
 // =====================================================
@@ -277,6 +318,7 @@ export async function cleanupDeletedImages(options: CleanupOptions = {}): Promis
       },
       select: {
         id: true,
+        userId: true,
         resultImages: true,
       },
     });

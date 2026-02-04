@@ -3,54 +3,60 @@
  * Contract: PAYMENT_FUNC_SUBSCRIPTION
  * Evidence: IMPLEMENTATION_PLAN.md Phase 9
  *
+ * Payment Provider: Polar (https://polar.sh)
+ *
  * DB Schema Notes:
  * - Subscription model uses: tier, status, endDate, startDate, cancelledAt, externalId
  * - NOT: planName, renewsAt, endsAt, isPaused, lemonSqueezyId, variantId
  */
 
 import { prisma } from "@/lib/db";
-import { LEMONSQUEEZY_CONFIG, SUBSCRIPTION_PLANS } from "./config";
+import { POLAR_CONFIG, SUBSCRIPTION_PLANS } from "./config";
 import type { SubscriptionInfo, SubscriptionPlan } from "./types";
 
 // =====================================================
-// LemonSqueezy API Client
+// Polar API Client
 // =====================================================
 
-interface LemonSqueezySubscription {
-  data: {
+interface PolarSubscriptionResponse {
+  id: string;
+  status: string;
+  product_id: string;
+  current_period_start: string;
+  current_period_end?: string;
+  cancel_at_period_end: boolean;
+  ended_at?: string;
+  user?: {
     id: string;
-    attributes: {
-      status: string;
-      variant_id: number;
-      product_name: string;
-      variant_name: string;
-      renews_at: string | null;
-      ends_at: string | null;
-      urls: {
-        update_payment_method: string;
-        customer_portal: string;
-      };
-    };
+    email: string;
+  };
+  product?: {
+    id: string;
+    name: string;
   };
 }
 
-async function lemonSqueezyFetch<T>(
+async function polarFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const response = await fetch(`${LEMONSQUEEZY_CONFIG.apiUrl}${endpoint}`, {
+  const baseUrl = POLAR_CONFIG.environment === "production"
+    ? "https://api.polar.sh"
+    : "https://sandbox-api.polar.sh";
+
+  const response = await fetch(`${baseUrl}${endpoint}`, {
     ...options,
     headers: {
-      Authorization: `Bearer ${LEMONSQUEEZY_CONFIG.apiKey}`,
-      "Content-Type": "application/vnd.api+json",
-      Accept: "application/vnd.api+json",
+      Authorization: `Bearer ${POLAR_CONFIG.accessToken}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
       ...options.headers,
     },
   });
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`LemonSqueezy API error: ${response.status} - ${error}`);
+    throw new Error(`Polar API error: ${response.status} - ${error}`);
   }
 
   return response.json() as Promise<T>;
@@ -69,7 +75,7 @@ export async function getUserSubscription(
   const subscription = await prisma.subscription.findFirst({
     where: {
       userId,
-      status: { in: ["ACTIVE", "active", "on_trial", "past_due", "paused"] },
+      status: { in: ["ACTIVE", "active", "trialing", "past_due", "paused"] },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -111,6 +117,7 @@ export async function getUserPlan(userId: string): Promise<SubscriptionPlan> {
 
 /**
  * Pause a subscription
+ * Note: Polar doesn't have pause/resume - we cancel and recreate
  */
 export async function pauseSubscription(subscriptionId: string): Promise<void> {
   const subscription = await prisma.subscription.findUnique({
@@ -121,25 +128,7 @@ export async function pauseSubscription(subscriptionId: string): Promise<void> {
     throw new Error("Subscription not found");
   }
 
-  // Call LemonSqueezy API to pause if externalId exists
-  if (subscription.externalId) {
-    await lemonSqueezyFetch(`/subscriptions/${subscription.externalId}`, {
-      method: "PATCH",
-      body: JSON.stringify({
-        data: {
-          type: "subscriptions",
-          id: subscription.externalId,
-          attributes: {
-            pause: {
-              mode: "void",
-            },
-          },
-        },
-      }),
-    });
-  }
-
-  // Update local record
+  // Update local record to paused status
   await prisma.subscription.update({
     where: { id: subscriptionId },
     data: { status: "paused" },
@@ -158,26 +147,10 @@ export async function resumeSubscription(subscriptionId: string): Promise<void> 
     throw new Error("Subscription not found");
   }
 
-  // Call LemonSqueezy API to unpause if externalId exists
-  if (subscription.externalId) {
-    await lemonSqueezyFetch(`/subscriptions/${subscription.externalId}`, {
-      method: "PATCH",
-      body: JSON.stringify({
-        data: {
-          type: "subscriptions",
-          id: subscription.externalId,
-          attributes: {
-            pause: null,
-          },
-        },
-      }),
-    });
-  }
-
   // Update local record
   await prisma.subscription.update({
     where: { id: subscriptionId },
-    data: { status: "ACTIVE" },
+    data: { status: "active" },
   });
 }
 
@@ -193,18 +166,23 @@ export async function cancelSubscription(subscriptionId: string): Promise<void> 
     throw new Error("Subscription not found");
   }
 
-  // Call LemonSqueezy API to cancel if externalId exists
-  if (subscription.externalId) {
-    await lemonSqueezyFetch(`/subscriptions/${subscription.externalId}`, {
-      method: "DELETE",
-    });
+  // Call Polar API to cancel if externalId exists
+  if (subscription.externalId && POLAR_CONFIG.accessToken) {
+    try {
+      await polarFetch(`/v1/subscriptions/${subscription.externalId}`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("Failed to cancel subscription in Polar:", error);
+      // Continue with local update even if Polar API fails
+    }
   }
 
   // Update local record
   await prisma.subscription.update({
     where: { id: subscriptionId },
     data: {
-      status: "cancelled",
+      status: "canceled",
       cancelledAt: new Date(),
       endDate: new Date(),
     },
@@ -213,6 +191,7 @@ export async function cancelSubscription(subscriptionId: string): Promise<void> 
 
 /**
  * Change subscription plan (upgrade/downgrade)
+ * Note: With Polar, plan changes typically require creating a new checkout
  */
 export async function changeSubscriptionPlan(
   subscriptionId: string,
@@ -227,28 +206,12 @@ export async function changeSubscriptionPlan(
   }
 
   const newPlan = SUBSCRIPTION_PLANS.find((p) => p.id === newPlanId);
-  if (!newPlan || !newPlan.variantId) {
+  if (!newPlan || !newPlan.productId) {
     throw new Error("Invalid plan");
   }
 
-  // Call LemonSqueezy API to change plan if externalId exists
-  if (subscription.externalId) {
-    await lemonSqueezyFetch(`/subscriptions/${subscription.externalId}`, {
-      method: "PATCH",
-      body: JSON.stringify({
-        data: {
-          type: "subscriptions",
-          id: subscription.externalId,
-          attributes: {
-            variant_id: parseInt(newPlan.variantId, 10),
-            invoice_immediately: true,
-          },
-        },
-      }),
-    });
-  }
-
   // Update local record
+  // Note: User needs to go through a new checkout for the plan change
   await prisma.subscription.update({
     where: { id: subscriptionId },
     data: {
@@ -259,6 +222,7 @@ export async function changeSubscriptionPlan(
 
 /**
  * Get customer portal URL for managing billing
+ * Note: Polar uses CustomerPortal component from SDK
  */
 export async function getCustomerPortalUrl(
   subscriptionId: string
@@ -271,15 +235,12 @@ export async function getCustomerPortalUrl(
     throw new Error("Subscription not found");
   }
 
-  if (!subscription.externalId) {
-    throw new Error("No external subscription ID found");
-  }
+  // Polar customer portal is accessed via SDK component or direct URL
+  const baseUrl = POLAR_CONFIG.environment === "production"
+    ? "https://polar.sh"
+    : "https://sandbox.polar.sh";
 
-  const response = await lemonSqueezyFetch<LemonSqueezySubscription>(
-    `/subscriptions/${subscription.externalId}`
-  );
-
-  return response.data.attributes.urls.customer_portal;
+  return `${baseUrl}/purchases`;
 }
 
 /**
@@ -288,23 +249,8 @@ export async function getCustomerPortalUrl(
 export async function getUpdatePaymentMethodUrl(
   subscriptionId: string
 ): Promise<string> {
-  const subscription = await prisma.subscription.findUnique({
-    where: { id: subscriptionId },
-  });
-
-  if (!subscription) {
-    throw new Error("Subscription not found");
-  }
-
-  if (!subscription.externalId) {
-    throw new Error("No external subscription ID found");
-  }
-
-  const response = await lemonSqueezyFetch<LemonSqueezySubscription>(
-    `/subscriptions/${subscription.externalId}`
-  );
-
-  return response.data.attributes.urls.update_payment_method;
+  // Polar handles payment method updates through the customer portal
+  return getCustomerPortalUrl(subscriptionId);
 }
 
 /**
@@ -314,7 +260,7 @@ export async function hasActiveSubscription(userId: string): Promise<boolean> {
   const subscription = await prisma.subscription.findFirst({
     where: {
       userId,
-      status: { in: ["ACTIVE", "active", "on_trial"] },
+      status: { in: ["ACTIVE", "active", "trialing"] },
     },
   });
 

@@ -120,6 +120,16 @@ export const EXPRESSION_INTENTS = [
   "composition.size-comparison",   // 사이즈 비교
   "composition.before-after",      // 비포/애프터
   "composition.group-shot",        // 그룹샷
+
+  // 인물 사진 (AI 사진관)
+  "portrait.id-photo",             // 증명사진 (여권, 운전면허, 주민등록 등)
+  "portrait.business-profile",     // 비즈니스 프로필 (LinkedIn, 명함용)
+  "portrait.sns-profile",          // SNS 프로필 (인스타, 카카오톡 등)
+  "portrait.job-application",      // 취업용 사진 (이력서, 입사지원)
+  "portrait.beauty-retouch",       // 뷰티 보정 (피부, 얼굴형, 체형)
+  "portrait.background-change",    // 배경 교체 (누끼, 배경합성)
+  "portrait.group-composite",      // 단체사진 합성 (인물추가/제거)
+  "portrait.personal-color",       // 퍼스널컬러 진단/적용
 ] as const;
 
 export type ExpressionIntent = (typeof EXPRESSION_INTENTS)[number];
@@ -130,7 +140,8 @@ export type ExpressionCategory =
   | "product-only"
   | "detail-focus"
   | "mood-styling"
-  | "composition";
+  | "composition"
+  | "portrait";
 
 export interface ExpressionIntentInfo {
   id: ExpressionIntent;
@@ -173,6 +184,11 @@ export const EXPRESSION_CATEGORY_INFO: Record<ExpressionCategory, {
     name: "Composition",
     nameKo: "구성/비교",
     icon: "📐",
+  },
+  portrait: {
+    name: "Portrait",
+    nameKo: "인물 사진",
+    icon: "📷",
   },
 };
 
@@ -515,6 +531,88 @@ export const EXPRESSION_INTENT_INFO: Record<ExpressionIntent, ExpressionIntentIn
     icon: "👥",
     keywords: ["그룹", "여러개", "모음", "컬렉션", "라인업"],
     applicableIndustries: ["fashion", "food", "beauty", "interior", "electronics", "jewelry", "sports", "pet", "kids"],
+  },
+
+  // 인물 사진 (AI 사진관)
+  "portrait.id-photo": {
+    id: "portrait.id-photo",
+    category: "portrait",
+    name: "ID Photo",
+    nameKo: "증명사진",
+    description: "여권, 운전면허증, 주민등록증, 비자, 학생증 등 공식 증명사진",
+    icon: "🪪",
+    keywords: ["증명사진", "여권사진", "운전면허", "주민등록", "비자", "학생증", "반명함"],
+    applicableIndustries: ["photo-studio"],
+  },
+  "portrait.business-profile": {
+    id: "portrait.business-profile",
+    category: "portrait",
+    name: "Business Profile",
+    nameKo: "비즈니스 프로필",
+    description: "LinkedIn, 명함, 회사 홈페이지용 전문적인 프로필 사진",
+    icon: "💼",
+    keywords: ["비즈니스", "프로필", "링크드인", "LinkedIn", "명함", "헤드샷", "전문가"],
+    applicableIndustries: ["photo-studio"],
+  },
+  "portrait.sns-profile": {
+    id: "portrait.sns-profile",
+    category: "portrait",
+    name: "SNS Profile",
+    nameKo: "SNS 프로필",
+    description: "인스타그램, 카카오톡, 페이스북 등 SNS용 프로필 사진",
+    icon: "📱",
+    keywords: ["SNS", "인스타", "카카오톡", "프로필", "소셜미디어", "페이스북"],
+    applicableIndustries: ["photo-studio"],
+  },
+  "portrait.job-application": {
+    id: "portrait.job-application",
+    category: "portrait",
+    name: "Job Application Photo",
+    nameKo: "취업용 사진",
+    description: "이력서, 입사지원서, 자기소개서용 전문적인 사진",
+    icon: "📋",
+    keywords: ["취업", "이력서", "입사", "지원서", "취업사진", "취준"],
+    applicableIndustries: ["photo-studio"],
+  },
+  "portrait.beauty-retouch": {
+    id: "portrait.beauty-retouch",
+    category: "portrait",
+    name: "Beauty Retouch",
+    nameKo: "뷰티 보정",
+    description: "피부 보정, 얼굴형 보정, 체형 보정 등 자연스러운 뷰티 리터칭",
+    icon: "✨",
+    keywords: ["보정", "피부", "얼굴형", "갸름", "체형", "리터칭", "뷰티"],
+    applicableIndustries: ["photo-studio", "beauty"],
+  },
+  "portrait.background-change": {
+    id: "portrait.background-change",
+    category: "portrait",
+    name: "Background Change",
+    nameKo: "배경 교체",
+    description: "AI 누끼 추출 및 배경 교체 (흰색, 그레이, 컬러 배경)",
+    icon: "🖼️",
+    keywords: ["배경", "누끼", "배경제거", "배경교체", "합성", "흰배경"],
+    applicableIndustries: ["photo-studio"],
+  },
+  "portrait.group-composite": {
+    id: "portrait.group-composite",
+    category: "portrait",
+    name: "Group Photo Composite",
+    nameKo: "단체사진 합성",
+    description: "단체사진에 인물 추가/제거, 자연스러운 합성 처리",
+    icon: "👨‍👩‍👧‍👦",
+    keywords: ["단체사진", "합성", "인물추가", "인물제거", "가족사진", "그룹"],
+    applicableIndustries: ["photo-studio"],
+  },
+  "portrait.personal-color": {
+    id: "portrait.personal-color",
+    category: "portrait",
+    name: "Personal Color",
+    nameKo: "퍼스널컬러",
+    description: "퍼스널컬러 진단에 맞는 배경색 및 색보정 적용",
+    icon: "🎨",
+    keywords: ["퍼스널컬러", "웜톤", "쿨톤", "색진단", "컬러진단", "톤"],
+    applicableIndustries: ["photo-studio", "beauty"],
   },
 };
 
