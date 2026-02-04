@@ -42,7 +42,7 @@ export async function refundCredits(
 
   const amount = hold.holdAmount;
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
     // Update ledger status to REFUNDED
     await tx.creditLedger.update({
       where: { requestId },
@@ -115,7 +115,7 @@ export async function refundCapturedCredits(
     return { success: false, error: "금액은 0보다 커야 합니다" };
   }
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
     // Add credits back to user
     await tx.user.update({
       where: { id: userId },

@@ -57,7 +57,7 @@ export async function applyReferralCode(
 
   // Apply referral in a transaction
   // DB Schema: Credit has only balance (no amount/source), use upsert for 1:1 relation
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
     // Update referee with referrer info
     await tx.user.update({
       where: { id: userId },

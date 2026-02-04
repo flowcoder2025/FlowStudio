@@ -64,7 +64,7 @@ export async function processExpiredCredits(): Promise<ExpiryResult> {
         0
       );
 
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
         // Zero out remaining amounts on expired transactions
         await tx.creditTransaction.updateMany({
           where: {

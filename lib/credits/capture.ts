@@ -119,7 +119,7 @@ export async function partialCapture(
 
   const refundAmount = holdAmount - captureAmount;
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
     // Update ledger with partial capture
     await tx.creditLedger.update({
       where: { requestId },
