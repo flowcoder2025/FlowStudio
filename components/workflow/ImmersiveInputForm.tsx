@@ -387,7 +387,7 @@ function InputCard({
                     className={cn(
                       "p-4 rounded-xl border-2 text-left transition-all",
                       value === opt.value
-                        ? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
+                        ? "border-primary-500 bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 shadow-md ring-2 ring-primary-500/20"
                         : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 text-zinc-900 dark:text-zinc-100"
                     )}
                   >
@@ -570,7 +570,7 @@ function InputCard({
                   className={cn(
                     "w-12 h-12 rounded-lg border-2 font-semibold transition-all",
                     imageCount === num
-                      ? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400"
+                      ? "border-primary-500 bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400 shadow-md ring-2 ring-primary-500/20"
                       : "border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600"
                   )}
                 >
@@ -935,7 +935,7 @@ export function ImmersiveInputForm({
 
           {/* 카드 컨테이너 */}
           <motion.div
-            className="relative w-full max-w-lg mx-4 md:mx-20 h-[600px] md:h-[650px]"
+            className="relative w-full max-w-lg mx-4 md:mx-20 h-[calc(100vh-120px)] min-h-[500px] max-h-[700px]"
             variants={cardContainerVariants}
             initial="hidden"
             animate="visible"

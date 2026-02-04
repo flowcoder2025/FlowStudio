@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import useSWR from "swr";
 import type { ReferenceMode } from "@/lib/imageProvider/types";
 import type { ImageListItem } from "@/lib/images/list";
+import { prepareImageForUpload } from "@/lib/imageProcessing/compress";
 
 // ============================================================
 // 타입 정의
@@ -532,18 +533,43 @@ export function ImageUpload({
 
       for (const file of filesToProcess) {
         const error = validateFile(file, acceptedFormats, maxFileSize);
-        const previewUrl = error ? "" : URL.createObjectURL(file);
-        // base64 변환 (에러가 없을 때만)
-        const base64Data = error ? undefined : await fileToBase64(file);
+
+        if (error) {
+          newImages.push({
+            id: generateId(),
+            file,
+            previewUrl: "",
+            status: "error",
+            progress: 0,
+            error,
+          });
+          continue;
+        }
+
+        // 2MB 초과 시 압축 시도
+        let processedFile: File | Blob = file;
+        let compressionWarning: string | undefined;
+
+        try {
+          const result = await prepareImageForUpload(file);
+          processedFile = result.blob;
+          compressionWarning = result.warning;
+        } catch {
+          // 압축 실패 시 원본 사용
+        }
+
+        const previewUrl = URL.createObjectURL(processedFile);
+        // base64 변환
+        const base64Data = await fileToBase64(processedFile instanceof File ? processedFile : new File([processedFile], file.name, { type: processedFile.type }));
 
         newImages.push({
           id: generateId(),
-          file,
+          file: processedFile instanceof File ? processedFile : new File([processedFile], file.name, { type: processedFile.type }),
           previewUrl,
           base64Data,
-          status: error ? "error" : "pending",
+          status: compressionWarning ? "error" : "pending",
           progress: 0,
-          error: error || undefined,
+          error: compressionWarning,
         });
       }
 

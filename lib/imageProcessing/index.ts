@@ -130,3 +130,14 @@ export {
   mergePresets,
   adjustPresetIntensity,
 } from './presets';
+
+// =====================================================
+// Image Compression (UX 개선)
+// =====================================================
+
+export {
+  compressImage,
+  estimateBase64Size,
+  exceedsPayloadLimit,
+  prepareImageForUpload,
+} from './compress';

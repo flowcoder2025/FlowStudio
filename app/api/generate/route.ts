@@ -11,6 +11,13 @@ import { ImageGenerationError, ErrorCodes } from '@/lib/imageProvider/types';
 import { uploadImageFromUrl } from '@/lib/storage';
 
 // =====================================================
+// Route Config (Next.js App Router)
+// =====================================================
+
+// Vercel에서 body 크기 제한을 10MB로 설정
+export const maxDuration = 60; // 최대 실행 시간 60초
+
+// =====================================================
 // Request Schema
 // =====================================================
 
@@ -176,6 +183,8 @@ function getStatusCode(errorCode: string): number {
       return 400; // Bad Request
     case ErrorCodes.CONTENT_FILTERED:
       return 422; // Unprocessable Entity
+    case ErrorCodes.PAYLOAD_TOO_LARGE:
+      return 413; // Payload Too Large
     case ErrorCodes.PROVIDER_ERROR:
       return 502; // Bad Gateway
     case ErrorCodes.TIMEOUT:

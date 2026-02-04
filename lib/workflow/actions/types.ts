@@ -15,6 +15,7 @@ export interface ActionInput {
   defaultValue?: string | number;
   min?: number;
   max?: number;
+  helperText?: string;
 }
 
 export interface Action {

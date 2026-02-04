@@ -235,7 +235,7 @@ export function FilterTab({
                 className={`
                   relative aspect-square rounded-lg overflow-hidden border-2 transition-all
                   ${selectedPreset === preset.id
-                    ? 'border-blue-500 ring-2 ring-blue-500/20'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 ring-2 ring-blue-500/30 shadow-md'
                     : 'border-transparent hover:border-zinc-300 dark:hover:border-zinc-600'
                   }
                   ${disabled || isApplying ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}

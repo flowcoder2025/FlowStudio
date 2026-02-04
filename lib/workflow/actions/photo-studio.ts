@@ -340,6 +340,43 @@ export const photoStudioActions: Action[] = [
     examples: ["피부 보정", "얼굴형 보정", "전체 뷰티 리터칭"],
   },
   {
+    id: "photo-studio-simple-cutout",
+    name: "Simple Cutout",
+    nameKo: "간편 누끼",
+    description: "AI로 배경을 빠르게 제거합니다",
+    industry: "photo-studio",
+    inputs: [
+      {
+        id: "outputType",
+        label: "결과물",
+        type: "select",
+        options: [
+          { value: "transparent", label: "투명 배경 (PNG)" },
+          { value: "white", label: "흰색 배경" },
+        ],
+        required: true,
+      },
+      {
+        id: "precision",
+        label: "정밀도",
+        type: "select",
+        options: [
+          { value: "standard", label: "표준 (권장)" },
+          { value: "high", label: "고정밀 (머리카락 디테일)" },
+        ],
+        required: true,
+        helperText: "복잡한 윤곽선은 고정밀 옵션을 선택하세요",
+      },
+    ],
+    promptTemplate:
+      "Remove the background from the image using AI-powered cutout technology. " +
+      "Apply {{precision}} precision level for edge detection. " +
+      "Output with {{outputType}} background. " +
+      "Ensure clean edges and natural-looking subject extraction.",
+    creditCost: 2,
+    examples: ["누끼", "배경 제거", "투명 배경"],
+  },
+  {
     id: "photo-studio-background-change",
     name: "Background Change",
     nameKo: "배경 교체",
@@ -374,14 +411,15 @@ export const photoStudioActions: Action[] = [
         required: true,
       },
       {
-        id: "hairDetail",
-        label: "머리카락 처리",
+        id: "precision",
+        label: "정밀도",
         type: "select",
         options: [
           { value: "standard", label: "표준 처리" },
-          { value: "detailed", label: "세밀한 처리 (머리카락 한 올까지)" },
+          { value: "high", label: "고정밀 (머리카락 디테일)" },
         ],
         required: true,
+        helperText: "복잡한 윤곽선은 고정밀 옵션을 선택하세요",
       },
       {
         id: "requests",
@@ -393,7 +431,7 @@ export const photoStudioActions: Action[] = [
     ],
     promptTemplate:
       "Extract the subject from the original background using AI-powered cutout technology. " +
-      "Apply {{hairDetail}} hair extraction for natural-looking edges. " +
+      "Apply {{precision}} precision extraction for natural-looking edges. " +
       "Place the subject against a new {{backgroundType}} background. " +
       "Ensure {{edgeQuality}} edge quality for seamless integration. " +
       "{{#requests}}Additional requirements: {{requests}}. {{/requests}}" +

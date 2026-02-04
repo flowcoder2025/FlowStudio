@@ -257,7 +257,11 @@ export function GuideChat({
   };
 
   return (
-    <Card className={cn("flex flex-col h-[600px]", className)}>
+    <Card className={cn(
+      "flex flex-col",
+      "h-[calc(100vh-200px)] min-h-[400px] max-h-[800px]",
+      className
+    )}>
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center gap-2">
@@ -373,7 +377,7 @@ export function GuideChat({
 
       {/* 입력 영역 */}
       {!isComplete && currentStep && (currentStep.type === "text" || currentStep.type === "textarea") && (
-        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 sticky bottom-0 z-10">
           <form
             onSubmit={(e) => {
               e.preventDefault();
