@@ -69,7 +69,7 @@ export async function processExpiredCredits(): Promise<ExpiryResult> {
         // Zero out remaining amounts on expired transactions
         await tx.creditTransaction.updateMany({
           where: {
-            id: { in: transactions.map((t) => t.id) },
+            id: { in: transactions.map((t: Transaction) => t.id) },
           },
           data: {
             remainingAmount: 0,
@@ -151,8 +151,9 @@ export async function getExpiringCredits(
   });
 
   const now = new Date();
+  type ExpiringTransaction = (typeof transactions)[number];
 
-  return transactions.map((t) => ({
+  return transactions.map((t: ExpiringTransaction) => ({
     id: t.id,
     amount: t.remainingAmount ?? t.amount,
     expiresAt: t.expiresAt,
