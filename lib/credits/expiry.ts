@@ -44,9 +44,10 @@ export async function processExpiredCredits(): Promise<ExpiryResult> {
     },
   });
 
-  // Group by user
-  const txByUser = expiredTransactions.reduce<Record<string, typeof expiredTransactions>>(
-    (acc: Record<string, typeof expiredTransactions>, tx) => {
+  // Group by user - 타입 별칭 정의
+  type Transaction = (typeof expiredTransactions)[number];
+  const txByUser = expiredTransactions.reduce<Record<string, Transaction[]>>(
+    (acc: Record<string, Transaction[]>, tx: Transaction) => {
       if (!acc[tx.userId]) {
         acc[tx.userId] = [];
       }
@@ -60,7 +61,7 @@ export async function processExpiredCredits(): Promise<ExpiryResult> {
   for (const [userId, transactions] of Object.entries(txByUser)) {
     try {
       const totalExpired = transactions.reduce(
-        (sum: number, tx) => sum + (tx.remainingAmount ?? 0),
+        (sum: number, tx: Transaction) => sum + (tx.remainingAmount ?? 0),
         0
       );
 
