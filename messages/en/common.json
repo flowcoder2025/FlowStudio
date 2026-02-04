@@ -24,7 +24,7 @@
     "profile": "Profile",
     "loginWith": "Login with {provider}",
     "continueWith": "Continue with {provider}",
-    "termsAgreement": "By logging in, you agree to our {terms} and {privacy}.",
+    "termsAgreement": "By logging in, you agree to our <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>.",
     "termsOfService": "Terms of Service",
     "privacyPolicy": "Privacy Policy"
   },
@@ -420,8 +420,8 @@
   },
   "pages": {
     "home": {
-      "title": "Create Product Images with AI",
-      "subtitle": "AI creates professional product images optimized for your industry. Select your industry and enter simple information to get started!",
+      "title": "FlowStudio",
+      "subtitle": "Create professional product photos and promotional materials in 30 seconds without complex Photoshop.",
       "searchPlaceholder": "What image would you like to create? (e.g., T-shirt model shot)",
       "keywordsFound": "Found keywords: \"{keywords}\"",
       "noIndustryFound": "No related industry found. Please select from below.",
@@ -443,7 +443,12 @@
       "purchase": "Purchase",
       "subscribe": "Subscribe",
       "currentPlan": "Current Plan",
-      "perMonth": "/month",
+      "perMonth": "/mo",
+      "perYear": "/yr",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "yearlyDiscount": "Save 2 months with yearly billing",
+      "billedYearly": "Billed yearly",
       "faq": {
         "title": "Frequently Asked Questions",
         "q1": "How are credits used?",
@@ -531,7 +536,7 @@
       "historyDays": "{days} days history",
       "historyUnlimited": "Unlimited history",
       "apiAccess": "API access",
-      "teamMembers": "Team collaboration ({count} members)"
+      "teamMembers": "Team collaboration ({count} members) - Coming soon"
     },
     "checkout": {
       "title": "Confirm Payment",

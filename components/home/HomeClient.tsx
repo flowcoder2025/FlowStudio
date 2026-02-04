@@ -17,6 +17,8 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
+import { motion, type Variants } from "framer-motion";
+import Image from "next/image";
 import { Search, ArrowRight, Sparkles, Clock } from "lucide-react";
 import { IndustryInfo, Industry } from "@/lib/workflow/industries";
 import { analyzeIntent } from "@/lib/workflow/intentAnalyzer";
@@ -40,6 +42,38 @@ const SearchIcon = <Search className="w-5 h-5" />;
 const ArrowRightIcon = <ArrowRight className="w-4 h-4" />;
 const SparklesIcon = <Sparkles className="w-4 h-4 text-primary-500" />;
 const ClockIcon = <Clock className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />;
+
+// Animation variants
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+  }
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: "easeOut" }
+  }
+};
+
+const buttonVariants: Variants = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.3, ease: "easeOut" }
+  },
+  hover: {
+    scale: 1.05,
+    transition: { duration: 0.2 }
+  },
+  tap: { scale: 0.95 }
+};
 
 interface HomeClientProps {
   industries: IndustryInfo[];
@@ -226,127 +260,215 @@ export function HomeClient({ industries }: HomeClientProps) {
         />
       ) : null}
 
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <motion.div
+        className="max-w-4xl mx-auto px-4 py-16 md:py-24"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
         {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
-            {t("title")}
-          </h1>
-          <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">
+        <motion.div className="text-center mb-20" variants={itemVariants}>
+          {/* Logo Image */}
+          <motion.div
+            className="flex justify-center mb-6"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            <Image
+              src="/FlowStudio_logo.png"
+              alt="FlowStudio"
+              width={240}
+              height={120}
+              priority
+              className="h-16 md:h-20 w-auto object-contain"
+            />
+          </motion.div>
+          {/* Text Logo */}
+          <motion.h1
+            className="text-4xl md:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-4"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+          >
+            FlowStudio
+          </motion.h1>
+          {/* Description */}
+          <motion.p
+            className="text-base md:text-lg text-zinc-600 dark:text-zinc-400 max-w-xl mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             {t("subtitle")}
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
         {/* Search Bar */}
-        <div className="max-w-2xl mx-auto mb-8">
-          <div className="relative">
+        <motion.div
+          className={`max-w-2xl mx-auto ${recentWorkflows.length > 0 ? "mb-16" : "mb-10"}`}
+          variants={itemVariants}
+        >
+          <motion.div
+            className="relative"
+            whileHover={{ scale: 1.01 }}
+            transition={{ duration: 0.2 }}
+          >
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               placeholder={t("searchPlaceholder")}
-              className="w-full px-5 py-4 pr-12 border border-zinc-300 dark:border-zinc-700 rounded-xl shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
+              className="w-full px-5 py-4 pr-12 border border-zinc-300 dark:border-zinc-700 rounded-xl shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 transition-shadow"
             />
             <button
               onClick={handleSearch}
               disabled={isPending}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 active:scale-95 transition-all disabled:opacity-50"
             >
               {SearchIcon}
             </button>
-          </div>
+          </motion.div>
 
           {/* Search Suggestions */}
           {suggestions ? (
-            <div className="mt-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800">
+            <motion.div
+              className="mt-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
               <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">{suggestions.message}</p>
               {suggestions.industry ? (
-                <button
+                <motion.button
                   onClick={() => handleIndustryClick(suggestions.industry!.id)}
                   className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                  whileHover={{ scale: 1.02, x: 5 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   <span>{suggestions.industry.icon}</span>
                   <span>{tWorkflow(`${suggestions.industry.id}.name`)}</span>
                   {ArrowRightIcon}
-                </button>
+                </motion.button>
               ) : null}
-            </div>
+            </motion.div>
           ) : null}
-        </div>
+        </motion.div>
 
         {/* Recent Workflows (if user has history) */}
         {recentWorkflows.length > 0 ? (
-          <Card className="mb-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                {ClockIcon}
-                <CardTitle className="text-base text-zinc-900 dark:text-zinc-100">{t("recentWorkflows")}</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {recentWorkflows.slice(0, 5).map((workflow, index) => {
-                  // Use Map for O(1) lookup
-                  const industryInfo = industryMap.get(workflow.industry);
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => handleRecentClick(workflow)}
-                      className="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors"
-                    >
-                      <span>{industryInfo?.icon}</span>
-                      <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                        {tWorkflow(`${workflow.industry}.name`)} - {workflow.action}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+          <motion.div variants={itemVariants}>
+            <Card className="mb-16 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  {ClockIcon}
+                  <CardTitle className="text-base text-zinc-900 dark:text-zinc-100">{t("recentWorkflows")}</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {recentWorkflows.slice(0, 5).map((workflow, index) => {
+                    // Use Map for O(1) lookup
+                    const industryInfo = industryMap.get(workflow.industry);
+                    return (
+                      <motion.button
+                        key={index}
+                        onClick={() => handleRecentClick(workflow)}
+                        className="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors"
+                        variants={buttonVariants}
+                        whileHover="hover"
+                        whileTap="tap"
+                      >
+                        <span>{industryInfo?.icon}</span>
+                        <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                          {tWorkflow(`${workflow.industry}.name`)} - {workflow.action}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         ) : null}
 
         {/* Industry Grid */}
-        <div className="mb-12">
-          <div className="flex items-center gap-2 mb-3">
-            {SparklesIcon}
+        <motion.div className="mb-6" variants={itemVariants}>
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <motion.span
+              animate={{ rotate: [0, 15, -15, 0] }}
+              transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+            >
+              {SparklesIcon}
+            </motion.span>
             <h2 className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{t("browseByIndustry")}</h2>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {industries.map((industry) => (
-              <button
+          <motion.div
+            className="flex flex-wrap gap-2 justify-center"
+            variants={containerVariants}
+          >
+            {industries.map((industry, index) => (
+              <motion.button
                 key={industry.id}
                 onClick={() => handleIndustryClick(industry.id)}
                 className="group flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-zinc-900 rounded-full border border-zinc-200 dark:border-zinc-800 hover:border-primary-400 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-950 transition-all"
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+                custom={index}
               >
                 <span className="text-lg">{industry.icon}</span>
                 <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-primary-600 dark:group-hover:text-primary-400">
                   {tWorkflow(`${industry.id}.name`)}
                 </span>
-              </button>
+              </motion.button>
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Footer Info */}
-        <div className="text-center">
+        <motion.div
+          className="text-center"
+          variants={itemVariants}
+        >
           <div className="inline-flex items-center gap-8 text-sm text-zinc-500 dark:text-zinc-400">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-500 rounded-full" />
+            <motion.div
+              className="flex items-center gap-2"
+              whileHover={{ scale: 1.05 }}
+            >
+              <motion.span
+                className="w-2 h-2 bg-green-500 rounded-full"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+              />
               <span>{t("creditsPerImage")}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-blue-500 rounded-full" />
+            </motion.div>
+            <motion.div
+              className="flex items-center gap-2"
+              whileHover={{ scale: 1.05 }}
+            >
+              <motion.span
+                className="w-2 h-2 bg-blue-500 rounded-full"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity, repeatDelay: 1, delay: 0.3 }}
+              />
               <span>{t("support4K")}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-purple-500 rounded-full" />
+            </motion.div>
+            <motion.div
+              className="flex items-center gap-2"
+              whileHover={{ scale: 1.05 }}
+            >
+              <motion.span
+                className="w-2 h-2 bg-purple-500 rounded-full"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity, repeatDelay: 1, delay: 0.6 }}
+              />
               <span>{t("commercialUse")}</span>
-            </div>
+            </motion.div>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </>
   );
 }

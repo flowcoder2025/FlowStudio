@@ -46,3 +46,7 @@ yarn-error.log*
 *.png
 *.jpg
 *.jpeg
+
+# But keep logo files
+!public/FlowStudio_logo.png
+!public/FlowStudio_icon.png
