@@ -45,7 +45,7 @@ export async function processExpiredCredits(): Promise<ExpiryResult> {
   });
 
   // Group by user
-  const txByUser = expiredTransactions.reduce(
+  const txByUser = expiredTransactions.reduce<Record<string, typeof expiredTransactions>>(
     (acc, tx) => {
       if (!acc[tx.userId]) {
         acc[tx.userId] = [];
@@ -53,7 +53,7 @@ export async function processExpiredCredits(): Promise<ExpiryResult> {
       acc[tx.userId].push(tx);
       return acc;
     },
-    {} as Record<string, typeof expiredTransactions>
+    {}
   );
 
   // Process each user's expired credits
