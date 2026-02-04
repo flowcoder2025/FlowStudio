@@ -89,6 +89,10 @@
       "kids": {
         "name": "Kids & Baby",
         "description": "Baby products, toys, and children's clothing images"
+      },
+      "photo-studio": {
+        "name": "AI Photo Studio",
+        "description": "ID photos, profile photos, retouching, background removal and portrait services"
       }
     },
     "actions": {
@@ -175,6 +179,38 @@
       "kids-playful": {
         "name": "Playful Scene",
         "description": "Child enjoying the product"
+      },
+      "photo-studio-id-photo": {
+        "name": "ID Photo",
+        "description": "Official ID photos for passport, driver's license, visa, etc."
+      },
+      "photo-studio-business-profile": {
+        "name": "Business Profile",
+        "description": "Professional profile photo for LinkedIn, business cards, corporate websites"
+      },
+      "photo-studio-sns-profile": {
+        "name": "SNS Profile",
+        "description": "Profile photo for Instagram, KakaoTalk, and social media"
+      },
+      "photo-studio-job-application": {
+        "name": "Job Application Photo",
+        "description": "Professional photo for resumes and job applications"
+      },
+      "photo-studio-beauty-retouch": {
+        "name": "Beauty Retouch",
+        "description": "Natural retouching for skin, face shape, and body"
+      },
+      "photo-studio-background-change": {
+        "name": "Background Change",
+        "description": "AI-powered background removal and replacement"
+      },
+      "photo-studio-group-composite": {
+        "name": "Group Photo Composite",
+        "description": "Add or remove people from group photos"
+      },
+      "photo-studio-personal-color": {
+        "name": "Personal Color",
+        "description": "Background and color grading based on personal color analysis"
       }
     },
     "inputs": {
@@ -349,6 +385,15 @@
       "swipeToSkip": "Swipe to skip",
       "referenceImageOptional": "Reference Image (Optional)",
       "referenceImageDesc": "Upload similar style images for more accurate results.",
+      "selectFromGallery": "Select from Gallery",
+      "galleryPickerTitle": "Select from Gallery",
+      "galleryPickerDesc": "Use your previously generated images as reference",
+      "galleryPickerSelected": "{count} selected",
+      "galleryPickerMaxSelect": "Up to {count} selectable",
+      "galleryPickerConfirm": "Select {count} image(s)",
+      "galleryPickerEmpty": "No images in gallery",
+      "galleryPickerEmptyDesc": "Generate images first",
+      "galleryPickerError": "Failed to load images",
       "readyToGenerate": "Ready to Go!",
       "completeInputs": "Please complete inputs",
       "clickToGenerate": "Click the button below to generate images",

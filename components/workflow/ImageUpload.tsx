@@ -2,11 +2,14 @@
  * Image Upload Component - 참조 이미지 업로드
  * Contract: Phase 8 UI Components
  * Evidence: HANDOFF_2026-01-21_P7.md
+ *
+ * 2026-02-04: 갤러리 이미지 선택 기능 추가
  */
 
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import {
   Upload,
   X,
@@ -19,10 +22,15 @@ import {
   Package,
   LayoutGrid,
   Copy,
+  FolderOpen,
+  Check,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import useSWR from "swr";
 import type { ReferenceMode } from "@/lib/imageProvider/types";
+import type { ImageListItem } from "@/lib/images/list";
 
 // ============================================================
 // 타입 정의
@@ -64,6 +72,9 @@ export interface ImageUploadProps {
 const DEFAULT_MAX_FILES = 5;
 const DEFAULT_MAX_SIZE = 10 * 1024 * 1024; // 10MB
 const DEFAULT_FORMATS = ["image/jpeg", "image/png", "image/webp"];
+
+// SWR fetcher
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 // ============================================================
 // 헬퍼 함수
@@ -189,6 +200,191 @@ function ImagePreview({ image, onRemove, disabled }: ImagePreviewProps) {
 }
 
 // ============================================================
+// 갤러리 선택 모달 컴포넌트
+// ============================================================
+
+interface GalleryPickerModalProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSelect: (images: UploadedImage[]) => void;
+  maxSelectable: number;
+  alreadySelectedCount: number;
+}
+
+function GalleryPickerModal({
+  isOpen,
+  onOpenChange,
+  onSelect,
+  maxSelectable,
+  alreadySelectedCount,
+}: GalleryPickerModalProps) {
+  const t = useTranslations("workflow.ui");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const remainingSlots = maxSelectable - alreadySelectedCount;
+
+  // SWR로 갤러리 이미지 목록 가져오기
+  const { data, isLoading, error } = useSWR<{
+    success: boolean;
+    images: ImageListItem[];
+    total: number;
+  }>(isOpen ? "/api/images/list?limit=50&sortBy=createdAt&sortOrder=desc" : null, fetcher);
+
+  const images = data?.images || [];
+  const hasImages = images.length > 0;
+
+  // 이미지 선택 토글
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else if (newSet.size < remainingSlots) {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  // 선택 완료 핸들러
+  const handleConfirm = () => {
+    const selectedImages: UploadedImage[] = images
+      .filter((img) => selectedIds.has(img.id))
+      .map((img) => ({
+        id: `gallery_${img.id}`,
+        file: new File([], img.title || "gallery-image"),
+        previewUrl: img.imageUrl || "",
+        base64Data: undefined, // 갤러리 이미지는 URL로 전달
+        uploadedUrl: img.imageUrl || undefined,
+        status: "success" as const,
+        progress: 100,
+      }));
+
+    onSelect(selectedImages);
+    setSelectedIds(new Set());
+    onOpenChange(false);
+  };
+
+  // 모달 닫힐 때 선택 초기화
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setSelectedIds(new Set());
+    }
+    onOpenChange(open);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold">
+            {t("galleryPickerTitle")}
+          </DialogTitle>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            {t("galleryPickerDesc")}
+          </p>
+        </DialogHeader>
+
+        {/* 선택 현황 */}
+        <div className="flex items-center justify-between px-1 py-2 border-b border-zinc-100 dark:border-zinc-800">
+          <span className="text-sm text-zinc-600 dark:text-zinc-400">
+            {t("galleryPickerSelected", { count: selectedIds.size })}
+          </span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            {t("galleryPickerMaxSelect", { count: remainingSlots })}
+          </span>
+        </div>
+
+        {/* 이미지 그리드 */}
+        <div className="flex-1 overflow-y-auto min-h-[300px]">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+            </div>
+          ) : error || !data?.success ? (
+            <div className="flex flex-col items-center justify-center h-full text-zinc-500 dark:text-zinc-400">
+              <AlertCircle className="w-8 h-8 mb-2" />
+              <p>{t("galleryPickerError")}</p>
+            </div>
+          ) : !hasImages ? (
+            <div className="flex flex-col items-center justify-center h-full text-zinc-500 dark:text-zinc-400">
+              <ImageIcon className="w-12 h-12 mb-2" />
+              <p className="text-center">
+                {t("galleryPickerEmpty")}
+                <br />
+                <span className="text-sm">{t("galleryPickerEmptyDesc")}</span>
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 p-1">
+              {images.map((img) => {
+                const isSelected = selectedIds.has(img.id);
+                const canSelect = isSelected || selectedIds.size < remainingSlots;
+
+                return (
+                  <button
+                    key={img.id}
+                    onClick={() => toggleSelect(img.id)}
+                    disabled={!canSelect && !isSelected}
+                    className={cn(
+                      "relative aspect-square rounded-lg overflow-hidden border-2 transition-all",
+                      isSelected
+                        ? "border-primary-500 ring-2 ring-primary-500/30"
+                        : canSelect
+                        ? "border-transparent hover:border-zinc-300 dark:hover:border-zinc-600"
+                        : "border-transparent opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <img
+                      src={img.thumbnailUrl || img.imageUrl || ""}
+                      alt={img.title || "Gallery image"}
+                      className="w-full h-full object-cover"
+                    />
+                    {/* 선택 체크 표시 */}
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-primary-500/30 flex items-center justify-center">
+                        <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
+                          <Check className="w-5 h-5 text-white" />
+                        </div>
+                      </div>
+                    )}
+                    {/* 호버 오버레이 */}
+                    {!isSelected && canSelect && (
+                      <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center">
+                          <Check className="w-5 h-5 text-zinc-700" />
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* 하단 버튼 */}
+        <div className="flex justify-end gap-2 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+          <Button
+            variant="outline"
+            onClick={() => handleOpenChange(false)}
+          >
+            {t("cancel")}
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            disabled={selectedIds.size === 0}
+          >
+            {selectedIds.size > 0
+              ? t("galleryPickerConfirm", { count: selectedIds.size })
+              : t("galleryPickerConfirm", { count: 0 })}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================================
 // 참조 모드 선택 컴포넌트
 // ============================================================
 
@@ -302,8 +498,10 @@ export function ImageUpload({
   referenceMode = "full",
   onReferenceModeChange,
 }: ImageUploadProps) {
+  const t = useTranslations("workflow.ui");
   const [images, setImages] = useState<UploadedImage[]>(value);
   const [isDragging, setIsDragging] = useState(false);
+  const [showGalleryPicker, setShowGalleryPicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const canAddMore = images.length < maxFiles;
@@ -448,65 +646,113 @@ export function ImageUpload({
     updateImages(newImages);
   };
 
+  // 갤러리에서 선택한 이미지 추가
+  const handleGallerySelect = useCallback(
+    (selectedImages: UploadedImage[]) => {
+      const allImages = [...images, ...selectedImages];
+      updateImages(allImages);
+    },
+    [images, updateImages]
+  );
+
   return (
     <div className={cn("space-y-4", className)}>
-      {/* 업로드 영역 */}
-      <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={cn(
-          "border-2 border-dashed rounded-xl p-6 text-center transition-all",
-          isDragging && "border-primary-500 bg-primary-50 dark:bg-primary-900/20",
-          disabled
-            ? "bg-zinc-50 dark:bg-zinc-800 cursor-not-allowed"
-            : "cursor-pointer hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
-          !canAddMore && "opacity-50"
-        )}
-        onClick={() => !disabled && canAddMore && fileInputRef.current?.click()}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={acceptedFormats.join(",")}
-          multiple={maxFiles > 1}
-          onChange={handleFileSelect}
-          disabled={disabled || !canAddMore}
-          className="hidden"
-        />
+      {/* 업로드 / 갤러리 선택 영역 - 동일 크기 양자택일 */}
+      <div className={cn(
+        "grid grid-cols-2 gap-3",
+        !canAddMore && "opacity-50"
+      )}>
+        {/* 파일 업로드 */}
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={cn(
+            "border-2 border-dashed rounded-xl p-4 text-center transition-all min-h-[120px] flex flex-col items-center justify-center",
+            isDragging && "border-primary-500 bg-primary-50 dark:bg-primary-900/20",
+            disabled
+              ? "bg-zinc-50 dark:bg-zinc-800 cursor-not-allowed"
+              : "cursor-pointer hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+          )}
+          onClick={() => !disabled && canAddMore && fileInputRef.current?.click()}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={acceptedFormats.join(",")}
+            multiple={maxFiles > 1}
+            onChange={handleFileSelect}
+            disabled={disabled || !canAddMore}
+            className="hidden"
+          />
 
-        <div className="flex flex-col items-center gap-2">
           <div
             className={cn(
-              "w-12 h-12 rounded-full flex items-center justify-center",
+              "w-10 h-10 rounded-full flex items-center justify-center mb-2",
               isDragging ? "bg-primary-100 dark:bg-primary-900/30" : "bg-zinc-100 dark:bg-zinc-800"
             )}
           >
             <Upload
               className={cn(
-                "w-6 h-6",
+                "w-5 h-5",
                 isDragging ? "text-primary-500" : "text-zinc-400"
               )}
             />
           </div>
 
-          <div>
-            <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              {isDragging ? "여기에 놓으세요" : "클릭하거나 드래그하여 업로드"}
-            </p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-              {acceptedFormats.map((f) => f.split("/")[1].toUpperCase()).join(", ")} • 최대{" "}
-              {formatFileSize(maxFileSize)}
-            </p>
+          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            {isDragging ? "여기에 놓으세요" : "업로드 또는 드래그앤드랍"}
+          </p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+            {acceptedFormats.map((f) => f.split("/")[1].toUpperCase()).join(", ")} • {formatFileSize(maxFileSize)}
+          </p>
+        </div>
+
+        {/* 갤러리에서 선택 */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!disabled && canAddMore) {
+              setShowGalleryPicker(true);
+            }
+          }}
+          disabled={disabled || !canAddMore}
+          className={cn(
+            "border-2 border-dashed rounded-xl p-4 text-center transition-all min-h-[120px] flex flex-col items-center justify-center",
+            disabled
+              ? "bg-zinc-50 dark:bg-zinc-800 cursor-not-allowed"
+              : "cursor-pointer hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+          )}
+        >
+          <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2 bg-zinc-100 dark:bg-zinc-800">
+            <FolderOpen className="w-5 h-5 text-zinc-400" />
           </div>
 
-          {!canAddMore && (
-            <p className="text-xs text-orange-500">
-              최대 {maxFiles}개까지 업로드할 수 있습니다
-            </p>
-          )}
-        </div>
+          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            {t("selectFromGallery")}
+          </p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+            이전 생성 이미지
+          </p>
+        </button>
       </div>
+
+      {/* 최대 개수 안내 */}
+      {!canAddMore && (
+        <p className="text-xs text-orange-500 text-center">
+          최대 {maxFiles}개까지 업로드할 수 있습니다
+        </p>
+      )}
+
+      {/* 갤러리 선택 모달 */}
+      <GalleryPickerModal
+        isOpen={showGalleryPicker}
+        onOpenChange={setShowGalleryPicker}
+        onSelect={handleGallerySelect}
+        maxSelectable={maxFiles}
+        alreadySelectedCount={images.length}
+      />
 
       {/* 이미지 미리보기 목록 */}
       {images.length > 0 && (

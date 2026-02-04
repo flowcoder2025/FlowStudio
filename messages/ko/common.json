@@ -89,6 +89,10 @@
       "kids": {
         "name": "키즈/유아",
         "description": "유아용품, 장난감, 아동복 이미지"
+      },
+      "photo-studio": {
+        "name": "AI 사진관",
+        "description": "증명사진, 프로필사진, 보정, 배경처리 등 인물 사진 서비스"
       }
     },
     "actions": {
@@ -175,6 +179,38 @@
       "kids-playful": {
         "name": "플레이풀 씬",
         "description": "아이가 제품과 즐거워하는 이미지"
+      },
+      "photo-studio-id-photo": {
+        "name": "증명사진",
+        "description": "여권, 운전면허증, 주민등록증, 비자 등 공식 증명사진"
+      },
+      "photo-studio-business-profile": {
+        "name": "비즈니스 프로필",
+        "description": "LinkedIn, 명함, 회사 홈페이지용 전문 프로필 사진"
+      },
+      "photo-studio-sns-profile": {
+        "name": "SNS 프로필",
+        "description": "인스타그램, 카카오톡 등 SNS용 프로필 사진"
+      },
+      "photo-studio-job-application": {
+        "name": "취업용 사진",
+        "description": "이력서, 입사지원서용 전문 사진"
+      },
+      "photo-studio-beauty-retouch": {
+        "name": "뷰티 보정",
+        "description": "피부, 얼굴형, 체형 보정 등 자연스러운 리터칭"
+      },
+      "photo-studio-background-change": {
+        "name": "배경 교체",
+        "description": "AI 누끼 추출 및 배경 교체"
+      },
+      "photo-studio-group-composite": {
+        "name": "단체사진 합성",
+        "description": "단체사진 인물 추가/제거, 합성 처리"
+      },
+      "photo-studio-personal-color": {
+        "name": "퍼스널컬러",
+        "description": "퍼스널컬러에 맞는 배경색 및 색보정 적용"
       }
     },
     "inputs": {
@@ -349,6 +385,15 @@
       "swipeToSkip": "스킵하려면 다음으로 스와이프",
       "referenceImageOptional": "참조 이미지 (선택)",
       "referenceImageDesc": "비슷한 스타일의 이미지를 업로드하면 더 정확한 결과를 얻을 수 있습니다.",
+      "selectFromGallery": "갤러리에서 선택",
+      "galleryPickerTitle": "갤러리에서 선택",
+      "galleryPickerDesc": "이전에 생성한 이미지를 참조 이미지로 사용할 수 있습니다",
+      "galleryPickerSelected": "{count}개 선택됨",
+      "galleryPickerMaxSelect": "최대 {count}개까지 선택 가능",
+      "galleryPickerConfirm": "{count}개 이미지 선택",
+      "galleryPickerEmpty": "갤러리에 이미지가 없습니다",
+      "galleryPickerEmptyDesc": "먼저 이미지를 생성해주세요",
+      "galleryPickerError": "이미지를 불러오지 못했습니다",
       "readyToGenerate": "준비 완료!",
       "completeInputs": "입력을 완료해주세요",
       "clickToGenerate": "아래 버튼을 눌러 이미지를 생성하세요",
