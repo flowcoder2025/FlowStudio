@@ -46,7 +46,7 @@ export async function processExpiredCredits(): Promise<ExpiryResult> {
 
   // Group by user
   const txByUser = expiredTransactions.reduce<Record<string, typeof expiredTransactions>>(
-    (acc, tx) => {
+    (acc: Record<string, typeof expiredTransactions>, tx) => {
       if (!acc[tx.userId]) {
         acc[tx.userId] = [];
       }
@@ -60,7 +60,7 @@ export async function processExpiredCredits(): Promise<ExpiryResult> {
   for (const [userId, transactions] of Object.entries(txByUser)) {
     try {
       const totalExpired = transactions.reduce(
-        (sum, tx) => sum + (tx.remainingAmount ?? 0),
+        (sum: number, tx) => sum + (tx.remainingAmount ?? 0),
         0
       );
 
