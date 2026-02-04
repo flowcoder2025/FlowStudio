@@ -71,6 +71,24 @@ const nextConfig: NextConfig = {
 
   // 청크 분리 최적화
   webpack: (config, { isServer }) => {
+    // onnxruntime-web/webgpu 모듈 문제 해결
+    config.resolve = {
+      ...config.resolve,
+      fallback: {
+        ...config.resolve?.fallback,
+        'onnxruntime-web/webgpu': false,
+      },
+    };
+
+    // 서버에서 @imgly/background-removal 외부 처리
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push({
+        'onnxruntime-web': 'commonjs onnxruntime-web',
+        'onnxruntime-web/webgpu': 'commonjs onnxruntime-web/webgpu',
+      });
+    }
+
     if (!isServer) {
       config.optimization = {
         ...config.optimization,
