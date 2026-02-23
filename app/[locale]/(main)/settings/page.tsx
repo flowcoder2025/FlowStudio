@@ -166,17 +166,17 @@ export default function SettingsPage() {
     if (payments.length > 0) return;
     setPaymentsLoading(true);
     try {
-      const [paymentRes, subRes] = await Promise.all([
+      const [paymentRes, subRes] = await Promise.allSettled([
         fetch("/api/payment/history?limit=50"),
         fetch("/api/payment/subscription"),
       ]);
-      if (paymentRes.ok) {
-        const data = await paymentRes.json();
+      if (paymentRes.status === "fulfilled" && paymentRes.value.ok) {
+        const data = await paymentRes.value.json();
         setPayments(data.payments || []);
         setPaymentsTotal(data.total || 0);
       }
-      if (subRes.ok) {
-        const data = await subRes.json();
+      if (subRes.status === "fulfilled" && subRes.value.ok) {
+        const data = await subRes.value.json();
         setSubscription(data);
       }
     } catch (error) {

@@ -7,6 +7,7 @@
  */
 
 import { Webhooks } from "@polar-sh/nextjs";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import {
   getCreditsForPackage,
@@ -14,10 +15,9 @@ import {
   getPackageByProductId,
 } from "@/lib/payment/config";
 
-export const POST = Webhooks({
+const webhookHandler = Webhooks({
   webhookSecret: process.env.POLAR_WEBHOOK_SECRET!,
   onPayload: async (payload) => {
-    // Generic handler for all events
     console.log("Polar webhook received:", payload.type);
   },
   onOrderCreated: async ({ data }) => {
@@ -217,3 +217,17 @@ export const POST = Webhooks({
     console.log(`Subscription ${subscriptionId} revoked`);
   },
 });
+
+export async function POST(request: NextRequest) {
+  try {
+    return await webhookHandler(request);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("Unknown event type")) {
+      console.log("Polar webhook: ignoring unknown event type");
+      return NextResponse.json({ received: true });
+    }
+    console.error("Polar webhook error:", error);
+    return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
+  }
+}
