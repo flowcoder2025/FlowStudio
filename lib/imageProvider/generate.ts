@@ -176,30 +176,30 @@ async function executeGeneration(
   options: GenerationOptions,
   provider: ImageProvider
 ): Promise<GenerationResult> {
-  if (provider === 'google') {
+  if (provider === 'openrouter') {
     try {
-      return await generateWithGoogle(options);
+      return await generateWithOpenRouter(options);
     } catch (error) {
-      // Google 실패 시 OpenRouter로 fallback (rate limit, provider error 등)
+      // OpenRouter 실패 시 Google로 fallback (rate limit, provider error 등)
       if (
         error instanceof ImageGenerationError &&
         error.retryable &&
-        process.env.OPENROUTER_API_KEY
+        process.env.GOOGLE_API_KEY
       ) {
         console.warn(
-          `[Fallback] Google failed (${error.code}), falling back to OpenRouter`
+          `[Fallback] OpenRouter failed (${error.code}), falling back to Google`
         );
         const fallbackOptions: GenerationOptions = {
           ...options,
-          provider: 'openrouter',
-          model: 'google/gemini-3-pro-image-preview',
+          provider: 'google',
+          model: 'gemini-3-pro-image-preview',
         };
-        return generateWithOpenRouter(fallbackOptions);
+        return generateWithGoogle(fallbackOptions);
       }
       throw error;
     }
   }
-  return generateWithOpenRouter(options);
+  return generateWithGoogle(options);
 }
 
 function incrementRateLimit(provider: ImageProvider): void {

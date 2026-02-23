@@ -81,15 +81,14 @@ export function selectProvider(criteria: ProviderSelectionCriteria): SelectedPro
 
   // High quality requirement
   if (requireHighQuality) {
-    // Prefer Google Gemini for quality
-    const googleAvailable = availableProviders.some((p) => p.provider === 'google');
-    if (googleAvailable) {
-      selectedConfig = GOOGLE_CONFIG;
-      reason = 'High quality mode: Google Gemini selected';
+    // Prefer OpenRouter Gemini for quality (avoids Google direct API rate limits)
+    const openRouterAvailable = availableProviders.some((p) => p.provider === 'openrouter');
+    if (openRouterAvailable) {
+      selectedConfig = OPENROUTER_GEMINI_CONFIG;
+      reason = 'High quality mode: OpenRouter Gemini selected';
     } else {
-      // Fallback to Flux Pro Ultra
-      selectedConfig = OPENROUTER_FLUX_CONFIG;
-      reason = 'High quality mode: Flux Pro selected (Google unavailable)';
+      selectedConfig = GOOGLE_CONFIG;
+      reason = 'High quality mode: Google Gemini selected (OpenRouter unavailable)';
     }
   }
 
@@ -123,14 +122,14 @@ export function selectProvider(criteria: ProviderSelectionCriteria): SelectedPro
 
   // Default selection
   if (!selectedConfig) {
-    // Default to Google for single/small requests, OpenRouter for batches
-    const googleAvailable = availableProviders.some((p) => p.provider === 'google');
-    if (googleAvailable && batchSize <= 2) {
-      selectedConfig = GOOGLE_CONFIG;
-      reason = 'Default: Google Gemini for small batch';
+    // Default to OpenRouter (faster, higher rate limit, avoids Vercel timeout)
+    const openRouterAvailable = availableProviders.some((p) => p.provider === 'openrouter');
+    if (openRouterAvailable) {
+      selectedConfig = OPENROUTER_GEMINI_CONFIG;
+      reason = 'Default: OpenRouter Gemini selected';
     } else {
-      selectedConfig = OPENROUTER_FLUX_CONFIG;
-      reason = 'Default: OpenRouter Flux for batch generation';
+      selectedConfig = GOOGLE_CONFIG;
+      reason = 'Default: Google Gemini (OpenRouter unavailable)';
     }
   }
 
@@ -173,22 +172,23 @@ function selectLeastWaitProvider(): SelectedProvider {
   const googleLimit = checkGoogleRateLimit();
   const openRouterLimit = checkOpenRouterRateLimit();
 
-  if (googleLimit.resetIn <= openRouterLimit.resetIn) {
+  // Prefer OpenRouter when wait times are similar
+  if (openRouterLimit.resetIn <= googleLimit.resetIn) {
     return {
-      provider: 'google',
-      model: GOOGLE_CONFIG.model,
-      config: GOOGLE_CONFIG,
-      estimatedCredits: GOOGLE_CONFIG.costPerImage,
-      reason: `Rate limited - Google resets in ${Math.ceil(googleLimit.resetIn / 1000)}s`,
+      provider: 'openrouter',
+      model: OPENROUTER_GEMINI_CONFIG.model,
+      config: OPENROUTER_GEMINI_CONFIG,
+      estimatedCredits: OPENROUTER_GEMINI_CONFIG.costPerImage,
+      reason: `Rate limited - OpenRouter resets in ${Math.ceil(openRouterLimit.resetIn / 1000)}s`,
     };
   }
 
   return {
-    provider: 'openrouter',
-    model: OPENROUTER_FLUX_CONFIG.model,
-    config: OPENROUTER_FLUX_CONFIG,
-    estimatedCredits: OPENROUTER_FLUX_CONFIG.costPerImage,
-    reason: `Rate limited - OpenRouter resets in ${Math.ceil(openRouterLimit.resetIn / 1000)}s`,
+    provider: 'google',
+    model: GOOGLE_CONFIG.model,
+    config: GOOGLE_CONFIG,
+    estimatedCredits: GOOGLE_CONFIG.costPerImage,
+    reason: `Rate limited - Google resets in ${Math.ceil(googleLimit.resetIn / 1000)}s`,
   };
 }
 
@@ -292,7 +292,7 @@ function buildSelection(
 // =====================================================
 
 export function getProviderConfig(model: ImageModel): ProviderConfig {
-  return PROVIDER_CONFIGS[model] ?? GOOGLE_CONFIG;
+  return PROVIDER_CONFIGS[model] ?? OPENROUTER_GEMINI_CONFIG;
 }
 
 export function getAllProviderConfigs(): ProviderConfig[] {

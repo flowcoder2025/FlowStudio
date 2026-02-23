@@ -130,7 +130,7 @@ export const INTENT_ACTION_MAPPINGS: IntentActionMapping[] = [
     expressionIntent: "with-person.hand-holding",
     actionIds: {
       fashion: [],
-      food: ["food-hero"], // food에 hand-holding 스타일 추가 가능
+      food: ["food-action"], // hand-holding → action shot (들어올리기 등)
       beauty: ["beauty-texture"],
       interior: [],
       electronics: ["electronics-product"],
@@ -145,8 +145,8 @@ export const INTENT_ACTION_MAPPINGS: IntentActionMapping[] = [
     expressionIntent: "product-only.hero-front",
     actionIds: {
       fashion: ["fashion-ghost-mannequin"],
-      food: ["food-hero"],
-      beauty: ["beauty-hero"],
+      food: ["food-hero-shot"],
+      beauty: ["beauty-product-hero"],
       interior: ["interior-room-scene"],
       electronics: ["electronics-product"],
       jewelry: ["jewelry-glamour"],
@@ -161,7 +161,7 @@ export const INTENT_ACTION_MAPPINGS: IntentActionMapping[] = [
     actionIds: {
       fashion: ["fashion-flat-lay"],
       food: ["food-flat-lay"],
-      beauty: ["beauty-flat-lay"],
+      beauty: ["beauty-flatlay"],
       interior: [],
       electronics: ["electronics-product"],
       jewelry: [],
@@ -175,7 +175,7 @@ export const INTENT_ACTION_MAPPINGS: IntentActionMapping[] = [
     expressionIntent: "detail-focus.texture",
     actionIds: {
       fashion: ["fashion-detail"],
-      food: ["food-detail"],
+      food: ["food-hero-shot"],
       beauty: ["beauty-texture"],
       interior: [],
       electronics: [],
@@ -190,7 +190,7 @@ export const INTENT_ACTION_MAPPINGS: IntentActionMapping[] = [
     expressionIntent: "mood-styling.space-cozy",
     actionIds: {
       fashion: ["fashion-lifestyle"],
-      food: ["food-lifestyle"],
+      food: ["food-hero-shot"],
       beauty: [],
       interior: ["interior-room-scene"],
       electronics: [],

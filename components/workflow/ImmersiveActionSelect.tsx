@@ -371,7 +371,7 @@ export function ImmersiveActionSelect({
       setShowInputForm(false);
       setSelectedAction(null);
       onClose();
-      router.push(`/result?sessionId=${sessionId}`);
+      router.push(`/result?session=${sessionId}`);
     },
     [router, onClose]
   );
