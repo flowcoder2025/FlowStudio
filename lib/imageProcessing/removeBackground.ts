@@ -27,19 +27,6 @@ interface RemovalConfig {
 // Configuration
 // =====================================================
 
-// Model configuration for future use with custom model paths
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _MODEL_CONFIG: Record<BackgroundRemovalModel, { publicPath: string }> = {
-  'isnet': {
-    publicPath: '/models/background-removal/isnet/',
-  },
-  'isnet_fp16': {
-    publicPath: '/models/background-removal/isnet_fp16/',
-  },
-  'isnet_quint8': {
-    publicPath: '/models/background-removal/isnet_quint8/',
-  },
-};
 
 const DEFAULT_CONFIG: RemovalConfig = {
   model: 'isnet_fp16',
@@ -55,6 +42,8 @@ const DEFAULT_CONFIG: RemovalConfig = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let removeBackgroundFn: ((image: ImageSource, config?: any) => Promise<Blob>) | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let segmentForegroundFn: ((image: ImageSource, config?: any) => Promise<Blob>) | null = null;
 
 let isInitialized = false;
 let initPromise: Promise<void> | null = null;
@@ -72,9 +61,30 @@ async function initialize(): Promise<void> {
 
   initPromise = (async () => {
     try {
+      // Configure onnxruntime-web before @imgly loads it.
+      //
+      // CRITICAL: Use single-threaded mode to avoid SharedArrayBuffer requirement.
+      // SharedArrayBuffer needs COOP/COEP headers which break OAuth popups.
+      //
+      // @imgly/background-removal internally calls:
+      //   ort.env.wasm.numThreads = navigator.hardwareConcurrency
+      // which overwrites our setting. To prevent this, we lock numThreads=1
+      // using Object.defineProperty so it cannot be overwritten.
+      const ort = await import('onnxruntime-web');
+      ort.env.wasm.numThreads = 1;
+
+      // Lock numThreads to 1 - prevents @imgly from overriding to multi-threaded
+      // which would fail without SharedArrayBuffer
+      Object.defineProperty(ort.env.wasm, 'numThreads', {
+        value: 1,
+        writable: false,
+        configurable: true,
+      });
+
       // Dynamic import for client-side only
       const bgRemoval = await import('@imgly/background-removal');
       removeBackgroundFn = bgRemoval.removeBackground;
+      segmentForegroundFn = bgRemoval.segmentForeground;
       isInitialized = true;
     } catch (error) {
       console.error('Failed to initialize background removal:', error);
@@ -204,6 +214,28 @@ async function applyMaskForBackground(
 // =====================================================
 
 /**
+ * Build @imgly/background-removal config from our options.
+ * @imgly/background-removal v1.7.0 Config:
+ *   publicPath, debug, rescale, device, proxyToWorker, fetchArgs,
+ *   progress, model, output: { format, quality }
+ */
+function buildImglyConfig(
+  config: RemovalConfig,
+  progressCallback?: (key: string, current: number, total: number) => void,
+) {
+  return {
+    model: config.model,
+    device: config.device,
+    debug: config.debug,
+    output: {
+      format: 'image/png' as const,
+      quality: 1,
+    },
+    ...(progressCallback && { progress: progressCallback }),
+  };
+}
+
+/**
  * Remove background from an image
  * Contract: HYBRID_FUNC_BG_REMOVE
  */
@@ -234,51 +266,43 @@ export async function removeBackground(
     // Report progress: Loading complete
     options.onProgress?.(20);
 
-    // Configure removal options for @imgly/background-removal
-    const removalOptions = {
-      model: config.model,
-      progress: (key: string, current: number, total: number) => {
-        // Map progress: 20-90%
-        const progress = 20 + ((current / total) * 70);
-        options.onProgress?.(Math.min(90, progress));
-      },
+    // Build progress callback that maps to 20-90%
+    const progressCallback = (key: string, current: number, total: number) => {
+      const progress = 20 + ((current / total) * 70);
+      options.onProgress?.(Math.min(90, progress));
     };
+
+    // Build @imgly config
+    const imglyConfig = buildImglyConfig(config, progressCallback);
 
     // Process based on output type
     let foreground: Blob | null = null;
     let mask: Blob | undefined;
 
     if (config.output === 'mask' || options.returnMask) {
-      // Get mask - @imgly/background-removal returns foreground by default
-      // We need to process the result to get mask
-      const result = await removeBackgroundFn(imageBlob, {
-        ...removalOptions,
-        output: { type: 'mask' },
-      });
-      mask = result;
+      // Use segmentForeground for mask output (alpha mask)
+      if (segmentForegroundFn) {
+        mask = await segmentForegroundFn(imageBlob, imglyConfig);
+      }
 
       if (config.output === 'mask') {
-        foreground = result;
+        foreground = mask || null;
       }
     }
 
     if (config.output === 'foreground' || !foreground) {
-      // Get foreground (transparent background)
-      foreground = await removeBackgroundFn(imageBlob, {
-        ...removalOptions,
-        output: { type: 'foreground' },
-      });
+      // removeBackground returns foreground with transparent background
+      foreground = await removeBackgroundFn(imageBlob, imglyConfig);
     }
 
     if (config.output === 'background') {
-      // Get background (inverted mask)
-      if (!mask) {
-        mask = await removeBackgroundFn(imageBlob, {
-          ...removalOptions,
-          output: { type: 'mask' },
-        });
+      // Get background: need mask first, then invert
+      if (!mask && segmentForegroundFn) {
+        mask = await segmentForegroundFn(imageBlob, imglyConfig);
       }
-      foreground = await applyMaskForBackground(imageBlob, mask);
+      if (mask) {
+        foreground = await applyMaskForBackground(imageBlob, mask);
+      }
     }
 
     // Report progress: Complete

@@ -87,8 +87,8 @@ export async function generateImages(
 
     const result = await executeGeneration(generationOptions, selected.provider);
 
-    // 6. Increment rate limit counter
-    incrementRateLimit(selected.provider);
+    // 6. Increment rate limit counter (실제 사용된 provider 기준)
+    incrementRateLimit(result.provider);
 
     // 7. Capture credits (commit)
     if (holdId) {
@@ -177,7 +177,27 @@ async function executeGeneration(
   provider: ImageProvider
 ): Promise<GenerationResult> {
   if (provider === 'google') {
-    return generateWithGoogle(options);
+    try {
+      return await generateWithGoogle(options);
+    } catch (error) {
+      // Google 실패 시 OpenRouter로 fallback (rate limit, provider error 등)
+      if (
+        error instanceof ImageGenerationError &&
+        error.retryable &&
+        process.env.OPENROUTER_API_KEY
+      ) {
+        console.warn(
+          `[Fallback] Google failed (${error.code}), falling back to OpenRouter`
+        );
+        const fallbackOptions: GenerationOptions = {
+          ...options,
+          provider: 'openrouter',
+          model: 'google/gemini-3-pro-image-preview',
+        };
+        return generateWithOpenRouter(fallbackOptions);
+      }
+      throw error;
+    }
   }
   return generateWithOpenRouter(options);
 }

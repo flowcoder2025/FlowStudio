@@ -1,5 +1,8 @@
 # Dependencies
 node_modules
+
+# WASM binaries (copied from node_modules at postinstall)
+public/*.wasm
 .pnpm-debug.log
 
 # Next.js

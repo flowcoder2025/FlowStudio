@@ -163,6 +163,20 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // WASM CORS 헤더 (onnxruntime-web)
+        source: '/:path*.wasm',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/wasm',
+          },
+          {
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'require-corp',
+          },
+        ],
+      },
+      {
         // API 응답 캐싱 (짧은 시간)
         source: '/api/:path*',
         headers: [
@@ -173,6 +187,33 @@ const nextConfig: NextConfig = {
         ],
       },
     ];
+  },
+
+  // WASM rewrite: Turbopack이 onnxruntime-web WASM을 _next/static/chunks/에서 찾으므로
+  // public/에 있는 파일로 리다이렉트
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/_next/static/chunks/ort-wasm-simd.wasm',
+          destination: '/ort-wasm-simd.wasm',
+        },
+        {
+          source: '/_next/static/chunks/ort-wasm-simd-threaded.wasm',
+          destination: '/ort-wasm-simd-threaded.wasm',
+        },
+        {
+          source: '/_next/static/chunks/ort-wasm.wasm',
+          destination: '/ort-wasm.wasm',
+        },
+        {
+          source: '/_next/static/chunks/ort-wasm-threaded.wasm',
+          destination: '/ort-wasm-threaded.wasm',
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
   },
 
   // 압축 활성화

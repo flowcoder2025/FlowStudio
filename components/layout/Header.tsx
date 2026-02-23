@@ -59,12 +59,6 @@ export function Header() {
                   {t("nav.gallery")}
                 </Link>
                 <Link
-                  href="/color-correction"
-                  className="px-4 py-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-                >
-                  {t("nav.colorCorrection")}
-                </Link>
-                <Link
                   href="/pricing"
                   className="px-4 py-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                 >
@@ -189,13 +183,6 @@ export function Header() {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {t("nav.gallery")}
-                </Link>
-                <Link
-                  href="/color-correction"
-                  className="block px-4 py-3 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-lg active:scale-95 transition-all touch-target"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {t("nav.colorCorrection")}
                 </Link>
                 <Link
                   href="/pricing"

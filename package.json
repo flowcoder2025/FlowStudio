@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate && node -e \"const fs=require('fs'),path=require('path'),d=path.join(path.dirname(path.dirname(fs.realpathSync('node_modules/@imgly/background-removal'))),'onnxruntime-web','dist');['ort-wasm-simd.wasm','ort-wasm-simd-threaded.wasm','ort-wasm.wasm','ort-wasm-threaded.wasm'].forEach(f=>{try{fs.copyFileSync(path.join(d,f),'public/'+f);console.log('Copied',f)}catch(e){console.warn('Skip',f)}})\"",
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
