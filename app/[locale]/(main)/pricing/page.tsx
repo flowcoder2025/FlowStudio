@@ -135,7 +135,7 @@ export default function PricingPage() {
           {CREDIT_PACKAGES.map((pkg) => (
             <Card
               key={pkg.id}
-              className={`relative ${
+              className={`relative flex flex-col ${
                 pkg.popular ? "border-primary shadow-lg" : ""
               }`}
             >
@@ -148,12 +148,14 @@ export default function PricingPage() {
               )}
               <CardHeader className="text-center pb-4">
                 <CardTitle className="text-xl">{tPackages(pkg.id)}</CardTitle>
-                <CardDescription>
-                  {pkg.credits.toLocaleString()} {t("credits")}
-                  {pkg.bonus ? ` ${t("bonus", { bonus: pkg.bonus })}` : ""}
+                <CardDescription className="min-h-[2.5rem] flex items-center justify-center">
+                  <span className="text-center">
+                    {pkg.credits.toLocaleString()} {t("credits")}
+                    {pkg.bonus ? ` ${t("bonus", { bonus: pkg.bonus })}` : ""}
+                  </span>
                 </CardDescription>
               </CardHeader>
-              <CardContent className="text-center">
+              <CardContent className="text-center flex flex-col flex-1 justify-end">
                 <div className="mb-6">
                   <span className="text-4xl font-bold">{getPackagePrice(pkg)}</span>
                 </div>
