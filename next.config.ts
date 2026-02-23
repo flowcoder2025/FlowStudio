@@ -15,20 +15,7 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
  */
 
 const nextConfig: NextConfig = {
-  // Cold Start 최적화: Prisma binary engine을 서버 번들에서 제외
-  // engineType="client" 사용 시 binary/library 런타임 불필요 (18MB → 224KB)
-  serverExternalPackages: ['@prisma/client', '@prisma/adapter-pg'],
-
-  outputFileTracingExcludes: {
-    '*': [
-      // Prisma binary engine 제외 (18MB dylib — Client Engine 사용으로 불필요)
-      'node_modules/@prisma/engines/**',
-      'node_modules/.prisma/client/libquery_engine*',
-      // 사용하지 않는 런타임 제외
-      'node_modules/.prisma/client/runtime/binary*',
-      'node_modules/.prisma/client/runtime/library*',
-    ],
-  },
+  serverExternalPackages: ['@prisma/client'],
 
   experimental: {
     serverActions: {
