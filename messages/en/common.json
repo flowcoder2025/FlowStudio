@@ -661,7 +661,8 @@
       "paymentHistory": "Payment History",
       "noPayments": "No payment records yet.",
       "showAll": "Show all ({count})",
-      "showLess": "Show less"
+      "showLess": "Show less",
+      "refunded": "Refunded"
     },
     "business": {
       "title": "Business Verification",

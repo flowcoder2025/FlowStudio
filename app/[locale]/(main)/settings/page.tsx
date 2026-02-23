@@ -449,23 +449,35 @@ export default function SettingsPage() {
                 ) : (
                   <>
                     <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                      {visiblePayments.map((p) => (
-                        <div key={p.id} className="flex items-center justify-between py-3">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
-                              {p.productName}
-                            </p>
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                              {formatDate(p.createdAt)}
-                            </p>
+                      {visiblePayments.map((p) => {
+                        const isRefund = p.status === "refunded";
+                        return (
+                          <div key={p.id} className="flex items-center justify-between py-3">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                                {p.productName}
+                              </p>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                {formatDate(p.createdAt)}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-3 ml-4">
+                              {isRefund && (
+                                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
+                                  {t("billing.refunded")}
+                                </span>
+                              )}
+                              <span className={`text-sm font-semibold tabular-nums ${
+                                isRefund
+                                  ? "text-amber-600 dark:text-amber-400"
+                                  : "text-green-600 dark:text-green-400"
+                              }`}>
+                                {isRefund ? "" : "+"}{formatNumber(p.creditsGranted)} credits
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-3 ml-4">
-                            <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                              +{formatNumber(p.creditsGranted)} credits
-                            </span>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     {payments.length > INITIAL_DISPLAY_COUNT && (
                       <button

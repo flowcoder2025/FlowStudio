@@ -661,7 +661,8 @@
       "paymentHistory": "결제 내역",
       "noPayments": "결제 내역이 없습니다.",
       "showAll": "전체 보기 ({count}건)",
-      "showLess": "접기"
+      "showLess": "접기",
+      "refunded": "환불"
     },
     "business": {
       "title": "사업자 인증",

@@ -40,7 +40,7 @@ export async function getPaymentHistory(
 
   const where = {
     userId,
-    type: "purchase",
+    type: { in: ["purchase", "refund"] },
   };
 
   const [transactions, total] = await Promise.all([
@@ -51,6 +51,7 @@ export async function getPaymentHistory(
       skip: offset,
       select: {
         id: true,
+        type: true,
         paymentId: true,
         paymentProvider: true,
         amount: true,
@@ -65,10 +66,10 @@ export async function getPaymentHistory(
     payments: transactions.map((t) => ({
       id: t.id,
       orderId: t.paymentId ?? t.id,
-      productName: t.description ?? "Credit Purchase",
-      amount: 0, // Price not stored in transaction
+      productName: t.description ?? (t.type === "refund" ? "Credit Refund" : "Credit Purchase"),
+      amount: 0,
       currency: "KRW",
-      status: "completed",
+      status: t.type === "refund" ? "refunded" : "completed",
       creditsGranted: t.amount,
       createdAt: t.createdAt,
     })),
