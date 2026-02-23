@@ -1,23 +1,18 @@
 /**
- * NextAuth Configuration
+ * NextAuth Edge-Safe Configuration
  * Contract: AUTH_FUNC_GOOGLE_OAUTH, AUTH_FUNC_KAKAO_OAUTH, AUTH_FUNC_SESSION
- * Evidence: IMPLEMENTATION_PLAN.md Phase 1
+ * Runtime: Edge-compatible (no DB, no Node.js-only deps)
  */
 
 import type { NextAuthConfig } from "next-auth";
-import { PrismaAdapter } from "@auth/prisma-adapter";
+import type { JWT } from "next-auth/jwt";
+import type { Session, User, Account } from "next-auth";
+import type { AdapterUser } from "next-auth/adapters";
 import Google from "next-auth/providers/google";
 import Kakao from "next-auth/providers/kakao";
-import { prisma } from "@/lib/db";
-import type { User, Account } from "next-auth";
-import type { JWT } from "next-auth/jwt";
-import type { Session } from "next-auth";
-import type { AdapterUser } from "next-auth/adapters";
 
-export const authOptions: NextAuthConfig = {
-  adapter: PrismaAdapter(prisma),
+export const authConfig: NextAuthConfig = {
   providers: [
-    // Contract: AUTH_FUNC_GOOGLE_OAUTH
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -29,7 +24,6 @@ export const authOptions: NextAuthConfig = {
         },
       },
     }),
-    // Contract: AUTH_FUNC_KAKAO_OAUTH
     Kakao({
       clientId: process.env.KAKAO_CLIENT_ID!,
       clientSecret: process.env.KAKAO_CLIENT_SECRET!,
@@ -44,7 +38,6 @@ export const authOptions: NextAuthConfig = {
     error: "/login",
   },
   callbacks: {
-    // Contract: AUTH_FUNC_SESSION
     async jwt({ token, user, account }: { token: JWT; user?: User | AdapterUser; account?: Account | null }) {
       if (user) {
         token.id = user.id;
@@ -63,38 +56,7 @@ export const authOptions: NextAuthConfig = {
       return session;
     },
     async signIn() {
-      // Allow sign in
       return true;
-    },
-  },
-  events: {
-    async createUser({ user }: { user: User }) {
-      // Grant initial bonus credits to new users
-      // DB Schema: Credit has only balance (1:1 with User), requires updatedAt
-      if (user.id) {
-        // Create Credit record with initial balance
-        await prisma.credit.create({
-          data: {
-            userId: user.id,
-            balance: 10, // Welcome bonus: 10 credits
-            updatedAt: new Date(),
-          },
-        });
-        // Update user's creditBalance
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { creditBalance: 10 },
-        });
-        // Record bonus transaction
-        await prisma.creditTransaction.create({
-          data: {
-            userId: user.id,
-            amount: 10,
-            type: "bonus",
-            description: "Welcome bonus credits",
-          },
-        });
-      }
     },
   },
   debug: process.env.NODE_ENV === "development",

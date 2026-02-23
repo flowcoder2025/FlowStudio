@@ -6,7 +6,7 @@
 
 import { cache } from "react";
 import NextAuth from "next-auth";
-import { authOptions } from "./authOptions";
+import { authOptions } from "./auth";
 
 export const { handlers, auth, signIn, signOut } = NextAuth(authOptions);
 
