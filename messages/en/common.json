@@ -642,7 +642,9 @@
     },
     "credits": {
       "title": "Credits",
-      "balance": "Credit Balance",
+      "availableBalance": "Available Credits",
+      "totalBalance": "Total Balance",
+      "pendingHolds": "Pending Holds",
       "description": "Credits are used for image generation. 5 credits are required per image."
     },
     "business": {

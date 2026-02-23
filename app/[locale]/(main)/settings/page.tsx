@@ -22,10 +22,17 @@ interface Profile {
   referralCode: string;
 }
 
+interface CreditBalance {
+  balance: number;
+  pendingHolds: number;
+  availableBalance: number;
+}
+
 export default function SettingsPage() {
   const t = useTranslations("settings");
   useSession(); // Ensure authentication context
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [creditBalance, setCreditBalance] = useState<CreditBalance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"profile" | "credits">("profile");
 
@@ -40,11 +47,18 @@ export default function SettingsPage() {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch("/api/user/profile");
-      if (response.ok) {
-        const data = await response.json();
+      const [profileRes, creditRes] = await Promise.all([
+        fetch("/api/user/profile"),
+        fetch("/api/credits/balance"),
+      ]);
+      if (profileRes.ok) {
+        const data = await profileRes.json();
         setProfile(data);
         setName(data.name || "");
+      }
+      if (creditRes.ok) {
+        const data = await creditRes.json();
+        setCreditBalance(data);
       }
     } catch (error) {
       console.error("Failed to fetch profile:", error);
@@ -171,10 +185,26 @@ export default function SettingsPage() {
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{t("credits.title")}</h2>
 
               <div className="bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-lg p-6">
-                <p className="text-sm text-amber-600 dark:text-amber-400 mb-1">{t("credits.balance")}</p>
+                <p className="text-sm text-amber-600 dark:text-amber-400 mb-1">{t("credits.availableBalance")}</p>
                 <p className="text-3xl font-bold text-amber-700 dark:text-amber-300">
-                  {formatNumber(profile?.creditBalance ?? 0)}
+                  {formatNumber(creditBalance?.availableBalance ?? 0)}
                 </p>
+                {(creditBalance?.pendingHolds ?? 0) > 0 && (
+                  <div className="mt-3 pt-3 border-t border-amber-200 dark:border-amber-700 flex justify-between text-sm">
+                    <span className="text-amber-600 dark:text-amber-400">{t("credits.totalBalance")}</span>
+                    <span className="text-amber-700 dark:text-amber-300 font-medium">
+                      {formatNumber(creditBalance?.balance ?? 0)}
+                    </span>
+                  </div>
+                )}
+                {(creditBalance?.pendingHolds ?? 0) > 0 && (
+                  <div className="flex justify-between text-sm mt-1">
+                    <span className="text-amber-600 dark:text-amber-400">{t("credits.pendingHolds")}</span>
+                    <span className="text-amber-700 dark:text-amber-300 font-medium">
+                      -{formatNumber(creditBalance?.pendingHolds ?? 0)}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
