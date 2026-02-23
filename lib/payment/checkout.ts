@@ -28,8 +28,12 @@ async function polarFetch<T>(
     ? "https://api.polar.sh"
     : "https://sandbox-api.polar.sh";
 
-  const response = await fetch(`${baseUrl}${endpoint}`, {
+  // Polar API는 trailing slash 없으면 307 리다이렉트 → Authorization 헤더 드롭됨
+  const normalizedEndpoint = endpoint.endsWith("/") ? endpoint : `${endpoint}/`;
+
+  const response = await fetch(`${baseUrl}${normalizedEndpoint}`, {
     ...options,
+    redirect: "follow",
     headers: {
       Authorization: `Bearer ${POLAR_CONFIG.accessToken}`,
       "Content-Type": "application/json",
