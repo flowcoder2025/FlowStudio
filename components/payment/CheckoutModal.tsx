@@ -58,7 +58,7 @@ export function CheckoutModal({
 
       const { checkoutUrl } = await response.json();
 
-      // Redirect to LemonSqueezy checkout
+      // Redirect to Polar checkout
       window.location.href = checkoutUrl;
     } catch (err) {
       setError(err instanceof Error ? err.message : t("genericError"));

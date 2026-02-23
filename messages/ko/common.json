@@ -589,7 +589,7 @@
       "creditPurchase": "크레딧을 구매합니다",
       "orderSummary": "주문 내역",
       "monthlyAutoPayment": "매월 자동 결제됩니다. 언제든지 취소할 수 있습니다.",
-      "securityNotice": "결제는 LemonSqueezy를 통해 안전하게 처리됩니다. 카드 정보는 당사 서버에 저장되지 않습니다.",
+      "securityNotice": "결제는 Polar를 통해 안전하게 처리됩니다. 카드 정보는 당사 서버에 저장되지 않습니다.",
       "cancel": "취소",
       "pay": "결제하기",
       "processing": "처리 중...",

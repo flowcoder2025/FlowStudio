@@ -27,7 +27,6 @@ const nextConfig: NextConfig = {
       '@radix-ui/react-icons',
       'date-fns',
       'lodash',
-      '@lemonsqueezy/lemonsqueezy.js',
     ],
   },
 
@@ -121,13 +120,6 @@ const nextConfig: NextConfig = {
               name: 'image-processing',
               test: /[\\/]node_modules[\\/](@imgly|@xenova)[\\/]/,
               priority: 25,
-              chunks: 'async',
-            },
-            // 결제 관련 청크
-            payment: {
-              name: 'payment',
-              test: /[\\/]node_modules[\\/](@lemonsqueezy)[\\/]/,
-              priority: 20,
               chunks: 'async',
             },
             // 공통 라이브러리
@@ -238,7 +230,6 @@ export const bundleSplitConfig = {
     framework: 'react, react-dom, next, scheduler',
     ui: '@radix-ui, lucide-react, class-variance-authority',
     imageProcessing: '@imgly, @xenova (async)',
-    payment: '@lemonsqueezy (async)',
     commons: 'shared modules (minChunks: 2)',
   },
   optimizePackageImports: [
