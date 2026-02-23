@@ -629,6 +629,7 @@
     "tabs": {
       "profile": "프로필",
       "credits": "크레딧",
+      "billing": "결제 관리",
       "business": "사업자 인증",
       "referral": "추천인"
     },
@@ -645,7 +646,22 @@
       "availableBalance": "사용 가능 크레딧",
       "totalBalance": "총 보유 크레딧",
       "pendingHolds": "사용 대기 중",
+      "history": "거래 내역",
+      "noHistory": "크레딧 거래 내역이 없습니다.",
+      "showAll": "전체 보기 ({count}건)",
+      "showLess": "접기",
       "description": "크레딧은 이미지 생성에 사용됩니다. 1장당 5 크레딧이 필요합니다."
+    },
+    "billing": {
+      "title": "결제 관리",
+      "currentPlan": "현재 플랜",
+      "since": "{date}부터",
+      "storage": "저장 공간",
+      "concurrent": "동시 생성",
+      "paymentHistory": "결제 내역",
+      "noPayments": "결제 내역이 없습니다.",
+      "showAll": "전체 보기 ({count}건)",
+      "showLess": "접기"
     },
     "business": {
       "title": "사업자 인증",

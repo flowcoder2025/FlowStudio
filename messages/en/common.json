@@ -629,6 +629,7 @@
     "tabs": {
       "profile": "Profile",
       "credits": "Credits",
+      "billing": "Billing",
       "business": "Business Verification",
       "referral": "Referral"
     },
@@ -645,7 +646,22 @@
       "availableBalance": "Available Credits",
       "totalBalance": "Total Balance",
       "pendingHolds": "Pending Holds",
+      "history": "Transaction History",
+      "noHistory": "No credit transactions yet.",
+      "showAll": "Show all ({count})",
+      "showLess": "Show less",
       "description": "Credits are used for image generation. 5 credits are required per image."
+    },
+    "billing": {
+      "title": "Billing",
+      "currentPlan": "Current Plan",
+      "since": "Since {date}",
+      "storage": "Storage",
+      "concurrent": "Concurrent",
+      "paymentHistory": "Payment History",
+      "noPayments": "No payment records yet.",
+      "showAll": "Show all ({count})",
+      "showLess": "Show less"
     },
     "business": {
       "title": "Business Verification",

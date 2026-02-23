@@ -6,9 +6,9 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { User, CreditCard, Loader2, Check } from "lucide-react";
+import { User, CreditCard, Receipt, Loader2, Check, ChevronDown, ChevronUp } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 
@@ -28,18 +28,96 @@ interface CreditBalance {
   availableBalance: number;
 }
 
+interface CreditTransaction {
+  id: string;
+  amount: number;
+  type: string;
+  description: string | null;
+  createdAt: string;
+}
+
+interface PaymentRecord {
+  id: string;
+  orderId: string;
+  productName: string;
+  amount: number;
+  currency: string;
+  status: string;
+  creditsGranted: number;
+  createdAt: string;
+}
+
+interface SubscriptionInfo {
+  subscription: {
+    id: string;
+    tier: string;
+    status: string;
+    startDate: string;
+    endDate: string | null;
+    cancelledAt: string | null;
+    paymentProvider: string | null;
+    externalId: string | null;
+  } | null;
+  plan: {
+    tier: string;
+    storageQuotaGB: number;
+    concurrentLimit: number;
+    watermarkFree: boolean;
+    priorityQueue: boolean;
+  };
+}
+
+type TabId = "profile" | "credits" | "billing";
+
+const CREDIT_TYPE_COLORS: Record<string, string> = {
+  PURCHASE: "text-green-600 dark:text-green-400",
+  BONUS: "text-blue-600 dark:text-blue-400",
+  USAGE: "text-red-600 dark:text-red-400",
+  REFUND: "text-amber-600 dark:text-amber-400",
+  REFERRAL: "text-purple-600 dark:text-purple-400",
+  EXPIRY: "text-zinc-500 dark:text-zinc-400",
+};
+
+const PAYMENT_STATUS_STYLES: Record<string, string> = {
+  COMPLETED: "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300",
+  PENDING: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
+  FAILED: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
+  REFUNDED: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+};
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 export default function SettingsPage() {
   const t = useTranslations("settings");
-  useSession(); // Ensure authentication context
+  useSession();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [creditBalance, setCreditBalance] = useState<CreditBalance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"profile" | "credits">("profile");
+  const [activeTab, setActiveTab] = useState<TabId>("profile");
 
   // Profile form state
   const [name, setName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Credit history state
+  const [creditHistory, setCreditHistory] = useState<CreditTransaction[]>([]);
+  const [creditHistoryTotal, setCreditHistoryTotal] = useState(0);
+  const [creditHistoryLoading, setCreditHistoryLoading] = useState(false);
+  const [showAllCredits, setShowAllCredits] = useState(false);
+
+  // Billing state
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [paymentsTotal, setPaymentsTotal] = useState(0);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
+  const [showAllPayments, setShowAllPayments] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -66,6 +144,52 @@ export default function SettingsPage() {
       setIsLoading(false);
     }
   };
+
+  const fetchCreditHistory = useCallback(async () => {
+    if (creditHistory.length > 0) return;
+    setCreditHistoryLoading(true);
+    try {
+      const res = await fetch("/api/credits/history?limit=50");
+      if (res.ok) {
+        const data = await res.json();
+        setCreditHistory(data.transactions);
+        setCreditHistoryTotal(data.total);
+      }
+    } catch (error) {
+      console.error("Failed to fetch credit history:", error);
+    } finally {
+      setCreditHistoryLoading(false);
+    }
+  }, [creditHistory.length]);
+
+  const fetchBillingData = useCallback(async () => {
+    if (payments.length > 0) return;
+    setPaymentsLoading(true);
+    try {
+      const [paymentRes, subRes] = await Promise.all([
+        fetch("/api/payment/history?limit=50"),
+        fetch("/api/payment/subscription"),
+      ]);
+      if (paymentRes.ok) {
+        const data = await paymentRes.json();
+        setPayments(data.payments || []);
+        setPaymentsTotal(data.total || 0);
+      }
+      if (subRes.ok) {
+        const data = await subRes.json();
+        setSubscription(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch billing data:", error);
+    } finally {
+      setPaymentsLoading(false);
+    }
+  }, [payments.length]);
+
+  useEffect(() => {
+    if (activeTab === "credits") fetchCreditHistory();
+    if (activeTab === "billing") fetchBillingData();
+  }, [activeTab, fetchCreditHistory, fetchBillingData]);
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
@@ -102,7 +226,12 @@ export default function SettingsPage() {
   const tabs = [
     { id: "profile" as const, labelKey: "profile" as const, icon: User },
     { id: "credits" as const, labelKey: "credits" as const, icon: CreditCard },
+    { id: "billing" as const, labelKey: "billing" as const, icon: Receipt },
   ];
+
+  const INITIAL_DISPLAY_COUNT = 5;
+  const visibleCredits = showAllCredits ? creditHistory : creditHistory.slice(0, INITIAL_DISPLAY_COUNT);
+  const visiblePayments = showAllPayments ? payments : payments.slice(0, INITIAL_DISPLAY_COUNT);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -207,9 +336,158 @@ export default function SettingsPage() {
                 )}
               </div>
 
+              {/* Credit History */}
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
+                  {t("credits.history")}
+                </h3>
+                {creditHistoryLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                  </div>
+                ) : creditHistory.length === 0 ? (
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 py-4 text-center">
+                    {t("credits.noHistory")}
+                  </p>
+                ) : (
+                  <>
+                    <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                      {visibleCredits.map((tx) => (
+                        <div key={tx.id} className="flex items-center justify-between py-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                              {tx.description || tx.type}
+                            </p>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                              {formatDate(tx.createdAt)}
+                            </p>
+                          </div>
+                          <span className={`text-sm font-semibold tabular-nums ml-4 ${
+                            CREDIT_TYPE_COLORS[tx.type] || "text-zinc-900 dark:text-zinc-100"
+                          }`}>
+                            {tx.amount > 0 ? "+" : ""}{formatNumber(tx.amount)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    {creditHistory.length > INITIAL_DISPLAY_COUNT && (
+                      <button
+                        onClick={() => setShowAllCredits(!showAllCredits)}
+                        className="flex items-center gap-1 mx-auto mt-3 text-sm text-primary-600 dark:text-primary-400 hover:underline"
+                      >
+                        {showAllCredits ? (
+                          <>
+                            {t("credits.showLess")}
+                            <ChevronUp className="w-4 h-4" />
+                          </>
+                        ) : (
+                          <>
+                            {t("credits.showAll", { count: creditHistoryTotal })}
+                            <ChevronDown className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 {t("credits.description")}
               </p>
+            </div>
+          )}
+
+          {/* Billing Tab */}
+          {activeTab === "billing" && (
+            <div className="space-y-6">
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{t("billing.title")}</h2>
+
+              {/* Subscription Info */}
+              {subscription && (
+                <div className="bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg p-5">
+                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
+                    {t("billing.currentPlan")}
+                  </h3>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                        {subscription.plan.tier}
+                      </p>
+                      {subscription.subscription && (
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                          {t("billing.since", { date: formatDate(subscription.subscription.startDate) })}
+                          {subscription.subscription.status !== "ACTIVE" && (
+                            <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
+                              {subscription.subscription.status}
+                            </span>
+                          )}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right text-xs text-zinc-500 dark:text-zinc-400 space-y-1">
+                      <p>{t("billing.storage")}: {subscription.plan.storageQuotaGB} GB</p>
+                      <p>{t("billing.concurrent")}: {subscription.plan.concurrentLimit}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Payment History */}
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
+                  {t("billing.paymentHistory")}
+                </h3>
+                {paymentsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                  </div>
+                ) : payments.length === 0 ? (
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 py-4 text-center">
+                    {t("billing.noPayments")}
+                  </p>
+                ) : (
+                  <>
+                    <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                      {visiblePayments.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between py-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                              {p.productName}
+                            </p>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                              {formatDate(p.createdAt)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3 ml-4">
+                            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                              +{formatNumber(p.creditsGranted)} credits
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {payments.length > INITIAL_DISPLAY_COUNT && (
+                      <button
+                        onClick={() => setShowAllPayments(!showAllPayments)}
+                        className="flex items-center gap-1 mx-auto mt-3 text-sm text-primary-600 dark:text-primary-400 hover:underline"
+                      >
+                        {showAllPayments ? (
+                          <>
+                            {t("billing.showLess")}
+                            <ChevronUp className="w-4 h-4" />
+                          </>
+                        ) : (
+                          <>
+                            {t("billing.showAll", { count: paymentsTotal })}
+                            <ChevronDown className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>
