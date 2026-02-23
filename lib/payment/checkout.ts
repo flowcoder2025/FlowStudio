@@ -70,7 +70,7 @@ export async function createCheckout(
   const finalSuccessUrl = successUrl || POLAR_CONFIG.successUrl || `${baseUrl}/payment/success?checkout_id={CHECKOUT_ID}`;
 
   const checkoutData = {
-    product_id: productId,
+    products: [productId],
     success_url: finalSuccessUrl,
     customer_email: email || undefined,
     metadata: {
@@ -80,7 +80,7 @@ export async function createCheckout(
   };
 
   const response = await polarFetch<PolarCheckoutResponse>(
-    "/v1/checkouts/custom",
+    "/v1/checkouts",
     {
       method: "POST",
       body: JSON.stringify(checkoutData),
