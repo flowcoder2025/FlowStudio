@@ -19,6 +19,7 @@ const intlMiddleware = createMiddleware({
 });
 
 const publicPatterns = [
+  /^\/(ko|en)?\/?$/, // 홈 화면
   /^\/(ko|en)?\/?(login|pricing|api\/auth|api\/webhooks)(\/|$)/,
 ];
 
