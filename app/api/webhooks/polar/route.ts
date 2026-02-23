@@ -81,6 +81,49 @@ export const POST = Webhooks({
 
     console.log(`Order ${orderId} processed for user ${userId}, credits: ${credits}`);
   },
+  onOrderRefunded: async ({ data }) => {
+    const order = data;
+    const orderId = order.id;
+
+    // Find the original purchase transaction
+    const purchaseTx = await prisma.creditTransaction.findFirst({
+      where: {
+        paymentId: orderId,
+        type: "purchase",
+      },
+    });
+
+    if (!purchaseTx || purchaseTx.amount <= 0) {
+      console.log(`Refund for order ${orderId}: no credits to revoke`);
+      return;
+    }
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: purchaseTx.userId },
+        data: { creditBalance: { decrement: purchaseTx.amount } },
+      }),
+      prisma.credit.updateMany({
+        where: { userId: purchaseTx.userId },
+        data: {
+          balance: { decrement: purchaseTx.amount },
+          updatedAt: new Date(),
+        },
+      }),
+      prisma.creditTransaction.create({
+        data: {
+          userId: purchaseTx.userId,
+          amount: -purchaseTx.amount,
+          type: "refund",
+          description: `Refund: ${orderId}`,
+          paymentId: orderId,
+          paymentProvider: "polar",
+        },
+      }),
+    ]);
+
+    console.log(`Order ${orderId} refunded, revoked ${purchaseTx.amount} credits from user ${purchaseTx.userId}`);
+  },
   onSubscriptionCreated: async ({ data }) => {
     const subscription = data;
     const subscriptionId = subscription.id;
