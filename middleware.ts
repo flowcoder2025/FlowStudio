@@ -74,5 +74,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!api|_next|.*\\..*).*)"],
+  matcher: ["/((?!api|admin|_next|.*\\..*).*)"],
 };

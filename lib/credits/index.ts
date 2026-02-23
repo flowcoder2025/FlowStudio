@@ -7,3 +7,4 @@ export * from "./hold";
 export * from "./capture";
 export * from "./refund";
 export * from "./expiry";
+export * from "./admin-bonus";
