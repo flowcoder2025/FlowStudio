@@ -66,16 +66,16 @@ export default function PricingPage() {
     );
   }, [billingInterval]);
 
-  // Get price based on locale
+  // Always show USD (Polar charges in USD)
   const getPackagePrice = (pkg: CreditPackage) => {
-    return locale === "ko" ? pkg.priceFormatted : pkg.priceFormattedUSD;
+    return pkg.priceFormattedUSD;
   };
 
   const getPlanPrice = (plan: SubscriptionPlan) => {
     if (plan.price === 0) {
       return locale === "ko" ? "무료" : "Free";
     }
-    return locale === "ko" ? plan.priceFormatted : plan.priceFormattedUSD;
+    return plan.priceFormattedUSD;
   };
 
   const handleSelectPackage = (pkg: CreditPackage) => {
@@ -237,9 +237,7 @@ export default function PricingPage() {
                       {/* 연간 플랜: 월별 환산 가격 표시 */}
                       <div className="flex items-baseline gap-1">
                         <span className="text-3xl font-bold">
-                          {locale === "ko"
-                            ? getYearlyPlanMonthlyPrice(plan).monthlyFormatted
-                            : getYearlyPlanMonthlyPrice(plan).monthlyFormattedUSD}
+                          {getYearlyPlanMonthlyPrice(plan).monthlyFormattedUSD}
                         </span>
                         <span className="text-muted-foreground text-sm">{t("perMonth")}</span>
                       </div>
@@ -325,12 +323,8 @@ export default function PricingPage() {
               ? tPackages(selectedItem.item.id)
               : tPlans(getBasePlanId(selectedItem.item.id))
           }
-          price={locale === "ko" ? selectedItem.item.price : selectedItem.item.priceUSD}
-          priceFormatted={
-            locale === "ko"
-              ? selectedItem.item.priceFormatted
-              : selectedItem.item.priceFormattedUSD
-          }
+          price={selectedItem.item.priceUSD}
+          priceFormatted={selectedItem.item.priceFormattedUSD}
         />
       )}
     </div>
