@@ -66,19 +66,22 @@ export function Header() {
                 </Link>
               </>
             )}
+          </nav>
+
+          {/* Right Side */}
+          <div className="flex items-center gap-2">
+            {/* Previous Version */}
             <a
               href="https://flow-studio-old.vercel.app"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 px-4 py-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-sm text-zinc-600 dark:text-zinc-300 transition-colors active:scale-95"
+              title={t("nav.previous")}
             >
-              {t("nav.previous")}
-              <ExternalLink className="w-3 h-3" />
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>{t("nav.previous")}</span>
             </a>
-          </nav>
 
-          {/* Right Side */}
-          <div className="flex items-center gap-3">
             {/* Theme Toggle */}
             <ThemeToggle />
 
