@@ -36,50 +36,48 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 glass-nav">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="relative flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 z-10">
             <span className="text-xl font-bold text-primary-600 dark:text-primary-400">FlowStudio</span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
-            {isAuthenticated && (
-              <>
-                <Link
-                  href="/"
-                  className="px-4 py-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-                >
-                  {t("nav.home")}
-                </Link>
-                <Link
-                  href="/gallery"
-                  className="px-4 py-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-                >
-                  {t("nav.gallery")}
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="px-4 py-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-                >
-                  {t("nav.pricing")}
-                </Link>
-              </>
-            )}
-          </nav>
+          {/* Desktop Navigation - absolute center */}
+          {isAuthenticated && (
+            <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+              <Link
+                href="/"
+                className="px-4 py-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                {t("nav.home")}
+              </Link>
+              <Link
+                href="/gallery"
+                className="px-4 py-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                {t("nav.gallery")}
+              </Link>
+              <Link
+                href="/pricing"
+                className="px-4 py-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                {t("nav.pricing")}
+              </Link>
+            </nav>
+          )}
 
           {/* Right Side */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 z-10">
             {/* Previous Version */}
             <a
               href="https://flow-studio-old.vercel.app"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-sm text-zinc-600 dark:text-zinc-300 transition-colors active:scale-95"
+              className="hidden md:flex items-center gap-1.5 p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-sm text-zinc-600 dark:text-zinc-300 transition-colors active:scale-95"
               title={t("nav.previous")}
             >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>{t("nav.previous")}</span>
+              <ExternalLink className="w-4 h-4" />
+              <span className="leading-5">{t("nav.previous")}</span>
             </a>
 
             {/* Theme Toggle */}
