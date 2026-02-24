@@ -73,11 +73,11 @@ export function Header() {
               href="https://flow-studio-old.vercel.app"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden md:flex items-center gap-1.5 p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-sm text-zinc-600 dark:text-zinc-300 transition-colors active:scale-95"
+              className="hidden md:flex p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 transition-colors touch-target active:scale-95"
+              aria-label={t("nav.previous")}
               title={t("nav.previous")}
             >
-              <ExternalLink className="w-4 h-4" />
-              <span className="leading-5">{t("nav.previous")}</span>
+              <ExternalLink className="w-5 h-5" />
             </a>
 
             {/* Theme Toggle */}
