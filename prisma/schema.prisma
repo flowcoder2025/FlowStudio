@@ -81,6 +81,7 @@ model User {
   subscriptions                      Subscription?
   UsageStats                         UsageStats?
   storageStats                       UserStorageStats?
+  recentWorkflows                    RecentWorkflow[]
 
   @@index([businessNumber])
 }
@@ -370,4 +371,16 @@ model UserStorageStats {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model RecentWorkflow {
+  id        String   @id @default(cuid())
+  userId    String
+  industry  String
+  action    String
+  intent    String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }

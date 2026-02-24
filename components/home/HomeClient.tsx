@@ -12,7 +12,7 @@
 
 "use client";
 
-import { useState, useCallback, useMemo, useTransition } from "react";
+import { useState, useCallback, useEffect, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -84,6 +84,7 @@ export function HomeClient({ industries }: HomeClientProps) {
   const { status } = useSession();
   const t = useTranslations("pages.home");
   const tWorkflow = useTranslations("workflow.industries");
+  const tActions = useTranslations("workflow.actions");
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<{
     industry: IndustryInfo | null;
@@ -100,12 +101,40 @@ export function HomeClient({ industries }: HomeClientProps) {
   // useTransition for non-urgent state updates (Vercel Best Practice: rerender-transitions)
   const [isPending, startTransition] = useTransition();
 
+  // Server-loaded recent workflows
+  const [serverWorkflows, setServerWorkflows] = useState<
+    Array<{ industry: string; action: string; intent?: string | null; createdAt: string }>
+  >([]);
+
   // Zustand store
   const selectIndustry = useWorkflowStore((state) => state.selectIndustry);
   const selectIntent = useWorkflowStore((state) => state.selectIntent);
-  const recentWorkflows = useWorkflowStore((state) => state.recentWorkflows);
+  const localRecentWorkflows = useWorkflowStore((state) => state.recentWorkflows);
   const setCurrentStep = useWorkflowStore((state) => state.setCurrentStep);
   const setInitialQuery = useWorkflowStore((state) => state.setInitialQuery);
+
+  // Fetch recent workflows from server when authenticated
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/workflows/recent")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.workflows) {
+          setServerWorkflows(data.workflows);
+        }
+      })
+      .catch(() => {/* fallback to local */});
+  }, [status]);
+
+  // Use server data if available, otherwise fallback to local
+  const recentWorkflows = serverWorkflows.length > 0
+    ? serverWorkflows.map((w) => ({
+        industry: w.industry as Industry,
+        action: w.action,
+        intent: w.intent ?? undefined,
+        timestamp: new Date(w.createdAt),
+      }))
+    : localRecentWorkflows;
 
   // Map for O(1) industry lookup (Vercel Best Practice: js-set-map-lookups)
   const industryMap = useMemo(
@@ -368,21 +397,23 @@ export function HomeClient({ industries }: HomeClientProps) {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {recentWorkflows.slice(0, 5).map((workflow, index) => {
+                  {recentWorkflows.slice(0, 10).map((workflow, index) => {
                     // Use Map for O(1) lookup
                     const industryInfo = industryMap.get(workflow.industry);
+                    const actionName = tActions(`${workflow.action}.name`);
                     return (
                       <motion.button
                         key={index}
                         onClick={() => handleRecentClick(workflow)}
-                        className="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors max-w-[180px]"
                         variants={buttonVariants}
                         whileHover="hover"
                         whileTap="tap"
+                        title={`${tWorkflow(`${workflow.industry}.name`)} - ${actionName}`}
                       >
-                        <span>{industryInfo?.icon}</span>
-                        <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                          {tWorkflow(`${workflow.industry}.name`)} - {workflow.action}
+                        <span className="shrink-0">{industryInfo?.icon}</span>
+                        <span className="text-xs text-zinc-700 dark:text-zinc-300 truncate">
+                          {actionName}
                         </span>
                       </motion.button>
                     );

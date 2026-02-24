@@ -456,10 +456,19 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>()(
         addToHistory: (workflow) => {
           set((state) => {
             const newEntry = { ...workflow, timestamp: new Date() };
-            // Keep only last 10 workflows
-            const updated = [newEntry, ...state.recentWorkflows].slice(0, 10);
+            const updated = [newEntry, ...state.recentWorkflows].slice(0, 20);
             return { recentWorkflows: updated };
           });
+          // Persist to server (fire-and-forget)
+          fetch("/api/workflows/recent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              industry: workflow.industry,
+              action: workflow.action,
+              intent: workflow.intent,
+            }),
+          }).catch(() => {/* Server save is best-effort */});
         },
 
         clearHistory: () => set({ recentWorkflows: [] }),
