@@ -122,6 +122,7 @@ interface InputCardProps {
   totalSteps: number;
   value: string;
   onChange: (value: string) => void;
+  onNext: () => void;
   referenceImages: UploadedImage[];
   onImageChange: (images: UploadedImage[]) => void;
   action: Action;
@@ -149,6 +150,7 @@ function InputCard({
   totalSteps,
   value,
   onChange,
+  onNext,
   referenceImages,
   onImageChange,
   action,
@@ -342,6 +344,10 @@ function InputCard({
   // 입력 필드 렌더링
   if (step.type === "input") {
     const input = step.input;
+    const isSelect = input.type === "select";
+    const isTextInput = input.type === "textarea" || input.type === "text" || (!isSelect);
+    const hasValue = !!value?.trim();
+
     return (
       <div className="flex flex-col h-full w-full max-w-lg mx-auto bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden">
         {/* 헤더 */}
@@ -378,12 +384,16 @@ function InputCard({
                 className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none text-base"
                 autoFocus
               />
-            ) : input.type === "select" ? (
+            ) : isSelect ? (
               <div className="grid grid-cols-2 gap-3">
                 {input.options?.map((opt) => (
                   <button
                     key={opt.value}
-                    onClick={() => onChange(opt.value)}
+                    onClick={() => {
+                      onChange(opt.value);
+                      // 선택 즉시 다음 스텝으로 이동
+                      setTimeout(() => onNext(), 200);
+                    }}
                     className={cn(
                       "p-4 rounded-xl border-2 text-left transition-all",
                       value === opt.value
@@ -400,6 +410,9 @@ function InputCard({
                 type={input.type}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && hasValue) onNext();
+                }}
                 placeholder={input.placeholder || `${input.label}을(를) 입력해주세요`}
                 className="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-base"
                 autoFocus
@@ -408,11 +421,23 @@ function InputCard({
           </motion.div>
         </div>
 
-        {/* 하단 힌트 */}
-        <div className="px-6 pb-6 text-center">
-          <p className="text-sm text-zinc-400 dark:text-zinc-500">
-            ← {t("ui.swipeToNavigate")} →
-          </p>
+        {/* 하단: 텍스트 입력은 다음 버튼, 선택은 힌트만 */}
+        <div className="px-6 pb-6">
+          {isTextInput ? (
+            <Button
+              onClick={onNext}
+              disabled={input.required && !hasValue}
+              className="w-full h-11 text-base font-semibold"
+              size="lg"
+            >
+              {t("ui.next")}
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          ) : (
+            <p className="text-sm text-zinc-400 dark:text-zinc-500 text-center">
+              {t("ui.selectToNext")}
+            </p>
+          )}
         </div>
       </div>
     );
@@ -974,6 +999,7 @@ export function ImmersiveInputForm({
                   totalSteps={steps.length}
                   value={inputs[currentInputId] || ""}
                   onChange={(v) => handleInputChange(currentInputId, v)}
+                  onNext={handleNext}
                   referenceImages={referenceImages}
                   onImageChange={setReferenceImages}
                   action={action}
