@@ -69,16 +69,20 @@ export function Header() {
           {/* Right Side */}
           <div className="flex items-center gap-2 z-10">
             {/* Previous Version */}
-            <a
-              href="https://flow-studio-old.vercel.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden md:flex p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 transition-colors touch-target active:scale-95"
-              aria-label={t("nav.previous")}
-              title={t("nav.previous")}
-            >
-              <ExternalLink className="w-5 h-5" />
-            </a>
+            <div className="relative hidden md:flex group">
+              <a
+                href="https://flow-studio-old.vercel.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 transition-colors touch-target active:scale-95"
+                aria-label={t("nav.previous")}
+              >
+                <ExternalLink className="w-5 h-5" />
+              </a>
+              <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2.5 py-1 rounded-md bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                {t("nav.previous")}
+              </span>
+            </div>
 
             {/* Theme Toggle */}
             <ThemeToggle />
