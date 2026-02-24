@@ -15,7 +15,7 @@ import { uploadImageFromUrl } from '@/lib/storage';
 // =====================================================
 
 // Vercel에서 body 크기 제한을 10MB로 설정
-export const maxDuration = 60; // 최대 실행 시간 60초
+export const maxDuration = 300; // Pro 플랜 최대 300초 (이미지 생성 대기)
 
 // =====================================================
 // Request Schema

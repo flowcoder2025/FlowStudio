@@ -297,9 +297,9 @@ CRITICAL RULES:
     };
   }
 
-  // Make request with timeout (55s to stay within Vercel 60s limit)
+  // Make request with timeout (280s to stay within Vercel 300s limit)
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 55000);
+  const timeoutId = setTimeout(() => controller.abort(), 280000);
 
   try {
     const response = await fetch(OPENROUTER_API_URL, {
@@ -374,8 +374,8 @@ CRITICAL RULES:
 
     // Handle timeout
     if (error instanceof Error && error.name === 'AbortError') {
-      logError('[OpenRouter] Generation timeout (55s)');
-      throw new Error('OpenRouter 이미지 생성 오류: 타임아웃 (55초)');
+      logError('[OpenRouter] Generation timeout (280s)');
+      throw new Error('OpenRouter 이미지 생성 오류: 타임아웃 (280초)');
     }
 
     throw error;

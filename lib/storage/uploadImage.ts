@@ -10,8 +10,8 @@ import { checkStorageQuota, updateStorageUsage } from './quota';
 // Configuration
 // =====================================================
 
-const BUCKET_NAME = 'images';
-const THUMBNAIL_BUCKET = 'thumbnails';
+const BUCKET_NAME = 'flowstudio-images';
+const THUMBNAIL_BUCKET = 'flowstudio-images';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 // =====================================================
