@@ -10,7 +10,7 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
-import { Menu, X, User, LogOut, Settings, ImageIcon } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, ImageIcon, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { CreditBadge } from "./CreditBadge";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
@@ -66,6 +66,15 @@ export function Header() {
                 </Link>
               </>
             )}
+            <a
+              href="https://flow-studio-old.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 px-4 py-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            >
+              {t("nav.previous")}
+              <ExternalLink className="w-3 h-3" />
+            </a>
           </nav>
 
           {/* Right Side */}
@@ -191,6 +200,16 @@ export function Header() {
                 >
                   {t("nav.pricing")}
                 </Link>
+                <a
+                  href="https://flow-studio-old.vercel.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 px-4 py-3 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-lg active:scale-95 transition-all touch-target"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {t("nav.previous")}
+                  <ExternalLink className="w-3 h-3" />
+                </a>
               </div>
             ) : (
               <Link
