@@ -15,6 +15,7 @@ import {
   ProviderConfig,
 } from './types';
 import { getGenAIClient, VERTEX_AI_MODELS } from './vertexai';
+import { extractBase64Data } from './utils';
 
 // =====================================================
 // Configuration
@@ -55,30 +56,6 @@ const ASPECT_RATIO_DIMENSIONS: Record<AspectRatio, { width: number; height: numb
 };
 
 // =====================================================
-// Utility Functions
-// =====================================================
-
-/**
- * Extract base64 data from data URL
- */
-function extractBase64Data(dataUrl: string): { mimeType: string; data: string } {
-  if (dataUrl.startsWith('data:')) {
-    const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-    if (matches) {
-      return {
-        mimeType: matches[1],
-        data: matches[2],
-      };
-    }
-  }
-  // Assume raw base64 with PNG mime type
-  return {
-    mimeType: 'image/png',
-    data: dataUrl,
-  };
-}
-
-// =====================================================
 // Main Generation Function
 // =====================================================
 
@@ -88,6 +65,9 @@ export async function generateWithGoogle(
   const startTime = Date.now();
   const count = options.count ?? 1;
   const images: GeneratedImage[] = [];
+
+  // Timeout: 240 seconds (4 min), well within Vercel 300s limit
+  const GENERATION_TIMEOUT_MS = 240_000;
 
   try {
     // Get GenAI client (auto-initializes based on env vars)
@@ -131,17 +111,27 @@ export async function generateWithGoogle(
         log(`[GoogleGenAI] Prompt length: ${enhancedPrompt.length}, refImages: ${refImageList.length}`);
         parts.push({ text: enhancedPrompt });
 
-        // Call the new @google/genai API
-        const response = await ai.models.generateContent({
-          model: imageModel,
-          contents: parts,
-          config: {
-            imageConfig: {
-              aspectRatio: aspectRatio,
-              imageSize: '2K',
+        // Set up timeout via AbortController
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), GENERATION_TIMEOUT_MS);
+
+        let response;
+        try {
+          // Call the @google/genai API with abort signal for timeout
+          response = await ai.models.generateContent({
+            model: imageModel,
+            contents: parts,
+            config: {
+              abortSignal: controller.signal,
+              imageConfig: {
+                aspectRatio: aspectRatio,
+                imageSize: '2K',
+              },
             },
-          },
-        });
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
 
         // Debug logging
         if (isDev) {
@@ -173,6 +163,16 @@ export async function generateWithGoogle(
       } catch (error) {
         // Handle individual image generation error
         logError(`[GoogleGenAI] Failed to generate image ${i + 1}/${count}: ${error instanceof Error ? error.message : String(error)}`);
+
+        // Check if it's a timeout (AbortError)
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new ImageGenerationError(
+            `Image generation timed out after ${GENERATION_TIMEOUT_MS / 1000}s`,
+            ErrorCodes.TIMEOUT,
+            'google',
+            true
+          );
+        }
 
         // Check if it's a content filter error
         if (isContentFilterError(error)) {

@@ -53,7 +53,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Session create error:", error);
     const message = error instanceof Error ? error.message : "Failed to create session";
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Business logic errors (invalid industry/action) return 400, not 500
+    const isClientError = message.startsWith("Invalid industry") || message.startsWith("Invalid action");
+    return NextResponse.json({ error: message }, { status: isClientError ? 400 : 500 });
   }
 }
 
@@ -168,7 +170,12 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.error("Session update error:", error);
     const message = error instanceof Error ? error.message : "Failed to update session";
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Business logic errors (not found, invalid action) return 400, not 500
+    const isClientError =
+      message.includes("not found") ||
+      message.startsWith("Invalid") ||
+      message.startsWith("Action not found");
+    return NextResponse.json({ error: message }, { status: isClientError ? 400 : 500 });
   }
 }
 

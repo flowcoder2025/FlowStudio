@@ -92,6 +92,9 @@ export function HomeClient({ industries }: HomeClientProps) {
   } | null>(null);
   // searchRecommendations state preserved for potential card-based fallback display
   const [, setSearchRecommendations] = useState<WorkflowRecommendation[]>([]);
+  // Tool mode: auto-open immersive form when toolMode is set in store
+  const [isToolImmersiveOpen, setIsToolImmersiveOpen] = useState(false);
+
   // 통합 몰입형 상태 (AI 추천 + 입력 폼)
   const [isImmersiveOpen, setIsImmersiveOpen] = useState(false);
   const [immersiveRecommendations, setImmersiveRecommendations] = useState<WorkflowRecommendation[]>([]);
@@ -112,6 +115,22 @@ export function HomeClient({ industries }: HomeClientProps) {
   const localRecentWorkflows = useWorkflowStore((state) => state.recentWorkflows);
   const setCurrentStep = useWorkflowStore((state) => state.setCurrentStep);
   const setInitialQuery = useWorkflowStore((state) => state.setInitialQuery);
+
+  // Tool mode detection
+  const toolMode = useWorkflowStore((state) => state.toolMode);
+  const exitToolMode = useWorkflowStore((state) => state.exitToolMode);
+
+  // Tool mode effect: auto-open immersive form when toolMode is set
+  useEffect(() => {
+    if (toolMode) {
+      setIsToolImmersiveOpen(true);
+    }
+  }, [toolMode]);
+
+  const handleToolImmersiveClose = useCallback(() => {
+    setIsToolImmersiveOpen(false);
+    exitToolMode();
+  }, [exitToolMode]);
 
   // Fetch recent workflows from server when authenticated
   useEffect(() => {
@@ -274,6 +293,16 @@ export function HomeClient({ industries }: HomeClientProps) {
 
   return (
     <>
+      {/* Tool mode immersive form - triggered by enterToolMode from Header/MobileNav */}
+      {toolMode ? (
+        <ImmersiveInputForm
+          isOpen={isToolImmersiveOpen}
+          onClose={handleToolImmersiveClose}
+          industry={"fashion" as Industry}
+          intent={"product_shot" as ExpressionIntent}
+        />
+      ) : null}
+
       {/* 통합 몰입형 모달 - AI 추천 + 입력 폼 (스와이프로 이동 가능) */}
       {selectedRecommendation ? (
         <ImmersiveInputForm

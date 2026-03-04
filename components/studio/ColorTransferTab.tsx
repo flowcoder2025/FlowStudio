@@ -5,7 +5,7 @@
  * Contract: HYBRID_DESIGN_TRANSFER_TAB
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Upload, ArrowRight, Palette, RefreshCw } from 'lucide-react';
 import { transferColors } from '@/lib/imageProcessing/colorTransfer';
 import { extractColors } from '@/lib/imageProcessing/extractColor';
@@ -97,9 +97,9 @@ export function ColorTransferTab({
   }, [imageUrl]);
 
   // Initial extraction
-  useState(() => {
+  useEffect(() => {
     extractTargetPalette();
-  });
+  }, [extractTargetPalette]);
 
   // Handle reference image upload
   const handleReferenceUpload = useCallback(

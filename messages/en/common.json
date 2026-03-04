@@ -8,7 +8,13 @@
     "settings": "Settings",
     "myGallery": "My Gallery",
     "pricing": "Pricing",
-    "previous": "Previous"
+    "previous": "Previous",
+    "tools": "Tools",
+    "toolEdit": "Image Edit",
+    "toolPoster": "Poster",
+    "toolComposite": "Composite",
+    "toolDetailEdit": "Detail Edit",
+    "toolDetailPage": "Detail Page"
   },
   "theme": {
     "light": "Light",
@@ -385,6 +391,7 @@
       "swipeToNavigate": "Swipe to navigate",
       "selectToNext": "Select to proceed to next",
       "swipeToSkip": "Swipe to skip",
+      "swipeToNext": "Swipe to continue",
       "referenceImageOptional": "Reference Image (Optional)",
       "referenceImageDesc": "Upload similar style images for more accurate results.",
       "selectFromGallery": "Select from Gallery",

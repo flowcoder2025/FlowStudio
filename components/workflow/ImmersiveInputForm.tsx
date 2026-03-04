@@ -27,6 +27,22 @@ import { getIndustryInfo, Industry, INDUSTRY_INFO } from "@/lib/workflow/industr
 import { ExpressionIntent, EXPRESSION_INTENT_INFO } from "@/lib/workflow/intents";
 import { useWorkflowStore } from "@/lib/workflow/store";
 import { WorkflowRecommendation } from "@/lib/workflow/recommend";
+import { TOOL_STEP_DEFINITIONS, TOOL_INFO } from "@/lib/workflow/actions/tools";
+import type { ToolStep as ToolStepDef } from "@/lib/workflow/actions/tools";
+import type { ToolMode, ToolGenerateRequest } from "@/lib/tools/types";
+import type { AspectRatio } from "@/lib/imageProvider/types";
+import { generateFromTool } from "@/lib/tools/generateClient";
+import { ImmersiveResult } from "@/components/workflow/ImmersiveResult";
+import {
+  ImageUploadStep,
+  AspectRatioStep,
+  CategoryStyleStep,
+  MultiImageStep,
+  PromptStep,
+  ConfirmationStep,
+  CanvasMaskStep,
+  SegmentLoopStep,
+} from "@/components/workflow/steps";
 
 // ============================================================
 // 타입 정의
@@ -638,6 +654,158 @@ function InputCard({
 }
 
 // ============================================================
+// 도구 모드 카드 렌더링
+// ============================================================
+
+interface ToolStepCardProps {
+  step: ToolStepDef;
+  stepIndex: number;
+  totalSteps: number;
+  toolMode: ToolMode;
+  toolInputs: Record<string, unknown>;
+  setToolInput: (key: string, value: unknown) => void;
+  onNext: () => void;
+  imageCount: number;
+  onImageCountChange: (count: number) => void;
+  isGenerating: boolean;
+  onGenerate: () => void;
+  toolSteps: ToolStepDef[];
+}
+
+function ToolStepCard({
+  step,
+  stepIndex,
+  totalSteps,
+  toolMode,
+  toolInputs,
+  setToolInput,
+  onNext,
+  imageCount,
+  onImageCountChange,
+  isGenerating,
+  onGenerate,
+  toolSteps,
+}: ToolStepCardProps) {
+  const t = useTranslations();
+  const info = TOOL_INFO[toolMode];
+  const toolTitle = t(info.titleKey);
+
+  switch (step.type) {
+    case 'image-upload':
+      return (
+        <ImageUploadStep
+          step={step}
+          value={(toolInputs[step.key] as string | null) ?? null}
+          onChange={(url) => setToolInput(step.key, url)}
+          onNext={onNext}
+          stepIndex={stepIndex}
+          totalSteps={totalSteps}
+          toolTitle={toolTitle}
+        />
+      );
+
+    case 'aspect-ratio':
+      return (
+        <AspectRatioStep
+          step={step}
+          value={(toolInputs[step.key] as AspectRatio) ?? step.default}
+          onChange={(ratio) => setToolInput(step.key, ratio)}
+          stepIndex={stepIndex}
+          totalSteps={totalSteps}
+          toolTitle={toolTitle}
+        />
+      );
+
+    case 'category-style':
+      return (
+        <CategoryStyleStep
+          value={(toolInputs[step.key] as { category: string; style: string } | null) ?? null}
+          onChange={(val) => setToolInput(step.key, val)}
+          onNext={onNext}
+          stepIndex={stepIndex}
+          totalSteps={totalSteps}
+          toolTitle={toolTitle}
+        />
+      );
+
+    case 'multi-image':
+      return (
+        <MultiImageStep
+          step={step}
+          value={(toolInputs[step.key] as string[]) ?? []}
+          onChange={(urls) => setToolInput(step.key, urls)}
+          onNext={onNext}
+          stepIndex={stepIndex}
+          totalSteps={totalSteps}
+          toolTitle={toolTitle}
+        />
+      );
+
+    case 'prompt':
+      return (
+        <PromptStep
+          step={step}
+          value={(toolInputs[step.key] as string) ?? ''}
+          onChange={(val) => setToolInput(step.key, val)}
+          onNext={onNext}
+          stepIndex={stepIndex}
+          totalSteps={totalSteps}
+          toolTitle={toolTitle}
+        />
+      );
+
+    case 'confirmation':
+      return (
+        <ConfirmationStep
+          toolMode={toolMode}
+          toolSteps={toolSteps}
+          toolInputs={toolInputs}
+          imageCount={imageCount}
+          onImageCountChange={onImageCountChange}
+          isGenerating={isGenerating}
+          onGenerate={onGenerate}
+          stepIndex={stepIndex}
+          totalSteps={totalSteps}
+        />
+      );
+
+    case 'canvas-mask':
+      return (
+        <CanvasMaskStep
+          sourceImage={(toolInputs['sourceImage'] as string | null) ?? null}
+          value={(toolInputs[step.key!] as string | null) ?? null}
+          onChange={(maskUrl) => setToolInput(step.key!, maskUrl)}
+          editMode={(toolInputs['editMode'] as 'ai' | 'text' | 'image') ?? 'ai'}
+          onEditModeChange={(mode) => setToolInput('editMode', mode)}
+          onNext={onNext}
+          stepIndex={stepIndex}
+          totalSteps={totalSteps}
+          toolTitle={toolTitle}
+        />
+      );
+
+    case 'segment-loop': {
+      const categoryStyle = toolInputs['categoryStyle'] as { category?: string; style?: string } | null;
+      return (
+        <SegmentLoopStep
+          segments={(toolInputs['segments'] as string[]) ?? []}
+          onSegmentsChange={(segs) => setToolInput('segments', segs)}
+          sourceImage={(toolInputs['sourceImage'] as string | null) ?? null}
+          refImage={(toolInputs['refImage'] as string | null) ?? null}
+          style={categoryStyle?.style ?? ''}
+          stepIndex={stepIndex}
+          totalSteps={totalSteps}
+          toolTitle={toolTitle}
+        />
+      );
+    }
+
+    default:
+      return null;
+  }
+}
+
+// ============================================================
 // 메인 컴포넌트
 // ============================================================
 
@@ -670,6 +838,15 @@ export function ImmersiveInputForm({
   const setStoreImageCount = useWorkflowStore((state) => state.setImageCount);
   const referenceMode = useWorkflowStore((state) => state.referenceMode);
   const setReferenceMode = useWorkflowStore((state) => state.setReferenceMode);
+
+  // Tool mode store
+  const toolMode = useWorkflowStore((state) => state.toolMode);
+  const toolInputs = useWorkflowStore((state) => state.toolInputs);
+  const toolStepIndex = useWorkflowStore((state) => state.toolStepIndex);
+  const setToolInput = useWorkflowStore((state) => state.setToolInput);
+  const setToolStepIndex = useWorkflowStore((state) => state.setToolStepIndex);
+  const exitToolMode = useWorkflowStore((state) => state.exitToolMode);
+  const generationResult = useWorkflowStore((state) => state.generationResult);
 
   // intent에서 적합한 action 가져오기
   const action = useMemo(() => {
@@ -910,6 +1087,287 @@ export function ImmersiveInputForm({
       setIsGenerating(false);
     }
   }, [action, industry, intent, inputs, referenceImages, referenceMode, addToHistory, onGenerate, router, onClose, imageCount, setStoreImageCount]);
+
+  // ============================================================
+  // 도구 모드 전용 변수 + 핸들러
+  // ============================================================
+  const toolSteps = toolMode ? TOOL_STEP_DEFINITIONS[toolMode] : [];
+  const currentToolStep = toolSteps[toolStepIndex] || null;
+
+  const handleToolNext = useCallback(() => {
+    if (toolStepIndex < toolSteps.length - 1) {
+      setToolStepIndex(toolStepIndex + 1);
+    }
+  }, [toolStepIndex, toolSteps.length, setToolStepIndex]);
+
+  const handleToolPrev = useCallback(() => {
+    if (toolStepIndex > 0) {
+      setToolStepIndex(toolStepIndex - 1);
+    }
+  }, [toolStepIndex, setToolStepIndex]);
+
+  const handleToolGoTo = useCallback(
+    (index: number) => {
+      if (index >= 0 && index < toolSteps.length) {
+        setToolStepIndex(index);
+      }
+    },
+    [toolSteps.length, setToolStepIndex]
+  );
+
+  const handleToolClose = useCallback(() => {
+    exitToolMode();
+    onClose();
+  }, [exitToolMode, onClose]);
+
+  // 도구 모드용 스와이프
+  const handleToolDragEnd = useCallback(
+    (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      const swipe = swipePower(info.offset.x, info.velocity.x);
+      if (swipe < -swipeConfidenceThreshold) {
+        handleToolNext();
+      } else if (swipe > swipeConfidenceThreshold) {
+        handleToolPrev();
+      }
+    },
+    [handleToolNext, handleToolPrev]
+  );
+
+  // 도구 모드용 키보드
+  useEffect(() => {
+    if (!isOpen || !toolMode) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case "Escape":
+          handleToolClose();
+          break;
+        case "ArrowRight":
+          handleToolNext();
+          break;
+        case "ArrowLeft":
+          handleToolPrev();
+          break;
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, toolMode, handleToolClose, handleToolNext, handleToolPrev]);
+
+  // 도구 모드용 결과 표시 상태
+  const [showToolResult, setShowToolResult] = useState(false);
+
+  // 도구 모드용 생성 핸들러
+  const handleToolGenerate = useCallback(async () => {
+    if (!toolMode) return;
+
+    setIsGenerating(true);
+    setError(null);
+
+    try {
+      // toolInputs → ToolGenerateRequest 매핑
+      const prompt = (toolInputs.prompt as string) || "";
+      const aspectRatio = (toolInputs.aspectRatio as AspectRatio) || "1:1";
+      const categoryStyle = toolInputs.categoryStyle as { category?: string; style?: string } | undefined;
+
+      const request: ToolGenerateRequest = {
+        prompt,
+        aspectRatio,
+        count: imageCount,
+        mode: toolMode,
+      };
+
+      // 스타일 추가 (POSTER, DETAIL_PAGE)
+      if (categoryStyle?.style) {
+        request.style = categoryStyle.style;
+      }
+
+      // sourceImage (EDIT, POSTER, DETAIL_EDIT, DETAIL_PAGE)
+      if (toolInputs.sourceImage) {
+        request.sourceImage = toolInputs.sourceImage as string;
+      }
+
+      // refImages: 단일 참조 이미지 (EDIT, DETAIL_PAGE)
+      if (toolInputs.refImage) {
+        request.refImages = [toolInputs.refImage as string];
+        request.referenceMode = "style";
+      }
+
+      // refImages: 다중 이미지 (COMPOSITE)
+      if (toolInputs.refImages && Array.isArray(toolInputs.refImages)) {
+        request.refImages = toolInputs.refImages as string[];
+        request.referenceMode = "full";
+      }
+
+      // logoImage (POSTER)
+      if (toolInputs.logoImage) {
+        request.logoImage = toolInputs.logoImage as string;
+      }
+
+      // maskImage (DETAIL_EDIT)
+      if (toolInputs.maskImage) {
+        request.maskImage = toolInputs.maskImage as string;
+      }
+
+      const result = await generateFromTool(request);
+
+      // 결과를 store에 저장
+      const store = useWorkflowStore.getState();
+      store.setGenerationResult({
+        success: result.success,
+        images: result.images || [],
+        creditsUsed: result.creditsUsed || 0,
+        provider: result.provider || "unknown",
+        model: result.model || "unknown",
+        duration: result.duration,
+        error: result.error,
+      });
+
+      if (result.success && result.images.length > 0) {
+        setShowToolResult(true);
+      } else {
+        setError(result.error || "생성에 실패했습니다");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "생성 중 오류가 발생했습니다");
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [toolMode, toolInputs, imageCount]);
+
+  // 도구 모드 결과에서 재생성
+  const handleToolRegenerate = useCallback(() => {
+    setShowToolResult(false);
+    // confirmation 스텝으로 돌아가기
+    const confirmIdx = toolSteps.findIndex((s) => s.type === "confirmation");
+    if (confirmIdx >= 0) {
+      setToolStepIndex(confirmIdx);
+    }
+  }, [toolSteps, setToolStepIndex]);
+
+  // 도구 모드 결과 닫기 → 입력 폼도 닫기
+  const handleToolResultClose = useCallback(() => {
+    setShowToolResult(false);
+    handleToolClose();
+  }, [handleToolClose]);
+
+  // ============================================================
+  // 도구 모드 렌더링
+  // ============================================================
+  if (toolMode && isOpen) {
+    // 결과 표시 중이면 ImmersiveResult를 렌더링
+    if (showToolResult && generationResult) {
+      return (
+        <ImmersiveResult
+          isOpen={true}
+          onClose={handleToolResultClose}
+          result={generationResult}
+          onRegenerate={handleToolRegenerate}
+          onCreateNew={handleToolResultClose}
+        />
+      );
+    }
+
+    return (
+      <AnimatePresence>
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          variants={overlayVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          role="dialog"
+          aria-modal="true"
+          aria-label={toolMode}
+        >
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+            onClick={handleToolClose}
+          />
+
+          <button
+            onClick={handleToolClose}
+            className={cn(
+              "absolute top-4 right-4 z-10",
+              "w-10 h-10 flex items-center justify-center",
+              "bg-white/10 hover:bg-white/20 rounded-full",
+              "text-white transition-colors",
+              "focus:outline-none focus:ring-2 focus:ring-white/50"
+            )}
+            aria-label="닫기"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {error && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-4 py-2 bg-red-500 text-white rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
+          <motion.div
+            className="relative w-full max-w-lg mx-4 md:mx-20 h-[calc(100vh-120px)] min-h-[500px] max-h-[700px]"
+            variants={cardContainerVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <ImmersiveNavigation
+              currentIndex={toolStepIndex}
+              total={toolSteps.length}
+              onPrevious={handleToolPrev}
+              onNext={handleToolNext}
+              onGoTo={handleToolGoTo}
+              variant="dark"
+              size="lg"
+              showOnboardingHint={false}
+            />
+
+            <AnimatePresence initial={false} custom={1} mode="wait">
+              <motion.div
+                key={toolStepIndex}
+                custom={1}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                className="absolute inset-0"
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={1}
+                onDragEnd={handleToolDragEnd}
+                style={{ cursor: toolSteps.length > 1 ? "grab" : "default" }}
+              >
+                {currentToolStep && (
+                  <ToolStepCard
+                    step={currentToolStep}
+                    stepIndex={toolStepIndex}
+                    totalSteps={toolSteps.length}
+                    toolMode={toolMode}
+                    toolInputs={toolInputs}
+                    setToolInput={setToolInput}
+                    onNext={handleToolNext}
+                    imageCount={imageCount}
+                    onImageCountChange={setImageCount}
+                    isGenerating={isGenerating}
+                    onGenerate={handleToolGenerate}
+                    toolSteps={toolSteps}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
+
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden md:flex items-center gap-4 text-white/60 text-sm">
+            <span>← → {tWorkflow("ui.navigate")}</span>
+            <span>•</span>
+            <span>ESC {tWorkflow("ui.close")}</span>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
 
   // action이 없으면 렌더링하지 않음
   if (!action || !steps.length) return null;

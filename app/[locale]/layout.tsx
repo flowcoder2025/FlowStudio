@@ -10,6 +10,7 @@ import { getMessages, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
 import { Providers } from "@/components/providers/Providers";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 type Props = {
   children: React.ReactNode;
@@ -28,17 +29,39 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const isKorean = locale === "ko";
 
+  const baseUrl = "https://studio.flow-coder.com";
+
   return {
+    metadataBase: new URL(baseUrl),
     title: metadata.title,
     description: metadata.description,
     icons: {
       icon: "/favicon.ico",
       apple: "/FlowStudio_icon.png",
     },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
+    },
+    alternates: {
+      canonical: locale === "ko" ? baseUrl : `${baseUrl}/en`,
+      languages: {
+        ko: baseUrl,
+        en: `${baseUrl}/en`,
+        "x-default": baseUrl,
+      },
+    },
     openGraph: {
       title: metadata.title,
       description: metadata.description,
-      url: "https://flowstudio.co.kr",
+      url: baseUrl,
       siteName: "FlowStudio",
       images: [
         {
@@ -77,6 +100,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <html lang={locale} suppressHydrationWarning>
       <body>
+        <JsonLd />
         <NextIntlClientProvider messages={messages}>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>

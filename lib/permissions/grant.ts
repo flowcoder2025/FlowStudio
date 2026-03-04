@@ -27,8 +27,37 @@ export async function grantPermission({
   subjectId,
   grantedBy,
 }: GrantPermissionParams): Promise<{ success: boolean; error?: string }> {
-  // If grantedBy is provided, verify they have permission to grant
-  if (grantedBy) {
+  // Determine the effective granter for authorization checks
+  const effectiveGranter = grantedBy || subjectId;
+
+  // For elevated roles (owner/admin), the granter must actually hold owner on this resource
+  if (relation === "owner" || relation === "admin") {
+    const granterIsOwner = await checkPermission({
+      namespace,
+      objectId,
+      relation: "owner",
+      userId: effectiveGranter,
+    });
+
+    if (!granterIsOwner) {
+      return { success: false, error: "Only owners can grant owner or admin permissions" };
+    }
+
+    // Block self-escalation: if no explicit grantedBy, the subject cannot elevate themselves
+    if (!grantedBy || grantedBy === subjectId) {
+      // Check if the subject already holds owner -- if not, this is self-escalation
+      const subjectIsOwner = await checkPermission({
+        namespace,
+        objectId,
+        relation: "owner",
+        userId: subjectId,
+      });
+      if (!subjectIsOwner) {
+        return { success: false, error: "Cannot escalate your own permissions" };
+      }
+    }
+  } else if (grantedBy) {
+    // For non-elevated roles, granter still needs owner permission on the resource
     const canGrant = await checkPermission({
       namespace,
       objectId,
@@ -38,16 +67,6 @@ export async function grantPermission({
 
     if (!canGrant) {
       return { success: false, error: "Insufficient permissions to grant access" };
-    }
-
-    // Cannot grant higher permission than you have
-    if (relation === "owner" && grantedBy !== subjectId) {
-      const grantorRelation = await prisma.relationTuple.findFirst({
-        where: { namespace, objectId, subjectId: grantedBy },
-      });
-      if (grantorRelation?.relation !== "owner" && grantorRelation?.relation !== "admin") {
-        return { success: false, error: "Cannot grant owner permission" };
-      }
     }
   }
 

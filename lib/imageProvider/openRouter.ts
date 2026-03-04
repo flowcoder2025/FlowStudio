@@ -18,6 +18,7 @@ import {
   ProviderConfig,
   ImageModel,
 } from './types';
+import { extractBase64Data } from './utils';
 
 // 프로덕션에서는 디버그 로그 비활성화
 const isDev = process.env.NODE_ENV === 'development';
@@ -70,22 +71,6 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 // =====================================================
 
 export type ImageSize = '1K' | '2K' | '4K';
-
-// =====================================================
-// Utility Functions
-// =====================================================
-
-/**
- * Extract base64 data from data URL
- */
-function extractBase64Data(base64String: string): { mimeType: string; data: string } {
-  const match = base64String.match(/^data:([^;]+);base64,(.+)$/);
-  if (match) {
-    return { mimeType: match[1], data: match[2] };
-  }
-  // data: prefix가 없는 경우 기본값
-  return { mimeType: 'image/png', data: base64String };
-}
 
 // =====================================================
 // Main Generation Function
@@ -297,9 +282,10 @@ CRITICAL RULES:
     };
   }
 
-  // Make request with timeout (280s to stay within Vercel 300s limit)
+  // Timeout: 240 seconds (4 min), well within Vercel 300s limit
+  const GENERATION_TIMEOUT_MS = 240_000;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 280000);
+  const timeoutId = setTimeout(() => controller.abort(), GENERATION_TIMEOUT_MS);
 
   try {
     const response = await fetch(OPENROUTER_API_URL, {
@@ -374,8 +360,13 @@ CRITICAL RULES:
 
     // Handle timeout
     if (error instanceof Error && error.name === 'AbortError') {
-      logError('[OpenRouter] Generation timeout (280s)');
-      throw new Error('OpenRouter 이미지 생성 오류: 타임아웃 (280초)');
+      logError(`[OpenRouter] Generation timeout (${GENERATION_TIMEOUT_MS / 1000}s)`);
+      throw new ImageGenerationError(
+        `Image generation timed out after ${GENERATION_TIMEOUT_MS / 1000}s`,
+        ErrorCodes.TIMEOUT,
+        'openrouter',
+        true
+      );
     }
 
     throw error;

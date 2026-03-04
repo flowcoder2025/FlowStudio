@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { grantPermission } from "@/lib/permissions/grant";
+import { checkPermission } from "@/lib/permissions/check";
 import { Namespace, Relation } from "@/lib/permissions/types";
 
 /**
@@ -49,6 +50,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Invalid relation" },
         { status: 400 }
+      );
+    }
+
+    // Authorization: requester must be owner or admin on this resource
+    const hasOwner = await checkPermission({
+      namespace,
+      objectId,
+      relation: "owner",
+      userId: session.user.id,
+    });
+    if (!hasOwner) {
+      return NextResponse.json(
+        { error: "Forbidden: insufficient permissions to grant access" },
+        { status: 403 }
       );
     }
 

@@ -15,7 +15,6 @@
  */
 
 import { prisma } from "@/lib/db";
-import { getCreditBalance } from "./balance";
 import { randomUUID } from "crypto";
 
 export interface HoldResult {
@@ -28,6 +27,8 @@ export interface HoldResult {
  * Hold (reserve) credits for an operation
  * Credits are not actually deducted until capture is called
  * Uses CreditLedger for hold management
+ *
+ * Race condition 방지: 잔액 확인 + hold 생성을 단일 트랜잭션으로 수행
  */
 export async function holdCredits(
   userId: string,
@@ -39,16 +40,6 @@ export async function holdCredits(
     return { success: false, error: "금액은 0보다 커야 합니다" };
   }
 
-  // Check available balance
-  const { availableBalance } = await getCreditBalance(userId);
-
-  if (availableBalance < amount) {
-    return {
-      success: false,
-      error: `크레딧이 부족합니다. 필요: ${amount}, 사용 가능: ${availableBalance}`,
-    };
-  }
-
   // Generate unique request ID
   const requestId = randomUUID();
 
@@ -56,38 +47,78 @@ export async function holdCredits(
   const expiresAt = new Date();
   expiresAt.setHours(expiresAt.getHours() + 1);
 
-  // Create hold in CreditLedger
-  // Note: workflowSessionId must be provided via relation, not direct field
-  await prisma.creditLedger.create({
-    data: {
-      userId,
-      requestId,
-      holdAmount: amount,
-      status: "HELD",
-      expiresAt,
-      description: description || "크레딧 예약",
-      updatedAt: new Date(),
-      ...(workflowSessionId
-        ? { WorkflowSession: { connect: { id: workflowSessionId } } }
-        : {}),
-    },
-  });
+  try {
+    // Atomic: balance check + hold creation in a single transaction
+    await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
+      // Check available balance inside transaction (serialized read)
+      const [credit, pendingHolds] = await Promise.all([
+        tx.credit.findUnique({
+          where: { userId },
+          select: { balance: true },
+        }),
+        tx.creditLedger.aggregate({
+          where: {
+            userId,
+            status: "HELD",
+          },
+          _sum: {
+            holdAmount: true,
+          },
+        }),
+      ]);
 
-  // Also create a transaction record for history (no status field)
-  await prisma.creditTransaction.create({
-    data: {
-      userId,
-      amount: -amount, // Negative for holds
-      type: "hold",
-      description: description || "크레딧 예약",
-      metadata: { requestId },
-    },
-  });
+      const balance = credit?.balance ?? 0;
+      const holds = Math.abs(pendingHolds._sum.holdAmount ?? 0);
+      const availableBalance = Math.max(0, balance - holds);
 
-  return {
-    success: true,
-    holdId: requestId, // Return requestId as holdId
-  };
+      if (availableBalance < amount) {
+        throw new Error(
+          `INSUFFICIENT_CREDITS:크레딧이 부족합니다. 필요: ${amount}, 사용 가능: ${availableBalance}`
+        );
+      }
+
+      // Create hold in CreditLedger
+      await tx.creditLedger.create({
+        data: {
+          userId,
+          requestId,
+          holdAmount: amount,
+          status: "HELD",
+          expiresAt,
+          description: description || "크레딧 예약",
+          updatedAt: new Date(),
+          ...(workflowSessionId
+            ? { WorkflowSession: { connect: { id: workflowSessionId } } }
+            : {}),
+        },
+      });
+
+      // Also create a transaction record for history (no status field)
+      await tx.creditTransaction.create({
+        data: {
+          userId,
+          amount: -amount, // Negative for holds
+          type: "hold",
+          description: description || "크레딧 예약",
+          metadata: { requestId },
+        },
+      });
+    });
+
+    return {
+      success: true,
+      holdId: requestId, // Return requestId as holdId
+    };
+  } catch (error) {
+    // Handle insufficient credits error thrown from inside the transaction
+    if (error instanceof Error && error.message.startsWith("INSUFFICIENT_CREDITS:")) {
+      return {
+        success: false,
+        error: error.message.replace("INSUFFICIENT_CREDITS:", ""),
+      };
+    }
+    throw error;
+  }
 }
 
 /**

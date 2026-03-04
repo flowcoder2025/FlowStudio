@@ -35,6 +35,14 @@ interface GenerateRequestBody {
   refImages?: string[];
   /** 참조 이미지 활용 모드: style(분위기만), product(제품유지), composition(구도), full(전체) */
   referenceMode?: ReferenceMode;
+  /** Source image for editing (base64 data URL) */
+  sourceImage?: string;
+  /** Mask image for detail editing (base64 data URL) */
+  maskImage?: string;
+  /** Logo image for poster overlay (base64 data URL) */
+  logoImage?: string;
+  /** Generation mode: EDIT, POSTER, COMPOSITE, DETAIL_EDIT, DETAIL_PAGE */
+  mode?: string;
 }
 
 // =====================================================
@@ -94,6 +102,10 @@ export async function POST(request: NextRequest) {
       workflowSessionId: body.workflowSessionId,
       refImages: body.refImages,
       referenceMode: body.referenceMode,
+      sourceImage: body.sourceImage,
+      maskImage: body.maskImage,
+      logoImage: body.logoImage,
+      mode: body.mode,
     };
 
     // 5. Generate images

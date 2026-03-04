@@ -15,10 +15,12 @@ export const authOptions: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
   events: {
     async createUser({ user }: { user: User }) {
-      // Grant initial bonus credits to new users
+      // Grant initial bonus credits to new users (upsert to avoid UNIQUE constraint violation)
       if (user.id) {
-        await prisma.credit.create({
-          data: {
+        await prisma.credit.upsert({
+          where: { userId: user.id },
+          update: {}, // No update if already exists -- prevent duplicate bonus
+          create: {
             userId: user.id,
             balance: 10,
             updatedAt: new Date(),

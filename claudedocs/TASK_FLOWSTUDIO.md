@@ -1018,3 +1018,172 @@ npm install swr
 ### 완료일: 2026-02-03
 
 ### 핸드오프: HANDOFF_2026-02-03_P18a.md
+
+---
+
+## Old FlowStudio 기능 포팅
+
+> 5개 이미지 도구 (Edit, Poster, Composite, Detail Edit, Detail Page) 포팅
+
+### Phase 진행 현황
+
+| Phase | 내용 | 상태 | 핸드오프 |
+|-------|------|------|----------|
+| Phase 0 | 공통 인프라 (API, 컴포넌트, i18n) | ✅ 완료 | HANDOFF_2026-02-24_PORTING_P0.md |
+| Phase 1 | EDIT 페이지 (편집) | ✅ 완료 | HANDOFF_2026-02-24_PORTING_P1.md |
+| Phase 2 | POSTER 페이지 (포스터) | ✅ 완료 | HANDOFF_2026-02-24_PORTING_P2.md |
+| Phase 3 | COMPOSITE 페이지 (합성) | ✅ 완료 | HANDOFF_2026-02-24_PORTING_P3.md |
+| Phase 4 | DETAIL_EDIT 페이지 (상세 편집) | ✅ 완료 | HANDOFF_2026-02-24_PORTING_P4.md |
+| Phase 5 | DETAIL_PAGE 페이지 (상세 페이지) | ✅ 완료 | HANDOFF_2026-02-24_PORTING_P5.md |
+| Phase 6 | 네비게이션 통합 (Header 드롭다운) | ✅ 완료 | HANDOFF_2026-02-24_PORTING_P6.md |
+
+### Phase 0: 공통 인프라 ✅
+
+- [x] API 확장 - `app/api/generate/route.ts`에 sourceImage/maskImage/logoImage/mode 추가
+- [x] 공통 컴포넌트 7개 - `components/tools/` (ImageDropzone, GalleryPicker, AspectRatioSelector, PromptInput, GenerationBar, ResultGrid, UpscaleModal)
+- [x] 유틸리티 - `lib/tools/` (types, constants, generateClient)
+- [x] i18n - `messages/{ko,en}/tools.json` + `i18n/request.ts` 다중 JSON 머지
+
+### 완료일: 2026-02-24
+### 핸드오프: HANDOFF_2026-02-24_PORTING_P0.md
+
+### Phase 1: EDIT 페이지 ✅
+
+- [x] `app/[locale]/(main)/edit/page.tsx` - EDIT 페이지 구현
+  - 원본 이미지 업로드 (ImageDropzone, required)
+  - 참조 이미지 업로드 (ImageDropzone, optional)
+  - 비율 선택 (AspectRatioSelector)
+  - 프롬프트 입력 + 추천 태그 (PromptInput)
+  - 이미지 수 + 생성 (GenerationBar)
+  - 결과 그리드 (ResultGrid)
+  - API: mode='EDIT', sourceImage + refImages
+
+### 완료일: 2026-02-24
+### 핸드오프: HANDOFF_2026-02-24_PORTING_P1.md
+
+### Phase 2: POSTER 페이지 ✅
+
+- [x] `app/[locale]/(main)/poster/page.tsx` - POSTER 페이지 구현
+  - 제품 이미지 업로드 (ImageDropzone, required)
+  - 로고 이미지 업로드 (ImageDropzone, optional)
+  - 카테고리/스타일 선택 (CATEGORIES, getStylesForCategory)
+  - 비율 선택 (AspectRatioSelector, 기본 3:4)
+  - 프롬프트 입력 + 추천 태그 (PromptInput)
+  - 이미지 수 + 생성 (GenerationBar)
+  - 결과 그리드 (ResultGrid)
+  - API: mode='POSTER', sourceImage + logoImage + style
+
+### 완료일: 2026-02-24
+### 핸드오프: HANDOFF_2026-02-24_PORTING_P2.md
+
+### Phase 3: COMPOSITE 페이지 ✅
+
+- [x] `app/[locale]/(main)/composite/page.tsx` - COMPOSITE 페이지 구현
+  - 다중 이미지 업로드 (최대 10개, 커스텀 드래그&드롭)
+  - 갤러리 다중 선택 (GalleryPicker onMultiSelect)
+  - 비율 선택 (AspectRatioSelector)
+  - 프롬프트 입력 + 추천 태그 (PromptInput)
+  - 이미지 수 + 생성 (GenerationBar)
+  - 결과 그리드 (ResultGrid)
+  - API: mode='COMPOSITE', refImages (다중)
+
+### 완료일: 2026-02-24
+### 핸드오프: HANDOFF_2026-02-24_PORTING_P3.md
+
+### Phase 4: DETAIL_EDIT 페이지 ✅
+
+- [x] `app/[locale]/(main)/detail-edit/page.tsx` - DETAIL_EDIT 페이지 구현
+  - 원본 이미지 업로드 (ImageDropzone, required)
+  - Canvas 기반 마스크 페인팅 (이중 Canvas, 브러시 도구)
+  - 브러시 크기 조절 (5-100px), Undo, 마스크 초기화
+  - 마스크 흑백 PNG 내보내기
+  - 편집 모드 선택 (AI/텍스트/이미지)
+  - 프롬프트 입력 (PromptInput)
+  - 결과 그리드 (ResultGrid)
+  - API: mode='DETAIL_EDIT', sourceImage + maskImage
+- [x] i18n 키 추가 - brushSize, clearMask, paintToSelect, sourceImage
+
+### 완료일: 2026-02-24
+### 핸드오프: HANDOFF_2026-02-24_PORTING_P4.md
+
+### Phase 5: DETAIL_PAGE 페이지 ✅
+
+- [x] `app/[locale]/(main)/detail-page/page.tsx` - DETAIL_PAGE 페이지 구현
+  - 제품 이미지 업로드 (ImageDropzone, required)
+  - 참조 이미지 업로드 (ImageDropzone, optional)
+  - 카테고리/스타일 선택 (CATEGORIES, getStylesForCategory)
+  - 세그먼트별 프롬프트 + 4장 후보 생성 (9:16 고정)
+  - 후보 선택 → 세그먼트 추가
+  - 세그먼트 삭제/순서변경/교체
+  - 전체 미리보기 (우측 패널)
+  - 전체 병합 다운로드 (Canvas API)
+  - 세션 히스토리 (메모리 기반)
+  - API: mode='DETAIL_PAGE', sourceImage + refImages
+- [x] i18n 키 추가 - 14개 detailPage 네임스페이스 키
+
+### 완료일: 2026-02-24
+### 핸드오프: HANDOFF_2026-02-24_PORTING_P5.md
+
+### Phase 6: 네비게이션 통합 ✅
+
+- [x] Header 데스크톱 드롭다운 - "도구" 버튼 + 5개 도구 링크 드롭다운
+- [x] Header 모바일 햄버거 메뉴 - "도구" 섹션 + 5개 도구 링크
+- [x] MobileNav 슬라이드아웃 - "AI 도구" 섹션 (2열 그리드)
+- [x] i18n 키 추가 - nav.tools 등 6개 키 (ko/en)
+
+### 완료일: 2026-02-24
+### 핸드오프: HANDOFF_2026-02-24_PORTING_P6.md
+
+---
+
+## 도구 몰입형 통합 (Immersive Tool Integration)
+
+> 5개 도구 페이지를 몰입형 워크플로우 UX로 통합
+
+### Phase 진행 현황
+
+| Phase | 내용 | 상태 | 핸드오프 |
+|-------|------|------|----------|
+| Phase 1 | Store 확장 + 도구 액션 정의 | ✅ 완료 | HANDOFF_2026-02-25_IMMERSIVE_TOOL_P1.md |
+| Phase 2 | ImmersiveInputForm 확장 — 새 스텝 타입 렌더링 | ✅ 완료 | HANDOFF_2026-02-25_IMMERSIVE_TOOL_P2.md |
+| Phase 3 | Detail Edit 캔버스 마스크 스텝 | ✅ 완료 | HANDOFF_2026-02-25_IMMERSIVE_TOOL_P3.md |
+| Phase 4 | Detail Page 세그먼트 루프 스텝 | ✅ 완료 | HANDOFF_2026-02-25_IMMERSIVE_TOOL_P4.md |
+| Phase 5 | 진입점 연결 + 기존 페이지 리다이렉트 | ✅ 완료 | HANDOFF_2026-02-25_IMMERSIVE_TOOL_P5.md |
+| Phase 6 | 생성 연결 + i18n | ✅ 완료 | HANDOFF_2026-02-25_IMMERSIVE_TOOL_P6.md |
+
+### Phase 1: Store 확장 + 도구 액션 정의 ✅
+
+- [x] Store 확장 - toolMode, toolInputs, toolStepIndex + 6개 액션 (`lib/workflow/store.ts`)
+- [x] 도구 스텝 정의 - TOOL_STEP_DEFINITIONS 5개 도구 × 스텝 배열 (`lib/workflow/actions/tools.ts`)
+
+### 완료일: 2026-02-25
+### 핸드오프: HANDOFF_2026-02-25_IMMERSIVE_TOOL_P1.md
+
+### Phase 2: ImmersiveInputForm 확장 ✅
+
+- [x] 스텝 컴포넌트 6개 생성 (ImageUpload, AspectRatio, CategoryStyle, MultiImage, Prompt, Confirmation)
+- [x] 배럴 내보내기 (`components/workflow/steps/index.ts`)
+- [x] ImmersiveInputForm 도구 모드 확장 (ToolStepCard + 도구 렌더링 분기)
+- [x] i18n 키 추가 (swipeToNext)
+
+### 완료일: 2026-02-25
+### 핸드오프: HANDOFF_2026-02-25_IMMERSIVE_TOOL_P2.md
+
+### Phase 5: 진입점 연결 + 기존 페이지 리다이렉트 ✅
+
+- [x] HomeClient 도구 모드 자동 열기 — `toolMode` 감지 → ImmersiveInputForm 자동 열기
+- [x] Header 도구 링크 → `enterToolMode` 버튼으로 변경 (데스크톱 + 모바일)
+- [x] MobileNav 도구 링크 → `enterToolMode` 버튼으로 변경
+- [x] 기존 5개 도구 페이지 → `ToolRedirect` 컴포넌트로 교체 (홈+몰입형 리다이렉트)
+
+### 완료일: 2026-02-25
+### 핸드오프: HANDOFF_2026-02-25_IMMERSIVE_TOOL_P5.md
+
+### Phase 6: 생성 연결 + i18n ✅
+
+- [x] handleToolGenerate 함수 완성 — toolInputs → ToolGenerateRequest 매핑 + generateFromTool API 호출
+- [x] ImmersiveResult 연동 — 생성 성공 시 결과 표시, 재생성/닫기 핸들러
+- [x] i18n 키 확인 — 기존 키 충분 (추가 불필요)
+
+### 완료일: 2026-02-25
+### 핸드오프: HANDOFF_2026-02-25_IMMERSIVE_TOOL_P6.md

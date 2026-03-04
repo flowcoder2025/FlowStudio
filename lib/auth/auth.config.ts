@@ -55,7 +55,21 @@ export const authConfig: NextAuthConfig = {
       }
       return session;
     },
-    async signIn() {
+    async signIn({ user }: { user?: User | AdapterUser }) {
+      // Block users without email
+      if (!user?.email) {
+        return false;
+      }
+
+      // Check blocked email list from environment variable
+      const blockedEmails = process.env.BLOCKED_EMAILS;
+      if (blockedEmails) {
+        const blockedList = blockedEmails.split(",").map((e) => e.trim().toLowerCase());
+        if (blockedList.includes(user.email.toLowerCase())) {
+          return false;
+        }
+      }
+
       return true;
     },
   },

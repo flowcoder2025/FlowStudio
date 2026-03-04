@@ -5,7 +5,7 @@
  * Contract: HYBRID_DESIGN_FILTER_TAB
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Check, RotateCcw, Sliders } from 'lucide-react';
 import {
   getCategories,
@@ -63,7 +63,18 @@ export function FilterTab({
   const [showCustom, setShowCustom] = useState(false);
   const [customFilters, setCustomFilters] = useState<CustomFilterState>(DEFAULT_CUSTOM_FILTERS);
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
+  const previewUrlsRef = useRef<Record<string, string>>({});
   const [isApplying, setIsApplying] = useState(false);
+  const lastAppliedUrlRef = useRef<string | null>(null);
+
+  // Cleanup Object URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (lastAppliedUrlRef.current) {
+        URL.revokeObjectURL(lastAppliedUrlRef.current);
+      }
+    };
+  }, []);
 
   const categories = useMemo(() => getCategories(), []);
   const currentPresets = useMemo(
@@ -74,18 +85,19 @@ export function FilterTab({
   // Generate preview thumbnails
   const generatePreview = useCallback(
     async (preset: FilterPreset) => {
-      if (previewUrls[preset.id]) return;
+      if (previewUrlsRef.current[preset.id]) return;
 
       try {
         const preview = await previewFilter(imageUrl, preset.filters, 100);
         if (preview) {
+          previewUrlsRef.current[preset.id] = preview;
           setPreviewUrls((prev) => ({ ...prev, [preset.id]: preview }));
         }
       } catch (error) {
         console.error('Preview generation failed:', error);
       }
     },
-    [imageUrl, previewUrls]
+    [imageUrl]
   );
 
   // Apply preset
@@ -107,7 +119,12 @@ export function FilterTab({
         });
 
         if (result.success && result.image) {
+          // Revoke previous Object URL to prevent memory leak
+          if (lastAppliedUrlRef.current) {
+            URL.revokeObjectURL(lastAppliedUrlRef.current);
+          }
           const url = URL.createObjectURL(result.image);
+          lastAppliedUrlRef.current = url;
           onProcessed(url);
         } else {
           console.error('Filter application failed:', result.error);
@@ -159,7 +176,12 @@ export function FilterTab({
       });
 
       if (result.success && result.image) {
+        // Revoke previous Object URL to prevent memory leak
+        if (lastAppliedUrlRef.current) {
+          URL.revokeObjectURL(lastAppliedUrlRef.current);
+        }
         const url = URL.createObjectURL(result.image);
+        lastAppliedUrlRef.current = url;
         onProcessed(url);
       } else {
         onProcessed(null);

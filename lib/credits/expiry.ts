@@ -166,6 +166,32 @@ export async function getExpiringCredits(
 }
 
 /**
+ * Cleanup expired holds
+ * Marks all holds that have status "HELD" and expiresAt < now as "EXPIRED"
+ * Should be called periodically (e.g., via cron or before balance checks)
+ */
+export async function cleanupExpiredHolds(): Promise<{
+  expiredCount: number;
+}> {
+  const now = new Date();
+
+  const result = await prisma.creditLedger.updateMany({
+    where: {
+      status: "HELD",
+      expiresAt: {
+        lt: now,
+      },
+    },
+    data: {
+      status: "EXPIRED",
+      updatedAt: now,
+    },
+  });
+
+  return { expiredCount: result.count };
+}
+
+/**
  * Cancel old pending holds (cleanup)
  * Uses CreditLedger for hold management
  */

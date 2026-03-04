@@ -12,6 +12,7 @@ import type { DynamicGuide, StepType } from "./guide";
 import type { WorkflowRecommendation } from "./recommend";
 import type { UploadedImage } from "@/components/workflow/ImageUpload";
 import type { ReferenceMode } from "@/lib/imageProvider/types";
+import type { ToolMode } from "@/lib/tools/types";
 
 // ============================================================
 // Types
@@ -107,6 +108,11 @@ export interface WorkflowState {
   showOnboarding: boolean;
   showImmersiveResult: boolean;
 
+  // Tool mode (immersive tool integration)
+  toolMode: ToolMode | null;
+  toolInputs: Record<string, unknown>;
+  toolStepIndex: number;
+
   // History (recent workflows)
   recentWorkflows: Array<{
     industry: Industry;
@@ -180,6 +186,14 @@ export interface WorkflowActions {
   // Initial query & image count
   setInitialQuery: (query: string) => void;
   setImageCount: (count: number) => void;
+
+  // Tool mode
+  enterToolMode: (mode: ToolMode) => void;
+  exitToolMode: () => void;
+  setToolInput: (key: string, value: unknown) => void;
+  setToolInputs: (inputs: Record<string, unknown>) => void;
+  clearToolInputs: () => void;
+  setToolStepIndex: (index: number) => void;
 }
 
 // ============================================================
@@ -208,6 +222,9 @@ const initialState: WorkflowState = {
   immersiveStep: "recommend",
   showOnboarding: true,
   showImmersiveResult: false,
+  toolMode: null,
+  toolInputs: {},
+  toolStepIndex: 0,
   recentWorkflows: [],
 };
 
@@ -445,6 +462,9 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>()(
             session: null,
             error: null,
             immersiveStep: "recommend",
+            toolMode: null,
+            toolInputs: {},
+            toolStepIndex: 0,
           });
         },
 
@@ -508,6 +528,42 @@ export const useWorkflowStore = create<WorkflowState & WorkflowActions>()(
           const validCount = Math.max(1, Math.min(4, count));
           set({ imageCount: validCount });
         },
+
+        // Tool mode
+        enterToolMode: (mode) => {
+          set({
+            toolMode: mode,
+            toolInputs: {},
+            toolStepIndex: 0,
+            isImmersiveMode: true,
+            immersiveStep: "input",
+            generationResult: null,
+            isGenerating: false,
+            generationProgress: 0,
+            error: null,
+          });
+        },
+
+        exitToolMode: () => {
+          set({
+            toolMode: null,
+            toolInputs: {},
+            toolStepIndex: 0,
+            immersiveStep: "recommend",
+          });
+        },
+
+        setToolInput: (key, value) => {
+          set((state) => ({
+            toolInputs: { ...state.toolInputs, [key]: value },
+          }));
+        },
+
+        setToolInputs: (inputs) => set({ toolInputs: inputs }),
+
+        clearToolInputs: () => set({ toolInputs: {}, toolStepIndex: 0 }),
+
+        setToolStepIndex: (index) => set({ toolStepIndex: index }),
       }),
       {
         name: "flowstudio-workflow",
@@ -550,6 +606,12 @@ export const selectUIState = (state: WorkflowState) => ({
   error: state.error,
 });
 
+export const selectToolState = (state: WorkflowState) => ({
+  toolMode: state.toolMode,
+  toolInputs: state.toolInputs,
+  toolStepIndex: state.toolStepIndex,
+});
+
 // ============================================================
 // Hooks
 // ============================================================
@@ -558,3 +620,4 @@ export const useCurrentWorkflow = () => useWorkflowStore(selectCurrentWorkflow);
 export const useGuideState = () => useWorkflowStore(selectGuideState);
 export const useGenerationState = () => useWorkflowStore(selectGenerationState);
 export const useUIState = () => useWorkflowStore(selectUIState);
+export const useToolState = () => useWorkflowStore(selectToolState);

@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { revokePermission } from "@/lib/permissions/revoke";
+import { checkPermission } from "@/lib/permissions/check";
 import { Namespace, Relation } from "@/lib/permissions/types";
 
 /**
@@ -52,6 +53,20 @@ export async function DELETE(request: NextRequest) {
           { status: 400 }
         );
       }
+    }
+
+    // Authorization: requester must be owner or admin on this resource
+    const hasOwner = await checkPermission({
+      namespace,
+      objectId,
+      relation: "owner",
+      userId: session.user.id,
+    });
+    if (!hasOwner) {
+      return NextResponse.json(
+        { error: "Forbidden: insufficient permissions to revoke access" },
+        { status: 403 }
+      );
     }
 
     const result = await revokePermission({
@@ -102,6 +117,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "namespace, objectId, and subjectId are required" },
         { status: 400 }
+      );
+    }
+
+    // Authorization: requester must be owner or admin on this resource
+    const hasOwnerPost = await checkPermission({
+      namespace,
+      objectId,
+      relation: "owner",
+      userId: session.user.id,
+    });
+    if (!hasOwnerPost) {
+      return NextResponse.json(
+        { error: "Forbidden: insufficient permissions to revoke access" },
+        { status: 403 }
       );
     }
 

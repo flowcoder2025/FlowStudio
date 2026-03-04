@@ -6,9 +6,9 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   Home,
@@ -21,11 +21,17 @@ import {
   X,
   ChevronRight,
   LogIn,
+  Pencil,
+  FileImage,
+  LayoutGrid,
+  PenTool,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useWorkflowStore } from "@/lib/workflow/store";
 import { getAllIndustries, Industry } from "@/lib/workflow/industries";
+import type { ToolMode } from "@/lib/tools/types";
 
 // ============================================================
 // Types
@@ -103,6 +109,7 @@ export function MobileBottomNav() {
 
 export function MobileMenu() {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session, status } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const industries = getAllIndustries();
@@ -110,6 +117,22 @@ export function MobileMenu() {
   // Zustand store
   const recentWorkflows = useWorkflowStore((state) => state.recentWorkflows);
   const selectIndustry = useWorkflowStore((state) => state.selectIndustry);
+  const enterToolMode = useWorkflowStore((state) => state.enterToolMode);
+
+  // Handle tool click: enter immersive tool mode + navigate to home
+  const handleToolClick = useCallback((mode: ToolMode) => {
+    if (status !== "authenticated") {
+      router.push("/login?callbackUrl=/");
+      setIsOpen(false);
+      return;
+    }
+    enterToolMode(mode);
+    const isHome = pathname === "/" || /^\/[a-z]{2}\/?$/.test(pathname);
+    if (!isHome) {
+      router.push("/");
+    }
+    setIsOpen(false);
+  }, [status, enterToolMode, router, pathname]);
 
   // Close menu on route change
   useEffect(() => {
@@ -201,6 +224,36 @@ export function MobileMenu() {
               </Link>
             </div>
           )}
+
+          {/* Tools Section */}
+          <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
+            <h3 className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase mb-3">
+              AI 도구
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { toolMode: "EDIT" as ToolMode, label: "이미지 편집", icon: Pencil },
+                { toolMode: "POSTER" as ToolMode, label: "포스터 생성", icon: FileImage },
+                { toolMode: "COMPOSITE" as ToolMode, label: "이미지 합성", icon: LayoutGrid },
+                { toolMode: "DETAIL_EDIT" as ToolMode, label: "상세 편집", icon: PenTool },
+                { toolMode: "DETAIL_PAGE" as ToolMode, label: "상세 페이지", icon: Layers },
+              ]).map((tool) => {
+                const Icon = tool.icon;
+                return (
+                  <button
+                    key={tool.toolMode}
+                    onClick={() => handleToolClick(tool.toolMode)}
+                    className="flex items-center gap-2 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors active:scale-95 touch-target text-left"
+                  >
+                    <Icon className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                    <span className="text-sm font-medium truncate text-zinc-900 dark:text-zinc-100">
+                      {tool.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Quick Start Section */}
           <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">

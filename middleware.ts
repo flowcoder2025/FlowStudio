@@ -71,7 +71,12 @@ export default auth((req) => {
       return response;
     }
   }
-  return intlMiddleware(req as unknown as NextRequest);
+
+  // 기본 로케일 + 접두사 없는 경로 → 직접 rewrite
+  // (intlMiddleware가 auth() 래퍼 안에서 rewrite+location 동시 반환하여 루프 발생 방지)
+  const url = req.nextUrl.clone();
+  url.pathname = `/${routing.defaultLocale}${pathname}`;
+  return NextResponse.rewrite(url);
 });
 
 export const config = {

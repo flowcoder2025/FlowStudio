@@ -1,6 +1,7 @@
 /**
  * i18n Request Configuration
  * Server-side locale detection and message loading
+ * Supports merging multiple JSON message files
  */
 
 import { getRequestConfig } from 'next-intl/server';
@@ -15,8 +16,17 @@ export default getRequestConfig(async ({ requestLocale }) => {
     locale = routing.defaultLocale;
   }
 
+  // Load multiple message files and merge
+  const [common, tools] = await Promise.all([
+    import(`../messages/${locale}/common.json`).then((m) => m.default),
+    import(`../messages/${locale}/tools.json`).then((m) => m.default),
+  ]);
+
   return {
     locale,
-    messages: (await import(`../messages/${locale}/common.json`)).default
+    messages: {
+      ...common,
+      ...tools,
+    },
   };
 });
